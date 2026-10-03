@@ -7,13 +7,16 @@ import { BAKUGAN, type Ability } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useGame } from '../store/useGame'
 import { EFFECT_DURATION } from '../three/AbilityEffect'
+import { savePhoto } from '../photo'
 import { BrawlScene, type Phase } from '../three/BrawlScene'
+import { PhotoCapture } from '../three/PhotoCapture'
 
 const BRAWL_SEQUENCE_MS = 2300
 
 export function Viewer() {
   const bakuganId = useGame((s) => s.bakuganId)
   const go = useGame((s) => s.go)
+  const compareWith = useGame((s) => s.compareWith)
   const bakugan = BAKUGAN.find((b) => b.id === bakuganId)!
   const element = ELEMENT_BY_ID[bakugan.element]
 
@@ -21,6 +24,8 @@ export function Viewer() {
   const [evolution, setEvolution] = useState(0)
   const [used, setUsed] = useState<string[]>([])
   const [activeAbility, setActiveAbility] = useState<{ ability: Ability; key: number } | null>(null)
+  const [photoRequest, setPhotoRequest] = useState(0)
+  const [flash, setFlash] = useState(0)
   const [shout, setShout] = useState<{ text: string; sub?: string; key: number } | null>(null)
 
   const evo = bakugan.evolutions[evolution]
@@ -64,6 +69,12 @@ export function Viewer() {
     setActiveAbility({ ability, key: Date.now() })
   }
 
+  function takePhoto() {
+    playSfx('gateCard')
+    setFlash(Date.now())
+    setPhotoRequest((n) => n + 1)
+  }
+
   function reset() {
     setPhase('ball')
     setUsed([])
@@ -74,6 +85,10 @@ export function Viewer() {
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Canvas shadows camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={[1, 2]}>
         <BrawlScene bakugan={bakugan} element={element} phase={phase} activeAbility={activeAbility} />
+        <PhotoCapture
+          request={photoRequest}
+          onCapture={(url) => void savePhoto(url, { name: evo.name, brawler: bakugan.brawler, gPower, element })}
+        />
       </Canvas>
 
       {/* header */}
@@ -92,7 +107,13 @@ export function Viewer() {
           <p className="mt-1 text-lg text-white/60">Brawler: {bakugan.brawler}</p>
           <p className="mt-3 max-w-sm text-white/70">{bakugan.description}</p>
         </div>
-        <GPowerCounter value={gPower} color={element.color} />
+        <div className="pointer-events-auto flex flex-col items-end gap-3">
+          <GPowerCounter value={gPower} color={element.color} />
+          <div className="flex gap-2">
+            <SmallButton onClick={takePhoto} label="PHOTO" />
+            <SmallButton onClick={() => compareWith(bakugan.id)} label="FACE-OFF" />
+          </div>
+        </div>
       </div>
 
       {/* evolution timeline */}
@@ -165,6 +186,18 @@ export function Viewer() {
       </p>
 
       <AnimatePresence>
+        {flash > 0 && (
+          <motion.div
+            key={flash}
+            className="pointer-events-none absolute inset-0 bg-white"
+            initial={{ opacity: 0.85 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {shout && (
           <motion.div
             key={shout.key}
@@ -205,5 +238,16 @@ function ActionButton({ label, onClick, color, subtle }: { label: string; onClic
     >
       {label}
     </motion.button>
+  )
+}
+
+function SmallButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="font-display rounded border border-white/20 bg-black/50 px-4 py-2 text-xs tracking-[0.3em] text-white/70 backdrop-blur transition hover:border-white/60 hover:text-white"
+    >
+      {label}
+    </button>
   )
 }

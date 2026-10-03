@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import { lazy, Suspense } from 'react'
 import { MuteButton } from './components/MuteButton'
+import { CompareScreen } from './screens/CompareScreen'
 import { ElementHub } from './screens/ElementHub'
 import { ElementWheel } from './screens/ElementWheel'
 import { IntroScreen } from './screens/IntroScreen'
@@ -20,6 +21,7 @@ export default function App() {
           {screen === 'wheel' && <ElementWheel key="wheel" />}
           {screen === 'hub' && <ElementHub key="hub" />}
           {screen === 'viewer' && <Viewer key="viewer" />}
+          {screen === 'compare' && <CompareScreen key="compare" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}
