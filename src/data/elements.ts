@@ -27,7 +27,7 @@ export const ELEMENTS: ElementInfo[] = [
     color: '#ff3b2f',
     glow: '#ff7a3d',
     wheelAngle: 0,
-    wheelPos: { x: 0, y: -170 },
+    wheelPos: { x: -1, y: -179.8 },
     icon: '/wheel/pyrus.webp',
   },
   {
@@ -39,7 +39,7 @@ export const ELEMENTS: ElementInfo[] = [
     color: '#c8782e',
     glow: '#e8a25a',
     wheelAngle: 60,
-    wheelPos: { x: 154, y: -85 },
+    wheelPos: { x: 153.5, y: -88.2 },
     icon: '/wheel/subterra.webp',
   },
   {
@@ -51,7 +51,7 @@ export const ELEMENTS: ElementInfo[] = [
     color: '#f5d90a',
     glow: '#fff27a',
     wheelAngle: 120,
-    wheelPos: { x: 154, y: 90 },
+    wheelPos: { x: 152.2, y: 88.5 },
     icon: '/wheel/haos.webp',
   },
   {
@@ -63,7 +63,7 @@ export const ELEMENTS: ElementInfo[] = [
     color: '#9b3dff',
     glow: '#c08bff',
     wheelAngle: 180,
-    wheelPos: { x: 0, y: 176 },
+    wheelPos: { x: -0.3, y: 181.3 },
     icon: '/wheel/darkus.webp',
   },
   {
@@ -75,7 +75,7 @@ export const ELEMENTS: ElementInfo[] = [
     color: '#2f6bff',
     glow: '#6fa2ff',
     wheelAngle: 240,
-    wheelPos: { x: -156, y: 91 },
+    wheelPos: { x: -155.4, y: 91.6 },
     icon: '/wheel/aquos.webp',
   },
   {
@@ -87,7 +87,7 @@ export const ELEMENTS: ElementInfo[] = [
     color: '#19c79a',
     glow: '#6fffd0',
     wheelAngle: 300,
-    wheelPos: { x: -156, y: -85 },
+    wheelPos: { x: -157.3, y: -88.2 },
     icon: '/wheel/ventus.webp',
   },
 ]

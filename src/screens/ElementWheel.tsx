@@ -6,7 +6,7 @@ import { GRID, GRID_SIZE } from '../components/grid'
 import { useGame } from '../store/useGame'
 
 const ART = 640 // size of the wheel art in source pixels
-const ICON = 118
+const ICON = 112.6 // badge diameter incl. 1px padding, in art pixels
 const DEAD_ZONE = 0.12 // fraction of the radius where the cursor keeps the current pick
 
 /** Signed shortest difference between two angles in degrees. */

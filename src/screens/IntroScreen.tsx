@@ -29,11 +29,13 @@ export function IntroScreen() {
       transition={{ duration: 0.6 }}
     >
       <motion.img
-        src="/wheel/pyrus.webp"
+        src="/brand/pyrus-logo.webp"
         alt=""
-        className="h-28 w-28 drop-shadow-[0_0_40px_rgba(255,80,40,0.7)]"
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 12, ease: 'linear' }}
+        draggable={false}
+        className="h-32 w-32 object-contain drop-shadow-[0_0_36px_rgba(255,70,40,0.75)]"
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: [1, 1.06, 1], opacity: 1 }}
+        transition={{ scale: { repeat: Infinity, duration: 2.4, ease: 'easeInOut' }, opacity: { duration: 0.6 } }}
       />
       <div className="text-center">
         <h1 className="font-display text-6xl font-black tracking-[0.2em] text-white">BAKUGAN</h1>
