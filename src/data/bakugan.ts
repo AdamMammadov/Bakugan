@@ -252,3 +252,19 @@ export function abilityLabel(a: Ability) {
 
 /** G-Power an ability adds to its user outside of battle (the Viewer's showcase). */
 export const abilitySelfBonus = (a: Ability) => (a.type === 'shield' || a.type === 'weaken' ? 0 : a.amount)
+
+/** Plain-language summary of what an ability does in the arena. */
+export function battleEffect(a: Ability) {
+  switch (a.type) {
+    case 'attack':
+      return `Strikes the opponent (power ${a.amount}). Damage grows with your G-Power.`
+    case 'boost':
+      return `Raises your G-Power by ${a.amount}, so every later hit lands harder.`
+    case 'weaken':
+      return `Cuts the opponent's G-Power by ${a.amount} and chips their life.`
+    case 'drain':
+      return `Steals ${a.amount}G from the opponent and drains some of their life into yours.`
+    case 'shield':
+      return `Raises a shield that blocks the opponent's next attack or ability.`
+  }
+}

@@ -1,7 +1,8 @@
 import { AnimatePresence, motion, useSpring } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { ELEMENTS, type ElementInfo } from '../data/elements'
+import { bakuganForElement } from '../data/bakugan'
+import { CORRELATIONS, DIAGONAL, ELEMENT_BY_ID, ELEMENTS, type ElementInfo } from '../data/elements'
 import { asset } from '../asset'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { useGame } from '../store/useGame'
@@ -34,7 +35,7 @@ export function ElementWheel() {
   const wedgeRotation = useSpring(0, { stiffness: 320, damping: 28 })
 
   useEffect(() => {
-    const resize = () => setSize(Math.min(window.innerHeight * 0.86, window.innerWidth * 0.55, 760))
+    const resize = () => setSize(Math.min(window.innerHeight * 0.86, window.innerWidth * 0.5, 760))
     resize()
     window.addEventListener('resize', resize)
     return () => window.removeEventListener('resize', resize)
@@ -187,8 +188,9 @@ function wedgePath(r: number, halfAngle: number) {
 }
 
 function InfoPanel({ element }: { element: ElementInfo }) {
+  const roster = bakuganForElement(element.id)
   return (
-    <div className="w-80 shrink-0">
+    <div className="w-[26rem] shrink-0">
       <p className="font-display text-xs tracking-[0.5em] text-white/40">CHOOSE YOUR ATTRIBUTE</p>
       <AnimatePresence mode="wait">
         <motion.div
@@ -199,20 +201,58 @@ function InfoPanel({ element }: { element: ElementInfo }) {
           transition={{ duration: 0.18 }}
         >
           <h2
-            className="font-display mt-4 text-6xl font-black tracking-wider"
+            className="font-display mt-3 text-5xl font-black tracking-wider xl:text-6xl"
             style={{ color: element.color, textShadow: `0 0 30px ${element.glow}88` }}
           >
             {element.name.toUpperCase()}
           </h2>
-          <p className="font-display mt-1 text-lg tracking-[0.4em] text-white/70">{element.attribute.toUpperCase()}</p>
-          <p className="mt-6 text-2xl font-medium text-white/90">{element.tagline}</p>
-          <p className="mt-6 text-base text-white/50">
-            Legendary brawler: <span className="font-semibold text-white/80">{element.brawler}</span>
-          </p>
+          <p className="font-display mt-1 text-base tracking-[0.4em] text-white/70">{element.attribute.toUpperCase()}</p>
+          <p className="mt-4 text-xl font-medium text-white/90">{element.tagline}</p>
+          <p className="mt-2 text-sm leading-relaxed text-white/60">{element.lore}</p>
+
+          <dl className="mt-5 space-y-3 border-t border-white/10 pt-4 text-sm">
+            <InfoRow label="BRAWLER">
+              <span className="font-semibold text-white/85">{element.brawler}</span>
+            </InfoRow>
+            <InfoRow label="BAKUGAN">
+              {roster.map((b) => (
+                <span key={b.id} className="text-white/85">
+                  <span className="font-semibold">{b.name}</span>
+                  <span className="text-white/45"> · {b.baseG}G · {b.evolutions.length} forms</span>
+                </span>
+              ))}
+            </InfoRow>
+            <InfoRow label="ALLIES">
+              {CORRELATIONS[element.id].map((id) => (
+                <Badge key={id} element={ELEMENT_BY_ID[id]} />
+              ))}
+            </InfoRow>
+            <InfoRow label="OPPOSITE">
+              <Badge element={ELEMENT_BY_ID[DIAGONAL[element.id]]} />
+            </InfoRow>
+          </dl>
         </motion.div>
       </AnimatePresence>
-      <p className="mt-12 text-sm tracking-widest text-white/35">MOVE THE MOUSE TO ROTATE · CLICK TO CHOOSE</p>
+      <p className="mt-6 text-xs tracking-widest text-white/35">MOVE THE MOUSE TO ROTATE · CLICK TO CHOOSE</p>
     </div>
+  )
+}
+
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-4">
+      <dt className="font-display w-20 shrink-0 pt-0.5 text-[10px] tracking-[0.3em] text-white/35">{label}</dt>
+      <dd className="flex flex-wrap items-center gap-x-3 gap-y-1">{children}</dd>
+    </div>
+  )
+}
+
+function Badge({ element }: { element: ElementInfo }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <img src={element.icon} alt="" className="h-5 w-5" />
+      <span style={{ color: element.color }}>{element.name}</span>
+    </span>
   )
 }
 

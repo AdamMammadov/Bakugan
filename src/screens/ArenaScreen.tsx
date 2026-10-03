@@ -12,7 +12,7 @@ import {
   type BattleState,
   type Fighter,
 } from '../battle/engine'
-import { abilityLabel, BAKUGAN, formOf, type Ability, type Entrant } from '../data/bakugan'
+import { abilityLabel, BAKUGAN, battleEffect, formOf, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useGame } from '../store/useGame'
 import { ACTION_DURATION, ArenaScene, IMPACT_AT } from '../three/ArenaScene'
@@ -107,7 +107,7 @@ export function ArenaScreen() {
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows camera={{ position: [0, 3.4, 11.5], fov: 45 }} dpr={[1, 2]}>
+      <Canvas shadows camera={{ position: [0, 3.6, 11.5], fov: 50 }} dpr={[1, 2]}>
         <ArenaScene
           fighters={[left, right]}
           gate={setup.gate}
@@ -165,6 +165,7 @@ export function ArenaScreen() {
               title={a.name}
               tag={`${TYPE_ICON[a.type]} ${abilityLabel(a)}`}
               text={a.description}
+              effect={battleEffect(a)}
             />
           )
         })}
@@ -277,6 +278,7 @@ function HandButton({
   title,
   tag,
   text,
+  effect,
   color,
   disabled,
   used,
@@ -285,36 +287,57 @@ function HandButton({
   title: string
   tag: string
   text: string
+  /** Arena effect summary shown in the hover popover. */
+  effect?: string
   color: string
   disabled: boolean
   used?: boolean
   onClick: () => void
 }) {
   return (
-    <motion.button
-      disabled={disabled}
-      onClick={onClick}
-      whileHover={disabled ? undefined : { y: -14 }}
-      className="relative flex h-[clamp(5.5rem,24vh,11rem)] w-40 min-w-0 flex-1 basis-0 flex-col rounded-lg border-2 bg-black/70 p-3 text-left backdrop-blur transition disabled:cursor-not-allowed [max-width:10rem]"
-      style={{
-        borderColor: used ? 'rgba(255,255,255,0.1)' : `${color}aa`,
-        opacity: used ? 0.25 : disabled ? 0.55 : 1,
-        boxShadow: disabled ? 'none' : `0 0 18px ${color}44`,
-      }}
-    >
-      <span className="font-display text-[11px] font-bold tracking-wider" style={{ color }}>
-        {tag}
-      </span>
-      <span className="font-display mt-1 text-sm leading-tight font-bold">{title}</span>
-      {!used && (
-        <span className="mt-2 line-clamp-4 hidden text-xs leading-snug text-white/60 [@media(min-height:720px)]:block">{text}</span>
-      )}
-      {used && (
-        <span className="font-display absolute inset-0 flex items-center justify-center text-xs tracking-[0.3em] text-white/70">
-          USED
+    <div className="group relative flex min-w-0 flex-1 basis-0 [max-width:10rem]">
+      <motion.button
+        disabled={disabled}
+        onClick={onClick}
+        whileHover={disabled ? undefined : { y: -14 }}
+        className="relative flex h-[clamp(6rem,24vh,11rem)] w-full flex-col rounded-lg border-2 bg-black/75 p-3 text-left backdrop-blur transition disabled:cursor-not-allowed"
+        style={{
+          borderColor: used ? 'rgba(255,255,255,0.1)' : `${color}aa`,
+          opacity: used ? 0.3 : disabled ? 0.6 : 1,
+          boxShadow: disabled ? 'none' : `0 0 18px ${color}44`,
+        }}
+      >
+        <span className="font-display text-[11px] font-bold tracking-wider" style={{ color }}>
+          {tag}
         </span>
-      )}
-    </motion.button>
+        <span className="font-display mt-1 text-sm leading-tight font-bold">{title}</span>
+        <span className="mt-1.5 line-clamp-2 text-xs leading-snug text-white/65 [@media(min-height:720px)]:line-clamp-4">
+          {text}
+        </span>
+        {used && (
+          <span className="font-display absolute inset-0 flex items-center justify-center rounded-lg bg-black/60 text-xs tracking-[0.3em] text-white/80">
+            USED
+          </span>
+        )}
+      </motion.button>
+
+      {/* full card text on hover, even while it is not your turn */}
+      <div
+        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-4 w-64 -translate-x-1/2 rounded-lg border bg-black/90 p-4 opacity-0 shadow-2xl backdrop-blur transition group-hover:opacity-100"
+        style={{ borderColor: `${color}aa` }}
+      >
+        <p className="font-display text-[11px] font-bold tracking-wider" style={{ color }}>
+          {tag}
+        </p>
+        <p className="font-display mt-1 text-base font-bold">{title}</p>
+        <p className="mt-2 text-sm leading-snug text-white/80">{text}</p>
+        {effect && (
+          <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-snug text-white/60">
+            <span className="font-display tracking-widest text-white/40">IN THE ARENA · </span>
+            {effect}
+          </p>
+        )}
+      </div>
+    </div>
   )
 }
-

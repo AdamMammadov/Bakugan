@@ -12,13 +12,16 @@ import { Impact, Projectile, ShieldDome } from './ArenaFx'
 import { MonsterModel } from './BakuganModels'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
+import type { Pose } from './pose'
 
-export const FIGHTER_X = 2.7
+export const FIGHTER_X = 3.4
+/** Bakugan stand larger in the arena than in the viewer. */
+const FIGHTER_SCALE = 1.5
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */
 export const IMPACT_AT = 0.75
 export const ACTION_DURATION = 1.7
 
-const CHEST_Y = 1.6
+const CHEST_Y = 1.6 * FIGHTER_SCALE
 
 interface Props {
   fighters: [Entrant, Entrant]
@@ -54,7 +57,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       <Sparkles count={120} scale={[20, 7, 14]} position={[0, 3, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
 
       {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={2.6}>
+      <group rotation={[0, Math.PI / 2, 0]} scale={3.4}>
         <Suspense fallback={null}>
           <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} />
         </Suspense>
@@ -69,10 +72,10 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={22} blur={2.5} far={6} />
       <OrbitControls
         makeDefault
-        target={[0, 0.6, 0]}
+        target={[0, 1.9, 0]}
         enablePan={false}
         minDistance={5}
-        maxDistance={18}
+        maxDistance={24}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
       <EffectComposer>
@@ -102,7 +105,7 @@ function Fighter({
   const element = ELEMENT_BY_ID[entrant.bakugan.element]
   const ref = useRef<THREE.Group>(null)
   const born = useRef<number | null>(null)
-  const anim = useRef<{ kind: 'lunge' | 'hit' | 'cast'; start: number | null } | null>(null)
+  const anim = useRef<Pose | null>(null)
   const fallen = useRef(0)
   const facing = side === 0 ? 1 : -1
 
@@ -150,9 +153,11 @@ function Fighter({
   return (
     <group>
       <group ref={ref} rotation={[0, (Math.PI / 2) * facing, 0]} scale={0.001}>
-        <MonsterModel entrant={entrant} />
+        <group scale={FIGHTER_SCALE}>
+          <MonsterModel entrant={entrant} poseRef={anim} />
+        </group>
       </group>
-      <group position={[sideX(side), 0, 0]}>
+      <group position={[sideX(side), 0, 0]} scale={FIGHTER_SCALE}>
         <ShieldDome color={element.glow} active={shield} flashKey={blockFlash} />
         <EntryPillar color={element.glow} />
       </group>

@@ -1,5 +1,7 @@
-import { motion } from 'framer-motion'
-import { bakuganForElement } from '../data/bakugan'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useState } from 'react'
+import { BakuganInfo } from '../components/BakuganInfo'
+import { bakuganForElement, type Bakugan } from '../data/bakugan'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useGame } from '../store/useGame'
@@ -10,6 +12,7 @@ export function ElementHub() {
   const openBakugan = useGame((s) => s.openBakugan)
   const element = ELEMENT_BY_ID[elementId]
   const roster = bakuganForElement(elementId)
+  const [info, setInfo] = useState<Bakugan | null>(null)
 
   return (
     <motion.div
@@ -41,10 +44,13 @@ export function ElementHub() {
 
       <div className="mt-12 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">
         {roster.map((b, i) => (
-          <motion.button
+          <motion.div
             key={b.id}
+            role="button"
+            tabIndex={0}
             onClick={() => openBakugan(b.id)}
-            className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-white/30"
+            onKeyDown={(e) => e.key === 'Enter' && openBakugan(b.id)}
+            className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-white/30"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.06 }}
@@ -54,6 +60,18 @@ export function ElementHub() {
               className="absolute -top-16 -right-16 h-48 w-48 rounded-full opacity-30 blur-3xl transition group-hover:opacity-60"
               style={{ background: element.color }}
             />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setInfo(b)
+              }}
+              aria-label={`About ${b.name}`}
+              title="Bakugan info"
+              className="font-display absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-base font-bold transition hover:scale-110"
+              style={{ borderColor: element.color, color: element.color, background: '#0008' }}
+            >
+              i
+            </button>
             <p className="text-sm text-white/40">{b.series}</p>
             <h2 className="font-display mt-1 text-3xl font-bold">{b.name}</h2>
             <p className="mt-1 text-white/60">Brawler: {b.brawler}</p>
@@ -64,9 +82,13 @@ export function ElementHub() {
               </span>
               <span className="font-display text-xs tracking-[0.3em] text-white/50 group-hover:text-white">INSPECT →</span>
             </div>
-          </motion.button>
+          </motion.div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {info && <BakuganInfo bakugan={info} onClose={() => setInfo(null)} onInspect={() => openBakugan(info.id)} />}
+      </AnimatePresence>
     </motion.div>
   )
 }
