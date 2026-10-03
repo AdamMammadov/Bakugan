@@ -11,7 +11,7 @@ import { savePhoto } from '../photo'
 import { BrawlScene, type Phase } from '../three/BrawlScene'
 import { PhotoCapture } from '../three/PhotoCapture'
 
-const BRAWL_SEQUENCE_MS = 2300
+const BRAWL_SEQUENCE_MS = 3000
 
 export function Viewer() {
   const bakuganId = useGame((s) => s.bakuganId)
@@ -22,6 +22,7 @@ export function Viewer() {
 
   const [phase, setPhase] = useState<Phase>('ball')
   const [evolution, setEvolution] = useState(0)
+  const [ballOpen, setBallOpen] = useState(false)
   const [used, setUsed] = useState<string[]>([])
   const [activeAbility, setActiveAbility] = useState<{ ability: Ability; key: number } | null>(null)
   const [photoRequest, setPhotoRequest] = useState(0)
@@ -84,7 +85,7 @@ export function Viewer() {
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Canvas shadows camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={[1, 2]}>
-        <BrawlScene bakugan={bakugan} element={element} phase={phase} form={evolution} activeAbility={activeAbility} />
+        <BrawlScene bakugan={bakugan} element={element} phase={phase} form={evolution} ballOpen={ballOpen} activeAbility={activeAbility} />
         <PhotoCapture
           request={photoRequest}
           onCapture={(url) => void savePhoto(url, { name: evo.name, brawler: bakugan.brawler, gPower, element })}
@@ -181,7 +182,27 @@ export function Viewer() {
 
       {/* main action */}
       <div className="absolute inset-x-0 bottom-10 flex justify-center gap-4">
-        {phase === 'ball' && <ActionButton color={element.color} onClick={setGateCard} label="GATE CARD, SET!" />}
+        {phase === 'ball' && (
+          <>
+            <ActionButton
+              color="#666"
+              subtle
+              onClick={() => {
+                playSfx('tick')
+                setBallOpen((o) => !o)
+              }}
+              label={ballOpen ? 'CLOSE BALL' : 'OPEN BALL'}
+            />
+            <ActionButton
+              color={element.color}
+              onClick={() => {
+                setBallOpen(false)
+                setGateCard()
+              }}
+              label="GATE CARD, SET!"
+            />
+          </>
+        )}
         {phase === 'gate' && <ActionButton color={element.color} onClick={brawl} label="BAKUGAN, BRAWL!" />}
         {phase === 'monster' && <ActionButton color="#666" onClick={reset} label="RETURN TO BALL" subtle />}
       </div>

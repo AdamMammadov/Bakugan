@@ -28,10 +28,12 @@ interface Props {
   phase: Phase
   /** Index of the evolution being shown. */
   form: number
+  /** Show the ball in its opened pose while inspecting it. */
+  ballOpen: boolean
   activeAbility: { ability: Ability; key: number } | null
 }
 
-export function BrawlScene({ bakugan, element, phase, form, activeAbility }: Props) {
+export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbility }: Props) {
   // Clock time at which the brawl sequence started; drives the ball → monster timeline.
   const brawlStart = useRef<number | null>(null)
   useFrame(({ clock }) => {
@@ -55,8 +57,8 @@ export function BrawlScene({ bakugan, element, phase, form, activeAbility }: Pro
         {phase !== 'ball' && <GateCard icon={element.icon} color={element.color} />}
       </Suspense>
 
-      <BallActor bakugan={bakugan} phase={phase} brawlStart={brawlStart} />
-      {phase === 'brawling' && <LightPillar color={element.glow} />}
+      <BallActor bakugan={bakugan} ballOpen={ballOpen} phase={phase} brawlStart={brawlStart} />
+      {phase === 'brawling' && <LightPillar color={element.glow} delay={T.pillar} />}
       {(phase === 'monster' || phase === 'brawling') && (
         <MonsterActor bakugan={bakugan} form={form} phase={phase} brawlStart={brawlStart} />
       )}
@@ -99,13 +101,13 @@ function Field({ color }: { color: string }) {
 }
 
 /** Brawl timeline in seconds. */
-const T = { roll: 0.6, open: 0.9, swap: 1.4, grown: 2.1 }
+const T = { roll: 0.6, open: 0.7, swap: 2.1, grown: 2.8, pillar: 1.5 }
 
 function elapsed(brawlStart: RefObject<number | null>, now: number) {
   return brawlStart.current === null ? 0 : now - brawlStart.current
 }
 
-function BallActor({ bakugan, phase, brawlStart }: { bakugan: Bakugan; phase: Phase; brawlStart: RefObject<number | null> }) {
+function BallActor({ bakugan, phase, brawlStart, ballOpen }: { bakugan: Bakugan; phase: Phase; ballOpen: boolean; brawlStart: RefObject<number | null> }) {
   const ref = useRef<THREE.Group>(null)
   const open = useRef(false)
 
@@ -119,14 +121,16 @@ function BallActor({ bakugan, phase, brawlStart }: { bakugan: Bakugan; phase: Ph
       g.position.y += Math.sin(k * Math.PI) * 1.2
       g.rotation.x = -k * Math.PI * 4
       if (k >= 1) g.rotation.x = 0
+      // face the camera so the opening is visible
+      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, Math.round(g.rotation.y / (Math.PI * 2)) * Math.PI * 2, 6, dt)
       open.current = t > T.open
       g.visible = t < T.swap
     } else {
       g.position.copy(BALL_REST)
       g.position.y += Math.sin(clock.elapsedTime * 2) * 0.04
-      g.rotation.y += dt * 0.3
+      if (!ballOpen) g.rotation.y += dt * 0.3
       g.rotation.x = 0
-      open.current = false
+      open.current = phase === 'ball' && ballOpen
       g.visible = phase !== 'monster'
     }
   })

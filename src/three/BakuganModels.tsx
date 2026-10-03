@@ -1,14 +1,20 @@
-import { Suspense, type RefObject } from 'react'
+import { Suspense, type ComponentType, type RefObject } from 'react'
 import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { asset } from '../asset'
 import { BakuganBall } from './BakuganBall'
+import { HydranoidBall } from './balls/HydranoidBall'
 import { NormalizedModel } from './NormalizedModel'
 import { PlaceholderMonster } from './PlaceholderMonster'
 import type { PoseRef } from './pose'
 
 export const MONSTER_HEIGHT = 3
 export const BALL_SIZE = 1
+
+/** Hand-built ball forms (with their own opening animation), keyed by Bakugan id. */
+const PROCEDURAL_BALLS: Record<string, ComponentType<{ openRef: RefObject<boolean> }>> = {
+  hydranoid: HydranoidBall,
+}
 
 /**
  * The monster form: the form's (or Bakugan's) .glb when provided, otherwise the procedural
@@ -34,7 +40,8 @@ export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?:
 /** The ball form. The procedural ball can open (`openRef`); a .glb ball is shown as-is. */
 export function BallModel({ bakugan, openRef }: { bakugan: Bakugan; openRef: RefObject<boolean> }) {
   const element = ELEMENT_BY_ID[bakugan.element]
-  const placeholder = <BakuganBall color={element.color} openRef={openRef} />
+  const Custom = PROCEDURAL_BALLS[bakugan.id]
+  const placeholder = Custom ? <Custom openRef={openRef} /> : <BakuganBall color={element.color} openRef={openRef} />
   if (!bakugan.models?.ball) return placeholder
   return (
     <Suspense fallback={placeholder}>

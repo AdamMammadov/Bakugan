@@ -3,15 +3,17 @@ import { useRef } from 'react'
 import * as THREE from 'three'
 
 /** The column of light that hides the ball-to-monster swap. Plays once over `duration` seconds. */
-export function LightPillar({ color, duration = 1.6 }: { color: string; duration?: number }) {
+export function LightPillar({ color, duration = 1.6, delay = 0 }: { color: string; duration?: number; delay?: number }) {
   const ref = useRef<THREE.Group>(null)
   const mat = useRef<THREE.MeshBasicMaterial>(null)
   const ring = useRef<THREE.Mesh>(null)
-  const t = useRef(0)
+  const t = useRef(-delay / duration)
 
   useFrame((_, dt) => {
     t.current += dt / duration
-    const p = Math.min(t.current, 1)
+    if (ref.current) ref.current.visible = t.current > 0
+    if (ring.current) ring.current.visible = t.current > 0
+    const p = THREE.MathUtils.clamp(t.current, 0, 1)
     // grow fast, hold, fade
     const grow = THREE.MathUtils.clamp(p / 0.25, 0.001, 1)
     const fade = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4
@@ -26,7 +28,7 @@ export function LightPillar({ color, duration = 1.6 }: { color: string; duration
 
   return (
     <group>
-      <group ref={ref}>
+      <group ref={ref} visible={delay === 0}>
         <mesh position={[0, 6, 0]}>
           <cylinderGeometry args={[1.1, 1.4, 12, 32, 1, true]} />
           <meshBasicMaterial
@@ -40,7 +42,7 @@ export function LightPillar({ color, duration = 1.6 }: { color: string; duration
           />
         </mesh>
       </group>
-      <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+      <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} visible={delay === 0}>
         <ringGeometry args={[0.5, 0.65, 64]} />
         <meshBasicMaterial color={color} transparent blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
       </mesh>
