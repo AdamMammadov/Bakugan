@@ -1,5 +1,5 @@
-import type { Ability, Bakugan } from '../data/bakugan'
-import { GATE_BONUS } from '../data/battle'
+import { formOf, type Ability, type Bakugan, type Entrant } from '../data/bakugan'
+import { startingPower } from '../data/battle'
 import type { ElementId } from '../data/elements'
 
 export const MAX_HP = 1000
@@ -10,6 +10,9 @@ export type SideIndex = 0 | 1
 
 export interface Fighter {
   bakugan: Bakugan
+  form: number
+  /** Display name of the form, e.g. "Alpha Hydranoid". */
+  name: string
   hp: number
   g: number
   used: string[]
@@ -44,11 +47,13 @@ export interface BattleEvent {
 
 export const other = (side: SideIndex): SideIndex => (side === 0 ? 1 : 0)
 
-export function startBattle(left: Bakugan, right: Bakugan, gate: ElementId | null): BattleState {
-  const fighter = (b: Bakugan): Fighter => ({
-    bakugan: b,
+export function startBattle(left: Entrant, right: Entrant, gate: ElementId | null): BattleState {
+  const fighter = (e: Entrant): Fighter => ({
+    bakugan: e.bakugan,
+    form: e.form,
+    name: formOf(e).name,
     hp: MAX_HP,
-    g: b.brawlG + (gate === b.element ? GATE_BONUS : 0),
+    g: startingPower(e, gate).total,
     used: [],
     shield: false,
   })
@@ -57,7 +62,7 @@ export function startBattle(left: Bakugan, right: Bakugan, gate: ElementId | nul
     turn: 0,
     round: 1,
     winner: null,
-    log: [`${left.name} vs ${right.name} — brawl!`],
+    log: [`${formOf(left).name} vs ${formOf(right).name} — brawl!`],
   }
 }
 
@@ -74,7 +79,7 @@ export function act(state: BattleState, action: Action): { state: BattleState; e
   const me = fighters[actor]
   const foe = fighters[target]
   const event: BattleEvent = { actor, target, action, damage: 0, heal: 0, actorG: 0, targetG: 0, blocked: false, ko: false }
-  const name = me.bakugan.name
+  const name = me.name
   let line: string
 
   if (action.kind === 'ability') me.used.push(action.ability.id)
@@ -84,7 +89,7 @@ export function act(state: BattleState, action: Action): { state: BattleState; e
   if (hostile && !isShield && foe.shield) {
     foe.shield = false
     event.blocked = true
-    line = `${foe.bakugan.name}'s shield blocks ${action.kind === 'basic' ? 'the attack' : action.ability.name}!`
+    line = `${foe.name}'s shield blocks ${action.kind === 'basic' ? 'the attack' : action.ability.name}!`
   } else if (action.kind === 'basic') {
     event.damage = strike(BASIC_POWER, me, foe)
     line = `${name} attacks for ${event.damage} damage.`
@@ -103,7 +108,7 @@ export function act(state: BattleState, action: Action): { state: BattleState; e
         const cut = Math.min(a.amount, foe.g - MIN_G)
         event.targetG = -cut
         event.damage = strike(BASIC_POWER * 0.5, me, foe)
-        line = `${name} uses ${a.name}: ${foe.bakugan.name} −${cut}G.`
+        line = `${name} uses ${a.name}: ${foe.name} −${cut}G.`
         break
       }
       case 'drain': {
@@ -135,7 +140,7 @@ export function act(state: BattleState, action: Action): { state: BattleState; e
       turn: target,
       round: actor === 1 ? state.round + 1 : state.round,
       winner: event.ko ? actor : null,
-      log: [...state.log, line, ...(event.ko ? [`${foe.bakugan.name} is defeated! ${name} wins!`] : [])],
+      log: [...state.log, line, ...(event.ko ? [`${foe.name} is defeated! ${name} wins!`] : [])],
     },
   }
 }

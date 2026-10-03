@@ -12,7 +12,7 @@ import {
   type BattleState,
   type Fighter,
 } from '../battle/engine'
-import { abilityLabel, BAKUGAN, type Ability } from '../data/bakugan'
+import { abilityLabel, BAKUGAN, formOf, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useGame } from '../store/useGame'
 import { ACTION_DURATION, ArenaScene, IMPACT_AT } from '../three/ArenaScene'
@@ -31,8 +31,10 @@ const TYPE_ICON: Record<Ability['type'], string> = {
 export function ArenaScreen() {
   const setup = useGame((s) => s.arena)!
   const go = useGame((s) => s.go)
-  const left = BAKUGAN.find((b) => b.id === setup.left)!
-  const right = BAKUGAN.find((b) => b.id === setup.right)!
+  const left: Entrant = { bakugan: BAKUGAN.find((b) => b.id === setup.left.id)!, form: setup.left.form }
+  const right: Entrant = { bakugan: BAKUGAN.find((b) => b.id === setup.right.id)!, form: setup.right.form }
+  const leftName = formOf(left).name
+  const rightName = formOf(right).name
 
   const [battle, setBattle] = useState<BattleState>(() => startBattle(left, right, setup.gate))
   // What the HUD shows; lags `battle` until each hit lands.
@@ -78,7 +80,7 @@ export function ArenaScreen() {
 
   useEffect(() => {
     playSfx('brawl')
-    say('BAKUGAN, BRAWL!', `${left.name} vs ${right.name}`)
+    say('BAKUGAN, BRAWL!', `${leftName} vs ${rightName}`)
     later(INTRO_MS, () => {
       setBusy(false)
       say('YOUR TURN')
@@ -92,7 +94,7 @@ export function ArenaScreen() {
     setShown(fresh)
     setEvent(null)
     setBusy(true)
-    say('BAKUGAN, BRAWL!', `${left.name} vs ${right.name}`)
+    say('BAKUGAN, BRAWL!', `${leftName} vs ${rightName}`)
     later(1200, () => {
       setBusy(false)
       say('YOUR TURN')
@@ -101,11 +103,11 @@ export function ArenaScreen() {
 
   const me = battle.fighters[0]
   const myTurn = !busy && battle.turn === 0 && battle.winner === null
-  const element = ELEMENT_BY_ID[left.element]
+  const element = ELEMENT_BY_ID[left.bakugan.element]
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows camera={{ position: [0, 4.2, 11.5], fov: 45 }} dpr={[1, 2]}>
+      <Canvas shadows camera={{ position: [0, 3.4, 11.5], fov: 45 }} dpr={[1, 2]}>
         <ArenaScene
           fighters={[left, right]}
           gate={setup.gate}
@@ -142,7 +144,7 @@ export function ArenaScreen() {
       </div>
 
       {/* hand */}
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 p-6">
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 px-28 pb-5">
         <HandButton
           disabled={!myTurn}
           onClick={() => run(battle, { kind: 'basic' })}
@@ -151,7 +153,7 @@ export function ArenaScreen() {
           tag="BASIC"
           text="A plain strike. Damage scales with your G-Power."
         />
-        {left.abilities.map((a) => {
+        {left.bakugan.abilities.map((a) => {
           const used = me.used.includes(a.id)
           return (
             <HandButton
@@ -199,7 +201,7 @@ export function ArenaScreen() {
               {battle.winner === 0 ? 'VICTORY!' : 'DEFEAT'}
             </p>
             <p className="font-display mt-2 tracking-[0.3em] text-white/60">
-              {battle.fighters[battle.winner].bakugan.name.toUpperCase()} WINS IN {battle.round - (battle.winner === 1 ? 1 : 0)}{' '}
+              {battle.fighters[battle.winner].name.toUpperCase()} WINS IN {battle.round - (battle.winner === 1 ? 1 : 0)}{' '}
               ROUNDS
             </p>
             <div className="mt-6 flex gap-4">
@@ -232,7 +234,7 @@ function LifePanel({ fighter, label, align }: { fighter: Fighter; label: string;
       <div className="flex-1">
         <div className={`flex items-baseline gap-3 ${right ? 'flex-row-reverse' : ''}`}>
           <span className="font-display text-xs tracking-[0.4em] text-white/40">{label}</span>
-          <span className="font-display text-2xl font-bold">{fighter.bakugan.name}</span>
+          <span className="font-display text-2xl font-bold">{fighter.name}</span>
           {fighter.shield && (
             <span className="font-display text-xs tracking-widest" style={{ color: element.glow }}>
               ◆ SHIELD
@@ -293,7 +295,7 @@ function HandButton({
       disabled={disabled}
       onClick={onClick}
       whileHover={disabled ? undefined : { y: -14 }}
-      className="relative flex h-44 w-40 flex-col rounded-lg border-2 bg-black/70 p-3 text-left backdrop-blur transition disabled:cursor-not-allowed"
+      className="relative flex h-[clamp(5.5rem,24vh,11rem)] w-40 min-w-0 flex-1 basis-0 flex-col rounded-lg border-2 bg-black/70 p-3 text-left backdrop-blur transition disabled:cursor-not-allowed [max-width:10rem]"
       style={{
         borderColor: used ? 'rgba(255,255,255,0.1)' : `${color}aa`,
         opacity: used ? 0.25 : disabled ? 0.55 : 1,
@@ -304,7 +306,9 @@ function HandButton({
         {tag}
       </span>
       <span className="font-display mt-1 text-sm leading-tight font-bold">{title}</span>
-      {!used && <span className="mt-2 line-clamp-4 text-xs leading-snug text-white/60">{text}</span>}
+      {!used && (
+        <span className="mt-2 line-clamp-4 hidden text-xs leading-snug text-white/60 [@media(min-height:720px)]:block">{text}</span>
+      )}
       {used && (
         <span className="font-display absolute inset-0 flex items-center justify-center text-xs tracking-[0.3em] text-white/70">
           USED

@@ -84,7 +84,7 @@ export function Viewer() {
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Canvas shadows camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={[1, 2]}>
-        <BrawlScene bakugan={bakugan} element={element} phase={phase} activeAbility={activeAbility} />
+        <BrawlScene bakugan={bakugan} element={element} phase={phase} form={evolution} activeAbility={activeAbility} />
         <PhotoCapture
           request={photoRequest}
           onCapture={(url) => void savePhoto(url, { name: evo.name, brawler: bakugan.brawler, gPower, element })}
@@ -111,17 +111,17 @@ export function Viewer() {
           <GPowerCounter value={gPower} color={element.color} />
           <div className="flex gap-2">
             <SmallButton onClick={takePhoto} label="PHOTO" />
-            <SmallButton onClick={() => compareWith(bakugan.id)} label="FACE-OFF" />
+            <SmallButton onClick={() => compareWith(bakugan.id, evolution)} label="FACE-OFF" />
           </div>
         </div>
       </div>
 
       {/* evolution timeline */}
-      <div className="absolute top-1/2 left-8 -translate-y-1/2">
+      <div className="absolute bottom-28 left-8">
         <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">EVOLUTION</p>
         <ol className="space-y-2 border-l border-white/15 pl-4">
           {bakugan.evolutions.map((e, i) => (
-            <li key={e.name}>
+            <li key={`${e.name}-${e.series}`}>
               <button
                 disabled={phase === 'brawling'}
                 onClick={() => {
@@ -144,32 +144,37 @@ export function Viewer() {
       <AnimatePresence>
         {phase === 'monster' && (
           <motion.div
-            className="absolute top-1/2 right-8 w-72 -translate-y-1/2 space-y-3"
+            className="absolute top-60 right-8 bottom-28 flex w-72 flex-col"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
           >
-            <p className="font-display text-xs tracking-[0.5em] text-white/40">ABILITY CARDS</p>
-            {bakugan.abilities.map((a) => {
-              const spent = used.includes(a.id)
-              return (
-                <button
-                  key={a.id}
-                  disabled={spent}
-                  onClick={() => activate(a)}
-                  className="block w-full rounded-lg border bg-black/50 p-4 text-left backdrop-blur transition enabled:hover:-translate-x-1 disabled:opacity-35"
-                  style={{ borderColor: `${element.color}88` }}
-                >
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-display text-sm font-bold">{a.name}</span>
-                    <span className="font-display text-sm" style={{ color: element.color }}>
-                      {abilityLabel(a)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-white/60">{a.description}</p>
-                </button>
-              )
-            })}
+            <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">
+              ABILITY CARDS ({bakugan.abilities.length})
+            </p>
+            {/* scrolls on its own so the cards never cover the G-Power counter */}
+            <div className="scroll-panel flex-1 space-y-3 overflow-y-auto pr-2">
+              {bakugan.abilities.map((a) => {
+                const spent = used.includes(a.id)
+                return (
+                  <button
+                    key={a.id}
+                    disabled={spent}
+                    onClick={() => activate(a)}
+                    className="block w-full rounded-lg border bg-black/50 p-4 text-left backdrop-blur transition enabled:hover:-translate-x-1 disabled:opacity-35"
+                    style={{ borderColor: `${element.color}88` }}
+                  >
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-display text-sm font-bold">{a.name}</span>
+                      <span className="font-display shrink-0 text-sm whitespace-nowrap" style={{ color: element.color }}>
+                        {abilityLabel(a)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-white/60">{a.description}</p>
+                  </button>
+                )
+              })}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

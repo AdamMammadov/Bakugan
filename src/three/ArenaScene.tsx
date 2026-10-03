@@ -5,7 +5,7 @@ import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { asset } from '../asset'
 import type { BattleEvent, SideIndex } from '../battle/engine'
-import type { Bakugan } from '../data/bakugan'
+import type { Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { Impact, Projectile, ShieldDome } from './ArenaFx'
@@ -21,7 +21,7 @@ export const ACTION_DURATION = 1.7
 const CHEST_Y = 1.6
 
 interface Props {
-  fighters: [Bakugan, Bakugan]
+  fighters: [Entrant, Entrant]
   gate: ElementId | null
   event: { event: BattleEvent; key: number } | null
   shields: [boolean, boolean]
@@ -44,7 +44,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       <ambientLight intensity={0.4} />
       <directionalLight position={[3, 9, 6]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       {fighters.map((f, i) => (
-        <pointLight key={i} position={[sideX(i as SideIndex) * 1.6, 3, -2]} intensity={25} color={ELEMENT_BY_ID[f.element].glow} />
+        <pointLight key={i} position={[sideX(i as SideIndex) * 1.6, 3, -2]} intensity={25} color={ELEMENT_BY_ID[f.bakugan.element].glow} />
       ))}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
@@ -60,8 +60,8 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
         </Suspense>
       </group>
 
-      {fighters.map((b, i) => (
-        <Fighter key={i} side={i as SideIndex} bakugan={b} event={event} shield={shields[i]} blockFlash={blockFlash[i]} defeated={defeated === i} />
+      {fighters.map((e, i) => (
+        <Fighter key={i} side={i as SideIndex} entrant={e} event={event} shield={shields[i]} blockFlash={blockFlash[i]} defeated={defeated === i} />
       ))}
 
       {event && <ActionFx key={event.key} event={event.event} fighters={fighters} />}
@@ -69,7 +69,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={22} blur={2.5} far={6} />
       <OrbitControls
         makeDefault
-        target={[0, 1.4, 0]}
+        target={[0, 0.6, 0]}
         enablePan={false}
         minDistance={5}
         maxDistance={18}
@@ -86,20 +86,20 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
 /** One Bakugan on the field: rises in on entry, lunges, flinches and falls when defeated. */
 function Fighter({
   side,
-  bakugan,
+  entrant,
   event,
   shield,
   blockFlash,
   defeated,
 }: {
   side: SideIndex
-  bakugan: Bakugan
+  entrant: Entrant
   event: Props['event']
   shield: boolean
   blockFlash: number
   defeated: boolean
 }) {
-  const element = ELEMENT_BY_ID[bakugan.element]
+  const element = ELEMENT_BY_ID[entrant.bakugan.element]
   const ref = useRef<THREE.Group>(null)
   const born = useRef<number | null>(null)
   const anim = useRef<{ kind: 'lunge' | 'hit' | 'cast'; start: number | null } | null>(null)
@@ -150,7 +150,7 @@ function Fighter({
   return (
     <group>
       <group ref={ref} rotation={[0, (Math.PI / 2) * facing, 0]} scale={0.001}>
-        <MonsterModel bakugan={bakugan} />
+        <MonsterModel entrant={entrant} />
       </group>
       <group position={[sideX(side), 0, 0]}>
         <ShieldDome color={element.glow} active={shield} flashKey={blockFlash} />
@@ -176,9 +176,9 @@ function EntryPillar({ color }: { color: string }) {
 }
 
 /** Visuals for one battle action. */
-function ActionFx({ event, fighters }: { event: BattleEvent; fighters: [Bakugan, Bakugan] }) {
+function ActionFx({ event, fighters }: { event: BattleEvent; fighters: [Entrant, Entrant] }) {
   const { actor, target, action, blocked } = event
-  const me = ELEMENT_BY_ID[fighters[actor].element]
+  const me = ELEMENT_BY_ID[fighters[actor].bakugan.element]
   const from = useMemo(() => new THREE.Vector3(sideX(actor) * 0.75, CHEST_Y, 0), [actor])
   const to = useMemo(() => new THREE.Vector3(sideX(target) * (blocked ? 0.25 : 0.85), CHEST_Y, 0), [target, blocked])
   const type = action.kind === 'basic' ? 'attack' : action.ability.type

@@ -23,3 +23,11 @@ body,
     linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 48px 48px;
 }
+
+/* Scrollable side panel: thin scrollbar and soft fade at the edges. */
+.scroll-panel {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
+  padding-block: 12px;
+}

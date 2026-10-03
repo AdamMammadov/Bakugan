@@ -39,7 +39,20 @@ export interface Evolution {
   name: string
   series: string
   gPower: number
+  /** Optional models for this form; falls back to the Bakugan's own models. */
+  models?: Bakugan['models']
 }
+
+/** A Bakugan in one of its evolved forms (index into `evolutions`). */
+export interface Entrant {
+  bakugan: Bakugan
+  form: number
+}
+
+export const formOf = (e: Entrant) => e.bakugan.evolutions[e.form] ?? e.bakugan.evolutions[0]
+/** G-Power once the form stands on a Gate Card. */
+export const formBrawlG = (e: Entrant) => formOf(e).gPower + (e.bakugan.brawlG - e.bakugan.baseG)
+export const formModels = (e: Entrant) => formOf(e).models ?? e.bakugan.models
 
 export interface Bakugan {
   id: string

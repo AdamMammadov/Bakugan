@@ -1,5 +1,5 @@
 import { Suspense, type RefObject } from 'react'
-import type { Bakugan } from '../data/bakugan'
+import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { asset } from '../asset'
 import { BakuganBall } from './BakuganBall'
@@ -9,14 +9,23 @@ import { PlaceholderMonster } from './PlaceholderMonster'
 export const MONSTER_HEIGHT = 3
 export const BALL_SIZE = 1
 
-/** The monster form: the Bakugan's .glb when provided, otherwise the procedural stand-in. */
-export function MonsterModel({ bakugan }: { bakugan: Bakugan }) {
-  const element = ELEMENT_BY_ID[bakugan.element]
-  const placeholder = <PlaceholderMonster color={element.color} glow={element.glow} />
-  if (!bakugan.models?.monster) return placeholder
+/**
+ * The monster form: the form's (or Bakugan's) .glb when provided, otherwise the procedural
+ * stand-in. Evolved forms stand a little taller.
+ */
+export function MonsterModel({ entrant }: { entrant: Entrant }) {
+  const element = ELEMENT_BY_ID[entrant.bakugan.element]
+  const models = formModels(entrant)
+  const size = 1 + entrant.form * 0.12
+  const placeholder = (
+    <group scale={size}>
+      <PlaceholderMonster color={element.color} glow={element.glow} />
+    </group>
+  )
+  if (!models?.monster) return placeholder
   return (
     <Suspense fallback={placeholder}>
-      <NormalizedModel url={asset(bakugan.models.monster)} height={MONSTER_HEIGHT} yaw={bakugan.models.monsterYaw} />
+      <NormalizedModel url={asset(models.monster)} height={MONSTER_HEIGHT * size} yaw={models.monsterYaw} />
     </Suspense>
   )
 }

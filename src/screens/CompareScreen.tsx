@@ -2,19 +2,20 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { GRID, GRID_SIZE } from '../components/grid'
-import { abilityLabel, BAKUGAN, type Bakugan } from '../data/bakugan'
+import { abilityLabel, BAKUGAN, formOf, type Entrant } from '../data/bakugan'
 import { GATE_BONUS, startingPower } from '../data/battle'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { useGame } from '../store/useGame'
 
 export function CompareScreen() {
   const bakuganId = useGame((s) => s.bakuganId)
+  const compareForm = useGame((s) => s.compareForm)
   const go = useGame((s) => s.go)
   const enterArena = useGame((s) => s.enterArena)
   const mine = BAKUGAN.find((b) => b.id === bakuganId) ?? BAKUGAN[0]
 
-  const [left, setLeft] = useState<Bakugan>(mine)
-  const [right, setRight] = useState<Bakugan>(BAKUGAN.find((b) => b.element !== mine.element)!)
+  const [left, setLeft] = useState<Entrant>({ bakugan: mine, form: compareForm })
+  const [right, setRight] = useState<Entrant>({ bakugan: BAKUGAN.find((b) => b.element !== mine.element)!, form: 0 })
   const [gate, setGate] = useState<ElementId | null>(mine.element)
 
   const lp = startingPower(left, gate)
@@ -23,7 +24,11 @@ export function CompareScreen() {
 
   function brawl() {
     playSfx('brawl')
-    enterArena({ left: left.id, right: right.id, gate })
+    enterArena({
+      left: { id: left.bakugan.id, form: left.form },
+      right: { id: right.bakugan.id, form: right.form },
+      gate,
+    })
   }
 
   return (
@@ -47,9 +52,9 @@ export function CompareScreen() {
       </p>
 
       <div className="mt-8 grid grid-cols-[1fr_auto_1fr] items-start gap-8">
-        <SideCard bakugan={left} power={lp} max={max} onChange={setLeft} label="YOU" />
+        <SideCard entrant={left} power={lp} max={max} onChange={setLeft} label="YOU" />
         <div className="font-display mt-40 text-5xl font-black text-white/30 italic">VS</div>
-        <SideCard bakugan={right} power={rp} max={max} onChange={setRight} label="OPPONENT" />
+        <SideCard entrant={right} power={rp} max={max} onChange={setRight} label="OPPONENT" />
       </div>
 
       <div className="mt-10 flex flex-col items-center gap-4">
@@ -79,18 +84,19 @@ export function CompareScreen() {
 }
 
 function SideCard({
-  bakugan,
+  entrant,
   power,
   max,
   onChange,
   label,
 }: {
-  bakugan: Bakugan
+  entrant: Entrant
   power: ReturnType<typeof startingPower>
   max: number
-  onChange: (bakugan: Bakugan) => void
+  onChange: (entrant: Entrant) => void
   label: string
 }) {
+  const { bakugan } = entrant
   const element = ELEMENT_BY_ID[bakugan.element]
 
   return (
@@ -101,7 +107,7 @@ function SideCard({
           <button
             key={b.id}
             title={b.name}
-            onClick={() => onChange(b)}
+            onClick={() => onChange({ bakugan: b, form: 0 })}
             className={`rounded-full transition ${b.id === bakugan.id ? 'scale-110' : 'opacity-40 hover:opacity-80'}`}
           >
             <img src={ELEMENT_BY_ID[b.element].icon} alt={b.name} className="h-9 w-9" />
@@ -112,11 +118,36 @@ function SideCard({
       <div className="mt-5 flex items-center gap-4">
         <img src={element.icon} alt="" className="h-16 w-16" style={{ filter: `drop-shadow(0 0 14px ${element.glow})` }} />
         <div>
-          <h2 className="font-display text-3xl font-bold">{bakugan.name}</h2>
+          <h2 className="font-display text-3xl font-bold">{formOf(entrant).name}</h2>
           <p className="text-white/50">
             {element.name} · {bakugan.brawler}
           </p>
         </div>
+      </div>
+
+      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">FORM</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {bakugan.evolutions.map((evo, i) => {
+          const on = i === entrant.form
+          return (
+            <button
+              key={`${evo.name}-${evo.series}`}
+              onClick={() => onChange({ bakugan, form: i })}
+              className="rounded-md border px-3 py-1.5 text-left text-sm transition"
+              style={{
+                borderColor: on ? element.color : 'rgba(255,255,255,0.15)',
+                background: on ? `${element.color}33` : 'transparent',
+                color: on ? '#fff' : 'rgba(255,255,255,0.6)',
+              }}
+            >
+              <span className="font-semibold">{evo.name}</span>
+              <span className="ml-2 text-xs text-white/50">
+                {evo.series === 'Battle Brawlers' ? '' : `${evo.series} · `}
+                {evo.gPower}G
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="mt-6">

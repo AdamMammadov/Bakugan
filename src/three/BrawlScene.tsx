@@ -26,10 +26,12 @@ interface Props {
   bakugan: Bakugan
   element: ElementInfo
   phase: Phase
+  /** Index of the evolution being shown. */
+  form: number
   activeAbility: { ability: Ability; key: number } | null
 }
 
-export function BrawlScene({ bakugan, element, phase, activeAbility }: Props) {
+export function BrawlScene({ bakugan, element, phase, form, activeAbility }: Props) {
   // Clock time at which the brawl sequence started; drives the ball → monster timeline.
   const brawlStart = useRef<number | null>(null)
   useFrame(({ clock }) => {
@@ -56,7 +58,7 @@ export function BrawlScene({ bakugan, element, phase, activeAbility }: Props) {
       <BallActor bakugan={bakugan} phase={phase} brawlStart={brawlStart} />
       {phase === 'brawling' && <LightPillar color={element.glow} />}
       {(phase === 'monster' || phase === 'brawling') && (
-        <MonsterActor bakugan={bakugan} phase={phase} brawlStart={brawlStart} />
+        <MonsterActor bakugan={bakugan} form={form} phase={phase} brawlStart={brawlStart} />
       )}
 
       {activeAbility && (
@@ -136,7 +138,7 @@ function BallActor({ bakugan, phase, brawlStart }: { bakugan: Bakugan; phase: Ph
   )
 }
 
-function MonsterActor({ bakugan, phase, brawlStart }: { bakugan: Bakugan; phase: Phase; brawlStart: RefObject<number | null> }) {
+function MonsterActor({ bakugan, form, phase, brawlStart }: { bakugan: Bakugan; form: number; phase: Phase; brawlStart: RefObject<number | null> }) {
   const ref = useRef<THREE.Group>(null)
   useFrame(({ clock }) => {
     if (!ref.current) return
@@ -149,7 +151,7 @@ function MonsterActor({ bakugan, phase, brawlStart }: { bakugan: Bakugan; phase:
   })
   return (
     <group ref={ref} scale={0.001} visible={false}>
-      <MonsterModel bakugan={bakugan} />
+      <MonsterModel entrant={{ bakugan, form }} />
     </group>
   )
 }
