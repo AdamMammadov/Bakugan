@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useSpring } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { ELEMENTS, type ElementInfo } from '../data/elements'
+import { asset } from '../asset'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { useGame } from '../store/useGame'
 
@@ -122,9 +123,9 @@ export function ElementWheel() {
           className="absolute inset-0 rounded-full transition-shadow duration-300"
           style={{ boxShadow: `0 0 ${size * 0.12}px ${active.color}66, inset 0 0 ${size * 0.05}px ${active.color}55` }}
         />
-        <img src="/wheel/inner.webp" alt="" className="absolute inset-0 h-full w-full" draggable={false} />
+        <img src={asset('wheel/inner.webp')} alt="" className="absolute inset-0 h-full w-full" draggable={false} />
         <motion.img
-          src="/wheel/runes.webp"
+          src={asset('wheel/runes.webp')}
           alt=""
           className="absolute inset-0 h-full w-full"
           style={{ rotate: runeRotation }}

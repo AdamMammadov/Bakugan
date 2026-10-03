@@ -1,4 +1,5 @@
 import { Howl } from 'howler'
+import { asset } from '../asset'
 import { useGame } from '../store/useGame'
 
 /**
@@ -23,7 +24,7 @@ export function unlockAudio() {
 
 function fileFor(name: SfxName): Howl | null {
   if (!files.has(name)) {
-    const howl = new Howl({ src: [`/sounds/${name}.mp3`], preload: true })
+    const howl = new Howl({ src: [asset(`sounds/${name}.mp3`)], preload: true })
     howl.once('loaderror', () => files.set(name, null))
     files.set(name, howl)
   }

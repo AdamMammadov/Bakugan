@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useEffect } from 'react'
+import { asset } from '../asset'
 import { playSfx, unlockAudio } from '../audio/sfx'
 import { useGame } from '../store/useGame'
 
@@ -29,7 +30,7 @@ export function IntroScreen() {
       transition={{ duration: 0.6 }}
     >
       <motion.img
-        src="/brand/pyrus-logo.webp"
+        src={asset('brand/pyrus-logo.webp')}
         alt=""
         draggable={false}
         className="h-32 w-32 object-contain drop-shadow-[0_0_36px_rgba(255,70,40,0.75)]"

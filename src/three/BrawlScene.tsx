@@ -4,6 +4,7 @@ import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { type RefObject, Suspense, useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
+import { asset } from '../asset'
 import type { Ability, Bakugan } from '../data/bakugan'
 import type { ElementInfo } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
@@ -134,7 +135,7 @@ function BallActor({ bakugan, color, phase, brawlStart }: { bakugan: Bakugan; co
     <group ref={ref}>
       {bakugan.models?.ball ? (
         <Suspense fallback={null}>
-          <Gltf src={bakugan.models.ball} castShadow />
+          <Gltf src={asset(bakugan.models.ball)} castShadow />
         </Suspense>
       ) : (
         <BakuganBall color={color} openRef={open} />
@@ -158,7 +159,7 @@ function MonsterActor({ bakugan, element, phase, brawlStart }: { bakugan: Bakuga
     <group ref={ref} scale={0.001} visible={false}>
       {bakugan.models?.monster ? (
         <Suspense fallback={null}>
-          <Gltf src={bakugan.models.monster} castShadow />
+          <Gltf src={asset(bakugan.models.monster)} castShadow />
         </Suspense>
       ) : (
         <PlaceholderMonster color={element.color} glow={element.glow} />

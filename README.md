@@ -41,7 +41,7 @@ public/
 Put files at `public/models/<bakugan-id>/ball.glb` and `monster.glb`, then reference them in `src/data/bakugan.ts`:
 
 ```ts
-models: { ball: '/models/dragonoid/ball.glb', monster: '/models/dragonoid/monster.glb' }
+models: { ball: 'models/dragonoid/ball.glb', monster: 'models/dragonoid/monster.glb' }
 ```
 
 Without models the viewer shows procedural placeholders.

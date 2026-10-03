@@ -1,3 +1,5 @@
+import { asset } from '../asset'
+
 export type ElementId = 'pyrus' | 'aquos' | 'subterra' | 'ventus' | 'haos' | 'darkus'
 
 export interface ElementInfo {
@@ -28,7 +30,7 @@ export const ELEMENTS: ElementInfo[] = [
     glow: '#ff7a3d',
     wheelAngle: 0,
     wheelPos: { x: -1, y: -179.8 },
-    icon: '/wheel/pyrus.webp',
+    icon: asset('wheel/pyrus.webp'),
   },
   {
     id: 'subterra',
@@ -40,7 +42,7 @@ export const ELEMENTS: ElementInfo[] = [
     glow: '#e8a25a',
     wheelAngle: 60,
     wheelPos: { x: 153.5, y: -88.2 },
-    icon: '/wheel/subterra.webp',
+    icon: asset('wheel/subterra.webp'),
   },
   {
     id: 'haos',
@@ -52,7 +54,7 @@ export const ELEMENTS: ElementInfo[] = [
     glow: '#fff27a',
     wheelAngle: 120,
     wheelPos: { x: 152.2, y: 88.5 },
-    icon: '/wheel/haos.webp',
+    icon: asset('wheel/haos.webp'),
   },
   {
     id: 'darkus',
@@ -64,7 +66,7 @@ export const ELEMENTS: ElementInfo[] = [
     glow: '#c08bff',
     wheelAngle: 180,
     wheelPos: { x: -0.3, y: 181.3 },
-    icon: '/wheel/darkus.webp',
+    icon: asset('wheel/darkus.webp'),
   },
   {
     id: 'aquos',
@@ -76,7 +78,7 @@ export const ELEMENTS: ElementInfo[] = [
     glow: '#6fa2ff',
     wheelAngle: 240,
     wheelPos: { x: -155.4, y: 91.6 },
-    icon: '/wheel/aquos.webp',
+    icon: asset('wheel/aquos.webp'),
   },
   {
     id: 'ventus',
@@ -88,7 +90,7 @@ export const ELEMENTS: ElementInfo[] = [
     glow: '#6fffd0',
     wheelAngle: 300,
     wheelPos: { x: -157.3, y: -88.2 },
-    icon: '/wheel/ventus.webp',
+    icon: asset('wheel/ventus.webp'),
   },
 ]
 
