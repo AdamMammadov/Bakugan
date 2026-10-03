@@ -1,0 +1,549 @@
+"""
+Builds the G1 Darkus Hydranoid ball (and its opened pose) and exports
+public/models/hydranoid/ball.glb.
+
+Run:  python3 tools/blender/hydranoid.py      (needs `pip install bpy`)
+
+Every shell piece is cut from one high-resolution sphere by region tests in
+"wheel coordinates":
+  a = angle from the wheel axis (0° at the hub, 180° on the far side)
+  b = azimuth around that axis (0° front, 90° top, 180° back, 270° bottom)
+Pieces that move when the ball opens carry glTF extras with their open pose
+(`openPos`, `openRot` in three.js space) so the web viewer can animate them;
+parts that only exist in the open form carry `openOnly: true`.
+"""
+
+import math
+import os
+import sys
+
+import bpy  # noqa: I001 — must be imported before bmesh/mathutils
+import bmesh
+from mathutils import Matrix, Quaternion, Vector
+
+OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'models', 'hydranoid', 'ball.glb')
+
+# Blender is Z-up; glTF/three.js is Y-up with Blender's -Y becoming +Z (front).
+FRONT = Vector((0, -1, 0))
+UP = Vector((0, 0, 1))
+WHEEL = Vector((-1, 0, 0))  # hub on the creature's right side
+SIDE2 = WHEEL.cross(FRONT)  # completes the frame (= up when WHEEL is +X)
+
+R = 1.0  # outer radius
+SHELL = 0.055  # shell thickness
+GAP = math.radians(0.9)  # half-width of the grooves between panels
+
+deg = math.radians
+
+
+# ---------------------------------------------------------------- helpers
+
+
+def reset():
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+
+
+def material(name, color, rough=0.6, metal=0.0, emit=None, strength=0.0):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    bsdf = m.node_tree.nodes['Principled BSDF']
+    bsdf.inputs['Base Color'].default_value = (*color, 1)
+    bsdf.inputs['Roughness'].default_value = rough
+    bsdf.inputs['Metallic'].default_value = metal
+    if emit:
+        bsdf.inputs['Emission Color'].default_value = (*emit, 1)
+        bsdf.inputs['Emission Strength'].default_value = strength
+    return m
+
+
+def srgb(h):
+    h = h.lstrip('#')
+    c = [int(h[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+    return tuple(((x + 0.055) / 1.055) ** 2.4 if x > 0.04045 else x / 12.92 for x in c)
+
+
+BLACK = None
+PURPLE = None
+CORE = None
+EYE = None
+BLUE = None
+GROOVE = None
+
+
+def wheel_coords(p: Vector):
+    """(a, b) in radians for a point on the sphere."""
+    n = p.normalized()
+    a = math.acos(max(-1.0, min(1.0, n.dot(WHEEL))))
+    b = math.atan2(n.dot(SIDE2), n.dot(FRONT)) % (2 * math.pi)
+    return a, b
+
+
+def from_wheel(a, b, r=R):
+    """Point on a sphere of radius r from wheel coordinates (radians)."""
+    perp = FRONT * math.cos(b) + SIDE2 * math.sin(b)
+    return (WHEEL * math.cos(a) + perp * math.sin(a)) * r
+
+
+def ang_in(b, lo, hi):
+    """Is azimuth b (radians) inside [lo, hi] going counter-clockwise (degrees)."""
+    b = math.degrees(b) % 360
+    lo %= 360
+    hi %= 360
+    return lo <= b <= hi if lo <= hi else (b >= lo or b <= hi)
+
+
+_sphere_cache = {}
+
+
+def base_sphere():
+    if 'bm' not in _sphere_cache:
+        bm = bmesh.new()
+        bmesh.ops.create_uvsphere(bm, u_segments=256, v_segments=128, radius=R)
+        bm.faces.ensure_lookup_table()
+        _sphere_cache['bm'] = bm
+    return _sphere_cache['bm']
+
+
+def shell_piece(name, keep, mat, thickness=SHELL, bevel=0.012, radius=1.0):
+    """New object from the sphere faces whose centre satisfies keep(a, b)."""
+    src = base_sphere()
+    bm = bmesh.new()
+    vmap = {}
+    for f in src.faces:
+        c = f.calc_center_median()
+        a, b = wheel_coords(c)
+        if not keep(a, b):
+            continue
+        verts = []
+        for v in f.verts:
+            if v.index not in vmap:
+                vmap[v.index] = bm.verts.new(v.co * radius)
+            verts.append(vmap[v.index])
+        bm.faces.new(verts)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(mat)
+    sol = ob.modifiers.new('solid', 'SOLIDIFY')
+    sol.thickness = thickness
+    sol.offset = -1
+    if bevel:
+        bev = ob.modifiers.new('bevel', 'BEVEL')
+        bev.width = bevel
+        bev.segments = 2
+        bev.limit_method = 'ANGLE'
+        bev.angle_limit = deg(50)
+    apply_all(ob)
+    smooth(ob)
+    return ob
+
+
+def patch(name, a0, a1, b_lo, b_hi, mat, thickness=SHELL, bevel=0.01, radius=R, na=None, nb=None, solid=True):
+    """
+    A clean-edged shell panel over a ∈ [a0, a1] (degrees from the wheel axis) and, for each a,
+    b ∈ [b_lo(a), b_hi(a)] (degrees around it). b_lo / b_hi may be numbers or callables.
+    """
+    lo = b_lo if callable(b_lo) else (lambda a, v=b_lo: v)
+    hi = b_hi if callable(b_hi) else (lambda a, v=b_hi: v)
+    na = na or max(4, int(abs(a1 - a0) / 1.5))
+    span = max(abs(hi(a0) - lo(a0)), abs(hi(a1) - lo(a1)), abs(hi((a0 + a1) / 2) - lo((a0 + a1) / 2)))
+    nb = nb or max(4, int(span / 1.5))
+    bm = bmesh.new()
+    rows = []
+    for i in range(na + 1):
+        a = a0 + (a1 - a0) * i / na
+        row = []
+        for j in range(nb + 1):
+            b = lo(a) + (hi(a) - lo(a)) * j / nb
+            row.append(bm.verts.new(from_wheel(deg(a), deg(b), radius)))
+        rows.append(row)
+    for i in range(na):
+        for j in range(nb):
+            bm.faces.new((rows[i][j], rows[i][j + 1], rows[i + 1][j + 1], rows[i + 1][j]))
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(mat)
+    # make normals point outward
+    me.update()
+    if me.polygons and me.polygons[0].normal.dot(me.polygons[0].center) < 0:
+        me.flip_normals()
+    if solid:
+        sol = ob.modifiers.new('solid', 'SOLIDIFY')
+        sol.thickness = thickness
+        sol.offset = -1
+        if bevel:
+            bev = ob.modifiers.new('bevel', 'BEVEL')
+            bev.width = bevel
+            bev.segments = 2
+            bev.limit_method = 'ANGLE'
+            bev.angle_limit = deg(50)
+        apply_all(ob)
+    smooth(ob)
+    return ob
+
+
+def segmented_ring(name, a0, a1, start, end, count, gap, mat, **kw):
+    """A band split into `count` blocks between azimuths start..end (degrees)."""
+    obs = []
+    step = (end - start) / count
+    for k in range(count):
+        b0 = start + k * step + gap
+        b1 = start + (k + 1) * step - gap
+        obs.append(patch(f'{name}_{k}', a0, a1, b0, b1, mat, **kw))
+    return join(name, obs)
+
+
+def join(name, obs):
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in obs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = obs[0]
+    bpy.ops.object.join()
+    obs[0].name = name
+    return obs[0]
+
+
+def apply_all(ob):
+    bpy.context.view_layer.objects.active = ob
+    for m in list(ob.modifiers):
+        bpy.ops.object.modifier_apply(modifier=m.name)
+
+
+def smooth(ob, angle=40):
+    for p in ob.data.polygons:
+        p.use_smooth = True
+    try:
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.shade_auto_smooth(angle=deg(angle))
+    except Exception:
+        pass
+
+
+def crystal(name, length, width, mat, sides=4):
+    """A faceted purple crystal spike pointing along +Z from the origin."""
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=sides, radius1=width, radius2=0, depth=length)
+    bmesh.ops.translate(bm, verts=bm.verts, vec=(0, 0, length / 2))
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(mat)
+    bev = ob.modifiers.new('bevel', 'BEVEL')
+    bev.width = width * 0.15
+    bev.segments = 1
+    apply_all(ob)
+    return ob
+
+
+def place_on_sphere(ob, a, b, r=R * 0.97, tilt=(0, 0), roll=0.0):
+    """Stand `ob` (+Z up) on the sphere at wheel coords (a, b), optionally tilted."""
+    p = from_wheel(a, b, r)
+    n = p.normalized()
+    q = Vector((0, 0, 1)).rotation_difference(n)
+    # tilt along the tangent directions (towards +a, towards +b)
+    ta = (from_wheel(a + 0.01, b) - from_wheel(a, b)).normalized()
+    tb = (from_wheel(a, b + 0.01) - from_wheel(a, b)).normalized()
+    q = Quaternion(tb, tilt[0]) @ Quaternion(ta, -tilt[1]) @ q
+    q = Quaternion(n, roll) @ q
+    ob.location = p
+    ob.rotation_mode = 'QUATERNION'
+    ob.rotation_quaternion = q
+
+
+def parent(child, par):
+    child.parent = par
+
+
+def empty(name, open_pos=None, open_rot=None, open_only=False):
+    ob = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(ob)
+    if open_pos is not None:
+        ob['openPos'] = list(open_pos)
+    if open_rot is not None:
+        ob['openRot'] = list(open_rot)
+    if open_only:
+        ob['openOnly'] = True
+    return ob
+
+
+# ---------------------------------------------------------------- regions
+
+WHEEL_EDGE = deg(65)
+RING_EDGE = deg(68.5)
+CREST_EDGE = deg(76)
+
+
+def in_triangle_window(a, b):
+    """Triangular cut-outs of the back lattice panel."""
+    da = math.degrees(a)
+    db = math.degrees(b) % 360
+    if not (deg(76) <= a <= deg(165) and 120 <= db <= 250):
+        return False
+    row_h = 22.0
+    col_w = 20.0
+    r = (da - 76) / row_h
+    c = (db - 120) / col_w
+    ri, rf = int(r), r - int(r)
+    ci, cf = int(c), c - int(c)
+    # alternate up/down triangles; keep a frame around each
+    m = 0.2
+    if rf < m or rf > 1 - m:
+        return False
+    t = (rf - m) / (1 - 2 * m)
+    half = 0.5 * (t if (ri + ci) % 2 == 0 else 1 - t)
+    return abs(cf - 0.5) < half - 0.12
+
+
+def wheel_window(a, b):
+    """Purple windows between the wheel's spokes."""
+    if not (deg(15) <= a <= deg(41)):
+        return False
+    spoke = (math.degrees(b) % 36.0) - 18.0
+    return abs(spoke) > 5.0
+
+
+# ---------------------------------------------------------------- build
+
+
+def build():
+    global BLACK, PURPLE, CORE, EYE, BLUE, GROOVE
+    reset()
+    BLACK = material('black', srgb('#141218'), rough=0.78)
+    PURPLE = material('purple', srgb('#8a4cc0'), rough=0.35)
+    CORE = material('core', srgb('#7a42b4'), rough=0.2)
+    BLUE = material('blue', srgb('#3f3ca8'), rough=0.3)
+    GROOVE = material('groove', srgb('#050407'), rough=0.9)
+    EYE = material('eye', (1, 0.05, 0.05), rough=0.3, emit=(1, 0.05, 0.03), strength=8)
+
+    root = empty('Hydranoid')
+
+    core = sphere_mesh('core', 0.9, CORE)
+    parent(core, root)
+
+    G = 0.7  # groove half-width in degrees
+
+    # --- side wheel (stays on the body as the hip) -------------------------
+    wheel = empty('wheel')
+    parent(wheel, root)
+    parent(patch('wheel_hub', 0, 11, 0, 360, BLACK, thickness=0.1, radius=0.955, nb=96), wheel)
+    parent(segmented_ring('wheel_hub_rim', 11.8, 15, 0, 360, 10, 0.6, BLACK), wheel)
+    spokes = []
+    for k in range(8):
+        c = k * 45 + 22.5
+        # each spoke is a pair of constant-width bars split by a thin groove,
+        # so the purple windows between them widen towards the rim
+        for side in (-1, 1):
+            inner = lambda a: 0.45 / math.sin(deg(a))
+            outer = lambda a: 8.2 / math.sin(deg(a))
+            if side < 0:
+                lo = lambda a, c=c, o=outer: c - o(a)
+                hi = lambda a, c=c, i=inner: c - i(a)
+            else:
+                lo = lambda a, c=c, i=inner: c + i(a)
+                hi = lambda a, c=c, o=outer: c + o(a)
+            spokes.append(patch(f'spoke_{k}_{side}', 15.8, 47.5, lo, hi, BLACK, na=24, nb=4))
+    parent(join('wheel_spokes', spokes), wheel)
+    parent(segmented_ring('wheel_ring', 48.3, 56, 0, 360, 8, 0.5, BLACK), wheel)
+    parent(patch('wheel_windows', 14, 48.5, 0, 360, PURPLE, radius=0.975, thickness=0.02, bevel=0, nb=120), wheel)
+
+    # --- segmented band next to the wheel -----------------------------------
+    parent(segmented_ring('band', 56.8, 65, 22.5, 382.5, 10, 0.45, BLACK), wheel)
+
+    # --- crest band with the crystal teeth (becomes the neck crest) ---------
+    crest = empty('crest', open_pos=(0, 0.25, 0.05), open_rot=(-0.25, 0, 0))
+    parent(crest, root)
+    parent(segmented_ring('crest_shell', 65.8, 68, 20, 215, 6, 0.4, BLACK), crest)
+    for i, bdeg in enumerate(range(26, 214, 13)):
+        size = 0.3
+        t = crystal(f'tooth_{i}', size, size * 0.62, PURPLE, sides=5)
+        t.scale = (1.0, 1.35, 1.0)
+        place_on_sphere(t, deg(72.2), deg(bdeg), r=0.9, tilt=(deg(-12), deg(-28)))
+        parent(t, crest)
+    parent(patch('crest_gap', 68, 76, 20, 215, GROOVE, radius=0.95, thickness=0.02, bevel=0), crest)
+    # the rest of that ring (below the face) is plain shell
+    parent(patch('chin_band', 65.8, 76, 215 + 0.6, 380 - 0.6, BLACK), wheel)
+
+    # --- top / shoulder panel between head and crest ------------------------
+    top = empty('top', open_pos=(0, 0.12, -0.05), open_rot=(0.1, 0, 0))
+    parent(top, root)
+    parent(patch('top_shell', 76, 180, 19 + G, 119 - G, BLACK, na=80), top)
+    parent(patch('bottom_shell', 62, 180, 216 + G, 300 - G, BLACK, na=80), top)
+
+    # --- head panel: front / lower front, eyes and folded horns -------------
+    head = empty('head', open_pos=(0, 0.2, 0.3), open_rot=(-0.4, 0, 0))
+    parent(head, root)
+    parent(patch('head_shell', 76, 180, -60 + G, 19 - G, BLACK, na=80), head)
+    parent(horn_patch('horn_0', 103.0, -42, 16, drift=-12), head)
+    parent(horn_patch('horn_1', 128.0, 40, 72, drift=4, peak=2.0), top)
+    for i, (ea, eb, roll) in enumerate(((88, -30, 70), (113, -36, 30))):
+        e = eye_mesh(f'eye_{i}')
+        place_on_sphere(e, deg(ea), deg(eb % 360), r=0.998, roll=deg(roll))
+        parent(e, head)
+    # curved jaw grooves sweeping down to the eyes
+    for i, (s0, s1, off) in enumerate(((73, 100, 0), (76, 106, 6), (79, 112, 12))):
+        parent(groove(f'groove_{i}', s0, s1, 18 - off, -30 + off * 0.5), head)
+
+    # --- back lattice panel (becomes the back plate / tail) -----------------
+    back = empty('back', open_pos=(0, -0.05, -0.3), open_rot=(0.35, 0, 0))
+    parent(back, root)
+    parent(patch('back_shell', 76, 180, 120 + G, 215 - G, BLACK, na=80), back)
+    parent(lattice_windows('back_windows'), back)
+
+    return root
+
+
+def horn_slot(a, b):
+    """Two long curved purple slashes on the head (the folded horns)."""
+    db = math.degrees(b) % 360
+    if db > 180:
+        db -= 360
+    da = math.degrees(a)
+    for centre in (100.0, 140.0):
+        # crescent: a drifts as b sweeps from -60 to +15
+        if -62 <= db <= 15:
+            k = (db + 62) / 77
+            ca = centre + 10 * math.sin(k * math.pi) - 6 * k
+            w = 2.6 * math.sin(k * math.pi) + 0.4
+            if abs(da - ca) < w:
+                return True
+    return False
+
+
+def horn_patch(name, centre, b0, b1, drift=-6.0, peak=3.0):
+    """A long curved purple slash (folded horn) on the head, as a crisp patch."""
+    def width(b):
+        k = (b - b0) / (b1 - b0)
+        return 0.3 + peak * math.sin(k * math.pi) ** 0.7
+
+    def mid(b):
+        k = (b - b0) / (b1 - b0)
+        return centre + 6 * math.sin(k * math.pi) + drift * k
+
+    # parametrise along b instead of a: swap roles by sampling a strip
+    bm_obs = []
+    n = 40
+    verts = []
+    bm = bmesh.new()
+    rows = []
+    for i in range(n + 1):
+        b = b0 + (b1 - b0) * i / n
+        m, w = mid(b), width(b)
+        rows.append([bm.verts.new(from_wheel(deg(m + t * w), deg(b), R * 1.002)) for t in (-1, -0.5, 0, 0.5, 1)])
+    for i in range(n):
+        for j in range(4):
+            bm.faces.new((rows[i][j], rows[i][j + 1], rows[i + 1][j + 1], rows[i + 1][j]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(PURPLE)
+    me.update()
+    if me.polygons[0].normal.dot(me.polygons[0].center) < 0:
+        me.flip_normals()
+    sol = ob.modifiers.new('solid', 'SOLIDIFY')
+    sol.thickness = 0.03
+    sol.offset = -1
+    apply_all(ob)
+    smooth(ob)
+    return ob
+
+
+def lattice_windows(name):
+    """Rows of alternating triangles (purple) laid over the back panel."""
+    tris = []
+    rows = [(76, 96), (100, 120), (124, 144), (148, 166)]
+    for r, (a0, a1) in enumerate(rows):
+        cols = 6 - r
+        span = (205 - 128) / cols
+        for c in range(cols):
+            cb = 128 + span * (c + 0.5)
+            half = span * 0.36
+            up = (r + c) % 2 == 0
+            if up:
+                lo = lambda a, a0=a0, a1=a1, cb=cb, half=half: cb - half * (a - a0) / (a1 - a0) - 0.01
+                hi = lambda a, a0=a0, a1=a1, cb=cb, half=half: cb + half * (a - a0) / (a1 - a0) + 0.01
+            else:
+                lo = lambda a, a0=a0, a1=a1, cb=cb, half=half: cb - half * (a1 - a) / (a1 - a0) - 0.01
+                hi = lambda a, a0=a0, a1=a1, cb=cb, half=half: cb + half * (a1 - a) / (a1 - a0) + 0.01
+            tris.append(patch(f'{name}_{r}_{c}', a0, a1, lo, hi, PURPLE, radius=R * 1.002, thickness=0.012, bevel=0, na=12, nb=8))
+    return join(name, tris)
+
+
+def groove(name, a0, a1, b0, b1):
+    """A thin dark recessed line running from (a0, b0) to (a1, b1) with a gentle curve."""
+    bm = bmesh.new()
+    n = 40
+    rows = []
+    for i in range(n + 1):
+        k = i / n
+        a = a0 + (a1 - a0) * k
+        b = b0 + (b1 - b0) * (k ** 1.4)
+        w = 0.45
+        rows.append([bm.verts.new(from_wheel(deg(a + t * w), deg(b), R * 1.0015)) for t in (-1, 1)])
+    for i in range(n):
+        bm.faces.new((rows[i][0], rows[i][1], rows[i + 1][1], rows[i + 1][0]))
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(GROOVE)
+    me.update()
+    if me.polygons[0].normal.dot(me.polygons[0].center) < 0:
+        me.flip_normals()
+    return ob
+
+
+def sphere_mesh(name, radius, mat, seg=64):
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=seg, v_segments=seg // 2, radius=radius)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(mat)
+    smooth(ob, 80)
+    return ob
+
+
+def eye_mesh(name):
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=16, v_segments=8, radius=1)
+    bmesh.ops.scale(bm, vec=(0.12, 0.045, 0.02), verts=bm.verts)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(EYE)
+    smooth(ob)
+    return ob
+
+
+def export():
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    bpy.ops.export_scene.gltf(
+        filepath=os.path.abspath(OUT),
+        export_format='GLB',
+        export_extras=True,
+        export_apply=True,
+        export_draco_mesh_compression_enable=False,
+    )
+    print('wrote', os.path.abspath(OUT), os.path.getsize(OUT) // 1024, 'KB')
+
+
+if __name__ == '__main__':
+    build()
+    export()
