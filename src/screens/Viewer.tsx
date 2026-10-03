@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { GPowerCounter } from '../components/GPowerCounter'
-import { BAKUGAN, type Ability } from '../data/bakugan'
+import { abilityLabel, abilitySelfBonus, BAKUGAN, type Ability } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useGame } from '../store/useGame'
 import { EFFECT_DURATION } from '../three/AbilityEffect'
@@ -31,7 +31,7 @@ export function Viewer() {
   const evo = bakugan.evolutions[evolution]
   const baseG = evo.gPower
   const brawlG = baseG + (bakugan.brawlG - bakugan.baseG)
-  const abilityBoost = bakugan.abilities.filter((a) => used.includes(a.id)).reduce((sum, a) => sum + a.gBoost, 0)
+  const abilityBoost = bakugan.abilities.filter((a) => used.includes(a.id)).reduce((sum, a) => sum + abilitySelfBonus(a), 0)
   const gPower = phase === 'monster' ? brawlG + abilityBoost : baseG
 
   const say = (text: string, sub?: string) => setShout({ text, sub, key: Date.now() })
@@ -163,7 +163,7 @@ export function Viewer() {
                   <div className="flex items-baseline justify-between">
                     <span className="font-display text-sm font-bold">{a.name}</span>
                     <span className="font-display text-sm" style={{ color: element.color }}>
-                      +{a.gBoost}G
+                      {abilityLabel(a)}
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-white/60">{a.description}</p>

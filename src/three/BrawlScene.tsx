@@ -1,17 +1,15 @@
-import { ContactShadows, Gltf, OrbitControls, Sparkles } from '@react-three/drei'
+import { ContactShadows, OrbitControls, Sparkles } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { type RefObject, Suspense, useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { asset } from '../asset'
 import type { Ability, Bakugan } from '../data/bakugan'
 import type { ElementInfo } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
-import { BakuganBall } from './BakuganBall'
+import { BallModel, MonsterModel } from './BakuganModels'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
-import { PlaceholderMonster } from './PlaceholderMonster'
 
 export type Phase = 'ball' | 'gate' | 'brawling' | 'monster'
 
@@ -55,10 +53,10 @@ export function BrawlScene({ bakugan, element, phase, activeAbility }: Props) {
         {phase !== 'ball' && <GateCard icon={element.icon} color={element.color} />}
       </Suspense>
 
-      <BallActor bakugan={bakugan} color={element.color} phase={phase} brawlStart={brawlStart} />
+      <BallActor bakugan={bakugan} phase={phase} brawlStart={brawlStart} />
       {phase === 'brawling' && <LightPillar color={element.glow} />}
       {(phase === 'monster' || phase === 'brawling') && (
-        <MonsterActor bakugan={bakugan} element={element} phase={phase} brawlStart={brawlStart} />
+        <MonsterActor bakugan={bakugan} phase={phase} brawlStart={brawlStart} />
       )}
 
       {activeAbility && (
@@ -105,7 +103,7 @@ function elapsed(brawlStart: RefObject<number | null>, now: number) {
   return brawlStart.current === null ? 0 : now - brawlStart.current
 }
 
-function BallActor({ bakugan, color, phase, brawlStart }: { bakugan: Bakugan; color: string; phase: Phase; brawlStart: RefObject<number | null> }) {
+function BallActor({ bakugan, phase, brawlStart }: { bakugan: Bakugan; phase: Phase; brawlStart: RefObject<number | null> }) {
   const ref = useRef<THREE.Group>(null)
   const open = useRef(false)
 
@@ -133,18 +131,12 @@ function BallActor({ bakugan, color, phase, brawlStart }: { bakugan: Bakugan; co
 
   return (
     <group ref={ref}>
-      {bakugan.models?.ball ? (
-        <Suspense fallback={null}>
-          <Gltf src={asset(bakugan.models.ball)} castShadow />
-        </Suspense>
-      ) : (
-        <BakuganBall color={color} openRef={open} />
-      )}
+      <BallModel bakugan={bakugan} openRef={open} />
     </group>
   )
 }
 
-function MonsterActor({ bakugan, element, phase, brawlStart }: { bakugan: Bakugan; element: ElementInfo; phase: Phase; brawlStart: RefObject<number | null> }) {
+function MonsterActor({ bakugan, phase, brawlStart }: { bakugan: Bakugan; phase: Phase; brawlStart: RefObject<number | null> }) {
   const ref = useRef<THREE.Group>(null)
   useFrame(({ clock }) => {
     if (!ref.current) return
@@ -157,13 +149,7 @@ function MonsterActor({ bakugan, element, phase, brawlStart }: { bakugan: Bakuga
   })
   return (
     <group ref={ref} scale={0.001} visible={false}>
-      {bakugan.models?.monster ? (
-        <Suspense fallback={null}>
-          <Gltf src={asset(bakugan.models.monster)} castShadow />
-        </Suspense>
-      ) : (
-        <PlaceholderMonster color={element.color} glow={element.glow} />
-      )}
+      <MonsterModel bakugan={bakugan} />
     </group>
   )
 }

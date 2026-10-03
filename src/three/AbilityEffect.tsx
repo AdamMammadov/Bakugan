@@ -1,11 +1,11 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import type { Ability } from '../data/bakugan'
+import type { EffectPreset } from '../data/bakugan'
 
 type Pattern = 'stream' | 'ring' | 'spiral' | 'sphere' | 'beams'
 
-const PATTERN: Record<Ability['effect'], Pattern> = {
+const PATTERN: Record<EffectPreset, Pattern> = {
   fireball: 'stream',
   waterJet: 'stream',
   flameWave: 'ring',
@@ -14,6 +14,8 @@ const PATTERN: Record<Ability['effect'], Pattern> = {
   waterSphere: 'sphere',
   shadowOrb: 'sphere',
   lightBeam: 'beams',
+  shieldDome: 'sphere',
+  aura: 'spiral',
 }
 
 const COUNT = 900
@@ -36,7 +38,7 @@ function softSprite() {
 }
 
 /** Particle show for an activated ability. Remount (change `key`) to replay. */
-export function AbilityEffect({ effect, color, glow }: { effect: Ability['effect']; color: string; glow: string }) {
+export function AbilityEffect({ effect, color, glow }: { effect: EffectPreset; color: string; glow: string }) {
   const pattern = PATTERN[effect]
   const points = useRef<THREE.Points>(null)
   const t = useRef(0)

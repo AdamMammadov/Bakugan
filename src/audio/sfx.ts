@@ -6,7 +6,7 @@ import { useGame } from '../store/useGame'
  * Sound effects. Each one first tries a real file from /public/sounds/<name>.mp3;
  * until that file exists, a synthesized placeholder plays instead.
  */
-export type SfxName = 'tick' | 'select' | 'start' | 'gateCard' | 'brawl' | 'ability' | 'gPower'
+export type SfxName = 'tick' | 'select' | 'start' | 'gateCard' | 'brawl' | 'ability' | 'gPower' | 'hit' | 'victory' | 'defeat'
 
 let ctx: AudioContext | null = null
 const files = new Map<SfxName, Howl | null>()
@@ -98,6 +98,16 @@ const synth: Record<SfxName, () => void> = {
     noise(0.6, 0.18, 800, 6000, 0.2)
   },
   gPower: () => tone(1200, 0.03, 'square', 0.025),
+  hit: () => {
+    noise(0.35, 0.35, 1800, 120)
+    tone(90, 0.3, 'sine', 0.25, 0, 40)
+  },
+  victory: () => {
+    ;[523, 659, 784, 1047].forEach((f, i) => tone(f, 0.5, 'triangle', 0.1, i * 0.12))
+  },
+  defeat: () => {
+    ;[392, 330, 262].forEach((f, i) => tone(f, 0.6, 'sawtooth', 0.06, i * 0.2))
+  },
 }
 
 export function playSfx(name: SfxName) {

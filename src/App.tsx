@@ -9,6 +9,7 @@ import { useGame } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
 const Viewer = lazy(() => import('./screens/Viewer').then((m) => ({ default: m.Viewer })))
+const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
 
 export default function App() {
   const screen = useGame((s) => s.screen)
@@ -22,6 +23,7 @@ export default function App() {
           {screen === 'hub' && <ElementHub key="hub" />}
           {screen === 'viewer' && <Viewer key="viewer" />}
           {screen === 'compare' && <CompareScreen key="compare" />}
+          {screen === 'arena' && <ArenaScreen key="arena" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}

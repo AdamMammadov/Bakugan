@@ -55,7 +55,7 @@ Model guidelines:
 ### Sounds
 Drop files into `public/sounds/` with these names; anything missing falls back to a synthesized placeholder:
 
-`tick.mp3` · `select.mp3` · `start.mp3` · `gateCard.mp3` · `brawl.mp3` · `ability.mp3` · `gPower.mp3`
+`tick.mp3` · `select.mp3` · `start.mp3` · `gateCard.mp3` · `brawl.mp3` · `ability.mp3` · `gPower.mp3` · `hit.mp3` · `victory.mp3` · `defeat.mp3`
 
 ---
 
