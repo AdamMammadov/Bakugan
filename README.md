@@ -57,6 +57,11 @@ Drop files into `public/sounds/` with these names; anything missing falls back t
 
 `tick.mp3` · `select.mp3` · `start.mp3` · `gateCard.mp3` · `brawl.mp3` · `ability.mp3` · `gPower.mp3` · `hit.mp3` · `victory.mp3` · `defeat.mp3`
 
+## Credits
+
+- Ability card names and texts: [BakuProject card database](https://bakuproject.info/cards)
+- Attribute wheel artwork: fan-made Bakugan attribute circle
+
 ---
 
 Bakugan is a trademark of Spin Master Ltd. and Sega Toys. This project is not affiliated with or endorsed by them.

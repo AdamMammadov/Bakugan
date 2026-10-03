@@ -50,7 +50,7 @@ export function IntroScreen() {
         CLICK OR PRESS ANY KEY
       </motion.p>
       <p className="absolute bottom-4 text-xs text-white/30">
-        Non-commercial fan project. Bakugan is a trademark of Spin Master Ltd. and Sega Toys.
+        Non-commercial fan project. Bakugan is a trademark of Spin Master Ltd. and Sega Toys. Card data: BakuProject.
       </p>
     </motion.div>
   )
