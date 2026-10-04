@@ -214,6 +214,7 @@ export const BAKUGAN: Bakugan[] = [
     series: 'Battle Brawlers',
     baseG: 450,
     brawlG: 550,
+    models: { monster: 'models/hydranoid/monster.glb' },
     description: 'A ravenous dark dragon that grows more heads — and more power — with each evolution.',
     abilities: [
       { id: 'oregano-revenge', name: 'Oregano Revenge', type: 'attack', amount: 100, effect: 'shadowOrb', description: 'Each of your opponent\'s Bakugan in battle loses -100 G\'s, and up to the same number of yours in battle gain +100 G\'s.' },

@@ -1,3 +1,4 @@
+import { useGLTF } from '@react-three/drei'
 import { Suspense, type ComponentType, type RefObject } from 'react'
 import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
@@ -50,4 +51,10 @@ export function BallModel({ bakugan, openRef }: { bakugan: Bakugan; openRef: Ref
       </group>
     </Suspense>
   )
+}
+
+/** Starts downloading a Bakugan's models ahead of time so the brawl doesn't stall on them. */
+export function preloadModels(bakugan: Bakugan) {
+  const urls = [bakugan.models?.ball, bakugan.models?.monster, ...bakugan.evolutions.flatMap((e) => [e.models?.ball, e.models?.monster])]
+  for (const url of urls) if (url) useGLTF.preload(asset(url))
 }

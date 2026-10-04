@@ -10,6 +10,7 @@ import { EFFECT_DURATION } from '../three/AbilityEffect'
 import { savePhoto } from '../photo'
 import { BrawlScene, type Phase } from '../three/BrawlScene'
 import { PhotoCapture } from '../three/PhotoCapture'
+import { preloadModels } from '../three/BakuganModels'
 
 const BRAWL_SEQUENCE_MS = 3000
 
@@ -19,6 +20,7 @@ export function Viewer() {
   const compareWith = useGame((s) => s.compareWith)
   const bakugan = BAKUGAN.find((b) => b.id === bakuganId)!
   const element = ELEMENT_BY_ID[bakugan.element]
+  useEffect(() => preloadModels(bakugan), [bakugan])
 
   const [phase, setPhase] = useState<Phase>('ball')
   const [evolution, setEvolution] = useState(0)

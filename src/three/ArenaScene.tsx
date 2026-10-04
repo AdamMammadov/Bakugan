@@ -14,9 +14,9 @@ import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
 import type { Pose } from './pose'
 
-export const FIGHTER_X = 3.4
+export const FIGHTER_X = 6.8
 /** Bakugan stand larger in the arena than in the viewer. */
-const FIGHTER_SCALE = 1.5
+const FIGHTER_SCALE = 2.3
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */
 export const IMPACT_AT = 0.75
 export const ACTION_DURATION = 1.7
@@ -43,7 +43,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 14, 34]} />
+      <fog attach="fog" args={['#05060a', 30, 70]} />
       <ambientLight intensity={0.4} />
       <directionalLight position={[3, 9, 6]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       {fighters.map((f, i) => (
@@ -51,13 +51,13 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       ))}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[16, 64]} />
+        <circleGeometry args={[45, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
       </mesh>
-      <Sparkles count={120} scale={[20, 7, 14]} position={[0, 3, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
+      <Sparkles count={200} scale={[40, 14, 28]} position={[0, 6, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
 
       {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={3.4}>
+      <group rotation={[0, Math.PI / 2, 0]} scale={6.5}>
         <Suspense fallback={null}>
           <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} />
         </Suspense>
@@ -69,13 +69,13 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
 
       {event && <ActionFx key={event.key} event={event.event} fighters={fighters} />}
 
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={22} blur={2.5} far={6} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={45} blur={2.5} far={14} />
       <OrbitControls
         makeDefault
-        target={[0, 1.9, 0]}
+        target={[0, 3.6, 0]}
         enablePan={false}
-        minDistance={5}
-        maxDistance={24}
+        minDistance={8}
+        maxDistance={50}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
       <EffectComposer>

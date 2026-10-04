@@ -15,6 +15,8 @@ const el = Number(q.get('el') ?? 0)
 const d = Number(q.get('d') ?? 4.2)
 /** Spin of the model around the wheel (X) axis, for views where the ball has rolled. */
 const spin = Number(q.get('spin') ?? 0)
+/** Height of the point the camera looks at. */
+const ty = Number(q.get('ty') ?? 0)
 
 function Model() {
   const { scene } = useGLTF(`/models/${model}`)
@@ -31,10 +33,11 @@ function Model() {
 
 createRoot(document.getElementById('root')!).render(
   <Canvas
-    camera={{ position: [Math.sin(az) * Math.cos(el) * d, Math.sin(el) * d, Math.cos(az) * Math.cos(el) * d], fov: 30 }}
-    onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
+    camera={{ position: [Math.sin(az) * Math.cos(el) * d, ty + Math.sin(el) * d, Math.cos(az) * Math.cos(el) * d], fov: 30 }}
+    onCreated={({ camera }) => camera.lookAt(0, ty, 0)}
   >
     <color attach="background" args={[q.get('bg') ?? '#000000']} />
+    <hemisphereLight args={['#ffffff', '#444466', 0.6]} />
     <ambientLight intensity={0.5} />
     <directionalLight position={[2, 4, 5]} intensity={2.2} />
     <directionalLight position={[-4, 2, -3]} intensity={0.8} color="#b48cff" />

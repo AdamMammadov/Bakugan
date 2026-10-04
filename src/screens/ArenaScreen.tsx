@@ -16,6 +16,7 @@ import { abilityLabel, BAKUGAN, battleEffect, formOf, type Ability, type Entrant
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useGame } from '../store/useGame'
 import { ACTION_DURATION, ArenaScene, IMPACT_AT } from '../three/ArenaScene'
+import { preloadModels } from '../three/BakuganModels'
 
 const INTRO_MS = 2000
 const ENEMY_DELAY_MS = 700
@@ -34,6 +35,10 @@ export function ArenaScreen() {
   const left: Entrant = { bakugan: BAKUGAN.find((b) => b.id === setup.left.id)!, form: setup.left.form }
   const right: Entrant = { bakugan: BAKUGAN.find((b) => b.id === setup.right.id)!, form: setup.right.form }
   const leftName = formOf(left).name
+  useEffect(() => {
+    preloadModels(left.bakugan)
+    preloadModels(right.bakugan)
+  }, [left.bakugan, right.bakugan])
   const rightName = formOf(right).name
 
   const [battle, setBattle] = useState<BattleState>(() => startBattle(left, right, setup.gate))
@@ -107,7 +112,7 @@ export function ArenaScreen() {
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows camera={{ position: [0, 3.6, 11.5], fov: 50 }} dpr={[1, 2]}>
+      <Canvas shadows camera={{ position: [0, 7.5, 23], fov: 50 }} dpr={[1, 2]}>
         <ArenaScene
           fighters={[left, right]}
           gate={setup.gate}

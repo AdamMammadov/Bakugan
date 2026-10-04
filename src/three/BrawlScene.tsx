@@ -16,10 +16,13 @@ export type Phase = 'ball' | 'gate' | 'brawling' | 'monster'
 const BALL_REST = new THREE.Vector3(0, 0.5, 2.6)
 const CARD_CENTER = new THREE.Vector3(0, 0.5, 0)
 
+/** How much bigger the monster form is than in the old 30–40 cm scale: ~9 m next to a 1 m ball. */
+export const MONSTER_SCALE = 3
+
 const CAMERA = {
   ball: { pos: new THREE.Vector3(0, 1.4, 5), target: new THREE.Vector3(0, 0.5, 2.6) },
   gate: { pos: new THREE.Vector3(0, 4.5, 8), target: new THREE.Vector3(0, 0.3, 1) },
-  monster: { pos: new THREE.Vector3(0, 3, 8.5), target: new THREE.Vector3(0, 1.6, 0) },
+  monster: { pos: new THREE.Vector3(11, 7, 21), target: new THREE.Vector3(0, 4.2, 0) },
 }
 
 interface Props {
@@ -44,35 +47,41 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 12, 30]} />
+      <fog attach="fog" args={['#05060a', 30, 70]} />
       <ambientLight intensity={0.35} />
       <directionalLight position={[4, 8, 5]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       <pointLight position={[-4, 3, -3]} intensity={30} color={element.glow} />
       <pointLight position={[0, 2, 6]} intensity={8} color="#ffffff" />
 
       <Field color={element.color} />
-      <Sparkles count={80} scale={[16, 6, 16]} position={[0, 3, 0]} size={2} speed={0.3} color={element.glow} />
+      <Sparkles count={160} scale={[30, 14, 30]} position={[0, 6, 0]} size={3} speed={0.3} color={element.glow} />
 
       <Suspense fallback={null}>
         {phase !== 'ball' && <GateCard icon={element.icon} color={element.color} />}
       </Suspense>
 
       <BallActor bakugan={bakugan} ballOpen={ballOpen} phase={phase} brawlStart={brawlStart} />
-      {phase === 'brawling' && <LightPillar color={element.glow} delay={T.pillar} />}
+      {phase === 'brawling' && (
+        <group scale={[2.2, 1.2, 2.2]}>
+          <LightPillar color={element.glow} delay={T.pillar} />
+        </group>
+      )}
       {(phase === 'monster' || phase === 'brawling') && (
         <MonsterActor bakugan={bakugan} form={form} phase={phase} brawlStart={brawlStart} />
       )}
 
       {activeAbility && (
-        <AbilityEffect
-          key={activeAbility.key}
-          effect={activeAbility.ability.effect}
-          color={element.color}
-          glow={element.glow}
-        />
+        <group scale={MONSTER_SCALE}>
+          <AbilityEffect
+            key={activeAbility.key}
+            effect={activeAbility.ability.effect}
+            color={element.color}
+            glow={element.glow}
+          />
+        </group>
       )}
 
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={20} blur={2.5} far={6} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={40} blur={2.5} far={12} />
       <CameraRig phase={phase} />
 
       <EffectComposer multisampling={0}>
@@ -87,7 +96,7 @@ function Field({ color }: { color: string }) {
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[14, 64]} />
+        <circleGeometry args={[40, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
       </mesh>
       {[3.5, 7, 10.5].map((r) => (
@@ -155,7 +164,9 @@ function MonsterActor({ bakugan, form, phase, brawlStart }: { bakugan: Bakugan; 
   })
   return (
     <group ref={ref} scale={0.001} visible={false}>
-      <MonsterModel entrant={{ bakugan, form }} />
+      <group scale={MONSTER_SCALE}>
+        <MonsterModel entrant={{ bakugan, form }} />
+      </group>
     </group>
   )
 }
@@ -186,7 +197,7 @@ function CameraRig({ phase }: { phase: Phase }) {
       makeDefault
       enablePan={false}
       minDistance={1.2}
-      maxDistance={14}
+      maxDistance={45}
       maxPolarAngle={Math.PI / 2 - 0.05}
       onStart={() => (flying.current = 0)}
     />
