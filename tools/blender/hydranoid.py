@@ -318,8 +318,8 @@ def build():
     global BLACK, PURPLE, CORE, EYE, BLUE, GROOVE
     reset()
     BLACK = material('black', srgb('#141218'), rough=0.78)
-    PURPLE = material('purple', srgb('#8a4cc0'), rough=0.35)
-    CORE = material('core', srgb('#7a42b4'), rough=0.2)
+    PURPLE = material('purple', srgb('#9558c8'), rough=0.45)
+    CORE = material('core', srgb('#7a46b0'), rough=0.42)
     BLUE = material('blue', srgb('#3f3ca8'), rough=0.3)
     GROOVE = material('groove', srgb('#050407'), rough=0.9)
     EYE = material('eye', (1, 0.05, 0.05), rough=0.3, emit=(1, 0.05, 0.03), strength=8)
@@ -343,7 +343,7 @@ def build():
         # so the purple windows between them widen towards the rim
         for side in (-1, 1):
             inner = lambda a: 0.45 / math.sin(deg(a))
-            outer = lambda a: 8.2 / math.sin(deg(a))
+            outer = lambda a: 6.4 / math.sin(deg(a))
             if side < 0:
                 lo = lambda a, c=c, o=outer: c - o(a)
                 hi = lambda a, c=c, i=inner: c - i(a)
@@ -361,16 +361,13 @@ def build():
     # --- crest band with the crystal teeth (becomes the neck crest) ---------
     crest = empty('crest', open_pos=(0, 0.25, 0.05), open_rot=(-0.25, 0, 0))
     parent(crest, root)
-    parent(segmented_ring('crest_shell', 65.8, 68, 20, 215, 6, 0.4, BLACK), crest)
-    for i, bdeg in enumerate(range(26, 214, 13)):
-        size = 0.3
-        t = crystal(f'tooth_{i}', size, size * 0.62, PURPLE, sides=5)
-        t.scale = (1.0, 1.35, 1.0)
-        place_on_sphere(t, deg(72.2), deg(bdeg), r=0.9, tilt=(deg(-12), deg(-28)))
+    parent(segmented_ring('crest_shell', 65.8, 68, -2, 215, 7, 0.4, BLACK), crest)
+    for i, bdeg in enumerate(range(8, 214, 17)):
+        t = fang(f'tooth_{i}', a=72.0, b=float(bdeg), span=15.0, depth=7.0, height=0.21)
         parent(t, crest)
-    parent(patch('crest_gap', 68, 76, 20, 215, GROOVE, radius=0.95, thickness=0.02, bevel=0), crest)
+    parent(patch('crest_gap', 68, 76, -2, 215, GROOVE, radius=0.95, thickness=0.02, bevel=0), crest)
     # the rest of that ring (below the face) is plain shell
-    parent(patch('chin_band', 65.8, 76, 215 + 0.6, 380 - 0.6, BLACK), wheel)
+    parent(patch('chin_band', 65.8, 76, 215 + 0.6, 358 - 0.6, BLACK), wheel)
 
     # --- top / shoulder panel between head and crest ------------------------
     top = empty('top', open_pos=(0, 0.12, -0.05), open_rot=(0.1, 0, 0))
@@ -382,14 +379,15 @@ def build():
     head = empty('head', open_pos=(0, 0.2, 0.3), open_rot=(-0.4, 0, 0))
     parent(head, root)
     parent(patch('head_shell', 76, 180, -60 + G, 19 - G, BLACK, na=80), head)
-    parent(horn_patch('horn_0', 103.0, -42, 16, drift=-12), head)
-    parent(horn_patch('horn_1', 128.0, 40, 72, drift=4, peak=2.0), top)
-    for i, (ea, eb, roll) in enumerate(((88, -30, 70), (113, -36, 30))):
+    # the long folded horn sweeping from the crown down to the outer eye
+    parent(horn_patch('horn_0', 82.0, -36, 18, drift=8, peak=4.8, bow=7), head)
+    parent(horn_patch('horn_1', 84.0, 40, 88, drift=-2, peak=3.0, bow=3), top)
+    for i, (ea, eb, roll) in enumerate(((80, -28, 80), (110, -30, 45))):
         e = eye_mesh(f'eye_{i}')
         place_on_sphere(e, deg(ea), deg(eb % 360), r=0.998, roll=deg(roll))
         parent(e, head)
     # curved jaw grooves sweeping down to the eyes
-    for i, (s0, s1, off) in enumerate(((73, 100, 0), (76, 106, 6), (79, 112, 12))):
+    for i, (s0, s1, off) in enumerate(((80, 104, 0), (86, 112, 6), (92, 120, 12))):
         parent(groove(f'groove_{i}', s0, s1, 18 - off, -30 + off * 0.5), head)
 
     # --- back lattice panel (becomes the back plate / tail) -----------------
@@ -418,7 +416,7 @@ def horn_slot(a, b):
     return False
 
 
-def horn_patch(name, centre, b0, b1, drift=-6.0, peak=3.0):
+def horn_patch(name, centre, b0, b1, drift=-6.0, peak=3.0, bow=6.0):
     """A long curved purple slash (folded horn) on the head, as a crisp patch."""
     def width(b):
         k = (b - b0) / (b1 - b0)
@@ -426,7 +424,7 @@ def horn_patch(name, centre, b0, b1, drift=-6.0, peak=3.0):
 
     def mid(b):
         k = (b - b0) / (b1 - b0)
-        return centre + 6 * math.sin(k * math.pi) + drift * k
+        return centre + bow * math.sin(k * math.pi) + drift * k
 
     # parametrise along b instead of a: swap roles by sampling a strip
     bm_obs = []
@@ -468,7 +466,7 @@ def lattice_windows(name):
         span = (205 - 128) / cols
         for c in range(cols):
             cb = 128 + span * (c + 0.5)
-            half = span * 0.36
+            half = span * 0.3
             up = (r + c) % 2 == 0
             if up:
                 lo = lambda a, a0=a0, a1=a1, cb=cb, half=half: cb - half * (a - a0) / (a1 - a0) - 0.01
@@ -518,10 +516,58 @@ def sphere_mesh(name, radius, mat, seg=64):
     return ob
 
 
+def fang(name, a, b, span, depth, height):
+    """
+    A broad faceted crystal tooth sitting in the crest gap: its base spans `span` degrees
+    along the ring and `depth` degrees across it, and its ridge rises `height` above the
+    shell, leaning towards the head (+a) like the reference's shark teeth.
+    """
+    bm = bmesh.new()
+    rb = R * 0.97
+    corners = [
+        from_wheel(deg(a - depth / 2), deg(b - span / 2), rb),
+        from_wheel(deg(a - depth / 2), deg(b + span / 2), rb),
+        from_wheel(deg(a + depth / 2), deg(b + span / 2), rb),
+        from_wheel(deg(a + depth / 2), deg(b - span / 2), rb),
+    ]
+    base = [bm.verts.new(c) for c in corners]
+    n = from_wheel(deg(a), deg(b)).normalized()
+    # ridge: two points, leaning towards the head side, slightly narrower than the base
+    ridge = [
+        bm.verts.new(from_wheel(deg(a + depth * 0.45), deg(b - span * 0.18), rb) + n * height),
+        bm.verts.new(from_wheel(deg(a + depth * 0.45), deg(b + span * 0.18), rb) + n * height),
+    ]
+    mid = [
+        bm.verts.new(from_wheel(deg(a - depth * 0.1), deg(b - span * 0.42), rb) + n * height * 0.55),
+        bm.verts.new(from_wheel(deg(a - depth * 0.1), deg(b + span * 0.42), rb) + n * height * 0.55),
+    ]
+    b0, b1, b2, b3 = base
+    r0, r1 = ridge
+    m0, m1 = mid
+    for f in ((b0, b1, m1, m0), (m0, m1, r1, r0), (b1, b2, r1, m1), (b3, b0, m0, r0), (b2, b3, r0, r1), (b3, b2, b1, b0)):
+        bm.faces.new(f)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(PURPLE)
+    bev = ob.modifiers.new('bevel', 'BEVEL')
+    bev.width = 0.012
+    bev.segments = 2
+    apply_all(ob)
+    return ob
+
+
 def eye_mesh(name):
     bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=16, v_segments=8, radius=1)
-    bmesh.ops.scale(bm, vec=(0.12, 0.045, 0.02), verts=bm.verts)
+    bmesh.ops.create_uvsphere(bm, u_segments=24, v_segments=12, radius=1)
+    for v in bm.verts:
+        # pinch the ends into points (leaf / almond shape)
+        k = abs(v.co.x)
+        v.co.y *= (1 - k) ** 0.6
+    bmesh.ops.scale(bm, vec=(0.17, 0.075, 0.02), verts=bm.verts)
     me = bpy.data.meshes.new(name)
     bm.to_mesh(me)
     bm.free()
