@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { Avatar, AvatarDrawing } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
+import { BAKUGAN } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import {
   ACCESSORIES,
@@ -45,6 +46,8 @@ export function ProfileEditor() {
   )
   const [tab, setTab] = useState<Tab>(avatar.kind === 'photo' ? 'photo' : avatar.kind === 'custom' ? 'build' : 'characters')
   const [error, setError] = useState('')
+  // the name last filled in from a series character, so picking another one replaces it
+  const [autoName, setAutoName] = useState<string | null>(null)
   const file = useRef<HTMLInputElement>(null)
   const color = ELEMENT_BY_ID[element].color
   const valid = firstName.trim() && lastName.trim()
@@ -133,11 +136,13 @@ export function ProfileEditor() {
                       playSfx('tick')
                       setAvatar({ kind: 'preset', id: c.id })
                       setParts(c.parts)
-                      // playing as a series character: fill in their name if none was typed yet
-                      const [first, last] = c.name.split(' ')
-                      if (!firstName && !lastName && last) {
+                      // playing as a series character: use their name unless the player typed their own
+                      const typed = `${firstName} ${lastName}`.trim()
+                      if (!typed || typed === autoName) {
+                        const [first, ...rest] = c.name.split(' ')
                         setFirstName(first)
-                        setLastName(last)
+                        setLastName(rest.join(' '))
+                        setAutoName(c.name)
                       }
                     }}
                     className="flex flex-col items-center rounded-lg border-2 p-2 transition hover:bg-white/5"
@@ -211,7 +216,8 @@ export function ProfileEditor() {
           </div>
           {!existing && (
             <p className="mt-2 text-xs text-white/45">
-              Your attribute decides your starting Bakugan: its {ELEMENT_BY_ID[element].name} Bakugan plus two allies.
+              You start with one Bakugan: {BAKUGAN.find((b) => b.element === element)?.name}. Win Battle Points to get more
+              from the shop.
             </p>
           )}
 

@@ -4,6 +4,8 @@ import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
 import { GateChip } from '../components/GateChip'
 import { GRID, GRID_SIZE } from '../components/grid'
+import { PageNav } from '../components/PageNav'
+import { clanOf, useClans } from '../profile/useClans'
 import { abilityLabel, BAKUGAN, formBrawlG, type Bakugan } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
@@ -13,12 +15,14 @@ import {
   cardUnlockXp,
   nextCardXp,
   nextEvolveXp,
-  rankOf,
+  priceOf,
+  rankScore,
   teamEntrants,
-  unlockOrder,
+  tierOf,
   useActiveProfile,
   useProfiles,
-  winsToUnlock,
+  bakuganById,
+  TIERS,
   type OwnedBakugan,
   type Profile,
 } from '../profile/useProfiles'
@@ -29,8 +33,6 @@ export function ProfileScreen() {
   const profiles = useProfiles((s) => s.profiles)
   const select = useProfiles((s) => s.select)
   const remove = useProfiles((s) => s.remove)
-  const back = useGame((s) => s.back)
-  const go = useGame((s) => s.go)
   const editProfile = useGame((s) => s.editProfile)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -45,13 +47,7 @@ export function ProfileScreen() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => go(back === 'profile' || back === 'profileEdit' ? 'wheel' : back)}
-          className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
-        >
-          ← BACK
-        </button>
+      <PageNav current="profile">
         {/* player switcher */}
         <div className="flex items-center gap-3">
           <span className="font-display text-[10px] tracking-[0.4em] text-white/40">PLAYERS</span>
@@ -76,7 +72,7 @@ export function ProfileScreen() {
             +
           </button>
         </div>
-      </div>
+      </PageNav>
 
       {!profile ? (
         <div className="mt-24 text-center">
@@ -109,6 +105,7 @@ export function ProfileScreen() {
               <div className="mt-6 flex justify-center gap-3">
                 <button
                   onClick={() => {
+                    useClans.getState().leave(profile.id)
                     remove(profile.id)
                     setConfirmDelete(false)
                   }}
@@ -130,14 +127,14 @@ export function ProfileScreen() {
 
 function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () => void; onDelete: () => void }) {
   const element = ELEMENT_BY_ID[profile.element]
+  const clan = clanOf(useClans((s) => s.clans), profile.id)
   return (
     <header className="mt-8 flex items-start gap-8">
       <Avatar avatar={profile.avatar} color={element.color} size={150} />
       <div className="min-w-0 flex-1">
-        <p className="font-display text-xs tracking-[0.5em]" style={{ color: element.color }}>
-          {rankOf(profile).toUpperCase()}
-        </p>
+        <RankBadge profile={profile} color={element.color} />
         <h1 className="font-display text-5xl font-black tracking-wide">
+          {clan && <span className="mr-3 text-3xl text-white/50">[{clan.tag}]</span>}
           {profile.firstName} {profile.lastName}
         </h1>
         <div className="mt-2 flex items-center gap-2">
@@ -164,16 +161,18 @@ function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () =>
 function Stats({ profile }: { profile: Profile }) {
   const s = profile.stats
   const items = [
+    ['RATING', `${profile.rating} BR`],
+    ['BATTLE POINTS', `${profile.bp.toLocaleString('en')} BP`],
+    ['PLAYER XP', profile.xp.toLocaleString('en')],
     ['BATTLES', s.battles],
     ['WINS', s.wins],
     ['LOSSES', s.losses],
     ['WIN RATE', s.battles ? `${Math.round((s.wins / s.battles) * 100)}%` : '—'],
     ['KOs', s.kos],
     ['BEST STREAK', s.bestStreak],
-    ['BAKUGAN', `${profile.collection.length}/${BAKUGAN.length}`],
   ] as const
   return (
-    <div className="mt-8 grid grid-cols-7 gap-3">
+    <div className="mt-8 grid grid-cols-9 gap-3">
       {items.map(([label, value]) => (
         <div key={label} className="rounded-lg border border-white/10 bg-black/40 px-4 py-3 backdrop-blur">
           <p className="font-display text-[10px] tracking-[0.3em] text-white/40">{label}</p>
@@ -210,22 +209,35 @@ function Team({ profile }: { profile: Profile }) {
 }
 
 function Collection({ profile }: { profile: Profile }) {
-  const order = unlockOrder(profile.element)
+  const shop = BAKUGAN.filter((b) => !profile.collection.some((o) => o.id === b.id)).sort(
+    (a, b) => Number(b.element === profile.element) - Number(a.element === profile.element),
+  )
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BAKUGAN COLLECTION</h2>
-      <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
-        {order.map((id) => {
-          const bakugan = BAKUGAN.find((b) => b.id === id)!
-          const owned = profile.collection.find((o) => o.id === id)
-          return owned ? (
-            <OwnedCard key={id} bakugan={bakugan} owned={owned} profile={profile} />
-          ) : (
-            <LockedCard key={id} bakugan={bakugan} need={winsToUnlock(profile.element, id)} wins={profile.stats.wins} />
-          )
-        })}
-      </div>
-    </section>
+    <>
+      <section className="mt-10">
+        <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
+          BAKUGAN COLLECTION · {profile.collection.length}/{BAKUGAN.length}
+        </h2>
+        <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
+          {profile.collection.map((owned) => (
+            <OwnedCard key={owned.id} bakugan={bakuganById(owned.id)} owned={owned} profile={profile} />
+          ))}
+        </div>
+      </section>
+      {shop.length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BAKUGAN SHOP</h2>
+          <p className="mt-1 text-sm text-white/45">
+            Win battles for Battle Points. Bakugan of your own attribute cost less; very high player XP unlocks them too.
+          </p>
+          <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
+            {shop.map((b) => (
+              <ShopCard key={b.id} bakugan={b} profile={profile} />
+            ))}
+          </div>
+        </section>
+      )}
+    </>
   )
 }
 
@@ -343,17 +355,73 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
   )
 }
 
-function LockedCard({ bakugan, need, wins }: { bakugan: Bakugan; need: number; wins: number }) {
+function ShopCard({ bakugan, profile }: { bakugan: Bakugan; profile: Profile }) {
+  const acquire = useProfiles((s) => s.acquire)
   const element = ELEMENT_BY_ID[bakugan.element]
+  const price = priceOf(profile, bakugan)
+  const canBuy = profile.bp >= price.bp
+  const canClaim = profile.xp >= price.xp
+  const own = bakugan.element === profile.element
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-dashed border-white/15 bg-black/30 p-5 opacity-60">
-      <img src={element.icon} alt="" className="h-14 w-14 grayscale" />
-      <div>
-        <p className="font-display text-2xl font-bold text-white/60">{bakugan.name}</p>
-        <p className="text-sm text-white/45">
-          🔒 Unlocks at {need} wins · {Math.max(0, need - wins)} to go
-        </p>
+    <div className="rounded-xl border border-dashed bg-black/30 p-5" style={{ borderColor: `${element.color}55` }}>
+      <div className="flex items-center gap-4">
+        <img src={element.icon} alt="" className={`h-14 w-14 ${canBuy || canClaim ? '' : 'opacity-50 grayscale'}`} />
+        <div>
+          <p className="font-display text-2xl font-bold">{bakugan.name}</p>
+          <p className="text-sm text-white/45">
+            {element.name} · {bakugan.baseG}G · {own ? 'your attribute' : 'other attribute'}
+          </p>
+        </div>
       </div>
+      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+        <button
+          disabled={!canBuy}
+          onClick={() => acquire(bakugan.id, 'bp') && playSfx('victory')}
+          className="rounded-md border px-2 py-2 text-xs transition enabled:hover:bg-white/10 disabled:opacity-40"
+          style={{ borderColor: element.color }}
+        >
+          <span className="font-display block font-bold">{price.bp.toLocaleString('en')} BP</span>
+          <span className="text-[10px] text-white/50">
+            {canBuy ? 'BUY' : `${(price.bp - profile.bp).toLocaleString('en')} BP to go`}
+          </span>
+        </button>
+        <button
+          disabled={!canClaim}
+          onClick={() => acquire(bakugan.id, 'xp') && playSfx('victory')}
+          className="rounded-md border border-white/20 px-2 py-2 text-xs transition enabled:hover:bg-white/10 disabled:opacity-40"
+        >
+          <span className="font-display block font-bold">{price.xp.toLocaleString('en')} XP</span>
+          <span className="text-[10px] text-white/50">{canClaim ? 'CLAIM' : 'player XP needed'}</span>
+        </button>
+        <button disabled className="rounded-md border border-amber-400/40 px-2 py-2 text-xs opacity-60" title="Coming later">
+          <span className="font-display block font-bold text-amber-300">GAME PASS</span>
+          <span className="text-[10px] text-white/50">coming soon</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Rank name with progress towards the next tier. */
+export function RankBadge({ profile, color }: { profile: Profile; color: string }) {
+  const score = rankScore(profile)
+  const tier = tierOf(score)
+  const from = TIERS[tier.index].min
+  return (
+    <div className="flex items-center gap-3">
+      <p className="font-display text-xs tracking-[0.5em]" style={{ color }}>
+        {tier.name.toUpperCase()}
+      </p>
+      {tier.next && (
+        <>
+          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full" style={{ width: `${((score - from) / (tier.next.min - from)) * 100}%`, background: color }} />
+          </div>
+          <span className="text-xs text-white/40">
+            {tier.next.min - score} to {tier.next.name}
+          </span>
+        </>
+      )}
     </div>
   )
 }

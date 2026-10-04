@@ -116,3 +116,18 @@ export function playSfx(name: SfxName) {
   if (file) file.play()
   else synth[name]()
 }
+
+/**
+ * A brawler calls out loud ("Ability activate! Dual Gazer!") with the browser's speech voice.
+ * Side 0 (the player) and side 1 (the CPU brawler) get different pitches.
+ */
+export function shout(text: string, side: 0 | 1 = 0) {
+  if (useGame.getState().muted || typeof speechSynthesis === 'undefined') return
+  speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(text)
+  u.lang = 'en-US'
+  u.rate = 1.12
+  u.pitch = side === 0 ? 1.25 : 0.75
+  u.volume = 0.9
+  speechSynthesis.speak(u)
+}

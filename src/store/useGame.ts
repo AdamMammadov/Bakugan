@@ -2,7 +2,10 @@ import { create } from 'zustand'
 import { useProfiles } from '../profile/useProfiles'
 import type { ElementId } from '../data/elements'
 
-export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit'
+export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit' | 'rankings' | 'clans'
+
+export type PageScreen = 'profile' | 'rankings' | 'clans'
+const PAGES: PageScreen[] = ['profile', 'rankings', 'clans']
 
 export interface TeamMember {
   id: string
@@ -16,6 +19,8 @@ export interface ArenaSetup {
   right: TeamMember[]
   /** True when the left team is the active player's own; the result then earns XP. */
   ranked: boolean
+  /** The CPU brawler: series character it plays as and the rank tier that sets its strength. */
+  bot: { characterId: string; tier: number }
 }
 
 interface GameState {
@@ -38,6 +43,8 @@ interface GameState {
   enterArena: (setup: ArenaSetup) => void
   toggleMute: () => void
   openProfile: () => void
+  /** Opens one of the player pages (profile, rankings, clans), remembering where to go back to. */
+  openPage: (screen: PageScreen) => void
   editProfile: (id: string | null) => void
 }
 
@@ -62,15 +69,13 @@ export const useGame = create<GameState>((set) => ({
   compareWith: (bakuganId, compareForm = 0) => set({ bakuganId, compareForm, screen: 'compare' }),
   enterArena: (arena) => set({ arena, screen: 'arena' }),
   toggleMute: () => set((s) => ({ muted: !s.muted })),
-  openProfile: () =>
-    set((s) => ({
-      screen: 'profile',
-      back: s.screen === 'profile' || s.screen === 'profileEdit' ? s.back : s.screen,
-    })),
+  openProfile: () => useGame.getState().openPage('profile'),
+  openPage: (screen) =>
+    set((s) => ({ screen, back: PAGES.includes(s.screen as PageScreen) || s.screen === 'profileEdit' ? s.back : s.screen })),
   editProfile: (editProfileId) =>
     set((s) => ({
       screen: 'profileEdit',
       editProfileId,
-      back: s.screen === 'profile' ? 'profile' : s.screen === 'profileEdit' ? s.back : s.screen,
+      back: PAGES.includes(s.screen as PageScreen) ? s.screen : s.screen === 'profileEdit' ? s.back : s.screen,
     })),
 }))

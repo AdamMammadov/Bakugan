@@ -8,6 +8,8 @@ import { ElementWheel } from './screens/ElementWheel'
 import { IntroScreen } from './screens/IntroScreen'
 import { ProfileEditor } from './screens/ProfileEditor'
 import { ProfileScreen } from './screens/ProfileScreen'
+import { ClansScreen } from './screens/ClansScreen'
+import { RankingsScreen } from './screens/RankingsScreen'
 import { useGame } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
@@ -29,10 +31,12 @@ export default function App() {
           {screen === 'arena' && <ArenaScreen key="arena" />}
           {screen === 'profile' && <ProfileScreen key="profile" />}
           {screen === 'profileEdit' && <ProfileEditor key="profileEdit" />}
+          {screen === 'rankings' && <RankingsScreen key="rankings" />}
+          {screen === 'clans' && <ClansScreen key="clans" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}
-      {screen !== 'intro' && screen !== 'arena' && screen !== 'profile' && screen !== 'profileEdit' && <ProfileButton />}
+      {screen !== 'intro' && !['arena', 'profile', 'profileEdit', 'rankings', 'clans'].includes(screen) && <ProfileButton />}
     </div>
   )
 }

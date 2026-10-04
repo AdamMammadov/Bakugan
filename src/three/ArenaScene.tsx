@@ -10,13 +10,19 @@ import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { Impact, Projectile, ShieldDome } from './ArenaFx'
 import { MonsterModel } from './BakuganModels'
+import { Brawler, type BrawlerGesture } from './Brawler'
 import { GateCard } from './GateCard'
+import type { AvatarParts } from '../profile/avatar'
 import { LightPillar } from './LightPillar'
 import { env, moveFor, type Pose } from './pose'
 
-export const FIGHTER_X = 11
-/** Bakugan stand far larger in the arena than in the viewer (about 14 units tall). */
-const FIGHTER_SCALE = 4.6
+export const FIGHTER_X = 14
+/** Bakugan tower over the field: about 21 units, so a brawler (≈4 units) reaches their ankles. */
+const FIGHTER_SCALE = 7
+/** Brawler size: a 1.75 m person next to an ~8.5 m Bakugan. */
+const BRAWLER_SCALE = 2.45
+const BRAWLER_X = FIGHTER_X + 6
+const BRAWLER_Z = 10
 /** Hip position along the model's length (model units), used as the pivot for rearing up. */
 const HIP_Z = -1.1
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */
@@ -31,11 +37,18 @@ interface Props {
   event: { event: BattleEvent; key: number } | null
   shields: [boolean, boolean]
   defeated: [boolean, boolean]
+  brawlers: [BrawlerInfo, BrawlerInfo]
+}
+
+export interface BrawlerInfo {
+  parts: AvatarParts
+  photo?: string
+  gesture: { kind: BrawlerGesture; key: number }
 }
 
 const sideX = (side: SideIndex) => (side === 0 ? -FIGHTER_X : FIGHTER_X)
 
-export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) {
+export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers }: Props) {
   const gateElement = gate ? ELEMENT_BY_ID[gate] : null
   const blockFlash = useMemo<[number, number]>(
     () => (event?.event.blocked ? (event.event.target === 0 ? [event.key, 0] : [0, event.key]) : [0, 0]),
@@ -45,21 +58,31 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 50, 120]} />
+      <fog attach="fog" args={['#05060a', 70, 160]} />
       <ambientLight intensity={0.4} />
-      <directionalLight position={[3, 9, 6]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
+      <directionalLight
+        position={[12, 40, 24]}
+        intensity={2.4}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-45}
+        shadow-camera-right={45}
+        shadow-camera-top={45}
+        shadow-camera-bottom={-45}
+        shadow-camera-far={120}
+      />
       {fighters.map((f, i) => (
-        <pointLight key={i} position={[sideX(i as SideIndex) * 1.6, 3, -2]} intensity={25} color={ELEMENT_BY_ID[f.bakugan.element].glow} />
+        <pointLight key={i} position={[sideX(i as SideIndex) * 1.6, 8, -4]} intensity={90} color={ELEMENT_BY_ID[f.bakugan.element].glow} />
       ))}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[80, 96]} />
+        <circleGeometry args={[110, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
       </mesh>
-      <Sparkles count={240} scale={[50, 20, 34]} position={[0, 8, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
+      <Sparkles count={300} scale={[70, 28, 44]} position={[0, 11, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
 
       {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={11}>
+      <group rotation={[0, Math.PI / 2, 0]} scale={17}>
         <Suspense fallback={null}>
           <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} />
         </Suspense>
@@ -77,15 +100,28 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
         />
       ))}
 
+      {brawlers.map((b, i) => (
+        <group
+          key={i}
+          position={[i === 0 ? -BRAWLER_X : BRAWLER_X, 0, BRAWLER_Z]}
+          rotation={[0, i === 0 ? Math.PI / 2 - 0.5 : -Math.PI / 2 + 0.5, 0]}
+          scale={BRAWLER_SCALE}
+        >
+          <Suspense fallback={null}>
+            <Brawler parts={b.parts} photo={b.photo} gesture={b.gesture} color={ELEMENT_BY_ID[fighters[i].bakugan.element].color} />
+          </Suspense>
+        </group>
+      ))}
+
       {event && <ActionFx key={event.key} event={event.event} fighters={fighters} />}
 
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={60} blur={2.5} far={20} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={80} blur={2.5} far={28} />
       <OrbitControls
         makeDefault
-        target={[0, 6.5, 0]}
+        target={[0, 8.5, 0]}
         enablePan={false}
         minDistance={8}
-        maxDistance={90}
+        maxDistance={120}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
       <EffectComposer>

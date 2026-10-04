@@ -31,3 +31,38 @@ body,
   mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
   padding-block: 12px;
 }
+
+/* speech bubble of a brawler calling out an ability in the arena */
+.brawler-call {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.5rem 1rem;
+  border: 2px solid;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.82);
+  font-family: var(--font-display, inherit);
+  animation: brawler-call 0.25s ease-out;
+}
+.brawler-call-name {
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.brawler-call-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  color: #fff;
+}
+.brawler-call-sub {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+@keyframes brawler-call {
+  from { transform: scale(1.5); }
+  to { transform: scale(1); }
+}

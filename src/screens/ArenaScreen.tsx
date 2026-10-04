@@ -1,11 +1,12 @@
 import { Canvas } from '@react-three/fiber'
 import { animate, AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { playSfx } from '../audio/sfx'
+import { playSfx, shout as callOut } from '../audio/sfx'
 import {
   act,
   activeOf,
   canPlay,
+  aiForTier,
   chooseAction,
   gateBonus,
   MAX_HP,
@@ -15,15 +16,18 @@ import {
   type BattleEvent,
   type BattleState,
   type Fighter,
+  other,
   type SideIndex,
 } from '../battle/engine'
 import { GateChip } from '../components/GateChip'
 import { abilityLabel, BAKUGAN, battleEffect, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck, gateElementOf } from '../data/gates'
-import { bakuganById, useProfiles, type BattleReward } from '../profile/useProfiles'
+import { bakuganById, useActiveProfile, useProfiles, type BattleReward } from '../profile/useProfiles'
 import { useGame, type TeamMember } from '../store/useGame'
-import { ACTION_DURATION, ArenaScene, IMPACT_AT } from '../three/ArenaScene'
+import { botCharacter, CHARACTER_BY_ID, DEFAULT_PARTS } from '../profile/avatar'
+import { ACTION_DURATION, ArenaScene, IMPACT_AT, type BrawlerInfo } from '../three/ArenaScene'
+import type { BrawlerCall, BrawlerGesture } from '../three/Brawler'
 import { preloadModels } from '../three/BakuganModels'
 
 const INTRO_MS = 2000
@@ -66,6 +70,47 @@ export function ArenaScreen() {
   // lets the turn loop call `run` without the two callbacks depending on each other
   const runRef = useRef<(state: BattleState, action: Action) => void>(() => {})
 
+  // the two brawlers: who they are, what they do and what they call out
+  const profile = useActiveProfile()
+  const botChar = CHARACTER_BY_ID[setup.bot.characterId] ?? botCharacter(teams[1][0].bakugan.element)
+  const player = useMemo(() => {
+    if (!profile) {
+      const c = botCharacter(teams[0][0].bakugan.element)
+      return { parts: c.parts, photo: undefined, name: 'You' }
+    }
+    const a = profile.avatar
+    return {
+      parts: a.kind === 'custom' ? a.parts : a.kind === 'preset' ? (CHARACTER_BY_ID[a.id]?.parts ?? DEFAULT_PARTS) : botCharacter(profile.element).parts,
+      photo: a.kind === 'photo' ? a.dataUrl : undefined,
+      name: profile.firstName,
+    }
+  }, [profile, teams])
+  type Cue = Pick<BrawlerInfo, 'gesture'> & { call: BrawlerCall | null }
+  const [cues, setCues] = useState<[Cue, Cue]>([
+    { gesture: { kind: null, key: 0 }, call: null },
+    { gesture: { kind: null, key: 0 }, call: null },
+  ])
+  /** A brawler gestures and calls out (speech bubble + voice). */
+  const cue = (side: SideIndex, kind: BrawlerGesture, title?: string, sub?: string, voice?: string) => {
+    const key = Date.now() + side
+    setCues((c) => {
+      const next = [...c] as typeof c
+      next[side] = { gesture: { kind, key }, call: title ? { key, title, sub } : c[side].call }
+      return next
+    })
+    if (voice) callOut(voice, side)
+    // the bubble disappears after a moment unless a newer call replaced it
+    if (title)
+      later(2200, () =>
+        setCues((c) => {
+          if (c[side].call?.key !== key) return c
+          const next = [...c] as typeof c
+          next[side] = { ...c[side], call: null }
+          return next
+        }),
+      )
+  }
+
   const later = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms))
   const say = (text: string, sub?: string) => setShout({ text, sub, key: Date.now() })
 
@@ -75,6 +120,8 @@ export function ArenaScreen() {
     setBattle(next)
     if (next.winner !== null) {
       playSfx(next.winner === 0 ? 'victory' : 'defeat')
+      cue(next.winner, 'cheer', 'I WIN!', undefined, 'Yes! Victory!')
+      cue(other(next.winner), 'slump')
       if (useGame.getState().arena?.ranked) {
         setReward(
           useProfiles.getState().recordBattle({
@@ -86,12 +133,13 @@ export function ArenaScreen() {
       }
       return
     }
-    if (next.turn === 1) later(ENEMY_DELAY_MS, () => runRef.current(next, chooseAction(next)))
+    if (next.turn === 1) later(ENEMY_DELAY_MS, () => runRef.current(next, chooseAction(next, aiForTier(useGame.getState().arena?.bot.tier ?? 0))))
     else {
       setBusy(false)
       if (next.round !== prev.round && next.gate) {
         playSfx('gateCard')
         say(`ROUND ${next.round}`, `Gate Card: ${next.gate.card.name}`)
+        cue(next.gate.owner, 'point', 'GATE CARD, SET!', next.gate.card.name, 'Gate card, set!')
       } else say('YOUR TURN')
     }
   }, [])
@@ -108,7 +156,7 @@ export function ArenaScreen() {
     if (action.kind === 'switch') {
       playSfx('brawl')
       const incoming = next.sides[ev.actor].team[action.to]
-      say(`${incoming.name.toUpperCase()}, STAND!`, `${activeOf(state.sides[ev.actor]).name} returns`)
+      cue(ev.actor, 'point', `${incoming.name.toUpperCase()}, STAND!`, `${activeOf(state.sides[ev.actor]).name}, return!`, `${incoming.name}, stand!`)
       later(300, () => {
         setShown(next)
         setOnField(actives(next))
@@ -119,10 +167,12 @@ export function ArenaScreen() {
 
     if (action.kind === 'ability') {
       playSfx('ability')
-      say('ABILITY ACTIVATE!', action.card.ability.name)
+      cue(ev.actor, 'card', 'ABILITY ACTIVATE!', action.card.ability.name, `Ability activate! ${action.card.ability.name}!`)
     } else {
       playSfx('gateCard')
+      cue(ev.actor, 'point')
     }
+    if (ev.damage > 0 && !ev.blocked) later(IMPACT_AT * 1000, () => cue(ev.target, 'flinch'))
     later(IMPACT_AT * 1000, () => {
       if (ev.damage > 0 && !ev.blocked) playSfx('hit')
       if (ev.actorG || ev.targetG) playSfx('gPower')
@@ -133,7 +183,8 @@ export function ArenaScreen() {
         // the defeated Bakugan has fallen; the next one rises in its place
         setOnField(actives(next))
         playSfx('brawl')
-        say(`${next.sides[ev.enters.side].team[ev.enters.index].name.toUpperCase()}, STAND!`)
+        const name = next.sides[ev.enters.side].team[ev.enters.index].name
+        cue(ev.enters.side, 'point', 'BAKUGAN, STAND!', name, `Bakugan stand! Go, ${name}!`)
         later(ENTRY_MS, () => nextTurn(next, state))
       } else nextTurn(next, state)
     })
@@ -154,6 +205,8 @@ export function ArenaScreen() {
       setBusy(true)
       playSfx('brawl')
       say('BAKUGAN, BRAWL!', `${activeOf(s.sides[0]).name} vs ${activeOf(s.sides[1]).name}`)
+      cue(0, 'point', 'BAKUGAN, BRAWL!', undefined, 'Bakugan, brawl!')
+      later(900, () => cue(1, 'point', 'BAKUGAN, STAND!', activeOf(s.sides[1]).name))
       later(delay, () => {
         setBusy(false)
         say('YOUR TURN', s.gate ? `Gate Card: ${s.gate.card.name}` : undefined)
@@ -178,19 +231,39 @@ export function ArenaScreen() {
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows camera={{ position: [0, 11, 36], fov: 50 }} dpr={[1, 2]}>
+      <Canvas shadows camera={{ position: [0, 10, 40], fov: 50 }} dpr={[1, 2]}>
         <ArenaScene
           fighters={[teams[0][onField[0]], teams[1][onField[1]]]}
           gate={gate ? gateElementOf(gate) : null}
           event={event}
           shields={[fieldFighters[0].shield, fieldFighters[1].shield]}
           defeated={[fieldFighters[0].hp === 0, fieldFighters[1].hp === 0]}
+          brawlers={[
+            { parts: player.parts, photo: player.photo, gesture: cues[0].gesture },
+            { parts: botChar.parts, gesture: cues[1].gesture },
+          ]}
         />
       </Canvas>
 
+      {/* what each brawler calls out, above their head on the field */}
+      {cues.map((c, i) =>
+        c.call ? (
+          <div
+            key={c.call.key}
+            className={`pointer-events-none absolute bottom-[40%] z-10 ${i === 0 ? 'left-[4%]' : 'right-[4%]'}`}
+          >
+            <div className="brawler-call" style={{ borderColor: i === 0 ? element.color : ELEMENT_BY_ID[shown.sides[1].team[onField[1]].bakugan.element].color }}>
+              <span className="brawler-call-name text-white/60">{i === 0 ? player.name : botChar.name}</span>
+              <span className="brawler-call-title">{c.call.title}</span>
+              {c.call.sub && <span className="brawler-call-sub">{c.call.sub}</span>}
+            </div>
+          </div>
+        ) : null,
+      )}
+
       {/* life bars + team */}
       <div className="pointer-events-none absolute inset-x-0 top-0 grid grid-cols-[1fr_auto_1fr] items-start gap-6 p-6">
-        <TeamPanel state={shown} side={0} field={onField[0]} label="YOU" />
+        <TeamPanel state={shown} side={0} field={onField[0]} label={player.name.toUpperCase()} />
         <div className="flex flex-col items-center pt-2 text-center">
           <p className="font-display text-xs tracking-[0.5em] text-white/40">ROUND</p>
           <p className="font-display text-3xl font-black">{shown.round}</p>
@@ -201,7 +274,7 @@ export function ArenaScreen() {
             </div>
           )}
         </div>
-        <TeamPanel state={shown} side={1} field={onField[1]} label="OPPONENT" />
+        <TeamPanel state={shown} side={1} field={onField[1]} label={`${botChar.name.toUpperCase()} · CPU`} />
       </div>
 
       <button
@@ -333,6 +406,13 @@ export function ArenaScreen() {
 /** XP and unlocks earned in a ranked brawl. */
 function RewardList({ reward }: { reward: BattleReward }) {
   const lines = [
+    {
+      id: 'bp',
+      color: '#f5c518',
+      text: `+${reward.bp} BP`,
+      extra: `${reward.rating >= 0 ? '+' : ''}${reward.rating} rating`,
+    },
+    ...(reward.rankUp ? [{ id: 'rank', color: '#ffffff', text: `RANK UP: ${reward.rankUp.toUpperCase()}`, extra: 'new tier reached' }] : []),
     ...Object.entries(reward.xp).map(([id, xp]) => {
       const b = bakuganById(id)
       const extra = [

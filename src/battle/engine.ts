@@ -155,7 +155,7 @@ export const canPlay = (side: Side, card: Card) => activeOf(side).bakugan.id ===
 
 /** Damage scales with the attacker/defender G-Power ratio, clamped so nobody is untouchable. */
 function strike(power: number, attackerG: number, defenderG: number) {
-  const ratio = Math.min(Math.max(attackerG / defenderG, 0.5), 2)
+  const ratio = Math.min(Math.max(attackerG / defenderG, 0.6), 1.5)
   return Math.round(power * ratio)
 }
 
@@ -212,7 +212,7 @@ export function act(prev: BattleState, action: Action): { state: BattleState; ev
       const a = action.card.ability
       switch (a.type) {
         case 'attack':
-          event.damage = strike(BASIC_POWER + a.amount * 1.1, myG, foeG)
+          event.damage = strike(BASIC_POWER + a.amount * 0.9, myG, foeG)
           state.log.push(`${me.name} uses ${a.name}! ${event.damage} damage.`)
           break
         case 'boost':
@@ -281,31 +281,6 @@ export function act(prev: BattleState, action: Action): { state: BattleState; ev
 
 // ---------------------------------------------------------------- AI
 
-/** Rough value of an action for the side to move: damage dealt, power gained, danger avoided. */
-function score(state: BattleState, action: Action): number {
-  const me = activeOf(state.sides[state.turn])
-  const foe = activeOf(state.sides[other(state.turn)])
-  const { state: next, event } = act(state, action)
-  if (next.winner === state.turn) return 10_000
-  let v = event.damage * 1.2 + event.heal + (event.actorG - event.targetG) * 0.9
-  if (event.ko) v += 600
-  if (event.blocked) v -= 150
-  if (action.kind === 'ability') {
-    const a = action.card.ability
-    if (a.type === 'shield') v += me.shield ? -200 : me.hp < MAX_HP * 0.45 ? 220 : 40
-    if (a.type === 'boost') v += 40
-  }
-  if (action.kind === 'switch') {
-    const incoming = next.sides[state.turn].team[action.to]
-    // switch out of a losing match-up when hurt
-    const ratioNow = powerOf(state, me) / powerOf(state, foe)
-    const ratioNew = powerOf(next, incoming) / powerOf(next, activeOf(next.sides[other(state.turn)]))
-    // only worth a turn when the match-up improves a lot or the Bakugan on the field is nearly down
-    v = (ratioNew - ratioNow) * 300 + ((incoming.hp - me.hp) / MAX_HP) * 200 + (me.hp < MAX_HP * 0.25 && incoming.hp > MAX_HP * 0.5 ? 120 : -260)
-  }
-  return v
-}
-
 export function legalActions(state: BattleState): Action[] {
   const side = state.sides[state.turn]
   return [
@@ -315,15 +290,87 @@ export function legalActions(state: BattleState): Action[] {
   ]
 }
 
-export function chooseAction(state: BattleState, rng: () => number = Math.random): Action {
-  const options = legalActions(state).map((action) => ({ action, v: score(state, action) + rng() * 40 }))
+export interface AiLevel {
+  /** Random wobble added to each option's value; lower plays sharper. */
+  noise: number
+  /** Turns searched ahead (1 = only its own move). */
+  depth: number
+}
+
+export const AI_EASY: AiLevel = { noise: 80, depth: 1 }
+
+/** Bots get sharper as the player climbs the ranks (tier 0 = Rookie). */
+export const aiForTier = (tier: number): AiLevel => ({ noise: Math.max(4, 30 - tier * 6), depth: tier >= 4 ? 4 : tier >= 2 ? 3 : 2 })
+
+/** How good the position is for `me`. */
+function evaluate(state: BattleState, me: SideIndex): number {
+  if (state.winner !== null) return state.winner === me ? 1e6 : -1e6
+  const side = (i: SideIndex) => {
+    const s = state.sides[i]
+    const f = activeOf(s)
+    const alive = s.team.filter((x) => x.hp > 0)
+    return (
+      alive.reduce((n, x) => n + x.hp + x.g * 0.6, 0) +
+      alive.length * 350 +
+      powerOf(state, f) * 1.2 +
+      (f.shield ? 120 : 0) +
+      s.hand.filter((c) => canPlay(s, c)).length * 25 +
+      s.hand.length * 10
+    )
+  }
+  return side(me) - side(other(me))
+}
+
+function search(state: BattleState, me: SideIndex, depth: number): number {
+  if (depth === 0 || state.winner !== null) return evaluate(state, me)
+  const values = legalActions(state).map((a) => search(act(state, a).state, me, depth - 1))
+  return state.turn === me ? Math.max(...values) : Math.min(...values)
+}
+
+export function chooseAction(state: BattleState, level: AiLevel = AI_EASY, rng: () => number = Math.random): Action {
+  const me = state.turn
+  const options = legalActions(state).map((action) => ({
+    action,
+    v: search(act(state, action).state, me, level.depth - 1) + rng() * level.noise,
+  }))
   options.sort((a, b) => b.v - a.v)
   return options[0].action
 }
 
-/** A random opponent team of three different Bakugan. */
-export function randomTeam(exclude: string[] = [], rng: () => number = Math.random): Entrant[] {
+/** A random team of different Bakugan. */
+export function randomTeam(size = TEAM_SIZE, exclude: string[] = [], rng: () => number = Math.random): Entrant[] {
   const pool = shuffle(BAKUGAN.filter((b) => !exclude.includes(b.id)), rng)
-  const picks = (pool.length >= TEAM_SIZE ? pool : shuffle(BAKUGAN, rng)).slice(0, TEAM_SIZE)
+  const picks = (pool.length >= size ? pool : shuffle(BAKUGAN, rng)).slice(0, size)
   return picks.map((bakugan) => ({ bakugan, form: Math.floor(rng() * Math.min(2, bakugan.evolutions.length)) }))
+}
+
+const teamPower = (team: Entrant[]) => team.reduce((n, e) => n + formBrawlG(e), 0)
+
+/**
+ * An opponent on the player's level: same number of Bakugan, the same forms slot by slot and
+ * the same number of ability cards, picked so the total G-Power is as close as possible.
+ */
+export function matchedOpponent(player: Entrant[], rng: () => number = Math.random): Entrant[] {
+  const target = teamPower(player)
+  let best: Entrant[] = []
+  let gap = Infinity
+  for (let tries = 0; tries < 30; tries++) {
+    const team = shuffle(BAKUGAN, rng)
+      .slice(0, player.length)
+      .map((bakugan, i): Entrant => {
+        const mine = player[i]
+        const cards = mine.cards?.length ?? mine.bakugan.abilities.length
+        return {
+          bakugan,
+          form: Math.min(mine.form, bakugan.evolutions.length - 1),
+          cards: bakugan.abilities.slice(0, cards).map((a) => a.id),
+        }
+      })
+    const d = Math.abs(teamPower(team) - target)
+    if (d < gap) {
+      gap = d
+      best = team
+    }
+  }
+  return best
 }

@@ -113,3 +113,14 @@ export function photoToDataUrl(file: File, size = 256): Promise<string> {
     img.src = url
   })
 }
+
+/** The series character a bot brawler plays as, chosen by its lead Bakugan's attribute. */
+const BOT_FOR: Record<ElementId, string> = {
+  pyrus: 'dan',
+  aquos: 'marucho',
+  subterra: 'julie',
+  ventus: 'shun',
+  haos: 'runo',
+  darkus: 'masquerade',
+}
+export const botCharacter = (element: ElementId) => CHARACTER_BY_ID[BOT_FOR[element]]
