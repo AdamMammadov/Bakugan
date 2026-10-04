@@ -14,9 +14,9 @@ import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
 import { env, moveFor, type Pose } from './pose'
 
-export const FIGHTER_X = 9
-/** Bakugan stand larger in the arena than in the viewer. */
-const FIGHTER_SCALE = 3.2
+export const FIGHTER_X = 11
+/** Bakugan stand far larger in the arena than in the viewer (about 14 units tall). */
+const FIGHTER_SCALE = 4.6
 /** Hip position along the model's length (model units), used as the pivot for rearing up. */
 const HIP_Z = -1.1
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */
@@ -30,7 +30,7 @@ interface Props {
   gate: ElementId | null
   event: { event: BattleEvent; key: number } | null
   shields: [boolean, boolean]
-  defeated: SideIndex | null
+  defeated: [boolean, boolean]
 }
 
 const sideX = (side: SideIndex) => (side === 0 ? -FIGHTER_X : FIGHTER_X)
@@ -45,7 +45,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 40, 95]} />
+      <fog attach="fog" args={['#05060a', 50, 120]} />
       <ambientLight intensity={0.4} />
       <directionalLight position={[3, 9, 6]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       {fighters.map((f, i) => (
@@ -53,31 +53,39 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       ))}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[60, 96]} />
+        <circleGeometry args={[80, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
       </mesh>
-      <Sparkles count={200} scale={[40, 14, 28]} position={[0, 6, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
+      <Sparkles count={240} scale={[50, 20, 34]} position={[0, 8, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
 
       {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={8.5}>
+      <group rotation={[0, Math.PI / 2, 0]} scale={11}>
         <Suspense fallback={null}>
           <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} />
         </Suspense>
       </group>
 
       {fighters.map((e, i) => (
-        <Fighter key={i} side={i as SideIndex} entrant={e} event={event} shield={shields[i]} blockFlash={blockFlash[i]} defeated={defeated === i} />
+        <Fighter
+          key={`${i}-${e.bakugan.id}-${e.form}`}
+          side={i as SideIndex}
+          entrant={e}
+          event={event}
+          shield={shields[i]}
+          blockFlash={blockFlash[i]}
+          defeated={defeated[i]}
+        />
       ))}
 
       {event && <ActionFx key={event.key} event={event.event} fighters={fighters} />}
 
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={45} blur={2.5} far={14} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={60} blur={2.5} far={20} />
       <OrbitControls
         makeDefault
-        target={[0, 4.8, 0]}
+        target={[0, 6.5, 0]}
         enablePan={false}
         minDistance={8}
-        maxDistance={70}
+        maxDistance={90}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
       <EffectComposer>
@@ -115,9 +123,11 @@ function Fighter({
   useEffect(() => {
     if (!event) return
     const { actor, target, action, damage, blocked } = event.event
-    const hostile = action.kind === 'basic' || action.ability.type === 'attack' || action.ability.type === 'drain'
+    if (action.kind === 'switch') return
+    const ability = action.kind === 'ability' ? action.card.ability : null
+    const hostile = !ability || ability.type === 'attack' || ability.type === 'drain'
     if (actor === side) {
-      const move = moveFor(action.kind === 'ability' ? action.ability : null)
+      const move = moveFor(ability)
       anim.current = { kind: hostile ? 'lunge' : 'cast', move, start: null }
     } else if (target === side && damage > 0 && !blocked) anim.current = { kind: 'hit', move: 'hit', start: null }
   }, [event, side])
@@ -238,8 +248,9 @@ function ActionFx({ event, fighters }: { event: BattleEvent; fighters: [Entrant,
   const me = ELEMENT_BY_ID[fighters[actor].bakugan.element]
   const from = useMemo(() => new THREE.Vector3(sideX(actor) * 0.75, CHEST_Y, 0), [actor])
   const to = useMemo(() => new THREE.Vector3(sideX(target) * (blocked ? 0.25 : 0.85), CHEST_Y, 0), [target, blocked])
-  const type = action.kind === 'basic' ? 'attack' : action.ability.type
-  const preset = action.kind === 'basic' ? 'fireball' : action.ability.effect
+  if (action.kind === 'switch') return null
+  const type = action.kind === 'basic' ? 'attack' : action.card.ability.type
+  const preset = action.kind === 'basic' ? 'fireball' : action.card.ability.effect
 
   if (type === 'attack') {
     return (

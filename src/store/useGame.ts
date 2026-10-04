@@ -3,10 +3,14 @@ import type { ElementId } from '../data/elements'
 
 export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena'
 
+export interface TeamMember {
+  id: string
+  form: number
+}
+
 export interface ArenaSetup {
-  left: { id: string; form: number }
-  right: { id: string; form: number }
-  gate: ElementId | null
+  left: TeamMember[]
+  right: TeamMember[]
 }
 
 interface GameState {

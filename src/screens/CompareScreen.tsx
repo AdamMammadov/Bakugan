@@ -1,11 +1,23 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { playSfx } from '../audio/sfx'
+import { randomTeam, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
-import { abilityLabel, BAKUGAN, formOf, type Entrant } from '../data/bakugan'
-import { GATE_BONUS, startingPower } from '../data/battle'
-import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
+import { abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
+import { ELEMENT_BY_ID } from '../data/elements'
+import { gateDeck } from '../data/gates'
+import { GateChip } from '../components/GateChip'
 import { useGame } from '../store/useGame'
+
+/** Fills a team up to three with Bakugan not already in it. */
+function fillTeam(start: Entrant[]): Entrant[] {
+  const team = [...start]
+  for (const bakugan of BAKUGAN) {
+    if (team.length >= TEAM_SIZE) break
+    if (!team.some((e) => e.bakugan.id === bakugan.id)) team.push({ bakugan, form: 0 })
+  }
+  return team
+}
 
 export function CompareScreen() {
   const bakuganId = useGame((s) => s.bakuganId)
@@ -14,21 +26,13 @@ export function CompareScreen() {
   const enterArena = useGame((s) => s.enterArena)
   const mine = BAKUGAN.find((b) => b.id === bakuganId) ?? BAKUGAN[0]
 
-  const [left, setLeft] = useState<Entrant>({ bakugan: mine, form: compareForm })
-  const [right, setRight] = useState<Entrant>({ bakugan: BAKUGAN.find((b) => b.element !== mine.element)!, form: 0 })
-  const [gate, setGate] = useState<ElementId | null>(mine.element)
-
-  const lp = startingPower(left, gate)
-  const rp = startingPower(right, gate)
-  const max = Math.max(lp.total, rp.total, 1)
+  const [left, setLeft] = useState<Entrant[]>(() => fillTeam([{ bakugan: mine, form: compareForm }]))
+  const [right, setRight] = useState<Entrant[]>(() => randomTeam([mine.id]))
 
   function brawl() {
     playSfx('brawl')
-    enterArena({
-      left: { id: left.bakugan.id, form: left.form },
-      right: { id: right.bakugan.id, form: right.form },
-      gate,
-    })
+    const pack = (team: Entrant[]) => team.map((e) => ({ id: e.bakugan.id, form: e.form }))
+    enterArena({ left: pack(left), right: pack(right) })
   }
 
   return (
@@ -39,100 +43,131 @@ export function CompareScreen() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <button
-        onClick={() => go('viewer')}
-        className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
-      >
+      <button onClick={() => go('viewer')} className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white">
         ← BACK
       </button>
-      <h1 className="font-display mt-4 text-4xl font-black tracking-wider">G-POWER FACE-OFF</h1>
-      <p className="mt-1 text-white/50">
-        Pick an opponent and set the Gate Card. A Bakugan on a Gate Card of its own attribute starts with +{GATE_BONUS}
-        G. Then fight it out in the arena.
+      <h1 className="font-display mt-4 text-4xl font-black tracking-wider">TEAM FACE-OFF</h1>
+      <p className="mt-1 max-w-3xl text-white/50">
+        Build a team of three Bakugan. Their ability cards are shuffled into one deck, and every round a Gate Card from
+        your gate deck or your opponent's is set on the field. Defeat all three opposing Bakugan to win.
       </p>
 
       <div className="mt-8 grid grid-cols-[1fr_auto_1fr] items-start gap-8">
-        <SideCard entrant={left} power={lp} max={max} onChange={setLeft} label="YOU" />
+        <TeamCard team={left} onChange={setLeft} label="YOUR TEAM" />
         <div className="font-display mt-40 text-5xl font-black text-white/30 italic">VS</div>
-        <SideCard entrant={right} power={rp} max={max} onChange={setRight} label="OPPONENT" />
+        <TeamCard
+          team={right}
+          onChange={setRight}
+          label="OPPONENT"
+          onRandom={() => {
+            playSfx('select')
+            setRight(randomTeam())
+          }}
+        />
       </div>
 
-      <div className="mt-10 flex flex-col items-center gap-4">
-        <p className="font-display text-xs tracking-[0.5em] text-white/40">GATE CARD ON THE FIELD</p>
-        <div className="flex gap-3">
-          <GateOption active={gate === null} onClick={() => setGate(null)}>
-            <span className="font-display text-xs text-white/60">NONE</span>
-          </GateOption>
-          {ELEMENTS.map((e) => (
-            <GateOption key={e.id} active={gate === e.id} color={e.color} onClick={() => setGate(e.id)}>
-              <img src={e.icon} alt={e.name} className="h-10 w-10" />
-            </GateOption>
-          ))}
-        </div>
+      <div className="mt-10 flex justify-center">
         <motion.button
           onClick={brawl}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.96 }}
-          className="font-display mt-4 skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.3em]"
+          className="font-display skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.3em]"
         >
           ENTER THE ARENA
         </motion.button>
       </div>
-
     </motion.div>
   )
 }
 
-function SideCard({
-  entrant,
-  power,
-  max,
+function TeamCard({
+  team,
   onChange,
   label,
+  onRandom,
 }: {
-  entrant: Entrant
-  power: ReturnType<typeof startingPower>
-  max: number
-  onChange: (entrant: Entrant) => void
+  team: Entrant[]
+  onChange: (team: Entrant[]) => void
   label: string
+  onRandom?: () => void
 }) {
-  const { bakugan } = entrant
-  const element = ELEMENT_BY_ID[bakugan.element]
+  const [slot, setSlot] = useState(0)
+  const current = team[slot]
+  const element = ELEMENT_BY_ID[current.bakugan.element]
+  const total = team.reduce((sum, e) => sum + formBrawlG(e), 0)
+
+  const replace = (entrant: Entrant) => {
+    playSfx('tick')
+    const next = [...team]
+    // picking a Bakugan already in the team swaps the two slots
+    const dup = team.findIndex((e, i) => i !== slot && e.bakugan.id === entrant.bakugan.id)
+    if (dup !== -1) next[dup] = team[slot]
+    next[slot] = entrant
+    onChange(next)
+  }
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/40 p-6 backdrop-blur">
-      <p className="font-display text-xs tracking-[0.5em] text-white/40">{label}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="flex items-baseline justify-between">
+        <p className="font-display text-xs tracking-[0.5em] text-white/40">{label}</p>
+        <div className="flex items-baseline gap-4">
+          {onRandom && (
+            <button onClick={onRandom} className="font-display text-xs tracking-[0.3em] text-white/50 hover:text-white">
+              ⟳ RANDOM
+            </button>
+          )}
+          <span className="font-display text-sm text-white/60">
+            TEAM <span className="text-xl font-black text-white">{total}G</span>
+          </span>
+        </div>
+      </div>
+
+      {/* the three slots */}
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {team.map((e, i) => {
+          const el = ELEMENT_BY_ID[e.bakugan.element]
+          const on = i === slot
+          return (
+            <button
+              key={i}
+              onClick={() => setSlot(i)}
+              className="flex flex-col items-center rounded-lg border-2 bg-black/40 p-3 transition"
+              style={{ borderColor: on ? el.color : 'rgba(255,255,255,0.1)', boxShadow: on ? `0 0 18px ${el.color}55` : 'none' }}
+            >
+              <span className="font-display self-start text-[10px] tracking-widest text-white/40">{i === 0 ? 'LEAD' : `#${i + 1}`}</span>
+              <img src={el.icon} alt="" className="h-12 w-12" style={{ filter: `drop-shadow(0 0 10px ${el.glow})` }} />
+              <span className="font-display mt-1 text-sm leading-tight font-bold">{formOf(e).name}</span>
+              <span className="text-xs text-white/50">{formBrawlG(e)}G</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">SLOT {slot + 1} · BAKUGAN</p>
+      <div className="mt-2 flex flex-wrap gap-2">
         {BAKUGAN.map((b) => (
           <button
             key={b.id}
             title={b.name}
-            onClick={() => onChange({ bakugan: b, form: 0 })}
-            className={`rounded-full transition ${b.id === bakugan.id ? 'scale-110' : 'opacity-40 hover:opacity-80'}`}
+            onClick={() => replace({ bakugan: b, form: 0 })}
+            className={`flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition ${
+              b.id === current.bakugan.id ? 'border-white/60 bg-white/10' : 'border-white/10 opacity-50 hover:opacity-90'
+            }`}
           >
-            <img src={ELEMENT_BY_ID[b.element].icon} alt={b.name} className="h-9 w-9" />
+            <img src={ELEMENT_BY_ID[b.element].icon} alt="" className="h-6 w-6" />
+            {b.name}
           </button>
         ))}
       </div>
 
-      <div className="mt-5 flex items-center gap-4">
-        <img src={element.icon} alt="" className="h-16 w-16" style={{ filter: `drop-shadow(0 0 14px ${element.glow})` }} />
-        <div>
-          <h2 className="font-display text-3xl font-bold">{formOf(entrant).name}</h2>
-          <p className="text-white/50">
-            {element.name} · {bakugan.brawler}
-          </p>
-        </div>
-      </div>
-
-      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">FORM</p>
+      <p className="font-display mt-4 text-xs tracking-[0.4em] text-white/40">FORM</p>
       <div className="mt-2 flex flex-wrap gap-2">
-        {bakugan.evolutions.map((evo, i) => {
-          const on = i === entrant.form
+        {current.bakugan.evolutions.map((evo, i) => {
+          const on = i === current.form
           return (
             <button
               key={`${evo.name}-${evo.series}`}
-              onClick={() => onChange({ bakugan, form: i })}
+              onClick={() => replace({ bakugan: current.bakugan, form: i })}
               className="rounded-md border px-3 py-1.5 text-left text-sm transition"
               style={{
                 borderColor: on ? element.color : 'rgba(255,255,255,0.15)',
@@ -141,69 +176,36 @@ function SideCard({
               }}
             >
               <span className="font-semibold">{evo.name}</span>
-              <span className="ml-2 text-xs text-white/50">
-                {evo.series === 'Battle Brawlers' ? '' : `${evo.series} · `}
-                {evo.gPower}G
-              </span>
+              <span className="ml-2 text-xs text-white/50">{evo.gPower}G</span>
             </button>
           )
         })}
       </div>
 
-      <div className="mt-6">
-        <div className="flex items-baseline justify-between">
-          <span className="font-display text-xs tracking-[0.4em] text-white/40">STARTING G-POWER</span>
-          <span className="font-display text-4xl font-black" style={{ color: element.color }}>
-            {power.total}G
-          </span>
-        </div>
-        <div className="mt-2 h-3 overflow-hidden rounded-full bg-white/10">
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: `linear-gradient(90deg, ${element.color}, ${element.glow})` }}
-            animate={{ width: `${(power.total / max) * 100}%` }}
-            transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-          />
-        </div>
-        <p className="mt-2 text-sm text-white/50">
-          Base {power.base}G{power.gateBonus > 0 && <span className="text-white/80"> · Gate +{power.gateBonus}G</span>}
-        </p>
+      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">
+        ABILITY DECK ({team.reduce((n, e) => n + e.bakugan.abilities.length, 0)} CARDS)
+      </p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {team.flatMap((e) =>
+          e.bakugan.abilities.map((a) => (
+            <span
+              key={`${e.bakugan.id}-${a.id}`}
+              className="rounded border px-2 py-0.5 text-xs text-white/70"
+              style={{ borderColor: `${ELEMENT_BY_ID[e.bakugan.element].color}66` }}
+              title={a.description}
+            >
+              {a.name} <span style={{ color: ELEMENT_BY_ID[e.bakugan.element].color }}>{abilityLabel(a)}</span>
+            </span>
+          )),
+        )}
       </div>
 
-      <p className="font-display mt-6 text-xs tracking-[0.4em] text-white/40">ABILITY CARDS ({bakugan.abilities.length})</p>
+      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">GATE DECK</p>
       <div className="mt-2 flex flex-wrap gap-2">
-        {bakugan.abilities.map((a) => (
-          <span key={a.id} className="rounded-md border border-white/15 px-3 py-1.5 text-sm text-white/70" title={a.description}>
-            {a.name} <span style={{ color: element.color }}>{abilityLabel(a)}</span>
-          </span>
+        {gateDeck(team).map((g) => (
+          <GateChip key={g.id} gate={g} />
         ))}
       </div>
     </div>
-  )
-}
-
-function GateOption({
-  active,
-  color = '#ffffff',
-  onClick,
-  children,
-}: {
-  active: boolean
-  color?: string
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex h-20 w-14 items-center justify-center rounded-md border-2 bg-black/50 transition"
-      style={{
-        borderColor: active ? color : 'rgba(255,255,255,0.12)',
-        boxShadow: active ? `0 0 18px ${color}88` : 'none',
-        opacity: active ? 1 : 0.6,
-      }}
-    >
-      {children}
-    </button>
   )
 }
