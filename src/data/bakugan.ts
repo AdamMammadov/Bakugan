@@ -108,7 +108,8 @@ export const BAKUGAN: Bakugan[] = [
       { name: 'Dragonoid', series: 'Battle Brawlers', gPower: 340 },
       { name: 'Delta Dragonoid', series: 'Battle Brawlers', gPower: 450 },
       { name: 'Ultimate Dragonoid', series: 'Battle Brawlers', gPower: 550 },
-      { name: 'Neo Dragonoid', series: 'New Vestroia', gPower: 500 },
+      // game model ripped from Bakugan: Defenders of the Core (Wii), via The Models Resource
+      { name: 'Neo Dragonoid', series: 'New Vestroia', gPower: 500, models: { monster: 'models/dragonoid/neo-ball.glb' } },
     ],
   },
   {
