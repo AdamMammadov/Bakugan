@@ -104,7 +104,10 @@ function makeSide(team: Entrant[], gates: GateCard[], rng: () => number): Side {
     }),
   )
   const deck = shuffle(
-    team.flatMap((e) => e.bakugan.abilities.map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id }))),
+    team.flatMap((e) =>
+      e.bakugan.abilities
+        .filter((a) => !e.cards || e.cards.includes(a.id))
+        .map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id }))),
     rng,
   )
   return { team: fighters, active: 0, deck: deck.slice(START_HAND), hand: deck.slice(0, START_HAND), used: [], gates: shuffle(gates, rng) }

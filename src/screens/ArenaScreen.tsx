@@ -21,6 +21,7 @@ import { GateChip } from '../components/GateChip'
 import { abilityLabel, BAKUGAN, battleEffect, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck, gateElementOf } from '../data/gates'
+import { bakuganById, useProfiles, type BattleReward } from '../profile/useProfiles'
 import { useGame, type TeamMember } from '../store/useGame'
 import { ACTION_DURATION, ArenaScene, IMPACT_AT } from '../three/ArenaScene'
 import { preloadModels } from '../three/BakuganModels'
@@ -39,7 +40,7 @@ const TYPE_ICON: Record<Ability['type'], string> = {
 }
 
 const toTeam = (members: TeamMember[]): Entrant[] =>
-  members.map((m) => ({ bakugan: BAKUGAN.find((b) => b.id === m.id)!, form: m.form }))
+  members.map((m) => ({ bakugan: BAKUGAN.find((b) => b.id === m.id)!, form: m.form, cards: m.cards }))
 
 const actives = (s: BattleState): [number, number] => [s.sides[0].active, s.sides[1].active]
 
@@ -59,6 +60,11 @@ export function ArenaScreen() {
   const [busy, setBusy] = useState(true)
   const [shout, setShout] = useState<{ text: string; sub?: string; key: number } | null>(null)
   const timers = useRef<number[]>([])
+  // KOs scored by each of the player's Bakugan, for XP
+  const kos = useRef<Record<string, number>>({})
+  const [reward, setReward] = useState<BattleReward | null>(null)
+  // lets the turn loop call `run` without the two callbacks depending on each other
+  const runRef = useRef<(state: BattleState, action: Action) => void>(() => {})
 
   const later = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms))
   const say = (text: string, sub?: string) => setShout({ text, sub, key: Date.now() })
@@ -69,9 +75,18 @@ export function ArenaScreen() {
     setBattle(next)
     if (next.winner !== null) {
       playSfx(next.winner === 0 ? 'victory' : 'defeat')
+      if (useGame.getState().arena?.ranked) {
+        setReward(
+          useProfiles.getState().recordBattle({
+            won: next.winner === 0,
+            team: next.sides[0].team.map((f) => f.bakugan.id),
+            kos: kos.current,
+          }),
+        )
+      }
       return
     }
-    if (next.turn === 1) later(ENEMY_DELAY_MS, () => run(next, chooseAction(next)))
+    if (next.turn === 1) later(ENEMY_DELAY_MS, () => runRef.current(next, chooseAction(next)))
     else {
       setBusy(false)
       if (next.round !== prev.round && next.gate) {
@@ -83,6 +98,10 @@ export function ArenaScreen() {
 
   const run = useCallback((state: BattleState, action: Action) => {
     const { state: next, event: ev } = act(state, action)
+    if (ev.ko && ev.actor === 0) {
+      const id = activeOf(state.sides[0]).bakugan.id
+      kos.current[id] = (kos.current[id] ?? 0) + 1
+    }
     setBusy(true)
     setEvent({ event: ev, key: Date.now() })
 
@@ -119,6 +138,9 @@ export function ArenaScreen() {
       } else nextTurn(next, state)
     })
   }, [nextTurn])
+  useEffect(() => {
+    runRef.current = run
+  }, [run])
 
   const begin = useCallback(
     (delay: number) => {
@@ -127,6 +149,8 @@ export function ArenaScreen() {
       setShown(s)
       setOnField([0, 0])
       setEvent(null)
+      setReward(null)
+      kos.current = {}
       setBusy(true)
       playSfx('brawl')
       say('BAKUGAN, BRAWL!', `${activeOf(s.sides[0]).name} vs ${activeOf(s.sides[1]).name}`)
@@ -287,6 +311,7 @@ export function ArenaScreen() {
               {battle.winner === 0 ? 'YOUR TEAM' : 'THE OPPONENT'} WINS IN {battle.round} ROUNDS ·{' '}
               {battle.sides[battle.winner].team.filter((f) => f.hp > 0).length} BAKUGAN STANDING
             </p>
+            {reward && <RewardList reward={reward} />}
             <div className="mt-6 flex gap-4">
               <button onClick={rematch} className="font-display border-2 border-white/70 px-8 py-3 tracking-[0.3em] hover:bg-white/10">
                 REMATCH
@@ -302,6 +327,45 @@ export function ArenaScreen() {
         )}
       </AnimatePresence>
     </motion.div>
+  )
+}
+
+/** XP and unlocks earned in a ranked brawl. */
+function RewardList({ reward }: { reward: BattleReward }) {
+  const lines = [
+    ...Object.entries(reward.xp).map(([id, xp]) => {
+      const b = bakuganById(id)
+      const extra = [
+        reward.newCards[id] ? `+${reward.newCards[id]} ability card` : '',
+        reward.evolveReady.includes(id) ? 'READY TO EVOLVE!' : '',
+      ].filter(Boolean)
+      return { id, color: ELEMENT_BY_ID[b.element].color, text: `${b.name} +${xp} XP`, extra: extra.join(' · ') }
+    }),
+    ...reward.unlocked.map((id) => ({
+      id: `new-${id}`,
+      color: ELEMENT_BY_ID[bakuganById(id).element].glow,
+      text: `NEW BAKUGAN: ${bakuganById(id).name}`,
+      extra: 'joined your collection',
+    })),
+  ]
+  return (
+    <div className="mt-5 flex flex-wrap justify-center gap-3">
+      {lines.map((l, i) => (
+        <motion.div
+          key={l.id}
+          className="rounded-md border bg-black/60 px-4 py-2 text-center"
+          style={{ borderColor: `${l.color}aa` }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 + i * 0.15 }}
+        >
+          <p className="font-display font-bold" style={{ color: l.color }}>
+            {l.text}
+          </p>
+          {l.extra && <p className="text-xs tracking-widest text-white/70">{l.extra}</p>}
+        </motion.div>
+      ))}
+    </div>
   )
 }
 

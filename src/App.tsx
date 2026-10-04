@@ -1,10 +1,13 @@
 import { AnimatePresence } from 'framer-motion'
 import { lazy, Suspense } from 'react'
 import { MuteButton } from './components/MuteButton'
+import { ProfileButton } from './components/ProfileButton'
 import { CompareScreen } from './screens/CompareScreen'
 import { ElementHub } from './screens/ElementHub'
 import { ElementWheel } from './screens/ElementWheel'
 import { IntroScreen } from './screens/IntroScreen'
+import { ProfileEditor } from './screens/ProfileEditor'
+import { ProfileScreen } from './screens/ProfileScreen'
 import { useGame } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
@@ -24,9 +27,12 @@ export default function App() {
           {screen === 'viewer' && <Viewer key="viewer" />}
           {screen === 'compare' && <CompareScreen key="compare" />}
           {screen === 'arena' && <ArenaScreen key="arena" />}
+          {screen === 'profile' && <ProfileScreen key="profile" />}
+          {screen === 'profileEdit' && <ProfileEditor key="profileEdit" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}
+      {screen !== 'intro' && screen !== 'arena' && screen !== 'profile' && screen !== 'profileEdit' && <ProfileButton />}
     </div>
   )
 }

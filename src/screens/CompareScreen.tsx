@@ -7,6 +7,16 @@ import { abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
 import { GateChip } from '../components/GateChip'
+import { Avatar } from '../components/Avatar'
+import {
+  cardCount,
+  teamEntrants,
+  unlockedCards,
+  useActiveProfile,
+  useProfiles,
+  type OwnedBakugan,
+  type Profile,
+} from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 
 /** Fills a team up to three with Bakugan not already in it. */
@@ -19,6 +29,28 @@ function fillTeam(start: Entrant[]): Entrant[] {
   return team
 }
 
+/** Fills a player's team up to three from their collection. */
+function fillOwn(start: Entrant[], collection: OwnedBakugan[]): Entrant[] {
+  const team = [...start]
+  for (const o of collection) {
+    if (team.length >= TEAM_SIZE) break
+    if (!team.some((e) => e.bakugan.id === o.id))
+      team.push({ bakugan: BAKUGAN.find((b) => b.id === o.id)!, form: o.form, cards: unlockedCards(o).map((a) => a.id) })
+  }
+  return team
+}
+
+/** Ranked opponents grow with the player: no higher forms and no more cards than the player has. */
+function matchLevel(team: Entrant[], profile: Profile): Entrant[] {
+  const maxForm = Math.max(...profile.collection.map((o) => o.form))
+  const cards = Math.round(profile.collection.reduce((n, o) => n + cardCount(o), 0) / profile.collection.length)
+  return team.map((e) => ({
+    ...e,
+    form: Math.min(e.form, maxForm),
+    cards: e.bakugan.abilities.slice(0, cards).map((a) => a.id),
+  }))
+}
+
 export function CompareScreen() {
   const bakuganId = useGame((s) => s.bakuganId)
   const compareForm = useGame((s) => s.compareForm)
@@ -26,13 +58,22 @@ export function CompareScreen() {
   const enterArena = useGame((s) => s.enterArena)
   const mine = BAKUGAN.find((b) => b.id === bakuganId) ?? BAKUGAN[0]
 
-  const [left, setLeft] = useState<Entrant[]>(() => fillTeam([{ bakugan: mine, form: compareForm }]))
-  const [right, setRight] = useState<Entrant[]>(() => randomTeam([mine.id]))
+  const profile = useActiveProfile()
+  const setTeam = useProfiles((s) => s.setTeam)
+  // with a profile you brawl with your own collection (ranked: earns XP); free play uses any Bakugan
+  const [ranked, setRanked] = useState(profile !== null)
+  const [free, setFree] = useState<Entrant[]>(() => fillTeam([{ bakugan: mine, form: compareForm }]))
+  const [own, setOwn] = useState<Entrant[]>(() => (profile ? fillOwn(teamEntrants(profile), profile.collection) : []))
+  const opponent = (asRanked: boolean) => (asRanked && profile ? matchLevel(randomTeam(), profile) : randomTeam([mine.id]))
+  const [right, setRight] = useState<Entrant[]>(() => opponent(ranked))
+  const left = ranked && profile ? own : free
+  const setLeft = ranked && profile ? setOwn : setFree
 
   function brawl() {
     playSfx('brawl')
-    const pack = (team: Entrant[]) => team.map((e) => ({ id: e.bakugan.id, form: e.form }))
-    enterArena({ left: pack(left), right: pack(right) })
+    const pack = (team: Entrant[]) => team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards }))
+    if (ranked && profile) setTeam(own.map((e) => e.bakugan.id))
+    enterArena({ left: pack(left), right: pack(right), ranked: ranked && profile !== null })
   }
 
   return (
@@ -52,8 +93,38 @@ export function CompareScreen() {
         your gate deck or your opponent's is set on the field. Defeat all three opposing Bakugan to win.
       </p>
 
+      {profile && (
+        <div className="mt-6 flex items-center gap-4 rounded-xl border border-white/10 bg-black/40 p-3 backdrop-blur">
+          <Avatar avatar={profile.avatar} color={ELEMENT_BY_ID[profile.element].color} size={44} />
+          <p className="flex-1 text-sm text-white/70">
+            <span className="font-bold text-white">
+              {profile.firstName} {profile.lastName}
+            </span>{' '}
+            {ranked
+              ? '— ranked brawl with your own Bakugan. Every battle earns XP towards evolutions, new cards and new Bakugan.'
+              : '— free play: any Bakugan in any form, no XP.'}
+          </p>
+          {(['ranked', 'free'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setRanked(m === 'ranked')
+                setRight(opponent(m === 'ranked'))
+              }}
+              className="font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition"
+              style={{
+                borderColor: (m === 'ranked') === ranked ? '#fff' : 'rgba(255,255,255,0.15)',
+                color: (m === 'ranked') === ranked ? '#fff' : 'rgba(255,255,255,0.5)',
+              }}
+            >
+              {m === 'ranked' ? 'RANKED' : 'FREE PLAY'}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="mt-8 grid grid-cols-[1fr_auto_1fr] items-start gap-8">
-        <TeamCard team={left} onChange={setLeft} label="YOUR TEAM" />
+        <TeamCard team={left} onChange={setLeft} label="YOUR TEAM" owned={ranked && profile ? profile.collection : undefined} />
         <div className="font-display mt-40 text-5xl font-black text-white/30 italic">VS</div>
         <TeamCard
           team={right}
@@ -61,7 +132,7 @@ export function CompareScreen() {
           label="OPPONENT"
           onRandom={() => {
             playSfx('select')
-            setRight(randomTeam())
+            setRight(opponent(ranked))
           }}
         />
       </div>
@@ -85,18 +156,25 @@ function TeamCard({
   onChange,
   label,
   onRandom,
+  owned,
 }: {
   team: Entrant[]
   onChange: (team: Entrant[]) => void
   label: string
   onRandom?: () => void
+  /** A player's collection: only these Bakugan, up to their current form, with their unlocked cards. */
+  owned?: OwnedBakugan[]
 }) {
   const [slot, setSlot] = useState(0)
   const current = team[slot]
   const element = ELEMENT_BY_ID[current.bakugan.element]
   const total = team.reduce((sum, e) => sum + formBrawlG(e), 0)
 
-  const replace = (entrant: Entrant) => {
+  const ownedOf = (id: string) => owned?.find((o) => o.id === id)
+  const replace = (pick: Entrant) => {
+    const o = ownedOf(pick.bakugan.id)
+    if (owned && (!o || pick.form > o.form)) return
+    const entrant = o ? { ...pick, cards: unlockedCards(o).map((a) => a.id) } : pick
     playSfx('tick')
     const next = [...team]
     // picking a Bakugan already in the team swaps the two slots
@@ -145,11 +223,11 @@ function TeamCard({
 
       <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">SLOT {slot + 1} · BAKUGAN</p>
       <div className="mt-2 flex flex-wrap gap-2">
-        {BAKUGAN.map((b) => (
+        {BAKUGAN.filter((b) => !owned || ownedOf(b.id)).map((b) => (
           <button
             key={b.id}
             title={b.name}
-            onClick={() => replace({ bakugan: b, form: 0 })}
+            onClick={() => replace({ bakugan: b, form: ownedOf(b.id)?.form ?? 0 })}
             className={`flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition ${
               b.id === current.bakugan.id ? 'border-white/60 bg-white/10' : 'border-white/10 opacity-50 hover:opacity-90'
             }`}
@@ -164,18 +242,24 @@ function TeamCard({
       <div className="mt-2 flex flex-wrap gap-2">
         {current.bakugan.evolutions.map((evo, i) => {
           const on = i === current.form
+          const locked = owned && i > (ownedOf(current.bakugan.id)?.form ?? 0)
           return (
             <button
               key={`${evo.name}-${evo.series}`}
+              disabled={locked}
+              title={locked ? 'Evolve this Bakugan in your profile to unlock this form' : undefined}
               onClick={() => replace({ bakugan: current.bakugan, form: i })}
-              className="rounded-md border px-3 py-1.5 text-left text-sm transition"
+              className="rounded-md border px-3 py-1.5 text-left text-sm transition disabled:opacity-30"
               style={{
                 borderColor: on ? element.color : 'rgba(255,255,255,0.15)',
                 background: on ? `${element.color}33` : 'transparent',
                 color: on ? '#fff' : 'rgba(255,255,255,0.6)',
               }}
             >
-              <span className="font-semibold">{evo.name}</span>
+              <span className="font-semibold">
+                {locked && '🔒 '}
+                {evo.name}
+              </span>
               <span className="ml-2 text-xs text-white/50">{evo.gPower}G</span>
             </button>
           )
@@ -183,11 +267,11 @@ function TeamCard({
       </div>
 
       <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">
-        ABILITY DECK ({team.reduce((n, e) => n + e.bakugan.abilities.length, 0)} CARDS)
+        ABILITY DECK ({team.reduce((n, e) => n + (e.cards?.length ?? e.bakugan.abilities.length), 0)} CARDS)
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {team.flatMap((e) =>
-          e.bakugan.abilities.map((a) => (
+          e.bakugan.abilities.filter((a) => !e.cards || e.cards.includes(a.id)).map((a) => (
             <span
               key={`${e.bakugan.id}-${a.id}`}
               className="rounded border px-2 py-0.5 text-xs text-white/70"
