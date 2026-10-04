@@ -55,7 +55,7 @@ export function NormalizedModel({
     const nodes: { node: THREE.Object3D; pos: THREE.Vector3; rot: THREE.Euler; u: Record<string, unknown> }[] = []
     scene.traverse((o) => {
       const u = o.userData
-      if (u.openPos || u.openRot || u.openOnly) nodes.push({ node: o, pos: o.position.clone(), rot: o.rotation.clone(), u })
+      if (u.openPos || u.openRot || u.openOnly || u.closedOnly) nodes.push({ node: o, pos: o.position.clone(), rot: o.rotation.clone(), u })
     })
     return nodes
   }, [scene])
@@ -72,6 +72,10 @@ export function NormalizedModel({
       if (u.openOnly) {
         node.scale.setScalar(Math.max(k, 0.001))
         node.visible = k > 0.02
+      }
+      if (u.closedOnly) {
+        node.scale.setScalar(Math.max(1 - k, 0.001))
+        node.visible = k < 0.98
       }
     }
   })

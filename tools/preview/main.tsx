@@ -24,6 +24,7 @@ function Model() {
     scene.traverse((o) => {
       const u = o.userData
       if (u.openOnly) o.visible = open
+      if (u.closedOnly) o.visible = !open
       if (open && u.openPos) o.position.add(new THREE.Vector3(...u.openPos))
       if (open && u.openRot) o.rotation.set(o.rotation.x + u.openRot[0], o.rotation.y + u.openRot[1], o.rotation.z + u.openRot[2])
     })

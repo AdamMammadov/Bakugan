@@ -23,6 +23,11 @@ from mathutils import Matrix, Quaternion, Vector
 
 V = Vector
 
+# open ("stand up") pose, three.js space: y up, z front
+OPEN_LIFT = 0.32
+SKULL_POS = (0.02, 0.36, 0.78)
+SKULL_PITCH, SKULL_YAW = -0.55, -0.6
+
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'models', 'hydranoid', 'ball.glb')
 
 # Blender is Z-up; glTF/three.js is Y-up with Blender's -Y becoming +Z (front).
@@ -261,11 +266,20 @@ def place_on_sphere(ob, a, b, r=R * 0.97, tilt=(0, 0), roll=0.0):
     ob.rotation_quaternion = q
 
 
+def yaw_then_pitch(yaw, pitch):
+    """three.js 'XYZ' Euler for: pitch about X first, then yaw about the world Y axis."""
+    from mathutils import Matrix as M
+
+    m = M.Rotation(yaw, 3, 'Y') @ M.Rotation(pitch, 3, 'X')
+    e = m.to_euler('ZYX')  # matrix Rx·Ry·Rz == three.js 'XYZ'
+    return (e.x, e.y, e.z)
+
+
 def parent(child, par):
     child.parent = par
 
 
-def empty(name, open_pos=None, open_rot=None, open_only=False):
+def empty(name, open_pos=None, open_rot=None, open_only=False, closed_only=False):
     ob = bpy.data.objects.new(name, None)
     bpy.context.collection.objects.link(ob)
     if open_pos is not None:
@@ -274,6 +288,8 @@ def empty(name, open_pos=None, open_rot=None, open_only=False):
         ob['openRot'] = list(open_rot)
     if open_only:
         ob['openOnly'] = True
+    if closed_only:
+        ob['closedOnly'] = True
     return ob
 
 
@@ -327,7 +343,7 @@ def build():
     EYE = material('eye', (1, 0.05, 0.05), rough=0.3, emit=(1, 0.05, 0.03), strength=8)
 
     # open pose: the ball stands up on its new legs
-    root = empty('Hydranoid', open_pos=(0, 0.32, 0))
+    root = empty('Hydranoid', open_pos=(0, OPEN_LIFT, 0))
 
     core = sphere_mesh('core', 0.9, BLUE)
     parent(core, root)
@@ -362,7 +378,7 @@ def build():
     parent(segmented_ring('band', 56.8, 65, 22.5, 382.5, 10, 0.45, BLACK), wheel)
 
     # --- crest band with the crystal teeth (becomes the neck crest) ---------
-    crest = empty('crest', open_pos=(0, 0.42, 0.28), open_rot=(-0.55, 0, 0))
+    crest = empty('crest', open_pos=(0.0, 0.32, 0.05), open_rot=(-0.12, 0, 0))
     parent(crest, root)
     parent(segmented_ring('crest_shell', 65.8, 68, -2, 215, 7, 0.4, BLACK), crest)
     for i, bdeg in enumerate(range(8, 214, 17)):
@@ -373,16 +389,16 @@ def build():
     parent(patch('chin_band', 65.8, 76, 215 + 0.6, 358 - 0.6, BLACK), wheel)
 
     # --- top / shoulder panel between head and crest ------------------------
-    top = empty('top', open_pos=(0, 0.18, -0.12), open_rot=(0.25, 0, 0))
+    top = empty('top', open_pos=(0, 0.05, -0.12), open_rot=(0.1, 0, 0))
     parent(top, root)
     parent(patch('top_shell', 76, 180, 19 + G, 119 - G, BLACK, na=80), top)
     # the lower front shell drops forward into a belly / foot plate
-    belly = empty('belly', open_pos=(0, -0.18, 0.32), open_rot=(0.55, 0, 0))
+    belly = empty('belly', closed_only=True)
     parent(belly, root)
     parent(patch('bottom_shell', 62, 180, 216 + G, 300 - G, BLACK, na=80), belly)
 
     # --- head panel: front / lower front, eyes and folded horns -------------
-    head = empty('head', open_pos=(0, 0.62, 0.55), open_rot=(-0.95, 0, 0))
+    head = empty('head', open_pos=SKULL_POS, open_rot=yaw_then_pitch(SKULL_YAW, SKULL_PITCH))
     parent(head, root)
     parent(patch('head_shell', 76, 180, -60 + G, 19 - G, BLACK, na=80), head)
     # the long folded horn sweeping from the crown down to the outer eye
@@ -397,31 +413,50 @@ def build():
         parent(groove(f'groove_{i}', s0, s1, 18 - off, -30 + off * 0.5), head)
 
     # --- back lattice panel (becomes the back plate / tail) -----------------
-    back = empty('back', open_pos=(0, -0.12, -0.42), open_rot=(0.6, 0, 0))
+    back = empty('back', closed_only=True)
     parent(back, root)
     parent(patch('back_shell', 76, 180, 120 + G, 215 - G, BLACK, na=80), back)
     parent(lattice_windows('back_windows'), back)
 
     # --- parts that only exist in the open form -----------------------------
+    # (Blender coords here: x = side (wheel at -x), -y = front, z = up; ground = -1 - OPEN_LIFT)
+    ground = -1.0 - OPEN_LIFT
     extra = empty('open_parts', open_only=True)
     parent(extra, root)
-    # glossy blue core blocks showing through the opened shell (the chest)
-    parent(box('core_block_0', V((0, -0.42, 0.18)), (0.34, 0.2, 0.26), BLUE), extra)
-    parent(box('core_block_1', V((0, -0.38, -0.3)), (0.32, 0.22, 0.2), BLUE), extra)
-    # two short legs with purple claws under the front
-    for s in (-1, 1):
-        parent(cone(f'leg_{s}', V((0.3 * s, -0.25, -0.62)), V((0, -0.2, -1)), 0.42, 0.07, BLACK), extra)
+    # black chest closing the front-lower body under the lifted skull
+    parent(patch('chest', 70, 179, 228, 318, BLACK, radius=0.965, na=50), extra)
+    # glossy blue core slab showing between the crest and the skull
+    parent(box('core_block_0', V((-0.18, -0.5, 0.42)), (0.3, 0.26, 0.26), BLUE), extra)
+    parent(box('core_block_1', V((-0.18, -0.58, -0.08)), (0.3, 0.24, 0.22), BLUE), extra)
+    # two thin legs with purple three-toed feet
+    for s, (lx, ly) in ((-1, (-0.62, -0.42)), (1, (0.55, -0.45))):
+        top_z = -0.55
+        parent(cone(f'leg_{s}', V((lx, ly, ground + 0.12)), V((0, 0, 1)), top_z - ground, 0.075, BLACK, sides=10), extra)
+        parent(box(f'foot_{s}', V((lx, ly - 0.06, ground + 0.06)), (0.08, 0.12, 0.06), PURPLE), extra)
         for c in (-1, 0, 1):
-            parent(cone(f'claw_{s}_{c}', V((0.3 * s + c * 0.05, -0.33, -1.02)), V((c * 0.2, -1, -0.2)), 0.12, 0.03, PURPLE), extra)
-    # purple tail tip behind
-    parent(cone('tail_tip', V((0, 1.05, -0.55)), V((0, 1, 0.25)), 0.55, 0.11, PURPLE), extra)
-    # purple teeth lining the head's jaw edge
+            parent(cone(f'claw_{s}_{c}', V((lx + c * 0.055, ly - 0.17, ground + 0.04)), V((c * 0.25, -1, -0.15)), 0.1, 0.028, PURPLE), extra)
+    # purple teeth lining the skull's jaw edge
     jaw = empty('jaw_teeth', open_only=True)
     parent(jaw, head)
-    for i, a in enumerate(range(80, 178, 9)):
-        p = from_wheel(deg(a), deg(-57), R * 0.98)
-        d = from_wheel(deg(a), deg(-75), R) - from_wheel(deg(a), deg(-57), R)
-        parent(cone(f'jaw_tooth_{i}', p, d, 0.13, 0.04, PURPLE), jaw)
+    for i, a in enumerate(range(80, 178, 8)):
+        p = from_wheel(deg(a), deg(-57.5), R * 0.985)
+        d = from_wheel(deg(a), deg(-80), R) - from_wheel(deg(a), deg(-57.5), R)
+        parent(cone(f'jaw_tooth_{i}', p, d, 0.26, 0.07, PURPLE, sides=4), jaw)
+    # three purple spikes along the top of the skull
+    spikes = empty('skull_spikes', open_only=True)
+    parent(spikes, head)
+    for i, bdeg in enumerate((-8, 6, 18)):
+        p = from_wheel(deg(105 + i * 18), deg(bdeg), R * 0.97)
+        parent(cone(f'skull_spike_{i}', p, p.normalized(), 0.32, 0.08, PURPLE, sides=4), spikes)
+    # black body shell: the opened body stays black except a front window showing the blue core
+    parent(patch('body_shell_a', 62, 179, 62, 322, BLACK, radius=0.95, na=50), extra)
+    parent(patch('body_shell_b', 118, 179, -40, 62, BLACK, radius=0.95, na=30), extra)
+    # foot plate: long segmented tongue lying on the ground in front, serrated purple tip
+    parent(tongue('foot_plate', start=V((-0.1, -0.6, -0.92)), direction=V((-0.12, -1, -0.32)), length=1.35,
+                  w0=0.5, w1=0.36, curl=0.18, segments=7, mat=BLACK, tip=PURPLE, teeth=5), extra)
+    # tail: a long scoop lying behind, curling up, ending in a flat purple blade
+    parent(tongue('tail_scoop', start=V((-0.15, 0.8, -0.85)), direction=V((-0.08, 1, -0.4)), length=1.25,
+                  w0=0.4, w1=0.24, curl=0.3, segments=6, mat=BLACK, tip=PURPLE, teeth=4, scoop=True, blade=True), extra)
 
     return root
 
@@ -622,6 +657,60 @@ def cone(name, base, direction, length, radius, mat, sides=6):
     bpy.context.collection.objects.link(ob)
     me.materials.append(mat)
     return ob
+
+
+def tongue(name, start, direction, length, w0, w1, curl, segments, mat, tip, teeth=0, scoop=False, blade=False):
+    """
+    A long tapered plate (foot plate / tail) lying along `direction` from `start`, made of
+    `segments` bevelled blocks with grooves, curling up by `curl` at the end. A scoop gets
+    raised rims. The tip gets purple serrations (and optionally a flat blade).
+    """
+    d = Vector(direction).normalized()
+    side = Vector((0, 0, 1)).cross(d).normalized()
+    up = Vector((0, 0, 1))
+    obs = []
+    seg_len = length / segments
+    for k in range(segments):
+        f0, f1 = k / segments, (k + 1) / segments
+        def at(f):
+            return start + d * (length * f) + up * (curl * f * f * length)
+        c = (at(f0) + at(f1)) / 2
+        w = w0 + (w1 - w0) * (f0 + f1) / 2
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=2)
+        bmesh.ops.scale(bm, vec=(w, seg_len * 0.495, 0.06), verts=bm.verts)
+        tangent = (at(f1) - at(f0)).normalized()
+        m = Matrix((side, tangent, side.cross(tangent))).transposed()
+        bmesh.ops.transform(bm, matrix=m.to_4x4(), verts=bm.verts)
+        bmesh.ops.translate(bm, verts=bm.verts, vec=c)
+        me = bpy.data.meshes.new(f'{name}_{k}')
+        bm.to_mesh(me)
+        bm.free()
+        ob = bpy.data.objects.new(f'{name}_{k}', me)
+        bpy.context.collection.objects.link(ob)
+        me.materials.append(mat)
+        bev = ob.modifiers.new('bevel', 'BEVEL')
+        bev.width = 0.025
+        bev.segments = 2
+        apply_all(ob)
+        obs.append(ob)
+        if scoop:
+            for s_ in (-1, 1):
+                rim = cone(f'{name}_rim_{k}_{s_}', c + side * s_ * w * 0.95, up, 0.12, 0.06, mat, sides=6)
+                obs.append(rim)
+        # small purple side spikes on later segments
+        if k >= segments // 2:
+            for s_ in (-1, 1):
+                p = c + side * s_ * w
+                obs.append(cone(f'{name}_side_{k}_{s_}', p, side * s_ + d * 0.6 + up * 0.3, 0.13, 0.045, tip, sides=4))
+    end = start + d * length + up * (curl * length)
+    wt = w1
+    for i in range(teeth):
+        x = -wt + 2 * wt * (i + 0.5) / teeth
+        obs.append(cone(f'{name}_tooth_{i}', end + side * x - d * 0.02, d + up * 0.1, 0.16, 0.05, tip, sides=4))
+    if blade:
+        obs.append(cone(f'{name}_blade', end + up * 0.05, d + up * 0.45, 0.7, 0.16, tip, sides=4))
+    return join(name, obs)
 
 
 def eye_mesh(name):
