@@ -24,9 +24,7 @@ from mathutils import Matrix, Quaternion, Vector
 V = Vector
 
 # open ("stand up") pose, three.js space: y up, z front
-OPEN_LIFT = 0.32
-SKULL_POS = (0.02, 0.36, 0.78)
-SKULL_PITCH, SKULL_YAW = -0.55, -0.6
+OPEN_LIFT = 0.35
 
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'models', 'hydranoid', 'ball.glb')
 
@@ -275,6 +273,18 @@ def yaw_then_pitch(yaw, pitch):
     return (e.x, e.y, e.z)
 
 
+def hinge(b_edge, phi, r=0.95):
+    """
+    Open pose that swings a petal by `phi` (radians, about the wheel axis) around a hinge on
+    its edge at azimuth `b_edge` (degrees), so the petal stays attached to the ball.
+    Returns (openPos, openRot) in three.js space (y up, z front).
+    """
+    py, pz = r * math.sin(math.radians(b_edge)), r * math.cos(math.radians(b_edge))
+    c, s = math.cos(phi), math.sin(phi)
+    ry, rz = py * c - pz * s, py * s + pz * c
+    return {'open_pos': (0.0, py - ry, pz - rz), 'open_rot': (phi, 0.0, 0.0)}
+
+
 def parent(child, par):
     child.parent = par
 
@@ -378,7 +388,7 @@ def build():
     parent(segmented_ring('band', 56.8, 65, 22.5, 382.5, 10, 0.45, BLACK), wheel)
 
     # --- crest band with the crystal teeth (becomes the neck crest) ---------
-    crest = empty('crest', open_pos=(0.0, 0.32, 0.05), open_rot=(-0.12, 0, 0))
+    crest = empty('crest')
     parent(crest, root)
     parent(segmented_ring('crest_shell', 65.8, 68, -2, 215, 7, 0.4, BLACK), crest)
     for i, bdeg in enumerate(range(8, 214, 17)):
@@ -389,16 +399,18 @@ def build():
     parent(patch('chin_band', 65.8, 76, 215 + 0.6, 358 - 0.6, BLACK), wheel)
 
     # --- top / shoulder panel between head and crest ------------------------
-    top = empty('top', open_pos=(0, 0.05, -0.12), open_rot=(0.1, 0, 0))
+    top = empty('top')
     parent(top, root)
     parent(patch('top_shell', 76, 180, 19 + G, 119 - G, BLACK, na=80), top)
     # the lower front shell drops forward into a belly / foot plate
-    belly = empty('belly', closed_only=True)
+    # bottom petal swings forward around its front edge into a foot plate
+    belly = empty('belly', **hinge(300, -2.45))
     parent(belly, root)
     parent(patch('bottom_shell', 62, 180, 216 + G, 300 - G, BLACK, na=80), belly)
 
     # --- head panel: front / lower front, eyes and folded horns -------------
-    head = empty('head', open_pos=SKULL_POS, open_rot=yaw_then_pitch(SKULL_YAW, SKULL_PITCH))
+    # head petal swings up and forward around its top edge: the jaw juts out over the core
+    head = empty('head', **hinge(19, -0.8))
     parent(head, root)
     parent(patch('head_shell', 76, 180, -60 + G, 19 - G, BLACK, na=80), head)
     # the long folded horn sweeping from the crown down to the outer eye
@@ -413,7 +425,8 @@ def build():
         parent(groove(f'groove_{i}', s0, s1, 18 - off, -30 + off * 0.5), head)
 
     # --- back lattice panel (becomes the back plate / tail) -----------------
-    back = empty('back', closed_only=True)
+    # back petal swings down and back around its bottom edge into the tail
+    back = empty('back', **hinge(215, -1.45))
     parent(back, root)
     parent(patch('back_shell', 76, 180, 120 + G, 215 - G, BLACK, na=80), back)
     parent(lattice_windows('back_windows'), back)
@@ -423,14 +436,9 @@ def build():
     ground = -1.0 - OPEN_LIFT
     extra = empty('open_parts', open_only=True)
     parent(extra, root)
-    # black chest closing the front-lower body under the lifted skull
-    parent(patch('chest', 70, 179, 228, 318, BLACK, radius=0.965, na=50), extra)
-    # glossy blue core slab showing between the crest and the skull
-    parent(box('core_block_0', V((-0.18, -0.5, 0.42)), (0.3, 0.26, 0.26), BLUE), extra)
-    parent(box('core_block_1', V((-0.18, -0.58, -0.08)), (0.3, 0.24, 0.22), BLUE), extra)
     # two thin legs with purple three-toed feet
-    for s, (lx, ly) in ((-1, (-0.62, -0.42)), (1, (0.55, -0.45))):
-        top_z = -0.55
+    for s, (lx, ly) in ((-1, (-0.5, -0.2)), (1, (0.5, -0.2))):
+        top_z = -0.7
         parent(cone(f'leg_{s}', V((lx, ly, ground + 0.12)), V((0, 0, 1)), top_z - ground, 0.075, BLACK, sides=10), extra)
         parent(box(f'foot_{s}', V((lx, ly - 0.06, ground + 0.06)), (0.08, 0.12, 0.06), PURPLE), extra)
         for c in (-1, 0, 1):
@@ -448,15 +456,21 @@ def build():
     for i, bdeg in enumerate((-8, 6, 18)):
         p = from_wheel(deg(105 + i * 18), deg(bdeg), R * 0.97)
         parent(cone(f'skull_spike_{i}', p, p.normalized(), 0.32, 0.08, PURPLE, sides=4), spikes)
-    # black body shell: the opened body stays black except a front window showing the blue core
-    parent(patch('body_shell_a', 62, 179, 62, 322, BLACK, radius=0.95, na=50), extra)
-    parent(patch('body_shell_b', 118, 179, -40, 62, BLACK, radius=0.95, na=30), extra)
-    # foot plate: long segmented tongue lying on the ground in front, serrated purple tip
-    parent(tongue('foot_plate', start=V((-0.1, -0.6, -0.92)), direction=V((-0.12, -1, -0.32)), length=1.35,
-                  w0=0.5, w1=0.36, curl=0.18, segments=7, mat=BLACK, tip=PURPLE, teeth=5), extra)
-    # tail: a long scoop lying behind, curling up, ending in a flat purple blade
-    parent(tongue('tail_scoop', start=V((-0.15, 0.8, -0.85)), direction=V((-0.08, 1, -0.4)), length=1.25,
-                  w0=0.4, w1=0.24, curl=0.3, segments=6, mat=BLACK, tip=PURPLE, teeth=4, scoop=True, blade=True), extra)
+    # serrated purple tip on the foot plate (far edge of the bottom petal)
+    plate_tips = empty('plate_tips', open_only=True)
+    parent(plate_tips, belly)
+    for i, a in enumerate(range(84, 176, 12)):
+        p = from_wheel(deg(a), deg(217), R * 0.99)
+        d = p - from_wheel(deg(a), deg(232), R)
+        parent(cone(f'plate_tip_{i}', p, d, 0.17, 0.05, PURPLE, sides=4), plate_tips)
+    # tail blade and fins (far edge of the back petal)
+    tail_tips = empty('tail_tips', open_only=True)
+    parent(tail_tips, back)
+    p = from_wheel(deg(128), deg(121), R * 0.97)
+    parent(cone('tail_blade', p, p - from_wheel(deg(128), deg(140), R), 0.7, 0.14, PURPLE, sides=4), tail_tips)
+    for i, a in enumerate((84, 100, 156, 172)):
+        p = from_wheel(deg(a), deg(150), R)
+        parent(cone(f'tail_fin_{i}', p, p.normalized(), 0.18, 0.06, PURPLE, sides=4), tail_tips)
 
     return root
 
