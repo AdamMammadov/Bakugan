@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { useProfiles } from '../profile/useProfiles'
 import type { ElementId } from '../data/elements'
 
-export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit' | 'rankings' | 'clans' | 'encyclopedia'
+export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit' | 'rankings' | 'clans' | 'encyclopedia' | 'admin'
 
 export type PageScreen = 'profile' | 'rankings' | 'clans' | 'encyclopedia'
 const PAGES: PageScreen[] = ['profile', 'rankings', 'clans', 'encyclopedia']
@@ -31,6 +31,9 @@ interface GameState {
   compareForm: number
   arena: ArenaSetup | null
   muted: boolean
+  /** Background music on/off (sound effects stay). */
+  music: boolean
+  toggleMusic: () => void
   /** Profile being edited; null while creating a new one. */
   editProfileId: string | null
   /** Where the profile editor/screen returns to. */
@@ -55,6 +58,8 @@ export const useGame = create<GameState>((set) => ({
   compareForm: 0,
   arena: null,
   muted: false,
+  music: true,
+  toggleMusic: () => set((s) => ({ music: !s.music })),
   editProfileId: null,
   back: 'wheel',
   go: (screen) => set({ screen }),

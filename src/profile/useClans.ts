@@ -87,7 +87,12 @@ export const useClans = create<ClansState>()(
           ),
         })),
     }),
-    { name: 'bakugan-clans', version: 1 },
+    {
+      name: 'bakugan-clans',
+      version: 2,
+      // cleared together with the profiles their members belonged to
+      migrate: (state, version) => (version < 2 ? { clans: [] } : (state as { clans: Clan[] })),
+    },
   ),
 )
 

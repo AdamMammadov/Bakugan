@@ -35,6 +35,10 @@ export interface Character {
   element: ElementId
   bakugan: string
   parts: AvatarParts
+  /** Portrait rendered from the character's game model, when we have one. */
+  image?: string
+  /** 3D model (arms split off at the shoulders as `armL` / `armR`) used on the battlefield. */
+  model?: string
 }
 
 export const CHARACTERS: Character[] = [
@@ -43,6 +47,8 @@ export const CHARACTERS: Character[] = [
     name: 'Dan Kuso',
     element: 'pyrus',
     bakugan: 'Drago',
+    image: 'characters/dan.webp',
+    model: 'models/brawlers/dan.glb',
     parts: { skin: '#f6cfae', hair: 'spiky', hairColor: '#4a2a1a', eyes: 'bright', eyeColor: '#5a3220', outfit: '#c8262b', accessory: 'none' },
   },
   {
@@ -85,6 +91,8 @@ export const CHARACTERS: Character[] = [
     name: 'Masquerade',
     element: 'darkus',
     bakugan: 'Hydranoid',
+    image: 'characters/masquerade.webp',
+    model: 'models/brawlers/masquerade.glb',
     parts: { skin: '#ffe0c7', hair: 'swept', hairColor: '#f3e6a0', eyes: 'sharp', eyeColor: '#2a62c8', outfit: '#e8e8f0', accessory: 'mask' },
   },
 ]

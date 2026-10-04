@@ -1,4 +1,6 @@
-import { useTexture } from '@react-three/drei'
+import { useGLTF, useTexture } from '@react-three/drei'
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
+import { asset } from '../asset'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
@@ -19,12 +21,21 @@ interface Props {
   photo?: string
   color: string
   gesture: { kind: BrawlerGesture; key: number }
+  /** Game model of a series character; replaces the drawn body when given. */
+  model?: string
+}
+
+/** Arm angles and body lean the current gesture asks for (procedural body convention). */
+interface PoseState {
+  r: number
+  l: number
 }
 
 const PANTS = '#23262f'
 
 /** A brawler standing on the field: holds up the ability card, points, cheers. */
-export function Brawler({ parts, photo, color, gesture }: Props) {
+export function Brawler({ parts, photo, color, gesture, model }: Props) {
+  const pose = useRef<PoseState>({ r: -0.08, l: 0.08 })
   const root = useRef<THREE.Group>(null)
   const armR = useRef<THREE.Group>(null)
   const armL = useRef<THREE.Group>(null)
@@ -63,6 +74,8 @@ export function Brawler({ parts, photo, color, gesture }: Props) {
       nod = 0.45
       lean = 0.15
     }
+    pose.current.r = THREE.MathUtils.lerp(pose.current.r, r, 0.25)
+    pose.current.l = THREE.MathUtils.lerp(pose.current.l, l, 0.25)
     const breathe = Math.sin(now * 2.2) * 0.012
     if (armR.current) armR.current.rotation.x = THREE.MathUtils.lerp(armR.current.rotation.x, r, 0.25)
     if (armL.current) armL.current.rotation.x = THREE.MathUtils.lerp(armL.current.rotation.x, l, 0.25)
@@ -76,6 +89,14 @@ export function Brawler({ parts, photo, color, gesture }: Props) {
       card.current.rotation.y = now * 3
     }
   })
+
+  if (model) {
+    return (
+      <group ref={root}>
+        <ModelBody url={model} pose={pose} color={color} cardRef={card} />
+      </group>
+    )
+  }
 
   return (
     <group ref={root}>
@@ -141,6 +162,55 @@ export function Brawler({ parts, photo, color, gesture }: Props) {
 
     </group>
   )
+}
+
+/** A series character's game model; its arms hang from the shoulders and follow the gesture. */
+function ModelBody({
+  url,
+  pose,
+  color,
+  cardRef,
+}: {
+  url: string
+  pose: React.RefObject<PoseState>
+  color: string
+  cardRef: React.RefObject<THREE.Mesh | null>
+}) {
+  const { scene } = useGLTF(asset(url))
+  const body = useMemo(() => {
+    const c = cloneSkinned(scene)
+    c.traverse((o) => {
+      o.castShadow = true
+    })
+    return c
+  }, [scene])
+  const armR = useMemo(() => body.getObjectByName('armR') ?? null, [body])
+  const armL = useMemo(() => body.getObjectByName('armL') ?? null, [body])
+
+  useFrame(() => {
+    const { r, l } = pose.current
+    // arms point sideways in the model: -1.25 hangs them down, positive lifts them overhead
+    if (armR) armR.rotation.z = -1.25 + (-r / 2.9) * 2.45
+    if (armL) armL.rotation.z = 1.25 - (-l / 2.9) * 2.45
+  })
+
+  // the ability card sits in the right hand
+  useEffect(() => {
+    if (!armR) return
+    const card = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 0.34, 0.01),
+      new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2.2, toneMapped: false }),
+    )
+    card.position.set(0.34, 0, 0)
+    card.visible = false
+    armR.add(card)
+    cardRef.current = card
+    return () => {
+      armR.remove(card)
+    }
+  }, [armR, color, cardRef])
+
+  return <primitive object={body} />
 }
 
 function Face({ parts }: { parts: AvatarParts }) {

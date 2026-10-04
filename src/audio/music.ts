@@ -1,0 +1,175 @@
+import { useGame } from '../store/useGame'
+import { audio } from './sfx'
+
+/**
+ * Background music, synthesised live with WebAudio (no files to download): a calm theme for
+ * the menus and a driving one for battles. It ducks while the brawlers are talking.
+ */
+export type Track = 'menu' | 'battle'
+
+interface Song {
+  bpm: number
+  /** Chord roots as MIDI notes, one per bar, with minor/major quality. */
+  chords: [number, 'min' | 'maj'][]
+  kick: number[]
+  snare: number[]
+  hat: number[]
+  /** Bass pattern: step → interval above the chord root (in octaves below). */
+  bass: Record<number, number>
+  /** Arpeggio steps (16th notes) playing chord tones; empty for none. */
+  arp: number[]
+  pad: boolean
+  lead?: Record<number, number>
+}
+
+const SONGS: Record<Track, Song> = {
+  menu: {
+    bpm: 88,
+    chords: [
+      [57, 'min'],
+      [53, 'maj'],
+      [48, 'maj'],
+      [55, 'maj'],
+    ],
+    kick: [0, 8],
+    snare: [],
+    hat: [2, 6, 10, 14],
+    bass: { 0: 0, 6: 0, 8: 7, 12: 0 },
+    arp: [0, 2, 4, 6, 8, 10, 12, 14],
+    pad: true,
+  },
+  battle: {
+    bpm: 138,
+    chords: [
+      [50, 'min'],
+      [46, 'maj'],
+      [48, 'maj'],
+      [45, 'maj'],
+    ],
+    kick: [0, 4, 8, 12],
+    snare: [4, 12],
+    hat: [0, 2, 4, 6, 8, 10, 12, 14, 15],
+    bass: { 0: 0, 2: 0, 3: 12, 4: 0, 6: 0, 8: 0, 10: 7, 11: 0, 12: 0, 14: 12 },
+    arp: [],
+    pad: true,
+    lead: { 0: 7, 3: 10, 6: 12, 8: 10, 10: 7, 14: 5 },
+  },
+}
+
+const LOOKAHEAD = 0.12
+const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12)
+const triad = (root: number, q: 'min' | 'maj') => [root, root + (q === 'min' ? 3 : 4), root + 7]
+
+let current: Track | null = null
+let bus: GainNode | null = null
+let timer = 0
+let step = 0
+let nextTime = 0
+
+function out(): GainNode {
+  const a = audio()
+  if (!bus) {
+    bus = a.createGain()
+    bus.gain.value = 0
+    const comp = a.createDynamicsCompressor()
+    bus.connect(comp).connect(a.destination)
+  }
+  return bus
+}
+
+function voice(type: OscillatorType, freq: number, at: number, dur: number, gain: number, cutoff = 4000, attack = 0.01) {
+  const a = audio()
+  const osc = a.createOscillator()
+  const f = a.createBiquadFilter()
+  const g = a.createGain()
+  osc.type = type
+  osc.frequency.value = freq
+  f.type = 'lowpass'
+  f.frequency.value = cutoff
+  g.gain.setValueAtTime(0.0001, at)
+  g.gain.exponentialRampToValueAtTime(gain, at + attack)
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur)
+  osc.connect(f).connect(g).connect(out())
+  osc.start(at)
+  osc.stop(at + dur + 0.05)
+}
+
+function drum(kind: 'kick' | 'snare' | 'hat', at: number) {
+  const a = audio()
+  if (kind === 'kick') {
+    const osc = a.createOscillator()
+    const g = a.createGain()
+    osc.frequency.setValueAtTime(140, at)
+    osc.frequency.exponentialRampToValueAtTime(40, at + 0.18)
+    g.gain.setValueAtTime(0.9, at)
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.25)
+    osc.connect(g).connect(out())
+    osc.start(at)
+    osc.stop(at + 0.3)
+    return
+  }
+  const len = kind === 'snare' ? 0.18 : 0.05
+  const buf = a.createBuffer(1, Math.ceil(a.sampleRate * len), a.sampleRate)
+  const d = buf.getChannelData(0)
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+  const src = a.createBufferSource()
+  src.buffer = buf
+  const f = a.createBiquadFilter()
+  f.type = kind === 'snare' ? 'bandpass' : 'highpass'
+  f.frequency.value = kind === 'snare' ? 1800 : 7000
+  const g = a.createGain()
+  g.gain.setValueAtTime(kind === 'snare' ? 0.5 : 0.18, at)
+  g.gain.exponentialRampToValueAtTime(0.0001, at + len)
+  src.connect(f).connect(g).connect(out())
+  src.start(at)
+}
+
+function schedule(song: Song, s: number, at: number) {
+  const sixteenth = 60 / song.bpm / 4
+  const bar = Math.floor(s / 16) % song.chords.length
+  const i = s % 16
+  const [root, q] = song.chords[bar]
+  const notes = triad(root, q)
+  if (song.kick.includes(i)) drum('kick', at)
+  if (song.snare.includes(i)) drum('snare', at)
+  if (song.hat.includes(i)) drum('hat', at)
+  if (i in song.bass) voice('sawtooth', midi(root - 24 + song.bass[i]), at, sixteenth * 1.8, 0.22, 600)
+  if (song.pad && i === 0) notes.forEach((n) => voice('sawtooth', midi(n), at, sixteenth * 16, 0.045, 1400, 0.6))
+  if (song.arp.includes(i)) voice('triangle', midi(notes[(i / 2) % 3] + 12), at, sixteenth * 1.6, 0.07, 3000)
+  if (song.lead && i in song.lead && bar % 2 === 1) voice('square', midi(root + 12 + song.lead[i]), at, sixteenth * 1.5, 0.05, 2400)
+}
+
+function speaking() {
+  return typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking
+}
+
+function tick() {
+  const song = current && SONGS[current]
+  if (!song) return
+  const a = audio()
+  const sixteenth = 60 / song.bpm / 4
+  while (nextTime < a.currentTime + LOOKAHEAD) {
+    schedule(song, step, nextTime)
+    nextTime += sixteenth
+    step++
+  }
+  // music level: off when muted, quieter while someone is talking
+  const muted = useGame.getState().muted || !useGame.getState().music
+  const level = muted ? 0 : speaking() ? 0.12 : 0.32
+  out().gain.setTargetAtTime(level, a.currentTime, 0.25)
+}
+
+/** Switches the background track (null stops the music). */
+export function playMusic(track: Track | null) {
+  if (track === current) return
+  current = track
+  clearInterval(timer)
+  if (!track) {
+    if (bus) bus.gain.setTargetAtTime(0, audio().currentTime, 0.3)
+    return
+  }
+  step = 0
+  nextTime = audio().currentTime + 0.1
+  timer = window.setInterval(tick, 40)
+  tick()
+}

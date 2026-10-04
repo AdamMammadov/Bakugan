@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { asset } from '../asset'
 import { playSfx, unlockAudio } from '../audio/sfx'
+import { useProfiles } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 
 export function IntroScreen() {
@@ -11,7 +12,10 @@ export function IntroScreen() {
     const start = () => {
       unlockAudio()
       playSfx('start')
-      go('wheel')
+      // returning players go straight to their attribute's main page
+      const profile = useProfiles.getState().profiles.find((p) => p.id === useProfiles.getState().activeId)
+      if (profile) useGame.setState({ element: profile.element, screen: 'hub' })
+      else go('wheel')
     }
     window.addEventListener('keydown', start)
     window.addEventListener('pointerdown', start)

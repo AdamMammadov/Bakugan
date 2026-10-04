@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { Avatar, AvatarDrawing } from '../components/Avatar'
+import { Avatar, AvatarDrawing, CharacterPortrait } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { BAKUGAN } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
@@ -149,7 +149,7 @@ export function ProfileEditor() {
                     style={{ borderColor: on ? el.color : 'rgba(255,255,255,0.08)' }}
                   >
                     <div className="h-16 w-16 overflow-hidden rounded-full">
-                      <AvatarDrawing parts={c.parts} color={el.color} />
+                      {c.image ? <CharacterPortrait src={c.image} color={el.color} /> : <AvatarDrawing parts={c.parts} color={el.color} />}
                     </div>
                     <span className="mt-1 text-center text-xs leading-tight font-semibold">{c.name}</span>
                     <span className="text-[10px] text-white/40">

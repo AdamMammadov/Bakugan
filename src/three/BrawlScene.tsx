@@ -14,15 +14,17 @@ import { moveFor, type Pose } from './pose'
 
 export type Phase = 'ball' | 'gate' | 'brawling' | 'monster'
 
-const BALL_REST = new THREE.Vector3(0, 0.5, 2.6)
+const BALL_REST = new THREE.Vector3(0, 0.5, 3.4)
+/** Gate Card size in the viewer (the card model is 2.2 × 3). */
+const GATE_SCALE = 3.2
 const CARD_CENTER = new THREE.Vector3(0, 0.5, 0)
 
 /** How much bigger the monster form is than in the old 30–40 cm scale: ~9 m next to a 1 m ball. */
 export const MONSTER_SCALE = 4
 
 const CAMERA = {
-  ball: { pos: new THREE.Vector3(0, 1.4, 5), target: new THREE.Vector3(0, 0.5, 2.6) },
-  gate: { pos: new THREE.Vector3(0, 4.5, 8), target: new THREE.Vector3(0, 0.3, 1) },
+  ball: { pos: new THREE.Vector3(0, 1.4, 5.8), target: new THREE.Vector3(0, 0.5, 3.4) },
+  gate: { pos: new THREE.Vector3(0, 10, 15), target: new THREE.Vector3(0, 0.3, 0.8) },
   monster: { pos: new THREE.Vector3(15, 9, 28), target: new THREE.Vector3(0, 5.6, 0) },
 }
 
@@ -58,7 +60,12 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
       <Sparkles count={160} scale={[30, 14, 30]} position={[0, 6, 0]} size={3} speed={0.3} color={element.glow} />
 
       <Suspense fallback={null}>
-        {phase !== 'ball' && <GateCard icon={element.icon} color={element.color} />}
+        {phase !== 'ball' && (
+          // the field card is big enough for a ~9 m Bakugan to stand on
+          <group scale={GATE_SCALE}>
+            <GateCard icon={element.icon} color={element.color} />
+          </group>
+        )}
       </Suspense>
 
       <BallActor bakugan={bakugan} ballOpen={ballOpen} phase={phase} brawlStart={brawlStart} />

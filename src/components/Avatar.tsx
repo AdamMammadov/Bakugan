@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { asset } from '../asset'
 import { CHARACTER_BY_ID, DEFAULT_PARTS, type Avatar as AvatarValue, type AvatarParts } from '../profile/avatar'
 
 /** A player's picture: an uploaded photo or a drawn character. */
@@ -7,10 +8,20 @@ export function Avatar({ avatar, color = '#9aa3b5', size = 96 }: { avatar: Avata
   if (avatar.kind === 'photo') {
     return <img src={avatar.dataUrl} alt="" className="shrink-0 rounded-full border-2 object-cover" style={style} />
   }
-  const parts = avatar.kind === 'custom' ? avatar.parts : (CHARACTER_BY_ID[avatar.id]?.parts ?? DEFAULT_PARTS)
+  const character = avatar.kind === 'preset' ? CHARACTER_BY_ID[avatar.id] : undefined
+  const parts = avatar.kind === 'custom' ? avatar.parts : (character?.parts ?? DEFAULT_PARTS)
   return (
     <div className="shrink-0 overflow-hidden rounded-full border-2" style={style}>
-      <AvatarDrawing parts={parts} color={color} />
+      {character?.image ? <CharacterPortrait src={character.image} color={color} /> : <AvatarDrawing parts={parts} color={color} />}
+    </div>
+  )
+}
+
+/** A series character's portrait (rendered from their game model) on an attribute-coloured glow. */
+export function CharacterPortrait({ src, color }: { src: string; color: string }) {
+  return (
+    <div className="h-full w-full" style={{ background: `radial-gradient(circle at 50% 35%, ${color}d9, #07080d 75%)` }}>
+      <img src={asset(src)} alt="" className="h-full w-full object-cover" draggable={false} />
     </div>
   )
 }

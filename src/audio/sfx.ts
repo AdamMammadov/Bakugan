@@ -11,7 +11,7 @@ export type SfxName = 'tick' | 'select' | 'start' | 'gateCard' | 'brawl' | 'abil
 let ctx: AudioContext | null = null
 const files = new Map<SfxName, Howl | null>()
 
-function audio(): AudioContext {
+export function audio(): AudioContext {
   ctx ??= new AudioContext()
   if (ctx.state === 'suspended') void ctx.resume()
   return ctx
@@ -123,11 +123,31 @@ export function playSfx(name: SfxName) {
  */
 export function shout(text: string, side: 0 | 1 = 0) {
   if (useGame.getState().muted || typeof speechSynthesis === 'undefined') return
-  speechSynthesis.cancel()
+  // brawlers take turns talking: calls queue up instead of cutting each other off
   const u = new SpeechSynthesisUtterance(text)
   u.lang = 'en-US'
-  u.rate = 1.12
+  u.rate = 1.08
   u.pitch = side === 0 ? 1.25 : 0.75
-  u.volume = 0.9
+  u.volume = 1
   speechSynthesis.speak(u)
+}
+
+const speaking = () => typeof speechSynthesis !== 'undefined' && (speechSynthesis.speaking || speechSynthesis.pending)
+
+/** Runs `fn` once the brawlers have finished talking (or after `maxMs` at the latest). */
+export function afterSpeech(fn: () => void, maxMs = 4000, minMs = 0): () => void {
+  const start = performance.now()
+  let timer = 0
+  const tick = () => {
+    const t = performance.now() - start
+    if (t >= maxMs || (t >= minMs && !speaking())) fn()
+    else timer = window.setTimeout(tick, 120)
+  }
+  timer = window.setTimeout(tick, Math.min(minMs, 150))
+  return () => clearTimeout(timer)
+}
+
+/** Stops every queued call, e.g. when leaving the arena. */
+export function hush() {
+  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
 }

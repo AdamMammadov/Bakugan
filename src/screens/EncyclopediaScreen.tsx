@@ -43,13 +43,7 @@ export function EncyclopediaScreen() {
     >
       <PageNav current="encyclopedia" />
       <h1 className="font-display mt-8 text-4xl font-black tracking-wider">ENCYCLOPEDIA</h1>
-      <p className="mt-1 text-white/50">
-        Every Bakugan, every card and every rule. Card data:{' '}
-        <a href="https://bakuproject.info/cards" target="_blank" rel="noreferrer" className="underline hover:text-white">
-          BakuProject
-        </a>
-        .
-      </p>
+      <p className="mt-1 text-white/50">Every Bakugan, every card and every rule.</p>
 
       <div className="mt-6 flex gap-2">
         {(
@@ -299,7 +293,7 @@ function CardModal({ card, onClose }: { card: DbCard; onClose: () => void }) {
             </div>
           ))}
         </div>
-        {card.pending && <p className="mt-4 text-sm text-white/45">Not released in BakuProject yet.</p>}
+        {card.pending && <p className="mt-4 text-sm text-white/45">Not released yet.</p>}
       </motion.div>
     </motion.div>
   )

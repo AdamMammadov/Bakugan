@@ -262,20 +262,9 @@ export const useProfiles = create<ProfilesState>()(
     }),
     {
       name: 'bakugan-profiles',
-      version: 2,
-      // v1 profiles had no currency, player XP or rating yet
-      migrate: (state, version) => {
-        const s = state as { profiles: Profile[]; activeId: string | null }
-        if (version < 2) {
-          s.profiles = s.profiles.map((p) => ({
-            ...p,
-            bp: p.bp ?? 0,
-            xp: p.xp ?? p.collection.reduce((n, o) => n + o.xp, 0),
-            rating: p.rating ?? p.stats.wins * RATING.win,
-          }))
-        }
-        return s
-      },
+      version: 3,
+      // v3 (new economy and rules): every earlier test profile is cleared so everyone starts from zero
+      migrate: (state, version) => (version < 3 ? { profiles: [], activeId: null } : (state as { profiles: Profile[]; activeId: string | null })),
     },
   ),
 )

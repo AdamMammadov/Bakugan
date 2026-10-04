@@ -16,12 +16,12 @@ import type { AvatarParts } from '../profile/avatar'
 import { LightPillar } from './LightPillar'
 import { env, moveFor, type Pose } from './pose'
 
-export const FIGHTER_X = 14
+export const FIGHTER_X = 17
 /** Bakugan tower over the field: about 21 units, so a brawler (≈4 units) reaches their ankles. */
 const FIGHTER_SCALE = 7
 /** Brawler size: a 1.75 m person next to an ~8.5 m Bakugan. */
 const BRAWLER_SCALE = 2.45
-const BRAWLER_X = FIGHTER_X + 6
+const BRAWLER_X = FIGHTER_X + 5
 const BRAWLER_Z = 10
 /** Hip position along the model's length (model units), used as the pivot for rearing up. */
 const HIP_Z = -1.1
@@ -43,6 +43,7 @@ interface Props {
 export interface BrawlerInfo {
   parts: AvatarParts
   photo?: string
+  model?: string
   gesture: { kind: BrawlerGesture; key: number }
 }
 
@@ -82,7 +83,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
       <Sparkles count={300} scale={[70, 28, 44]} position={[0, 11, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
 
       {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={17}>
+      <group rotation={[0, Math.PI / 2, 0]} scale={27}>
         <Suspense fallback={null}>
           <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} />
         </Suspense>
@@ -108,7 +109,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
           scale={BRAWLER_SCALE}
         >
           <Suspense fallback={null}>
-            <Brawler parts={b.parts} photo={b.photo} gesture={b.gesture} color={ELEMENT_BY_ID[fighters[i].bakugan.element].color} />
+            <Brawler parts={b.parts} photo={b.photo} model={b.model} gesture={b.gesture} color={ELEMENT_BY_ID[fighters[i].bakugan.element].color} />
           </Suspense>
         </group>
       ))}
