@@ -5,6 +5,7 @@ const TABS: [PageScreen, string][] = [
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
+  ['characters', 'CHARACTERS'],
 ]
 
 /** Back button plus tabs between the player pages. */
@@ -12,7 +13,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   const back = useGame((s) => s.back)
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
-  const target = ['profile', 'rankings', 'clans', 'encyclopedia', 'profileEdit'].includes(back) ? 'hub' : back
+  const target = ['profile', 'rankings', 'clans', 'encyclopedia', 'characters', 'profileEdit'].includes(back) ? 'hub' : back
   return (
     <div className="flex items-center justify-between gap-6">
       <div className="flex items-center gap-8">

@@ -61,20 +61,36 @@ const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12)
 const triad = (root: number, q: 'min' | 'maj') => [root, root + (q === 'min' ? 3 : 4), root + 7]
 
 let current: Track | null = null
+/** Each track plays into its own bus, so the old one can fade out cleanly when the track changes. */
 let bus: GainNode | null = null
+let master: DynamicsCompressorNode | null = null
 let timer = 0
 let step = 0
 let nextTime = 0
 
 function out(): GainNode {
   const a = audio()
+  if (!master) {
+    master = a.createDynamicsCompressor()
+    master.connect(a.destination)
+  }
   if (!bus) {
     bus = a.createGain()
     bus.gain.value = 0
-    const comp = a.createDynamicsCompressor()
-    bus.connect(comp).connect(a.destination)
+    bus.connect(master)
   }
   return bus
+}
+
+/** Fades the current bus out and drops it, together with every note already scheduled on it. */
+function retireBus() {
+  if (!bus) return
+  const old = bus
+  bus = null
+  const a = audio()
+  old.gain.cancelScheduledValues(a.currentTime)
+  old.gain.setTargetAtTime(0, a.currentTime, 0.15)
+  window.setTimeout(() => old.disconnect(), 1500)
 }
 
 function voice(type: OscillatorType, freq: number, at: number, dur: number, gain: number, cutoff = 4000, attack = 0.01) {
@@ -164,10 +180,8 @@ export function playMusic(track: Track | null) {
   if (track === current) return
   current = track
   clearInterval(timer)
-  if (!track) {
-    if (bus) bus.gain.setTargetAtTime(0, audio().currentTime, 0.3)
-    return
-  }
+  retireBus()
+  if (!track) return
   step = 0
   nextTime = audio().currentTime + 0.1
   timer = window.setInterval(tick, 40)

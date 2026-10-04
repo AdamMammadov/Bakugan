@@ -19,10 +19,10 @@ import { env, moveFor, type Pose } from './pose'
 export const FIGHTER_X = 17
 /** Bakugan tower over the field: about 21 units, so a brawler (≈4 units) reaches their ankles. */
 const FIGHTER_SCALE = 7
-/** Brawler size: a 1.75 m person next to an ~8.5 m Bakugan. */
-const BRAWLER_SCALE = 2.45
+/** Brawler size: a little larger than true scale so they read clearly next to the Bakugan. */
+const BRAWLER_SCALE = 3.6
 const BRAWLER_X = FIGHTER_X + 5
-const BRAWLER_Z = 10
+const BRAWLER_Z = 12
 /** Hip position along the model's length (model units), used as the pivot for rearing up. */
 const HIP_Z = -1.1
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */

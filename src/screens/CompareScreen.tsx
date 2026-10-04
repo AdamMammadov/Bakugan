@@ -55,26 +55,27 @@ export function CompareScreen() {
 
   const profile = useActiveProfile()
   const setTeam = useProfiles((s) => s.setTeam)
-  // with a profile you brawl with your own collection (ranked: earns XP); free play uses any Bakugan
+  // a player always brawls with their own collection; ranked earns rewards, free play is practice.
+  // Without a profile (guest) any Bakugan can be picked.
   const [ranked, setRanked] = useState(profile !== null)
   const [free, setFree] = useState<Entrant[]>(() => fillTeam([{ bakugan: mine, form: compareForm }]))
   const [own, setOwn] = useState<Entrant[]>(() => (profile ? fillOwn(teamEntrants(profile), profile.collection) : []))
-  const left = ranked && profile ? own : free
+  const left = profile ? own : free
   // the system always picks the opponent, on the player's level; nobody chooses their rival's forms
   const [right, setRight] = useState<Entrant[]>(() => matchedOpponent(left))
   const tier = profile ? tierOf(rankScore(profile)).index : 0
   const bot = botCharacter(right[0].bakugan.element)
 
   const setLeft = (team: Entrant[]) => {
-    if (ranked && profile) setOwn(team)
+    if (profile) setOwn(team)
     else setFree(team)
     setRight(matchedOpponent(team))
   }
 
   function brawl() {
     playSfx('brawl')
-    const pack = (team: Entrant[]) => team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards }))
-    if (ranked && profile) setTeam(own.map((e) => e.bakugan.id))
+    const pack = (team: Entrant[]) => team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards, bonusG: e.bonusG }))
+    if (profile) setTeam(own.map((e) => e.bakugan.id))
     enterArena({
       left: pack(left),
       right: pack(right),
@@ -112,14 +113,14 @@ export function CompareScreen() {
             </span>{' '}
             {ranked
               ? `— ranked brawl with your own Bakugan against a ${TIERS[tier].name}-level bot. Wins earn XP, Battle Points and rating.`
-              : '— free play: any team of three, no rewards.'}
+              : '— free play: practise with your own Bakugan, no rewards.'}
           </p>
           {(['ranked', 'free'] as const).map((m) => (
             <button
               key={m}
               onClick={() => {
                 setRanked(m === 'ranked')
-                setRight(matchedOpponent(m === 'ranked' ? own : free))
+                setRight(matchedOpponent(own))
               }}
               className="font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition"
               style={{
@@ -134,7 +135,7 @@ export function CompareScreen() {
       )}
 
       <div className="mt-8 grid grid-cols-[1fr_auto_1fr] items-start gap-8">
-        <TeamCard team={left} onChange={setLeft} label="YOUR TEAM" owned={ranked && profile ? profile.collection : undefined} />
+        <TeamCard team={left} onChange={setLeft} label="YOUR TEAM" owned={profile ? profile.collection : undefined} />
         <div className="font-display mt-40 text-5xl font-black text-white/30 italic">VS</div>
         <TeamCard
           team={right}
@@ -182,7 +183,8 @@ function TeamCard({
   const [slot, setSlot] = useState(0)
   const current = team[slot]
   const element = ELEMENT_BY_ID[current.bakugan.element]
-  const total = team.reduce((sum, e) => sum + formBrawlG(e), 0)
+  const power = (e: Entrant) => formBrawlG(e) + (e.bonusG ?? 0)
+  const total = team.reduce((sum, e) => sum + power(e), 0)
 
   const ownedOf = (id: string) => owned?.find((o) => o.id === id)
   const replace = (pick: Entrant) => {
@@ -235,7 +237,10 @@ function TeamCard({
               </span>
               <img src={el.icon} alt="" className="h-12 w-12" style={{ filter: `drop-shadow(0 0 10px ${el.glow})` }} />
               <span className="font-display mt-1 text-sm leading-tight font-bold">{formOf(e).name}</span>
-              <span className="text-xs text-white/50">{formBrawlG(e)}G</span>
+              <span className="text-xs text-white/50">
+                {power(e)}G
+                {e.bonusG ? <span className="text-white/35"> ({e.bonusG > 0 ? '+' : ''}{e.bonusG} level match)</span> : null}
+              </span>
             </button>
           )
         })}

@@ -99,7 +99,7 @@ function makeSide(team: Entrant[], gates: GateCard[], rng: () => number): Side {
       form: e.form,
       name: formOf(e).name,
       hp: MAX_HP,
-      g: formBrawlG(e),
+      g: formBrawlG(e) + (e.bonusG ?? 0),
       shield: false,
     }),
   )
@@ -344,33 +344,20 @@ export function randomTeam(size = TEAM_SIZE, exclude: string[] = [], rng: () => 
   return picks.map((bakugan) => ({ bakugan, form: Math.floor(rng() * Math.min(2, bakugan.evolutions.length)) }))
 }
 
-const teamPower = (team: Entrant[]) => team.reduce((n, e) => n + formBrawlG(e), 0)
-
 /**
- * An opponent on the player's level: same number of Bakugan, the same forms slot by slot and
- * the same number of ability cards, picked so the total G-Power is as close as possible.
+ * An opponent on the player's level: as many Bakugan as the player brings, any attribute,
+ * the same forms and the same number of ability cards. Bakugan differ in base power, so
+ * each opponent gets a G adjustment that puts it level with the player's Bakugan in that slot.
  */
 export function matchedOpponent(player: Entrant[], rng: () => number = Math.random): Entrant[] {
-  const target = teamPower(player)
-  let best: Entrant[] = []
-  let gap = Infinity
-  for (let tries = 0; tries < 30; tries++) {
-    const team = shuffle(BAKUGAN, rng)
-      .slice(0, player.length)
-      .map((bakugan, i): Entrant => {
-        const mine = player[i]
-        const cards = mine.cards?.length ?? mine.bakugan.abilities.length
-        return {
-          bakugan,
-          form: Math.min(mine.form, bakugan.evolutions.length - 1),
-          cards: bakugan.abilities.slice(0, cards).map((a) => a.id),
-        }
-      })
-    const d = Math.abs(teamPower(team) - target)
-    if (d < gap) {
-      gap = d
-      best = team
-    }
-  }
-  return best
+  const mine = new Set(player.map((e) => e.bakugan.id))
+  const others = BAKUGAN.filter((b) => !mine.has(b.id))
+  const pool = shuffle(others.length >= player.length ? others : BAKUGAN, rng)
+  return player.map((slot, i): Entrant => {
+    const bakugan = pool[i % pool.length]
+    const form = Math.min(slot.form, bakugan.evolutions.length - 1)
+    const cards = slot.cards?.length ?? slot.bakugan.abilities.length
+    const entrant: Entrant = { bakugan, form, cards: bakugan.abilities.slice(0, cards).map((a) => a.id) }
+    return { ...entrant, bonusG: formBrawlG(slot) + (slot.bonusG ?? 0) - formBrawlG(entrant) }
+  })
 }

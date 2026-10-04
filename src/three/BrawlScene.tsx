@@ -89,10 +89,12 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
         </group>
       )}
 
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={40} blur={2.5} far={12} />
+      {/* remounted per phase: a fresh shadow buffer, so a monster that left the field leaves no ghost */}
+      <ContactShadows key={phase} position={[0, 0.001, 0]} opacity={0.6} scale={40} blur={2.5} far={12} />
       <CameraRig phase={phase} />
 
-      <EffectComposer multisampling={0}>
+      {/* fresh post-processing buffers per phase, so nothing of a departed monster lingers */}
+      <EffectComposer key={phase} multisampling={0}>
         <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
         <Vignette offset={0.25} darkness={0.75} />
       </EffectComposer>

@@ -181,6 +181,15 @@ function ModelBody({
     const c = cloneSkinned(scene)
     c.traverse((o) => {
       o.castShadow = true
+      // eyes and mouths of the Wii models sit just behind the face skin; draw them in front
+      const m = o as THREE.Mesh
+      if (m.isMesh && o.name.startsWith('face')) {
+        const mat = (m.material as THREE.Material).clone()
+        mat.polygonOffset = true
+        mat.polygonOffsetFactor = -40
+        mat.polygonOffsetUnits = -400
+        m.material = mat
+      }
     })
     return c
   }, [scene])
@@ -196,19 +205,21 @@ function ModelBody({
 
   // the ability card sits in the right hand
   useEffect(() => {
-    if (!armR) return
+    // models without separate arms hold the card up above their head instead
+    const holder = armR ?? body
     const card = new THREE.Mesh(
       new THREE.BoxGeometry(0.24, 0.34, 0.01),
       new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2.2, toneMapped: false }),
     )
-    card.position.set(0.34, 0, 0)
+    if (armR) card.position.set(0.34, 0, 0)
+    else card.position.set(0.12, 2.05, 0.15)
     card.visible = false
-    armR.add(card)
+    holder.add(card)
     cardRef.current = card
     return () => {
-      armR.remove(card)
+      holder.remove(card)
     }
-  }, [armR, color, cardRef])
+  }, [armR, body, color, cardRef])
 
   return <primitive object={body} />
 }

@@ -44,7 +44,7 @@ const TYPE_ICON: Record<Ability['type'], string> = {
 }
 
 const toTeam = (members: TeamMember[]): Entrant[] =>
-  members.map((m) => ({ bakugan: BAKUGAN.find((b) => b.id === m.id)!, form: m.form, cards: m.cards }))
+  members.map((m) => ({ bakugan: BAKUGAN.find((b) => b.id === m.id)!, form: m.form, cards: m.cards, bonusG: m.bonusG }))
 
 const actives = (s: BattleState): [number, number] => [s.sides[0].active, s.sides[1].active]
 

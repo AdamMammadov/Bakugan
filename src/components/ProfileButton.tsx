@@ -8,6 +8,7 @@ import { Avatar } from './Avatar'
 const ITEMS: [PageScreen | 'admin', string][] = [
   ['profile', 'PROFILE'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
+  ['characters', 'CHARACTERS'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
   ['admin', 'ADMIN PANEL'],

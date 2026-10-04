@@ -49,6 +49,8 @@ export interface Entrant {
   form: number
   /** Ability ids the player has unlocked; all of the Bakugan's cards when omitted. */
   cards?: string[]
+  /** G added (or removed) so a matched opponent stands at the player's level. */
+  bonusG?: number
 }
 
 export const formOf = (e: Entrant) => e.bakugan.evolutions[e.form] ?? e.bakugan.evolutions[0]

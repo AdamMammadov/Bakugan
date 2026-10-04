@@ -2,16 +2,18 @@ import { create } from 'zustand'
 import { useProfiles } from '../profile/useProfiles'
 import type { ElementId } from '../data/elements'
 
-export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit' | 'rankings' | 'clans' | 'encyclopedia' | 'admin'
+export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit' | 'rankings' | 'clans' | 'encyclopedia' | 'characters' | 'admin'
 
-export type PageScreen = 'profile' | 'rankings' | 'clans' | 'encyclopedia'
-const PAGES: PageScreen[] = ['profile', 'rankings', 'clans', 'encyclopedia']
+export type PageScreen = 'profile' | 'rankings' | 'clans' | 'encyclopedia' | 'characters'
+const PAGES: PageScreen[] = ['profile', 'rankings', 'clans', 'encyclopedia', 'characters']
 
 export interface TeamMember {
   id: string
   form: number
   /** Unlocked ability card ids (player profiles); every card when omitted. */
   cards?: string[]
+  /** Level-matching G adjustment (opponents). */
+  bonusG?: number
 }
 
 export interface ArenaSetup {

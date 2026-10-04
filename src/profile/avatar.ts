@@ -63,6 +63,8 @@ export const CHARACTERS: Character[] = [
     name: 'Marucho Marukura',
     element: 'aquos',
     bakugan: 'Preyas',
+    image: 'characters/marucho.webp',
+    model: 'models/brawlers/marucho.glb',
     parts: { skin: '#ffe0c7', hair: 'bowl', hairColor: '#f0d060', eyes: 'calm', eyeColor: '#2a62c8', outfit: '#2a62c8', accessory: 'glasses' },
   },
   {
@@ -77,6 +79,8 @@ export const CHARACTERS: Character[] = [
     name: 'Julie Makimoto',
     element: 'subterra',
     bakugan: 'Gorem',
+    image: 'characters/julie.webp',
+    model: 'models/brawlers/julie.glb',
     parts: { skin: '#e8b48f', hair: 'long', hairColor: '#d8dce6', eyes: 'happy', eyeColor: '#2a62c8', outfit: '#e870a8', accessory: 'none' },
   },
   {
@@ -84,6 +88,8 @@ export const CHARACTERS: Character[] = [
     name: 'Alice Gehabich',
     element: 'darkus',
     bakugan: 'Hydranoid',
+    image: 'characters/alice.webp',
+    model: 'models/brawlers/alice.glb',
     parts: { skin: '#ffe0c7', hair: 'long', hairColor: '#e07a2a', eyes: 'calm', eyeColor: '#5a3220', outfit: '#6a3a9a', accessory: 'none' },
   },
   {

@@ -5,6 +5,7 @@ import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 const q = new URLSearchParams(location.search)
 const src = q.get('src')!
@@ -18,21 +19,151 @@ async function load(): Promise<THREE.Object3D> {
 }
 
 const root = await load()
+{
+  const dbg: string[] = []
+  root.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh) return
+    const uv = m.geometry.attributes.uv
+    let lo = Infinity
+    let hi = -Infinity
+    if (uv) for (let i = 0; i < uv.array.length; i++) {
+      lo = Math.min(lo, uv.array[i])
+      hi = Math.max(hi, uv.array[i])
+    }
+    const mm = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshPhongMaterial
+    dbg.push(`${mm.type} map=${mm.map ? (mm.map.image as HTMLImageElement)?.src?.slice(-24) + ' ' + (mm.map.image as HTMLImageElement)?.width : 'none'} color=${mm.color?.getHexString()}`)
+    dbg.push(`${m.name} uv=${uv ? uv.itemSize : 'none'} [${lo.toFixed(2)},${hi.toFixed(2)}] groups=${m.geometry.groups.length}`)
+  })
+  ;(window as any).dbg = dbg
+}
 // textures stream in after the model itself
 await new Promise((r) => setTimeout(r, 2500))
 root.updateMatrixWorld(true)
 // pixel-art textures from the DS: keep them crisp, and make the materials unlit-friendly
+/** Share of see-through pixels in a texture (0 = fully opaque). */
+function alphaShare(tex: THREE.Texture | null) {
+  const img = tex?.image as HTMLImageElement | undefined
+  if (!img?.width) return 0
+  const c = document.createElement('canvas')
+  c.width = img.width
+  c.height = img.height
+  const g = c.getContext('2d')!
+  g.drawImage(img, 0, 0)
+  const d = g.getImageData(0, 0, c.width, c.height).data
+  let n = 0
+  for (let i = 3; i < d.length; i += 4) if (d[i] < 128) n++
+  return n / (d.length / 4)
+}
+
+/** True when a texture has see-through pixels (eyes, mouths and hair tips drawn as overlays). */
+function hasAlpha(tex: THREE.Texture | null) {
+  const img = tex?.image as HTMLImageElement | undefined
+  if (!img?.width) return false
+  const c = document.createElement('canvas')
+  c.width = img.width
+  c.height = img.height
+  const g = c.getContext('2d')!
+  g.drawImage(img, 0, 0)
+  const d = g.getImageData(0, 0, c.width, c.height).data
+  for (let i = 3; i < d.length; i += 4) if (d[i] < 128) return true
+  return false
+}
 root.traverse((o) => {
   const m = o as THREE.Mesh
   if (!m.isMesh) return
+  // some rips ship without normals, which renders them nearly black
+  if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals()
+  // rebuild smooth normals from the triangles themselves (some rips ship unusable ones)
+  if (q.get('normals') === 'compute') {
+    m.geometry.deleteAttribute('normal')
+    m.geometry = mergeVertices(m.geometry, 1e-4)
+    m.geometry.computeVertexNormals()
+  }
+  // some rips store normals pointing into the model
+  if (q.get('normals') === 'flip') {
+    const n = m.geometry.attributes.normal
+    for (let i = 0; i < n.array.length; i++) (n.array as Float32Array)[i] *= -1
+  }
   const mats = Array.isArray(m.material) ? m.material : [m.material]
   m.material = mats.map((old) => {
     const map = (old as THREE.MeshPhongMaterial).map ?? null
     if (map) {
       map.magFilter = THREE.NearestFilter
+      // Wii rips address their face atlases with negative UVs
+      map.wrapS = map.wrapT = THREE.RepeatWrapping
+      map.minFilter = THREE.LinearFilter
+      map.generateMipmaps = false
+      map.needsUpdate = true
       map.colorSpace = THREE.SRGBColorSpace
     }
-    return new THREE.MeshStandardMaterial({ map, color: map ? 0xffffff : (old as THREE.MeshPhongMaterial).color, roughness: 0.8, alphaTest: 0.5, side: THREE.DoubleSide })
+    // face parts (eyes, brows, mouth) come from small cells of an expression atlas
+    const uv = m.geometry.attributes.uv
+    let span = 0
+    if (uv) {
+      let lo = Infinity
+      let hi = -Infinity
+      for (let i = 0; i < uv.count; i++) {
+        lo = Math.min(lo, uv.getX(i))
+        hi = Math.max(hi, uv.getX(i))
+      }
+      span = hi - lo
+    }
+    const facePart = span > 0 && span < 0.3 && m.geometry.attributes.position.count < 400
+    // glTF has no polygon offset: tag face parts so the game can re-apply it
+    if (facePart && !m.name.startsWith('face')) m.name = `face-${m.name}`
+    // the game tints the see-through iris of the eye atlas; paint it in so the eyes have colour
+    // only the eye sheet: mostly opaque skin with see-through irises (brows are mostly see-through)
+    const share = facePart ? alphaShare(map) : 0
+    if (facePart && map && q.get('iris') && share > 0 && share < 0.4) {
+      const img = map.image as HTMLImageElement
+      const c = document.createElement('canvas')
+      c.width = img.width
+      c.height = img.height
+      const g = c.getContext('2d')!
+      g.fillStyle = '#' + q.get('iris')
+      g.fillRect(0, 0, c.width, c.height)
+      g.drawImage(img, 0, 0)
+      const filled = new THREE.CanvasTexture(c)
+      filled.colorSpace = THREE.SRGBColorSpace
+      filled.magFilter = THREE.NearestFilter
+      filled.wrapS = filled.wrapT = THREE.RepeatWrapping
+      filled.flipY = map.flipY
+      if (q.get('basic') === '1')
+        return new THREE.MeshBasicMaterial({
+          map: filled,
+          color: new THREE.Color('#' + (q.get('faceTint') ?? 'ffffff')),
+          polygonOffset: true,
+          polygonOffsetFactor: Number(q.get('faceOffset') ?? -60) / 10,
+          polygonOffsetUnits: Number(q.get('faceOffset') ?? -60),
+          side: THREE.DoubleSide,
+        })
+      return new THREE.MeshStandardMaterial({
+        map: filled,
+        roughness: 0.8,
+        polygonOffset: true,
+        polygonOffsetFactor: Number(q.get('faceOffset') ?? -60) / 10,
+        polygonOffsetUnits: Number(q.get('faceOffset') ?? -60),
+        side: THREE.DoubleSide,
+      })
+    }
+    const overlay = hasAlpha(map) || facePart
+    const offset = facePart ? Number(q.get('faceOffset') ?? -60) : -2
+    if (q.get('basic') === '1') return new THREE.MeshBasicMaterial({ map, color: facePart ? new THREE.Color('#' + (q.get('faceTint') ?? 'ffffff')) : new THREE.Color(Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1)), transparent: overlay, alphaTest: overlay ? 0.3 : 0, side: THREE.DoubleSide, polygonOffset: overlay, polygonOffsetFactor: offset / 10, polygonOffsetUnits: offset })
+    // Wii models store most textures at half brightness and double them when drawing
+    const gain = facePart ? 1 : Number(q.get('gain') ?? 1)
+    return new THREE.MeshStandardMaterial({
+      map,
+      color: map ? new THREE.Color(gain, gain, gain) : (old as THREE.MeshPhongMaterial).color,
+      roughness: 0.8,
+      alphaTest: overlay ? 0.3 : 0,
+      transparent: overlay,
+      // overlays sit on top of the skin they are painted over
+      polygonOffset: overlay,
+      polygonOffsetFactor: overlay ? offset / 10 : 0,
+      polygonOffsetUnits: overlay ? offset : 0,
+      side: THREE.DoubleSide,
+    })
   }) as unknown as THREE.Material
   if ((m.material as unknown as THREE.Material[]).length === 1) m.material = (m.material as unknown as THREE.Material[])[0]
 })
@@ -40,7 +171,7 @@ root.traverse((o) => {
 // stand on the floor, centred, 1.75 units tall (a person in metres)
 const box = new THREE.Box3().setFromObject(root)
 const size = box.getSize(new THREE.Vector3())
-const s = 1.75 / size.y
+const s = Number(q.get('height') ?? 1.75) / size.y
 const wrap = new THREE.Group()
 root.scale.multiplyScalar(s)
 root.updateMatrixWorld(true)
@@ -50,13 +181,14 @@ root.position.sub(new THREE.Vector3(c.x, b2.min.y, c.z))
 wrap.add(root)
 ;(window as any).info = { size: size.toArray(), s }
 
+const NO_SPLIT = q.get('split') === '0'
 // Split the T-posed arms off the body so the game can swing them from the shoulders.
-const SHOULDER = Number(q.get('shoulder') ?? 0.24)
+const SHOULDER = q.get('split') === '0' ? Infinity : Number(q.get('shoulder') ?? 0.24)
 const ARM_MIN_Y = Number(q.get('armY') ?? 1.1)
 const ARM_MAX_Y = Number(q.get('armTop') ?? 1.42)
 wrap.updateMatrixWorld(true)
 const parts: Record<'body' | 'armL' | 'armR', { geo: THREE.BufferGeometry; mat: THREE.Material }[]> = { body: [], armL: [], armR: [] }
-wrap.traverse((o) => {
+if (!NO_SPLIT) wrap.traverse((o) => {
   const m = o as THREE.Mesh
   if (!m.isMesh) return
   const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrixWorld)
@@ -89,9 +221,10 @@ wrap.traverse((o) => {
     }
   }
 })
-const rig = new THREE.Group()
+let rig = new THREE.Group()
 rig.name = 'brawler'
-for (const key of ['body', 'armL', 'armR'] as const) {
+for (const key of NO_SPLIT ? [] : (['body', 'armL', 'armR'] as const)) {
+  if (key !== 'body' && !parts[key].length) continue
   const node = new THREE.Group()
   node.name = key
   let pivot = new THREE.Vector3()
@@ -112,12 +245,18 @@ for (const key of ['body', 'armL', 'armR'] as const) {
   }
   rig.add(node)
 }
-wrap.clear()
-wrap.add(rig)
+if (NO_SPLIT) {
+  rig = wrap
+} else {
+  wrap.clear()
+  wrap.add(rig)
+}
 // arms down for the pictures
 const armDown = Number(q.get('down') ?? 1.25)
-rig.getObjectByName('armR')!.rotation.z = -armDown
-rig.getObjectByName('armL')!.rotation.z = armDown
+const armRNode = rig.getObjectByName('armR')
+const armLNode = rig.getObjectByName('armL')
+if (armRNode) armRNode.rotation.z = -armDown
+if (armLNode) armLNode.rotation.z = armDown
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
 renderer.setSize(512, 512)
@@ -145,8 +284,8 @@ cam.lookAt(0, 0.85, 0)
 renderer.render(scene, cam)
 ;(window as any).body = renderer.domElement.toDataURL('image/png')
 wrap.rotation.y = 0
-rig.getObjectByName('armR')!.rotation.z = 0
-rig.getObjectByName('armL')!.rotation.z = 0
+if (armRNode) armRNode.rotation.z = 0
+if (armLNode) armLNode.rotation.z = 0
 new GLTFExporter().parse(
   rig,
   (glb) => {

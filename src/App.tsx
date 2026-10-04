@@ -17,6 +17,7 @@ import { useGame } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
 const Viewer = lazy(() => import('./screens/Viewer').then((m) => ({ default: m.Viewer })))
+const CharacterShowroom = lazy(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
 const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
 
 export default function App() {
@@ -42,10 +43,11 @@ export default function App() {
           {screen === 'clans' && <ClansScreen key="clans" />}
           {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
           {screen === 'admin' && <AdminScreen key="admin" />}
+          {screen === 'characters' && <CharacterShowroom key="characters" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}
-      {screen !== 'intro' && !['arena', 'viewer', 'profile', 'profileEdit', 'rankings', 'clans', 'encyclopedia', 'admin'].includes(screen) && <ProfileButton />}
+      {screen !== 'intro' && !['arena', 'viewer', 'profile', 'profileEdit', 'rankings', 'clans', 'encyclopedia', 'characters', 'admin'].includes(screen) && <ProfileButton />}
     </div>
   )
 }
