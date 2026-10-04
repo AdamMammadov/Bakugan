@@ -2,10 +2,10 @@ import { create } from 'zustand'
 import { useProfiles } from '../profile/useProfiles'
 import type { ElementId } from '../data/elements'
 
-export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit' | 'rankings' | 'clans'
+export type Screen = 'intro' | 'wheel' | 'hub' | 'viewer' | 'compare' | 'arena' | 'profile' | 'profileEdit' | 'rankings' | 'clans' | 'encyclopedia'
 
-export type PageScreen = 'profile' | 'rankings' | 'clans'
-const PAGES: PageScreen[] = ['profile', 'rankings', 'clans']
+export type PageScreen = 'profile' | 'rankings' | 'clans' | 'encyclopedia'
+const PAGES: PageScreen[] = ['profile', 'rankings', 'clans', 'encyclopedia']
 
 export interface TeamMember {
   id: string

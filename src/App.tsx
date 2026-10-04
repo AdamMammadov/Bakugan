@@ -10,6 +10,7 @@ import { ProfileEditor } from './screens/ProfileEditor'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ClansScreen } from './screens/ClansScreen'
 import { RankingsScreen } from './screens/RankingsScreen'
+import { EncyclopediaScreen } from './screens/EncyclopediaScreen'
 import { useGame } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
@@ -33,10 +34,11 @@ export default function App() {
           {screen === 'profileEdit' && <ProfileEditor key="profileEdit" />}
           {screen === 'rankings' && <RankingsScreen key="rankings" />}
           {screen === 'clans' && <ClansScreen key="clans" />}
+          {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}
-      {screen !== 'intro' && !['arena', 'profile', 'profileEdit', 'rankings', 'clans'].includes(screen) && <ProfileButton />}
+      {screen !== 'intro' && !['arena', 'profile', 'profileEdit', 'rankings', 'clans', 'encyclopedia'].includes(screen) && <ProfileButton />}
     </div>
   )
 }

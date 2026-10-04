@@ -11,18 +11,26 @@ export function ProfileButton() {
   const openPage = useGame((s) => s.openPage)
   if (!profile) {
     return (
-      <button
-        onClick={() => editProfile(null)}
-        className="font-display fixed right-40 bottom-5 z-50 rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs tracking-[0.3em] text-white/60 backdrop-blur transition hover:text-white"
-      >
-        + CREATE PROFILE
-      </button>
+      <div className="fixed right-40 bottom-5 z-50 flex items-center gap-2">
+        <button
+          onClick={() => openPage('encyclopedia')}
+          className="font-display rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs tracking-[0.3em] text-white/60 backdrop-blur transition hover:text-white"
+        >
+          ENCYCLOPEDIA
+        </button>
+        <button
+          onClick={() => editProfile(null)}
+          className="font-display rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs tracking-[0.3em] text-white/60 backdrop-blur transition hover:text-white"
+        >
+          + CREATE PROFILE
+        </button>
+      </div>
     )
   }
   const color = ELEMENT_BY_ID[profile.element].color
   return (
     <div className="fixed right-40 bottom-5 z-50 flex items-center gap-2">
-      {(['rankings', 'clans'] as const).map((page) => (
+      {(['encyclopedia', 'rankings', 'clans'] as const).map((page) => (
         <button
           key={page}
           onClick={() => openPage(page)}
