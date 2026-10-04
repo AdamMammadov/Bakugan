@@ -47,7 +47,7 @@ export function BallModel({ bakugan, openRef }: { bakugan: Bakugan; openRef: Ref
   return (
     <Suspense fallback={placeholder}>
       <group position={[0, -BALL_SIZE / 2, 0]}>
-        <NormalizedModel url={asset(bakugan.models.ball)} height={BALL_SIZE} />
+        <NormalizedModel url={asset(bakugan.models.ball)} height={BALL_SIZE} openRef={openRef} />
       </group>
     </Suspense>
   )

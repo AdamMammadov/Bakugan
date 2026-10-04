@@ -112,7 +112,7 @@ export function ArenaScreen() {
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows camera={{ position: [0, 7.5, 23], fov: 50 }} dpr={[1, 2]}>
+      <Canvas shadows camera={{ position: [0, 10, 31], fov: 50 }} dpr={[1, 2]}>
         <ArenaScene
           fighters={[left, right]}
           gate={setup.gate}

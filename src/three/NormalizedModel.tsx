@@ -1,9 +1,9 @@
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { type RefObject, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js'
-import type { Pose, PoseRef } from './pose'
+import { rigPose, type Pose, type PoseRef } from './pose'
 
 /** Clip-name patterns tried for each pose, in order. */
 const POSE_CLIPS: Record<Pose['kind'], RegExp> = {
@@ -17,7 +17,20 @@ const POSE_CLIPS: Record<Pose['kind'], RegExp> = {
  * standing on y = 0. Plays an idle-looking clip when the file has animations, and a
  * matching one-shot clip (attack / roar / hit) whenever the fighter's pose changes.
  */
-export function NormalizedModel({ url, height, yaw = 0, poseRef }: { url: string; height: number; yaw?: number; poseRef?: PoseRef }) {
+export function NormalizedModel({
+  url,
+  height,
+  yaw = 0,
+  poseRef,
+  openRef,
+}: {
+  url: string
+  height: number
+  yaw?: number
+  poseRef?: PoseRef
+  /** For ball models: while true, pieces move to the open pose stored in their glTF extras. */
+  openRef?: RefObject<boolean>
+}) {
   const gltf = useGLTF(url)
   // Clone so the same model can appear twice (e.g. a mirror match in the arena).
   const scene = useMemo(() => {
@@ -28,8 +41,40 @@ export function NormalizedModel({ url, height, yaw = 0, poseRef }: { url: string
         o.receiveShadow = true
       }
     })
+    // parts that only exist in the open form start collapsed, and must not affect the fit
+    copy.traverse((o) => {
+      if (o.userData.openOnly) {
+        o.scale.setScalar(0.001)
+        o.visible = false
+      }
+    })
     return copy
   }, [gltf.scene])
+
+  const openable = useMemo(() => {
+    const nodes: { node: THREE.Object3D; pos: THREE.Vector3; rot: THREE.Euler; u: Record<string, unknown> }[] = []
+    scene.traverse((o) => {
+      const u = o.userData
+      if (u.openPos || u.openRot || u.openOnly) nodes.push({ node: o, pos: o.position.clone(), rot: o.rotation.clone(), u })
+    })
+    return nodes
+  }, [scene])
+  const openAmount = useRef(0)
+  useFrame((_, dt) => {
+    if (!openable.length || !openRef) return
+    openAmount.current = THREE.MathUtils.damp(openAmount.current, openRef.current ? 1 : 0, 5, dt)
+    const k = openAmount.current
+    for (const { node, pos, rot, u } of openable) {
+      const op = u.openPos as number[] | undefined
+      const or = u.openRot as number[] | undefined
+      if (op) node.position.set(pos.x + op[0] * k, pos.y + op[1] * k, pos.z + op[2] * k)
+      if (or) node.rotation.set(rot.x + or[0] * k, rot.y + or[1] * k, rot.z + or[2] * k)
+      if (u.openOnly) {
+        node.scale.setScalar(Math.max(k, 0.001))
+        node.visible = k > 0.02
+      }
+    }
+  })
 
   const fit = useMemo(() => {
     const box = new THREE.Box3().setFromObject(scene)
@@ -47,6 +92,41 @@ export function NormalizedModel({ url, height, yaw = 0, poseRef }: { url: string
     action?.reset().fadeIn(0.3).play()
     return () => void action?.fadeOut(0.2)
   }, [actions, names])
+
+  // Part-rigged models (e.g. the Blender-built monsters) expose named pivot nodes;
+  // animate them procedurally for idle breathing and per-move combat poses.
+  const rig = useMemo(() => {
+    const get = (n: string) => scene.getObjectByName(n) ?? null
+    const nodes = {
+      neck: get('neck'),
+      head: get('head'),
+      jaw: get('jaw'),
+      tail: get('tail'),
+      tip: get('tail_tip'),
+      fl: get('leg_fl'),
+      fr: get('leg_fr'),
+      bl: get('leg_bl'),
+      br: get('leg_br'),
+    }
+    return nodes.neck || nodes.tail ? nodes : null
+  }, [scene])
+
+  useFrame(({ clock }) => {
+    if (!rig) return
+    const now = clock.elapsedTime
+    const pose = poseRef?.current ?? null
+    const t = pose?.start != null ? now - pose.start : 0
+    const p = rigPose(pose?.move ?? null, t, now)
+    rig.neck?.rotation.set(p.neck, 0, 0)
+    rig.head?.rotation.set(p.head, 0, 0)
+    rig.jaw?.rotation.set(p.jaw, 0, 0)
+    rig.tail?.rotation.set(p.tailLift, p.tailYaw, 0)
+    rig.tip?.rotation.set(0, p.tipYaw, 0)
+    rig.fl?.rotation.set(p.frontL, 0, 0)
+    rig.fr?.rotation.set(p.frontR, 0, 0)
+    rig.bl?.rotation.set(p.hindL, 0, 0)
+    rig.br?.rotation.set(p.hindR, 0, 0)
+  })
 
   const lastPose = useRef<Pose | null>(null)
   useFrame(() => {

@@ -21,6 +21,8 @@ import bpy  # noqa: I001 — must be imported before bmesh/mathutils
 import bmesh
 from mathutils import Matrix, Quaternion, Vector
 
+V = Vector
+
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'models', 'hydranoid', 'ball.glb')
 
 # Blender is Z-up; glTF/three.js is Y-up with Blender's -Y becoming +Z (front).
@@ -320,13 +322,14 @@ def build():
     BLACK = material('black', srgb('#141218'), rough=0.78)
     PURPLE = material('purple', srgb('#9558c8'), rough=0.45)
     CORE = material('core', srgb('#7a46b0'), rough=0.42)
-    BLUE = material('blue', srgb('#3f3ca8'), rough=0.3)
+    BLUE = material('blue', srgb('#4b4fb8'), rough=0.18)
     GROOVE = material('groove', srgb('#050407'), rough=0.9)
     EYE = material('eye', (1, 0.05, 0.05), rough=0.3, emit=(1, 0.05, 0.03), strength=8)
 
-    root = empty('Hydranoid')
+    # open pose: the ball stands up on its new legs
+    root = empty('Hydranoid', open_pos=(0, 0.32, 0))
 
-    core = sphere_mesh('core', 0.9, CORE)
+    core = sphere_mesh('core', 0.9, BLUE)
     parent(core, root)
 
     G = 0.7  # groove half-width in degrees
@@ -359,7 +362,7 @@ def build():
     parent(segmented_ring('band', 56.8, 65, 22.5, 382.5, 10, 0.45, BLACK), wheel)
 
     # --- crest band with the crystal teeth (becomes the neck crest) ---------
-    crest = empty('crest', open_pos=(0, 0.25, 0.05), open_rot=(-0.25, 0, 0))
+    crest = empty('crest', open_pos=(0, 0.42, 0.28), open_rot=(-0.55, 0, 0))
     parent(crest, root)
     parent(segmented_ring('crest_shell', 65.8, 68, -2, 215, 7, 0.4, BLACK), crest)
     for i, bdeg in enumerate(range(8, 214, 17)):
@@ -370,13 +373,16 @@ def build():
     parent(patch('chin_band', 65.8, 76, 215 + 0.6, 358 - 0.6, BLACK), wheel)
 
     # --- top / shoulder panel between head and crest ------------------------
-    top = empty('top', open_pos=(0, 0.12, -0.05), open_rot=(0.1, 0, 0))
+    top = empty('top', open_pos=(0, 0.18, -0.12), open_rot=(0.25, 0, 0))
     parent(top, root)
     parent(patch('top_shell', 76, 180, 19 + G, 119 - G, BLACK, na=80), top)
-    parent(patch('bottom_shell', 62, 180, 216 + G, 300 - G, BLACK, na=80), top)
+    # the lower front shell drops forward into a belly / foot plate
+    belly = empty('belly', open_pos=(0, -0.18, 0.32), open_rot=(0.55, 0, 0))
+    parent(belly, root)
+    parent(patch('bottom_shell', 62, 180, 216 + G, 300 - G, BLACK, na=80), belly)
 
     # --- head panel: front / lower front, eyes and folded horns -------------
-    head = empty('head', open_pos=(0, 0.2, 0.3), open_rot=(-0.4, 0, 0))
+    head = empty('head', open_pos=(0, 0.62, 0.55), open_rot=(-0.95, 0, 0))
     parent(head, root)
     parent(patch('head_shell', 76, 180, -60 + G, 19 - G, BLACK, na=80), head)
     # the long folded horn sweeping from the crown down to the outer eye
@@ -391,10 +397,31 @@ def build():
         parent(groove(f'groove_{i}', s0, s1, 18 - off, -30 + off * 0.5), head)
 
     # --- back lattice panel (becomes the back plate / tail) -----------------
-    back = empty('back', open_pos=(0, -0.05, -0.3), open_rot=(0.35, 0, 0))
+    back = empty('back', open_pos=(0, -0.12, -0.42), open_rot=(0.6, 0, 0))
     parent(back, root)
     parent(patch('back_shell', 76, 180, 120 + G, 215 - G, BLACK, na=80), back)
     parent(lattice_windows('back_windows'), back)
+
+    # --- parts that only exist in the open form -----------------------------
+    extra = empty('open_parts', open_only=True)
+    parent(extra, root)
+    # glossy blue core blocks showing through the opened shell (the chest)
+    parent(box('core_block_0', V((0, -0.42, 0.18)), (0.34, 0.2, 0.26), BLUE), extra)
+    parent(box('core_block_1', V((0, -0.38, -0.3)), (0.32, 0.22, 0.2), BLUE), extra)
+    # two short legs with purple claws under the front
+    for s in (-1, 1):
+        parent(cone(f'leg_{s}', V((0.3 * s, -0.25, -0.62)), V((0, -0.2, -1)), 0.42, 0.07, BLACK), extra)
+        for c in (-1, 0, 1):
+            parent(cone(f'claw_{s}_{c}', V((0.3 * s + c * 0.05, -0.33, -1.02)), V((c * 0.2, -1, -0.2)), 0.12, 0.03, PURPLE), extra)
+    # purple tail tip behind
+    parent(cone('tail_tip', V((0, 1.05, -0.55)), V((0, 1, 0.25)), 0.55, 0.11, PURPLE), extra)
+    # purple teeth lining the head's jaw edge
+    jaw = empty('jaw_teeth', open_only=True)
+    parent(jaw, head)
+    for i, a in enumerate(range(80, 178, 9)):
+        p = from_wheel(deg(a), deg(-57), R * 0.98)
+        d = from_wheel(deg(a), deg(-75), R) - from_wheel(deg(a), deg(-57), R)
+        parent(cone(f'jaw_tooth_{i}', p, d, 0.13, 0.04, PURPLE), jaw)
 
     return root
 
@@ -557,6 +584,43 @@ def fang(name, a, b, span, depth, height):
     bev.width = 0.012
     bev.segments = 2
     apply_all(ob)
+    return ob
+
+
+def box(name, centre, size, mat):
+    """A rounded block (half-extents `size`)."""
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=2)
+    bmesh.ops.scale(bm, vec=size, verts=bm.verts)
+    bmesh.ops.translate(bm, verts=bm.verts, vec=centre)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(mat)
+    bev = ob.modifiers.new('bevel', 'BEVEL')
+    bev.width = min(size) * 0.45
+    bev.segments = 4
+    apply_all(ob)
+    smooth(ob, 80)
+    return ob
+
+
+def cone(name, base, direction, length, radius, mat, sides=6):
+    """A simple spike from `base` along `direction`."""
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=sides, radius1=radius, radius2=0, depth=length)
+    bmesh.ops.translate(bm, verts=bm.verts, vec=(0, 0, length / 2))
+    q = Vector((0, 0, 1)).rotation_difference(Vector(direction).normalized())
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=q.to_matrix())
+    bmesh.ops.translate(bm, verts=bm.verts, vec=base)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    me.materials.append(mat)
     return ob
 
 

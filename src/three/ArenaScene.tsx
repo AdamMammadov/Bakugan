@@ -12,11 +12,13 @@ import { Impact, Projectile, ShieldDome } from './ArenaFx'
 import { MonsterModel } from './BakuganModels'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
-import type { Pose } from './pose'
+import { env, moveFor, type Pose } from './pose'
 
-export const FIGHTER_X = 6.8
+export const FIGHTER_X = 9
 /** Bakugan stand larger in the arena than in the viewer. */
-const FIGHTER_SCALE = 2.3
+const FIGHTER_SCALE = 3.2
+/** Hip position along the model's length (model units), used as the pivot for rearing up. */
+const HIP_Z = -1.1
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */
 export const IMPACT_AT = 0.75
 export const ACTION_DURATION = 1.7
@@ -43,7 +45,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 30, 70]} />
+      <fog attach="fog" args={['#05060a', 40, 95]} />
       <ambientLight intensity={0.4} />
       <directionalLight position={[3, 9, 6]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       {fighters.map((f, i) => (
@@ -51,13 +53,13 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       ))}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[45, 96]} />
+        <circleGeometry args={[60, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
       </mesh>
       <Sparkles count={200} scale={[40, 14, 28]} position={[0, 6, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
 
       {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={6.5}>
+      <group rotation={[0, Math.PI / 2, 0]} scale={8.5}>
         <Suspense fallback={null}>
           <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} />
         </Suspense>
@@ -72,10 +74,10 @@ export function ArenaScene({ fighters, gate, event, shields, defeated }: Props) 
       <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={45} blur={2.5} far={14} />
       <OrbitControls
         makeDefault
-        target={[0, 3.6, 0]}
+        target={[0, 4.8, 0]}
         enablePan={false}
         minDistance={8}
-        maxDistance={50}
+        maxDistance={70}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
       <EffectComposer>
@@ -106,6 +108,7 @@ function Fighter({
   const ref = useRef<THREE.Group>(null)
   const born = useRef<number | null>(null)
   const anim = useRef<Pose | null>(null)
+  const motion = useRef<THREE.Group>(null)
   const fallen = useRef(0)
   const facing = side === 0 ? 1 : -1
 
@@ -113,8 +116,10 @@ function Fighter({
     if (!event) return
     const { actor, target, action, damage, blocked } = event.event
     const hostile = action.kind === 'basic' || action.ability.type === 'attack' || action.ability.type === 'drain'
-    if (actor === side) anim.current = { kind: hostile ? 'lunge' : 'cast', start: null }
-    else if (target === side && damage > 0 && !blocked) anim.current = { kind: 'hit', start: null }
+    if (actor === side) {
+      const move = moveFor(action.kind === 'ability' ? action.ability : null)
+      anim.current = { kind: hostile ? 'lunge' : 'cast', move, start: null }
+    } else if (target === side && damage > 0 && !blocked) anim.current = { kind: 'hit', move: 'hit', start: null }
   }, [event, side])
 
   useFrame(({ clock }, dt) => {
@@ -125,28 +130,70 @@ function Fighter({
     const grow = THREE.MathUtils.clamp((now - born.current - 0.4) / 0.7, 0, 1)
     fallen.current = THREE.MathUtils.damp(fallen.current, defeated ? 1 : 0, 3, dt)
 
-    let x = 0
-    let shake = 0
+    // whole-body motion of the current move, in the model's own frame (forward = +Z)
+    let fwd = 0
     let lift = 0
+    let pitch = 0
+    let yaw = 0
+    let shake = 0
     const a = anim.current
     if (a) {
       a.start ??= now
       const t = now - a.start
-      if (a.kind === 'lunge') x = Math.sin(THREE.MathUtils.clamp(t / 0.5, 0, 1) * Math.PI) * 0.9 * facing
-      if (a.kind === 'cast') lift = Math.sin(THREE.MathUtils.clamp(t / 0.8, 0, 1) * Math.PI) * 0.4
-      if (a.kind === 'hit') {
-        const k = THREE.MathUtils.clamp((t - IMPACT_AT) / 0.45, 0, 1)
-        if (k > 0 && k < 1) {
-          x = -Math.sin(k * Math.PI) * 0.6 * facing
-          shake = Math.sin(t * 80) * 0.08 * (1 - k)
+      switch (a.move) {
+        case 'bite':
+          fwd = 1.1 * env(t, 0.1, 0.85)
+          pitch = 0.08 * env(t, 0.2, 0.8)
+          break
+        case 'breath':
+          fwd = -0.35 * env(t, 0, 1.5)
+          pitch = -0.1 * env(t, 0, 1.5)
+          break
+        case 'clawSwipe':
+          pitch = -0.38 * env(t, 0, 0.7)
+          fwd = 0.7 * env(t, 0.35, 0.95)
+          yaw = 0.25 * env(t, 0.3, 0.95)
+          break
+        case 'tailWhip': {
+          // full spin so the tail sweeps through the opponent
+          const k = THREE.MathUtils.smoothstep(t, 0.05, 1.05)
+          yaw = k * Math.PI * 2
+          fwd = 0.4 * env(t, 0.05, 1.05)
+          break
+        }
+        case 'stomp':
+          pitch = -0.55 * env(t, 0, 0.75)
+          lift = 0.25 * env(t, 0, 0.75)
+          if (t > 0.72 && t < 1.1) shake = Math.sin(t * 90) * 0.06 * (1.1 - t) * 3
+          break
+        case 'roar':
+          pitch = -0.25 * env(t, 0, 1.5)
+          shake = Math.sin(t * 60) * 0.02 * env(t, 0.2, 1.4)
+          break
+        case 'guard':
+          fwd = -0.45 * env(t, 0, 1.4)
+          lift = -0.15 * env(t, 0, 1.4)
+          break
+        case 'hit': {
+          const h = env(t, IMPACT_AT - 0.03, IMPACT_AT + 0.55)
+          fwd = -0.9 * h
+          pitch = -0.18 * h
+          yaw = 0.15 * h
+          if (h > 0) shake = Math.sin(t * 80) * 0.08 * h
+          break
         }
       }
       if (t > ACTION_DURATION) anim.current = null
     }
+    const m = motion.current
+    if (m) {
+      m.position.set(shake, lift, -HIP_Z + fwd)
+      m.rotation.set(pitch, yaw, 0)
+    }
 
     const s = Math.max(1 - Math.pow(1 - grow, 3), 0.001) * (1 - fallen.current * 0.999)
     g.scale.setScalar(Math.max(s, 0.001))
-    g.position.set(sideX(side) + x + shake, lift - fallen.current * 0.5, 0)
+    g.position.set(sideX(side), -fallen.current * 0.5, 0)
     g.rotation.z = fallen.current * 0.5 * facing
   })
 
@@ -154,7 +201,12 @@ function Fighter({
     <group>
       <group ref={ref} rotation={[0, (Math.PI / 2) * facing, 0]} scale={0.001}>
         <group scale={FIGHTER_SCALE}>
-          <MonsterModel entrant={entrant} poseRef={anim} />
+          {/* rotations pivot around the hips so rearing up looks natural */}
+          <group ref={motion} position={[0, 0, -HIP_Z]}>
+            <group position={[0, 0, HIP_Z]}>
+              <MonsterModel entrant={entrant} poseRef={anim} />
+            </group>
+          </group>
         </group>
       </group>
       <group position={[sideX(side), 0, 0]} scale={FIGHTER_SCALE}>

@@ -10,6 +10,7 @@ import { AbilityEffect } from './AbilityEffect'
 import { BallModel, MonsterModel } from './BakuganModels'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
+import { moveFor, type Pose } from './pose'
 
 export type Phase = 'ball' | 'gate' | 'brawling' | 'monster'
 
@@ -17,12 +18,12 @@ const BALL_REST = new THREE.Vector3(0, 0.5, 2.6)
 const CARD_CENTER = new THREE.Vector3(0, 0.5, 0)
 
 /** How much bigger the monster form is than in the old 30–40 cm scale: ~9 m next to a 1 m ball. */
-export const MONSTER_SCALE = 3
+export const MONSTER_SCALE = 4
 
 const CAMERA = {
   ball: { pos: new THREE.Vector3(0, 1.4, 5), target: new THREE.Vector3(0, 0.5, 2.6) },
   gate: { pos: new THREE.Vector3(0, 4.5, 8), target: new THREE.Vector3(0, 0.3, 1) },
-  monster: { pos: new THREE.Vector3(11, 7, 21), target: new THREE.Vector3(0, 4.2, 0) },
+  monster: { pos: new THREE.Vector3(15, 9, 28), target: new THREE.Vector3(0, 5.6, 0) },
 }
 
 interface Props {
@@ -47,7 +48,7 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 30, 70]} />
+      <fog attach="fog" args={['#05060a', 40, 90]} />
       <ambientLight intensity={0.35} />
       <directionalLight position={[4, 8, 5]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       <pointLight position={[-4, 3, -3]} intensity={30} color={element.glow} />
@@ -67,7 +68,7 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
         </group>
       )}
       {(phase === 'monster' || phase === 'brawling') && (
-        <MonsterActor bakugan={bakugan} form={form} phase={phase} brawlStart={brawlStart} />
+        <MonsterActor bakugan={bakugan} form={form} phase={phase} brawlStart={brawlStart} activeAbility={activeAbility} />
       )}
 
       {activeAbility && (
@@ -96,7 +97,7 @@ function Field({ color }: { color: string }) {
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[40, 96]} />
+        <circleGeometry args={[55, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
       </mesh>
       {[3.5, 7, 10.5].map((r) => (
@@ -138,6 +139,8 @@ function BallActor({ bakugan, phase, brawlStart, ballOpen }: { bakugan: Bakugan;
       g.position.copy(BALL_REST)
       g.position.y += Math.sin(clock.elapsedTime * 2) * 0.04
       if (!ballOpen) g.rotation.y += dt * 0.3
+      // when opened for inspection, turn to face the camera
+      else g.rotation.y = THREE.MathUtils.damp(g.rotation.y, Math.round(g.rotation.y / (Math.PI * 2)) * Math.PI * 2 - 0.6, 4, dt)
       g.rotation.x = 0
       open.current = phase === 'ball' && ballOpen
       g.visible = phase !== 'monster'
@@ -151,9 +154,30 @@ function BallActor({ bakugan, phase, brawlStart, ballOpen }: { bakugan: Bakugan;
   )
 }
 
-function MonsterActor({ bakugan, form, phase, brawlStart }: { bakugan: Bakugan; form: number; phase: Phase; brawlStart: RefObject<number | null> }) {
+function MonsterActor({
+  bakugan,
+  form,
+  phase,
+  brawlStart,
+  activeAbility,
+}: {
+  bakugan: Bakugan
+  form: number
+  phase: Phase
+  brawlStart: RefObject<number | null>
+  activeAbility: Props['activeAbility']
+}) {
   const ref = useRef<THREE.Group>(null)
+  // activating an ability card plays that card's combat move
+  const pose = useRef<Pose | null>(null)
+  useEffect(() => {
+    if (activeAbility) pose.current = { kind: 'cast', move: moveFor(activeAbility.ability), start: null }
+  }, [activeAbility])
   useFrame(({ clock }) => {
+    if (pose.current) {
+      pose.current.start ??= clock.elapsedTime
+      if (clock.elapsedTime - pose.current.start > 1.7) pose.current = null
+    }
     if (!ref.current) return
     const t = elapsed(brawlStart, clock.elapsedTime)
     const k = phase === 'monster' ? 1 : THREE.MathUtils.clamp((t - T.swap) / (T.grown - T.swap), 0, 1)
@@ -165,7 +189,7 @@ function MonsterActor({ bakugan, form, phase, brawlStart }: { bakugan: Bakugan; 
   return (
     <group ref={ref} scale={0.001} visible={false}>
       <group scale={MONSTER_SCALE}>
-        <MonsterModel entrant={{ bakugan, form }} />
+        <MonsterModel entrant={{ bakugan, form }} poseRef={pose} />
       </group>
     </group>
   )
@@ -197,7 +221,7 @@ function CameraRig({ phase }: { phase: Phase }) {
       makeDefault
       enablePan={false}
       minDistance={1.2}
-      maxDistance={45}
+      maxDistance={65}
       maxPolarAngle={Math.PI / 2 - 0.05}
       onStart={() => (flying.current = 0)}
     />

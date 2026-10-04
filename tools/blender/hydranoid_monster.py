@@ -4,8 +4,10 @@ and exports public/models/hydranoid/monster.glb.
 
 Run:  python3 tools/blender/hydranoid_monster.py      (needs `pip install bpy`)
 
-The body is a skin-modifier skeleton (torso, long neck, curled tail, four legs) smoothed
-with subdivision; armour plates, spikes, claws and the head are added on top.
+The body is built from skin-modifier tubes (torso, long neck, curled tail, four legs) smoothed
+with subdivision; armour plates, spikes, claws and the head are added on top. Each moving part
+hangs under a named pivot node (torso, neck, head, jaw, tail, tail_tip, leg_fl/fr/bl/br) so
+the web app can animate attacks without a skeleton.
 Blender axes: Z up, the creature faces -Y. Units are metres: it stands ~7.5 m tall.
 """
 
@@ -107,43 +109,19 @@ def leg(side, front):
     ]
 
 
-def build_body(mat):
+def build_skin(name, points, mat):
+    """A smooth tube through `points` (skin modifier + subdivision)."""
     bm = bmesh.new()
-    radii = {}
-
-    def add_chain(points, start=None):
-        prev = start
-        for p, rx, ry in points:
-            v = bm.verts.new(p)
-            radii[v] = (rx, ry)
-            if prev is not None:
-                bm.edges.new((prev, v))
-            prev = v
-        return prev
-
-    spine_verts = []
     prev = None
-    for p, rx, ry in SPINE:
+    for p, _, _ in points:
         v = bm.verts.new(p)
-        radii[v] = (rx, ry)
-        spine_verts.append(v)
-        if prev:
+        if prev is not None:
             bm.edges.new((prev, v))
         prev = v
-    first, chest = spine_verts[0], spine_verts[-1]
-    add_chain(NECK, chest)
-    add_chain(TAIL, first)
-    for side in (-1, 1):
-        add_chain(leg(side, True)[1:], nearest(spine_verts, leg(side, True)[0][0], bm, radii, leg(side, True)[0]))
-        add_chain(leg(side, False)[1:], nearest(spine_verts, leg(side, False)[0][0], bm, radii, leg(side, False)[0]))
-
-    ob = new_object('body', bm, mat)
+    ob = new_object(name, bm, mat)
     ob.modifiers.new('skin', 'SKIN')
-    me = ob.data
-    skin = me.skin_vertices[0].data
-    # bmesh verts were written in creation order, so radii order matches
-    order = list(radii.values())
-    for i, (rx, ry) in enumerate(order):
+    skin = ob.data.skin_vertices[0].data
+    for i, (_, rx, ry) in enumerate(points):
         skin[i].radius = (rx, ry)
     skin[0].use_root = True
     sub = ob.modifiers.new('subd', 'SUBSURF')
@@ -151,15 +129,6 @@ def build_body(mat):
     apply_all(ob)
     smooth(ob)
     return ob
-
-
-def nearest(spine_verts, p, bm, radii, entry):
-    """Create the leg's hip/shoulder joint vertex and connect it to the nearest spine vertex."""
-    v = bm.verts.new(entry[0])
-    radii[v] = (entry[1], entry[2])
-    best = min(spine_verts, key=lambda s: (s.co - p).length)
-    bm.edges.new((best, v))
-    return v
 
 
 # ------------------------------------------------------------------ helpers
@@ -289,6 +258,71 @@ def euler(x=0, y=0, z=0):
 # ------------------------------------------------------------------ build
 
 
+def group(name, at, parent=None, parent_at=None):
+    """An empty used as an animation pivot, placed at world position `at`."""
+    e = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(e)
+    e.location = at - (parent_at if parent_at is not None else V((0, 0, 0)))
+    if parent is not None:
+        e.parent = parent
+    return e
+
+
+def attach(name, objs, grp, grp_at):
+    """Joins world-space meshes into one and hangs it under the pivot `grp` (at `grp_at`)."""
+    ob = join(name, objs)
+    ob.location = -grp_at
+    ob.parent = grp
+    return ob
+
+
+def wedge(name, centre, size, mat, taper=(1.0, 1.0), rot=None, bevel=0.09):
+    """A box tapered towards -Y (the front): angular armour shapes for the head."""
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=2)
+    for v in bm.verts:
+        x, y, z = v.co
+        if y < 0:
+            x *= taper[0]
+            z *= taper[1]
+        v.co = V((x * size[0], y * size[1], z * size[2]))
+    if rot:
+        bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=rot.to_matrix())
+    bmesh.ops.translate(bm, verts=bm.verts, vec=centre)
+    ob = new_object(name, bm, mat)
+    if bevel:
+        b = ob.modifiers.new('bevel', 'BEVEL')
+        b.width = bevel
+        b.segments = 3
+        apply_all(ob)
+    smooth(ob)
+    return ob
+
+
+def dorsal(prefix, chain, step, arc, spike_every, spike_len, ARMOR, PINK, BELLY=None, belly_arc=0):
+    """Armour plates along a chain's back, pink flank marks, spikes, and optional belly scutes."""
+    parts = []
+    samples = resample(chain, step)
+    for i in range(len(samples)):
+        p, t, up = frame_along(samples, i)
+        r = max(samples[i][1], samples[i][2]) * 1.12
+        parts.append(plate(f'{prefix}_plate_{i}', p, t, up, r, step * 1.08, arc, ARMOR, thick=0.07 + r * 0.06))
+        side = t.cross(up).normalized()
+        for s in (-1, 1):
+            mp = p + (up * math.cos(math.radians(58)) + side * s * math.sin(math.radians(58))) * (r + 0.07 + r * 0.06)
+            parts.append(ellipsoid(f'{prefix}_mark_{i}_{s}', mp, (0.07 + r * 0.05, 0.03, 0.14 + r * 0.06), PINK, rot=V((0, 0, 1)).rotation_difference(t)))
+        if spike_every and i % spike_every == 0 and 0 < i < len(samples) - 1:
+            base = p + up * (r + 0.05)
+            parts.append(spike(f'{prefix}_spike_{i}', base, up + (-t) * 0.35, spike_len * (0.6 + r * 0.5), 0.12 + r * 0.12, PINK, curve=0.25, curve_dir=-t))
+        if BELLY is not None:
+            parts.append(plate(f'{prefix}_scute_{i}', p, t, -up, r * 0.93, step * 0.95, belly_arc, BELLY, thick=0.05))
+    return parts
+
+
+HEAD_SCALE = 1.5
+JAW_OPEN = 24  # degrees the jaw is modelled open; the viewer animates around this
+
+
 def build():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     SKIN = material('skin', '#4b56c4', rough=0.5)
@@ -297,57 +331,76 @@ def build():
     WHITE = material('teeth', '#f1f1f6', rough=0.3)
     MOUTH = material('mouth', '#7a1f3a', rough=0.6)
     EYE = material('eye', '#ff2a3a', rough=0.3, emit='#ff1a2a', strength=6)
-    BELLY = material('belly', '#5f6dd8', rough=0.5)
+    BELLY = material('belly', '#6878de', rough=0.5)
 
-    parts = []
-    parts.append(build_body(SKIN))
+    O = V((0, 0, 0))
+    root = group('HydranoidMonster', O)
+    torso = group('torso', O, root, O)
 
-    # belly plate under the chest
-    parts.append(ellipsoid('belly', V((0, -0.6, 3.0)), (1.0, 1.9, 0.8), BELLY))
-
-    # --- dorsal armour plates with pink marks and spikes ----------------------
-    k = 0
-    for chain, step, arc, spike_every, spike_len in (
-        (SPINE, 0.62, 200, 1, 0.9),
-        (NECK, 0.5, 190, 2, 0.6),
-        (TAIL, 0.42, 200, 2, 0.45),
-    ):
-        samples = resample(chain, step)
-        for i in range(len(samples)):
-            p, t, up = frame_along(samples, i)
-            r = max(samples[i][1], samples[i][2]) * 1.12
-            parts.append(plate(f'plate_{k}', p, t, up, r, step * 1.08, arc, ARMOR, thick=0.07 + r * 0.06))
-            side = t.cross(up).normalized()
-            # small pink diamond marks on both flanks of each plate
-            for s in (-1, 1):
-                mp = p + (up * math.cos(math.radians(55)) + side * s * math.sin(math.radians(55))) * (r + 0.07 + r * 0.06)
-                mark = ellipsoid(f'mark_{k}_{s}', mp, (0.07 + r * 0.05, 0.03, 0.14 + r * 0.06), PINK, rot=V((0, 0, 1)).rotation_difference(t))
-                parts.append(mark)
-            if i % spike_every == 0 and 0 < i < len(samples) - 1:
-                base = p + up * (r + 0.05)
-                parts.append(spike(f'spike_{k}', base, up + (-t) * 0.35, spike_len * (0.6 + r * 0.5), 0.12 + r * 0.12, PINK, curve=0.25, curve_dir=-t))
-            k += 1
-
-    # shoulder & hip armour: curved shells over the top of each leg, with big spikes
+    # --- torso -------------------------------------------------------------------
+    tp = [build_skin('spine', SPINE, SKIN)]
+    tp.append(ellipsoid('belly', V((0, -0.6, 3.0)), (1.0, 1.9, 0.8), BELLY))
+    tp += dorsal('spine', SPINE, 0.62, 200, 1, 0.9, ARMOR, PINK, BELLY, 110)
     for side in (-1, 1):
-        for front, spike_len in ((True, 1.7), (False, 2.3)):
+        for front, spike_len in ((True, 1.8), (False, 2.4)):
             lp = leg(side, front)
             top, knee = lp[0][0], lp[1][0]
             t = (knee - top).normalized()
             out = V((side, 0, 0))
             out = (out - t * out.dot(t)).normalized()
-            for j in range(3):
-                c = top.lerp(knee, -0.05 + j * 0.3)
-                rr = lp[0][1] * (1.18 - j * 0.12)
-                parts.append(plate(f'pad_{side}_{front}_{j}', c, t, out, rr, 0.75, 170, ARMOR, thick=0.14))
-                for m in (-0.2, 0.25):
-                    mp = c + out * (rr + 0.16) + t * m
-                    parts.append(ellipsoid(f'pad_mark_{side}_{front}_{j}_{m}', mp, (0.05, 0.1, 0.16), PINK, rot=V((0, 0, 1)).rotation_difference(t)))
-            parts.append(spike(f'pad_spike_{side}_{front}', top + out * (lp[0][1] + 0.1) + V((0, 0, 0.5)), V((0.45 * side, 0.5, 1)), spike_len, 0.26, PINK, curve=0.35, curve_dir=V((0, 1, 0))))
+            # one big angular shoulder / hip plate with a smaller one overlapping below
+            for j, (f, rr, ln) in enumerate(((0.05, 1.22, 1.5), (0.38, 1.08, 0.9))):
+                c = top.lerp(knee, f)
+                r = lp[0][1] * rr
+                tp.append(plate(f'pad_{side}_{front}_{j}', c, t, out, r, ln, 200, ARMOR, thick=0.16))
+                for m in (-0.25, 0.25):
+                    mp = c + out * (r + 0.18) + t * m * ln * 0.6
+                    tp.append(ellipsoid(f'pad_mark_{side}_{front}_{j}_{m}', mp, (0.05, 0.11, 0.2), PINK, rot=V((0, 0, 1)).rotation_difference(t)))
+            tp.append(spike(f'pad_spike_{side}_{front}', top + out * (lp[0][1] + 0.15) + V((0, 0, 0.55)), V((0.45 * side, 0.5, 1)), spike_len, 0.28, PINK, curve=0.35, curve_dir=V((0, 1, 0))))
+    attach('torso_mesh', tp, torso, O)
 
-    # knee / elbow guards (segmented navy bands) and pink fin on the shins
+    # --- neck → head → jaw ----------------------------------------------------------
+    chest = SPINE[-1][0]
+    neck = group('neck', chest, torso, O)
+    neck_chain = [SPINE[-1]] + NECK
+    np_ = [build_skin('neck_skin', neck_chain, SKIN)]
+    np_ += dorsal('neck', NECK, 0.5, 190, 2, 0.6, ARMOR, PINK, BELLY, 120)
+    attach('neck_mesh', np_, neck, chest)
+
+    head_at = NECK[-1][0]
+    head_parts, jaw_parts, jaw_pivot = build_head(ARMOR, SKIN, PINK, WHITE, MOUTH, EYE)
+    for ob in head_parts + jaw_parts:
+        for v in ob.data.vertices:
+            v.co = head_at + (v.co - head_at) * HEAD_SCALE
+    jaw_pivot = head_at + (jaw_pivot - head_at) * HEAD_SCALE
+    head = group('head', head_at, neck, chest)
+    attach('head_mesh', head_parts, head, head_at)
+    jaw = group('jaw', jaw_pivot, head, head_at)
+    attach('jaw_mesh', jaw_parts, jaw, jaw_pivot)
+
+    # --- tail (two segments so it can whip) ----------------------------------------
+    hip = SPINE[0][0]
+    tail = group('tail', hip, torso, O)
+    t1 = [SPINE[0]] + TAIL[:4]
+    tl = [build_skin('tail_skin', t1, SKIN)] + dorsal('tail', TAIL[:4], 0.42, 200, 2, 0.45, ARMOR, PINK)
+    attach('tail_mesh', tl, tail, hip)
+    mid = TAIL[3][0]
+    tail_tip = group('tail_tip', mid, tail, hip)
+    t2 = TAIL[3:]
+    tt = [build_skin('tail_tip_skin', t2, SKIN)] + dorsal('tailtip', t2, 0.4, 200, 2, 0.4, ARMOR, PINK)
+    tip_p, tip_t, tip_up = frame_along(TAIL, len(TAIL) - 1)
+    for j, d in enumerate((tip_t, tip_t + tip_up * 0.9, tip_t - tip_up * 0.9)):
+        tt.append(spike(f'tailtip_{j}', tip_p, d, 0.75 if j == 0 else 0.55, 0.11, PINK, curve=0.2, curve_dir=tip_up))
+    attach('tail_tip_mesh', tt, tail_tip, mid)
+
+    # --- legs ------------------------------------------------------------------------
     for side in (-1, 1):
-        for lp in (leg(side, True), leg(side, False)):
+        for front in (True, False):
+            lp = leg(side, front)
+            name = f"leg_{'f' if front else 'b'}{'l' if side < 0 else 'r'}"
+            top = lp[0][0]
+            g = group(name, top, torso, O)
+            parts = [build_skin(f'{name}_skin', lp, SKIN)]
             knee, ankle = lp[1][0], lp[2][0]
             t = (ankle - knee).normalized()
             for j in range(3):
@@ -355,86 +408,74 @@ def build():
                 r = lp[1][1] * (1 - j * 0.15) * 1.05
                 fwd = V((0, -1, 0))
                 up = (fwd - t * fwd.dot(t)).normalized()
-                parts.append(plate(f'guard_{side}_{knee.y}_{j}', c, t, up, r, 0.28, 240, ARMOR, thick=0.08))
-            # foot with four toes and pink claws
+                parts.append(plate(f'{name}_guard_{j}', c, t, up, r, 0.28, 240, ARMOR, thick=0.08))
             foot = lp[3][0]
-            parts.append(ellipsoid(f'foot_{side}_{knee.y}', V((foot.x, foot.y - 0.15, 0.24)), (0.5, 0.6, 0.24), SKIN))
+            parts.append(ellipsoid(f'{name}_foot', V((foot.x, foot.y - 0.15, 0.24)), (0.5, 0.6, 0.24), SKIN))
             for c in range(4):
                 x = foot.x + (c - 1.5) * 0.24
                 toe = V((x, foot.y - 0.6 - (0.08 if c in (1, 2) else 0), 0.17))
-                parts.append(ellipsoid(f'toe_{side}_{knee.y}_{c}', toe, (0.11, 0.24, 0.13), SKIN))
-                parts.append(plate(f'toe_guard_{side}_{knee.y}_{c}', toe + V((0, 0.05, 0)), V((0, 1, 0)), V((0, 0, 1)), 0.13, 0.2, 200, ARMOR, thick=0.04))
-                parts.append(spike(f'claw_{side}_{knee.y}_{c}', toe + V((0, -0.2, 0.02)), V((0, -1, -0.35)), 0.45, 0.085, PINK, curve=0.45, curve_dir=V((0, 0, -1))))
-        # pink fins on the back of the hind shins
-        hp = leg(side, False)
-        for j in range(4):
-            c = hp[2][0].lerp(hp[1][0], 0.2 + j * 0.18)
-            parts.append(spike(f'fin_{side}_{j}', c + V((0, 0.25, 0)), V((0, 1, 0.35)), 0.55 - j * 0.07, 0.1, PINK, sides=4))
+                parts.append(ellipsoid(f'{name}_toe_{c}', toe, (0.11, 0.24, 0.13), SKIN))
+                parts.append(plate(f'{name}_toe_guard_{c}', toe + V((0, 0.05, 0)), V((0, 1, 0)), V((0, 0, 1)), 0.13, 0.2, 200, ARMOR, thick=0.04))
+                parts.append(spike(f'{name}_claw_{c}', toe + V((0, -0.2, 0.02)), V((0, -1, -0.35)), 0.45, 0.085, PINK, curve=0.45, curve_dir=V((0, 0, -1))))
+            if not front:
+                for j in range(4):
+                    c = lp[2][0].lerp(lp[1][0], 0.2 + j * 0.18)
+                    parts.append(spike(f'{name}_fin_{j}', c + V((0, 0.25, 0)), V((0, 1, 0.35)), 0.55 - j * 0.07, 0.1, PINK, sides=4))
+            attach(f'{name}_mesh', parts, g, top)
 
-    # tail tip: three-pronged pink spikes
-    tip_p, tip_t, tip_up = frame_along(TAIL, len(TAIL) - 1)
-    for j, d in enumerate((tip_t, tip_t + tip_up * 0.9, tip_t - tip_up * 0.9)):
-        parts.append(spike(f'tailtip_{j}', tip_p, d, 0.75 if j == 0 else 0.55, 0.11, PINK, curve=0.2, curve_dir=tip_up))
-
-    head = join('head', build_head(ARMOR, SKIN, PINK, WHITE, MOUTH, EYE))
-    pivot = NECK[-1][0]
-    for v in head.data.vertices:
-        v.co = pivot + (v.co - pivot) * HEAD_SCALE
-    parts.append(head)
-
-    body = join('Hydranoid', parts)
-    body.name = 'HydranoidMonster'
-    return body
-
-
-HEAD_SCALE = 1.5
+    return root
 
 
 def build_head(ARMOR, SKIN, PINK, WHITE, MOUTH, EYE):
-    """Dragon head at the end of the neck, facing -Y with the jaws wide open."""
-    parts = []
+    """
+    Angular armoured dragon head at the end of the neck, facing -Y.
+    Returns (head parts, jaw parts, jaw pivot) in world space before HEAD_SCALE.
+    """
+    hp = []
     base = NECK[-1][0]
     H = base + V((0, -0.55, -0.25))  # skull centre
-    tilt = euler(-18, 0, 0)
+    tilt = euler(-14, 0, 0)
 
-    # skull + snout (upper jaw)
-    parts.append(ellipsoid('skull', H, (0.55, 0.65, 0.48), ARMOR, rot=tilt))
-    parts.append(ellipsoid('snout', H + V((0, -0.8, -0.02)), (0.33, 0.66, 0.2), ARMOR, rot=euler(-4, 0, 0), seg=8))
-    parts.append(ellipsoid('cheek', H + V((0, -0.2, -0.25)), (0.5, 0.55, 0.3), SKIN))
-    # lower jaw, dropped open
-    jaw_pivot = H + V((0, -0.05, -0.32))
-    jaw_rot = euler(32, 0, 0)
-    parts.append(ellipsoid('jaw', jaw_pivot + jaw_rot @ V((0, -0.7, -0.08)), (0.32, 0.72, 0.16), ARMOR, rot=jaw_rot))
-    parts.append(ellipsoid('mouth', H + V((0, -0.55, -0.42)), (0.26, 0.55, 0.22), MOUTH, rot=euler(15, 0, 0)))
-    # teeth on upper and lower jaw
+    # skull: a tapered armoured wedge, snout wedge in front, cheeks below
+    hp.append(wedge('skull', H, (0.48, 0.58, 0.34), ARMOR, taper=(0.6, 0.7), rot=tilt))
+    hp.append(wedge('snout', H + V((0, -0.9, 0.0)), (0.27, 0.5, 0.14), ARMOR, taper=(0.42, 0.5), rot=euler(-6, 0, 0)))
+    hp.append(wedge('cheek', H + V((0, -0.25, -0.22)), (0.46, 0.5, 0.18), SKIN, taper=(0.7, 0.8)))
+    hp.append(ellipsoid('mouth', H + V((0, -0.55, -0.38)), (0.24, 0.55, 0.2), MOUTH, rot=euler(12, 0, 0)))
+    # brow ridges over the eyes, angled down to the snout
+    for s in (-1, 1):
+        hp.append(wedge(f'brow_{s}', H + V((s * 0.33, -0.42, 0.24)), (0.13, 0.36, 0.07), ARMOR, taper=(0.4, 0.6), rot=euler(-12, s * 8, -s * 22)))
+        hp.append(ellipsoid(f'eye_{s}', H + V((s * 0.4, -0.4, 0.13)), (0.06, 0.14, 0.055), EYE, rot=euler(0, 0, -s * 22)))
+    # upper teeth and pink fangs
     for s in (-1, 1):
         for j in range(5):
-            y = -0.35 - j * 0.2
-            parts.append(spike(f'tooth_u_{s}_{j}', H + V((s * (0.27 - j * 0.025), y, -0.2)), V((0, -0.15, -1)), 0.2 - j * 0.015, 0.045, WHITE, sides=4))
-            lp = jaw_pivot + jaw_rot @ V((s * (0.24 - j * 0.025), -0.3 - j * 0.2, 0.05))
-            parts.append(spike(f'tooth_l_{s}_{j}', lp, jaw_rot @ V((0, -0.1, 1)), 0.17 - j * 0.01, 0.04, WHITE, sides=4))
-    # fangs at the tip
+            hp.append(spike(f'tooth_u_{s}_{j}', H + V((s * (0.26 - j * 0.03), -0.38 - j * 0.2, -0.17)), V((0, -0.15, -1)), 0.2 - j * 0.015, 0.045, WHITE, sides=4))
+        hp.append(spike(f'fang_{s}', H + V((s * 0.12, -1.3, -0.08)), V((0, -0.2, -1)), 0.34, 0.06, PINK, sides=5))
+    # long pink nose horn sweeping up and forward
+    hp.append(spike('nose_horn', H + V((0, -1.0, 0.14)), V((0, -0.55, 1)), 1.35, 0.17, PINK, curve=-0.35, curve_dir=V((0, -1, 0))))
+    # crown of navy blades swept back, plus side blades
+    for j, (dx, dz, ln) in enumerate(((0, 0.38, 1.55), (0.26, 0.34, 1.4), (-0.26, 0.34, 1.4), (0.44, 0.14, 1.1), (-0.44, 0.14, 1.1), (0.2, -0.02, 0.85), (-0.2, -0.02, 0.85))):
+        hp.append(spike(f'crown_{j}', H + V((dx, 0.12, dz)), V((dx * 1.2, 0.8, 1.0)), ln, 0.15, ARMOR, sides=4, curve=0.25, curve_dir=V((0, 1, 0))))
     for s in (-1, 1):
-        parts.append(spike(f'fang_{s}', H + V((s * 0.13, -1.38, -0.12)), V((0, -0.2, -1)), 0.32, 0.06, PINK, sides=5))
-    # red eyes
+        hp.append(spike(f'cheek_spike_{s}', H + V((s * 0.42, 0.0, -0.25)), V((s * 0.8, 0.5, -0.4)), 0.6, 0.1, ARMOR, sides=4))
+
+    # lower jaw, modelled open by JAW_OPEN degrees around its hinge
+    jp = []
+    pivot = H + V((0, -0.02, -0.3))
+    rot = euler(JAW_OPEN, 0, 0)
+    jp.append(wedge('jaw_bone', pivot + rot @ V((0, -0.66, -0.06)), (0.28, 0.62, 0.11), ARMOR, taper=(0.55, 0.7), rot=rot))
+    jp.append(spike('chin_spike', pivot + rot @ V((0, -0.2, -0.12)), rot @ V((0, 0.4, -1)), 0.4, 0.08, ARMOR, sides=4))
     for s in (-1, 1):
-        parts.append(ellipsoid(f'eye_{s}', H + V((s * 0.44, -0.35, 0.16)), (0.06, 0.13, 0.06), EYE, rot=euler(0, 0, -s * 20)))
-        parts.append(ellipsoid(f'brow_{s}', H + V((s * 0.4, -0.3, 0.27)), (0.12, 0.3, 0.06), ARMOR, rot=euler(-10, 0, -s * 25)))
-    # big pink nose horn sweeping up and forward
-    parts.append(spike('nose_horn', H + V((0, -1.05, 0.15)), V((0, -0.55, 1)), 1.25, 0.16, PINK, curve=-0.35, curve_dir=V((0, -1, 0))))
-    # crown of navy spikes swept back
-    for j, (dx, dz, ln) in enumerate(((0, 0.4, 1.5), (0.28, 0.36, 1.35), (-0.28, 0.36, 1.35), (0.46, 0.15, 1.05), (-0.46, 0.15, 1.05), (0.2, 0.0, 0.8), (-0.2, 0.0, 0.8))):
-        parts.append(spike(f'crown_{j}', H + V((dx, 0.15, dz)), V((dx * 1.2, 0.8, 1.0)), ln, 0.15, ARMOR, sides=5, curve=0.25, curve_dir=V((0, 1, 0))))
-    # cheek spikes
-    for s in (-1, 1):
-        parts.append(spike(f'cheek_spike_{s}', H + V((s * 0.45, 0.0, -0.3)), V((s * 0.8, 0.5, -0.4)), 0.55, 0.1, ARMOR, sides=5))
-    return parts
+        for j in range(5):
+            lp = pivot + rot @ V((s * (0.22 - j * 0.025), -0.3 - j * 0.2, 0.06))
+            jp.append(spike(f'tooth_l_{s}_{j}', lp, rot @ V((0, -0.1, 1)), 0.17 - j * 0.01, 0.04, WHITE, sides=4))
+    return hp, jp, pivot
 
 
-def export(ob):
+def export(root):
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     bpy.ops.export_scene.gltf(filepath=os.path.abspath(OUT), export_format='GLB', export_apply=True)
-    print('wrote', os.path.abspath(OUT), os.path.getsize(OUT) // 1024, 'KB', len(ob.data.polygons), 'faces')
+    faces = sum(len(o.data.polygons) for o in bpy.data.objects if o.type == 'MESH')
+    print('wrote', os.path.abspath(OUT), os.path.getsize(OUT) // 1024, 'KB', faces, 'faces')
 
 
 if __name__ == '__main__':
