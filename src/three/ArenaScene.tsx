@@ -1,4 +1,4 @@
-import { ContactShadows, OrbitControls, Sparkles } from '@react-three/drei'
+import { OrbitControls, Sparkles } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
@@ -10,6 +10,7 @@ import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { Impact, Projectile, ShieldDome } from './ArenaFx'
 import { MonsterModel } from './BakuganModels'
+import { BlobShadow } from './BlobShadow'
 import { Brawler, type BrawlerGesture } from './Brawler'
 import { GateCard } from './GateCard'
 import type { AvatarParts } from '../profile/avatar'
@@ -111,12 +112,12 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
           <Suspense fallback={null}>
             <Brawler parts={b.parts} photo={b.photo} model={b.model} gesture={b.gesture} color={ELEMENT_BY_ID[fighters[i].bakugan.element].color} />
           </Suspense>
+          <BlobShadow size={0.9} />
         </group>
       ))}
 
       {event && <ActionFx key={event.key} event={event.event} fighters={fighters} />}
 
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={80} blur={2.5} far={28} />
       <OrbitControls
         makeDefault
         target={[0, 8.5, 0]}
@@ -254,6 +255,7 @@ function Fighter({
               <MonsterModel entrant={entrant} poseRef={anim} />
             </group>
           </group>
+          <BlobShadow size={3.2} />
         </group>
       </group>
       <group position={[sideX(side), 0, 0]} scale={FIGHTER_SCALE}>

@@ -1,4 +1,4 @@
-import { ContactShadows, OrbitControls, Sparkles } from '@react-three/drei'
+import { OrbitControls, Sparkles } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { type RefObject, Suspense, useEffect, useRef } from 'react'
@@ -8,6 +8,7 @@ import type { Ability, Bakugan } from '../data/bakugan'
 import type { ElementInfo } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { BallModel, MonsterModel } from './BakuganModels'
+import { BlobShadow } from './BlobShadow'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
 import { moveFor, type Pose } from './pose'
@@ -89,12 +90,9 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
         </group>
       )}
 
-      {/* remounted per phase: a fresh shadow buffer, so a monster that left the field leaves no ghost */}
-      <ContactShadows key={phase} position={[0, 0.001, 0]} opacity={0.6} scale={40} blur={2.5} far={12} />
       <CameraRig phase={phase} />
 
-      {/* fresh post-processing buffers per phase, so nothing of a departed monster lingers */}
-      <EffectComposer key={phase} multisampling={0}>
+      <EffectComposer multisampling={0}>
         <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
         <Vignette offset={0.25} darkness={0.75} />
       </EffectComposer>
@@ -156,12 +154,28 @@ function BallActor({ bakugan, phase, brawlStart, ballOpen }: { bakugan: Bakugan;
     }
   })
 
+  // soft shadow on the ground under the ball (follows it, stays flat)
+  const shadow = useRef<THREE.Mesh>(null)
+  useFrame(() => {
+    const g = ref.current
+    const sh = shadow.current
+    if (!g || !sh) return
+    sh.position.set(g.position.x, 0.01, g.position.z)
+    sh.visible = g.visible
+    const lift = Math.max(0, g.position.y - 0.5)
+    sh.scale.setScalar(1.3 + lift * 0.4)
+  })
+
   return (
-    <group ref={ref}>
-      <BallModel bakugan={bakugan} openRef={open} />
-    </group>
+    <>
+      <group ref={ref}>
+        <BallModel bakugan={bakugan} openRef={open} />
+      </group>
+      <BlobShadow ref={shadow} />
+    </>
   )
 }
+
 
 function MonsterActor({
   bakugan,
@@ -200,6 +214,7 @@ function MonsterActor({
       <group scale={MONSTER_SCALE}>
         <MonsterModel entrant={{ bakugan, form }} poseRef={pose} />
       </group>
+      <BlobShadow size={7} />
     </group>
   )
 }

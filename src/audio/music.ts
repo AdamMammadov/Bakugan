@@ -19,6 +19,7 @@ interface Song {
   /** Arpeggio steps (16th notes) playing chord tones; empty for none. */
   arp: number[]
   pad: boolean
+  /** Melody: step → chord tone (0 root, 1 third, 2 fifth, 3 octave), so it always fits the harmony. */
   lead?: Record<number, number>
 }
 
@@ -39,20 +40,21 @@ const SONGS: Record<Track, Song> = {
     pad: true,
   },
   battle: {
-    bpm: 138,
+    bpm: 132,
+    // D minor: i – VI – VII – i
     chords: [
       [50, 'min'],
       [46, 'maj'],
       [48, 'maj'],
-      [45, 'maj'],
+      [50, 'min'],
     ],
     kick: [0, 4, 8, 12],
     snare: [4, 12],
     hat: [0, 2, 4, 6, 8, 10, 12, 14, 15],
-    bass: { 0: 0, 2: 0, 3: 12, 4: 0, 6: 0, 8: 0, 10: 7, 11: 0, 12: 0, 14: 12 },
+    bass: { 0: 0, 2: 0, 4: 0, 6: 12, 8: 0, 10: 0, 12: 7, 14: 12 },
     arp: [],
     pad: true,
-    lead: { 0: 7, 3: 10, 6: 12, 8: 10, 10: 7, 14: 5 },
+    lead: { 0: 2, 3: 1, 6: 0, 8: 1, 10: 2, 12: 3 },
   },
 }
 
@@ -152,7 +154,11 @@ function schedule(song: Song, s: number, at: number) {
   if (i in song.bass) voice('sawtooth', midi(root - 24 + song.bass[i]), at, sixteenth * 1.8, 0.22, 600)
   if (song.pad && i === 0) notes.forEach((n) => voice('sawtooth', midi(n), at, sixteenth * 16, 0.045, 1400, 0.6))
   if (song.arp.includes(i)) voice('triangle', midi(notes[(i / 2) % 3] + 12), at, sixteenth * 1.6, 0.07, 3000)
-  if (song.lead && i in song.lead && bar % 2 === 1) voice('square', midi(root + 12 + song.lead[i]), at, sixteenth * 1.5, 0.05, 2400)
+  if (song.lead && i in song.lead && bar % 2 === 1) {
+    const tone = song.lead[i]
+    const note = tone === 3 ? root + 12 : notes[tone]
+    voice('square', midi(note + 12), at, sixteenth * 1.5, 0.045, 2200)
+  }
 }
 
 function speaking() {
