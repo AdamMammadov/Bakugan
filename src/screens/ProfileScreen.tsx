@@ -15,6 +15,7 @@ import {
   cardUnlockXp,
   nextCardXp,
   nextEvolveXp,
+  inShop,
   priceOf,
   rankScore,
   teamEntrants,
@@ -26,6 +27,7 @@ import {
   type OwnedBakugan,
   type Profile,
 } from '../profile/useProfiles'
+import { FRAMES, OUTFITS, PASS_ACCESSORIES, SKIN_BY_ID, SKINS } from '../season/season'
 import { useGame } from '../store/useGame'
 
 export function ProfileScreen() {
@@ -85,6 +87,7 @@ export function ProfileScreen() {
           <Stats profile={profile} />
           <Team profile={profile} />
           <Collection profile={profile} />
+          <Locker profile={profile} />
           <Cards profile={profile} />
         </>
       )}
@@ -130,9 +133,10 @@ function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () =>
   const clan = clanOf(useClans((s) => s.clans), profile.id)
   return (
     <header className="mt-8 flex items-start gap-8">
-      <Avatar avatar={profile.avatar} color={element.color} size={150} />
+      <Avatar avatar={profile.avatar} color={element.color} size={150} frame={profile.cosmetics?.frame} />
       <div className="min-w-0 flex-1">
         <RankBadge profile={profile} color={element.color} />
+        {profile.cosmetics?.title && <p className="font-display mt-1 text-sm tracking-[0.2em] text-amber-200">✦ {profile.cosmetics.title}</p>}
         <h1 className="font-display text-5xl font-black tracking-wide">
           {clan && <span className="mr-3 text-3xl text-white/50">[{clan.tag}]</span>}
           {profile.firstName} {profile.lastName}
@@ -209,7 +213,7 @@ function Team({ profile }: { profile: Profile }) {
 }
 
 function Collection({ profile }: { profile: Profile }) {
-  const shop = BAKUGAN.filter((b) => !profile.collection.some((o) => o.id === b.id)).sort(
+  const shop = BAKUGAN.filter((b) => !profile.collection.some((o) => o.id === b.id) && inShop(b.id)).sort(
     (a, b) => Number(b.element === profile.element) - Number(a.element === profile.element),
   )
   return (
@@ -250,6 +254,9 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
   const ready = canEvolve(owned)
   const inTeam = profile.team.indexOf(bakugan.id)
   const cardNext = nextCardXp(owned)
+  const applyCardKey = useProfiles((s) => s.applyCardKey)
+  const setSkin = useProfiles((s) => s.setSkin)
+  const skins = SKINS.filter((sk) => profile.cosmetics?.owned.includes(`skin:${sk.id}`))
   const [flash, setFlash] = useState(0)
 
   function toggleTeam() {
@@ -351,7 +358,101 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
         Ability cards {cardCount(owned)}/{bakugan.abilities.length}
         {cardNext !== null && ` · next card at ${cardNext} XP`}
       </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+        {cardNext !== null && (profile.cardKeys ?? 0) > 0 && (
+          <button
+            onClick={() => {
+              playSfx('gPower')
+              applyCardKey(bakugan.id)
+            }}
+            className="rounded border border-amber-300/60 px-2 py-1 text-amber-200 hover:bg-amber-300/10"
+          >
+            🗝 USE CARD KEY ({profile.cardKeys})
+          </button>
+        )}
+        {skins.length > 0 && (
+          <label className="flex items-center gap-1 text-white/50">
+            SKIN
+            <select
+              value={owned.skin ?? ''}
+              onChange={(e) => setSkin(bakugan.id, e.target.value || undefined)}
+              className="rounded border border-white/20 bg-black/80 px-1 py-0.5 text-white"
+            >
+              <option value="">Original</option>
+              {skins.map((sk) => (
+                <option key={sk.id} value={sk.id}>
+                  {sk.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
     </div>
+  )
+}
+
+/** Everything earned in the Season Pass: titles, frames, skins, sets, boosts and keys. */
+function Locker({ profile }: { profile: Profile }) {
+  const equip = useProfiles((s) => s.equip)
+  const owned = profile.cosmetics?.owned ?? []
+  const titles = owned.filter((k) => k.startsWith('title:')).map((k) => k.slice(6))
+  const frames = owned.filter((k) => k.startsWith('frame:')).map((k) => k.slice(6))
+  const other = owned.filter((k) => /^(skin|outfit|acc):/.test(k))
+  const color = ELEMENT_BY_ID[profile.element].color
+  const label = (k: string) => {
+    const [kind, id] = k.split(':')
+    return kind === 'skin' ? `${SKIN_BY_ID[id]?.name} Bakugan skin` : kind === 'outfit' ? `${OUTFITS[id]?.name} (avatar builder)` : `${PASS_ACCESSORIES[id]} (avatar builder)`
+  }
+  return (
+    <section className="mt-10">
+      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">LOCKER</h2>
+      <p className="mt-1 text-sm text-white/45">
+        Rewards from the Season Pass. XP Boosts: {profile.boosts ?? 0} (each gives +50% Bakugan XP for one battle) · Card Keys:{' '}
+        {profile.cardKeys ?? 0} (use them on a Bakugan above)
+      </p>
+      {owned.length === 0 && <p className="mt-3 text-sm text-white/40">Nothing yet — climb the Season Pass to fill your locker.</p>}
+      {titles.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="font-display w-20 text-[10px] tracking-[0.3em] text-white/40">TITLE</span>
+          {[undefined, ...titles].map((t) => (
+            <button
+              key={t ?? 'none'}
+              onClick={() => equip('title', t)}
+              className="rounded-full border px-3 py-1 text-xs"
+              style={{ borderColor: profile.cosmetics?.title === t ? '#fde68a' : 'rgba(255,255,255,0.15)' }}
+            >
+              {t ?? 'None'}
+            </button>
+          ))}
+        </div>
+      )}
+      {frames.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <span className="font-display w-20 text-[10px] tracking-[0.3em] text-white/40">FRAME</span>
+          {[undefined, ...frames].map((f) => (
+            <button
+              key={f ?? 'none'}
+              onClick={() => equip('frame', f)}
+              title={f ? FRAMES[f]?.name : 'No frame'}
+              className={`rounded-full transition ${profile.cosmetics?.frame === f ? 'scale-110' : 'opacity-60 hover:opacity-100'}`}
+            >
+              <Avatar avatar={profile.avatar} color={color} size={44} frame={f} />
+            </button>
+          ))}
+        </div>
+      )}
+      {other.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="font-display w-20 text-[10px] tracking-[0.3em] text-white/40">ITEMS</span>
+          {other.map((k) => (
+            <span key={k} className="rounded border border-white/15 px-2 py-1 text-xs text-white/70">
+              {label(k)}
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -390,8 +491,10 @@ function ShopCard({ bakugan, profile }: { bakugan: Bakugan; profile: Profile }) 
           onClick={() => acquire(bakugan.id, 'xp') && playSfx('victory')}
           className="rounded-md border border-white/20 px-2 py-2 text-xs transition enabled:hover:bg-white/10 disabled:opacity-40"
         >
-          <span className="font-display block font-bold">{price.xp.toLocaleString('en')} XP</span>
-          <span className="text-[10px] text-white/50">{canClaim ? 'CLAIM' : 'player XP needed'}</span>
+          <span className="font-display block font-bold">{Number.isFinite(price.xp) ? `${price.xp.toLocaleString('en')} XP` : '—'}</span>
+          <span className="text-[10px] text-white/50">
+            {!Number.isFinite(price.xp) ? 'season pass Bakugan: BP only' : canClaim ? 'CLAIM' : 'player XP needed'}
+          </span>
         </button>
         <button disabled className="rounded-md border border-amber-400/40 px-2 py-2 text-xs opacity-60" title="Coming later">
           <span className="font-display block font-bold text-amber-300">GAME PASS</span>

@@ -38,9 +38,11 @@ interface Props {
   /** Show the ball in its opened pose while inspecting it. */
   ballOpen: boolean
   activeAbility: { ability: Ability; key: number } | null
+  /** The player's equipped skin for this Bakugan. */
+  skin?: string
 }
 
-export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbility }: Props) {
+export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbility, skin }: Props) {
   // Clock time at which the brawl sequence started; drives the ball → monster timeline.
   const brawlStart = useRef<number | null>(null)
   useFrame(({ clock }) => {
@@ -69,14 +71,21 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
         )}
       </Suspense>
 
-      <BallActor bakugan={bakugan} ballOpen={ballOpen} phase={phase} brawlStart={brawlStart} />
+      <BallActor bakugan={bakugan} ballOpen={ballOpen} phase={phase} brawlStart={brawlStart} skin={skin} />
       {phase === 'brawling' && (
         <group scale={[2.2, 1.2, 2.2]}>
           <LightPillar color={element.glow} delay={T.pillar} />
         </group>
       )}
       {(phase === 'monster' || phase === 'brawling') && (
-        <MonsterActor bakugan={bakugan} form={form} phase={phase} brawlStart={brawlStart} activeAbility={activeAbility} />
+        <MonsterActor
+          bakugan={bakugan}
+          form={form}
+          phase={phase}
+          brawlStart={brawlStart}
+          activeAbility={activeAbility}
+          skin={skin}
+        />
       )}
 
       {activeAbility && (
@@ -124,7 +133,19 @@ function elapsed(brawlStart: RefObject<number | null>, now: number) {
   return brawlStart.current === null ? 0 : now - brawlStart.current
 }
 
-function BallActor({ bakugan, phase, brawlStart, ballOpen }: { bakugan: Bakugan; phase: Phase; ballOpen: boolean; brawlStart: RefObject<number | null> }) {
+function BallActor({
+  bakugan,
+  phase,
+  brawlStart,
+  ballOpen,
+  skin,
+}: {
+  bakugan: Bakugan
+  phase: Phase
+  ballOpen: boolean
+  brawlStart: RefObject<number | null>
+  skin?: string
+}) {
   const ref = useRef<THREE.Group>(null)
   const open = useRef(false)
 
@@ -169,13 +190,12 @@ function BallActor({ bakugan, phase, brawlStart, ballOpen }: { bakugan: Bakugan;
   return (
     <>
       <group ref={ref}>
-        <BallModel bakugan={bakugan} openRef={open} />
+        <BallModel bakugan={bakugan} openRef={open} skin={skin} />
       </group>
       <BlobShadow ref={shadow} />
     </>
   )
 }
-
 
 function MonsterActor({
   bakugan,
@@ -183,12 +203,14 @@ function MonsterActor({
   phase,
   brawlStart,
   activeAbility,
+  skin,
 }: {
   bakugan: Bakugan
   form: number
   phase: Phase
   brawlStart: RefObject<number | null>
   activeAbility: Props['activeAbility']
+  skin?: string
 }) {
   const ref = useRef<THREE.Group>(null)
   // activating an ability card plays that card's combat move
@@ -212,7 +234,7 @@ function MonsterActor({
   return (
     <group ref={ref} scale={0.001} visible={false}>
       <group scale={MONSTER_SCALE}>
-        <MonsterModel entrant={{ bakugan, form }} poseRef={pose} />
+        <MonsterModel entrant={{ bakugan, form, skin }} poseRef={pose} />
       </group>
       <BlobShadow size={7} />
     </group>

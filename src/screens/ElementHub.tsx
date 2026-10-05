@@ -4,7 +4,29 @@ import { BakuganInfo } from '../components/BakuganInfo'
 import { bakuganForElement, type Bakugan } from '../data/bakugan'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { ELEMENT_BY_ID } from '../data/elements'
+import { seasonFor, useActiveProfile } from '../profile/useProfiles'
+import { currentSeason } from '../season/current'
+import { passLevel, timeLeft } from '../season/season'
 import { useGame } from '../store/useGame'
+
+/** Season countdown and pass level, opening the Season Pass. */
+function SeasonChip() {
+  const profile = useActiveProfile()
+  const openPage = useGame((s) => s.openPage)
+  const info = currentSeason()
+  const level = profile ? passLevel(seasonFor(profile).passXp) : 0
+  return (
+    <button
+      onClick={() => openPage('pass')}
+      className="ml-auto rounded-xl border-2 border-amber-300/60 bg-black/50 px-5 py-3 text-left backdrop-blur transition hover:bg-amber-300/10"
+    >
+      <p className="font-display text-[10px] tracking-[0.4em] text-amber-300">SEASON {info.id} · ENDS IN {timeLeft(info.endsAt - Date.now()).toUpperCase()}</p>
+      <p className="font-display mt-1 text-xl font-black">
+        SEASON PASS {profile && <span className="text-white/60">· LEVEL {level}</span>}
+      </p>
+    </button>
+  )
+}
 
 export function ElementHub() {
   const elementId = useGame((s) => s.element)!
@@ -40,6 +62,7 @@ export function ElementHub() {
             {element.name.toUpperCase()} BAKUGAN
           </h1>
         </div>
+        <SeasonChip />
       </header>
 
       <div className="mt-12 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">

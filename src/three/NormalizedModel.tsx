@@ -23,8 +23,11 @@ export function NormalizedModel({
   yaw = 0,
   poseRef,
   openRef,
+  tint,
 }: {
   url: string
+  /** Skin colours: the model is tinted towards `color` and glows in `glow`. */
+  tint?: { color: string; glow: string }
   height: number
   yaw?: number
   poseRef?: PoseRef
@@ -36,9 +39,22 @@ export function NormalizedModel({
   const scene = useMemo(() => {
     const copy = clone(gltf.scene)
     copy.traverse((o) => {
-      if ((o as THREE.Mesh).isMesh) {
+      const m = o as THREE.Mesh
+      if (m.isMesh) {
         o.castShadow = true
         o.receiveShadow = true
+        if (tint) {
+          const tintOne = (mat: THREE.Material) => {
+            const c = mat.clone() as THREE.MeshStandardMaterial
+            c.color?.lerp(new THREE.Color(tint.color), 0.6)
+            if (c.emissive) {
+              c.emissive = new THREE.Color(tint.glow)
+              c.emissiveIntensity = 0.18
+            }
+            return c
+          }
+          m.material = Array.isArray(m.material) ? m.material.map(tintOne) : tintOne(m.material)
+        }
       }
     })
     // parts that only exist in the open form start collapsed, and must not affect the fit
@@ -49,7 +65,8 @@ export function NormalizedModel({
       }
     })
     return copy
-  }, [gltf.scene])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gltf.scene, tint?.color, tint?.glow])
 
   const openable = useMemo(() => {
     const nodes: { node: THREE.Object3D; pos: THREE.Vector3; rot: THREE.Euler; u: Record<string, unknown> }[] = []

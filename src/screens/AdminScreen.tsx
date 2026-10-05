@@ -7,6 +7,10 @@ import { GRID, GRID_SIZE } from '../components/grid'
 import { abilityLabel, type Ability, type AbilityType, type Bakugan, type EffectPreset, type Evolution } from '../data/bakugan'
 import { loadCards, type DbCard } from '../data/cardDb'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
+import { BAKUGAN } from '../data/bakugan'
+import { seasonFor, useActiveProfile, useProfiles } from '../profile/useProfiles'
+import { currentSeason } from '../season/current'
+import { SEASON_DAYS, type SeasonRole } from '../season/season'
 import { useGame } from '../store/useGame'
 
 const TYPES: AbilityType[] = ['attack', 'boost', 'weaken', 'drain', 'shield']
@@ -115,7 +119,8 @@ function Panel() {
   const [dirty, setDirty] = useState(false)
 
   function exportData() {
-    const blob = new Blob([JSON.stringify({ custom, overrides }, null, 2)], { type: 'application/json' })
+    const { seasonStart, seasonRoles } = useAdmin.getState()
+    const blob = new Blob([JSON.stringify({ custom, overrides, seasonStart, seasonRoles }, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = 'bakugan-admin.json'
@@ -188,6 +193,8 @@ function Panel() {
           <input type="file" accept="application/json" className="hidden" onChange={(e) => importFile(e.target.files?.[0])} />
         </label>
       </div>
+
+      <SeasonAdmin />
 
       <h2 className="font-display mt-8 text-xs tracking-[0.5em] text-white/40">BUILT-IN BAKUGAN</h2>
       <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3">
@@ -504,5 +511,101 @@ function CardPicker({ bakugan, onPick, onClose }: { bakugan: Bakugan; onPick: (c
         })}
       </div>
     </div>
+  )
+}
+
+/** Season settings: start date, which Bakugan each season brings, and test tools. */
+function SeasonAdmin() {
+  const seasonStart = useAdmin((s) => s.seasonStart)
+  const setSeasonStart = useAdmin((s) => s.setSeasonStart)
+  const seasonRoles = useAdmin((s) => s.seasonRoles)
+  const setSeasonRole = useAdmin((s) => s.setSeasonRole)
+  const profile = useActiveProfile()
+  const adminSetPremium = useProfiles((s) => s.adminSetPremium)
+  const adminAddPassXp = useProfiles((s) => s.adminAddPassXp)
+  const current = currentSeason()
+  const [season, setSeason] = useState(current.id)
+  const roles = seasonRoles[season] ?? {}
+  const count = (r: SeasonRole) => Object.values(roles).filter((x) => x === r).length
+  const shift = (days: number) => {
+    const d = new Date(`${seasonStart}T00:00:00`)
+    d.setDate(d.getDate() + days)
+    setSeasonStart(d.toISOString().slice(0, 10))
+  }
+
+  return (
+    <section className="mt-8 rounded-xl border border-amber-300/30 bg-black/40 p-5">
+      <h2 className="font-display text-xs tracking-[0.5em] text-amber-300">SEASONS</h2>
+      <div className="mt-3 flex flex-wrap items-end gap-4">
+        <label>
+          <span className={label}>SEASON 1 STARTS</span>
+          <input type="date" className={input} value={seasonStart} onChange={(e) => e.target.value && setSeasonStart(e.target.value)} />
+        </label>
+        <p className="text-sm text-white/60">
+          Now: <b>Season {current.id}</b> · ends {new Date(current.endsAt).toLocaleDateString('en-GB')} (every season lasts {SEASON_DAYS} days)
+        </p>
+      </div>
+
+      <div className="mt-4 flex items-center gap-3">
+        <span className={label}>EDIT SEASON</span>
+        {[current.id, current.id + 1].map((id) => (
+          <button
+            key={id}
+            onClick={() => setSeason(id)}
+            className={`rounded border px-3 py-1 text-xs ${season === id ? 'border-white text-white' : 'border-white/20 text-white/50'}`}
+          >
+            Season {id}
+            {id === current.id ? ' (now)' : ' (next)'}
+          </button>
+        ))}
+        <span className="text-xs text-white/50">
+          pass {count('pass')}/4 · in play {count('challenge')}/8
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-2">
+        {BAKUGAN.map((b) => {
+          const elsewhere = Object.entries(seasonRoles).find(([sid, r]) => Number(sid) !== season && r[b.id])
+          return (
+            <label key={b.id} className="flex items-center gap-2 rounded border border-white/10 px-2 py-1.5 text-sm">
+              <img src={ELEMENT_BY_ID[b.element].icon} alt="" className="h-6 w-6" />
+              <span className="flex-1 truncate">{b.name}</span>
+              {elsewhere ? (
+                <span className="text-xs text-white/40">Season {elsewhere[0]}</span>
+              ) : (
+                <select
+                  value={roles[b.id] ?? ''}
+                  onChange={(e) => setSeasonRole(season, b.id, (e.target.value || null) as SeasonRole | null)}
+                  className="rounded border border-white/20 bg-black/80 px-1 text-xs"
+                >
+                  <option value="">base game</option>
+                  <option value="pass" disabled={roles[b.id] !== 'pass' && count('pass') >= 4}>
+                    season pass
+                  </option>
+                  <option value="challenge" disabled={roles[b.id] !== 'challenge' && count('challenge') >= 8}>
+                    earned in play
+                  </option>
+                </select>
+              )}
+            </label>
+          )
+        })}
+      </div>
+
+      <h3 className={`${label} mt-5`}>TEST TOOLS (ACTIVE PLAYER{profile ? `: ${profile.firstName.toUpperCase()}` : ''})</h3>
+      <div className="flex flex-wrap gap-2">
+        <button disabled={!profile} onClick={() => adminSetPremium(!(profile && seasonFor(profile).premium))} className="rounded border border-amber-300/50 px-3 py-1.5 text-xs text-amber-200 disabled:opacity-40">
+          {profile && seasonFor(profile).premium ? 'Remove premium pass' : 'Give premium pass'}
+        </button>
+        <button disabled={!profile} onClick={() => adminAddPassXp(5000)} className="rounded border border-white/30 px-3 py-1.5 text-xs disabled:opacity-40">
+          +5,000 pass XP
+        </button>
+        <button onClick={() => shift(-SEASON_DAYS)} className="rounded border border-white/30 px-3 py-1.5 text-xs">
+          Jump to next season
+        </button>
+        <button onClick={() => shift(SEASON_DAYS)} className="rounded border border-white/30 px-3 py-1.5 text-xs">
+          Go back a season
+        </button>
+      </div>
+    </section>
   )
 }

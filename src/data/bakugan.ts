@@ -51,6 +51,8 @@ export interface Entrant {
   cards?: string[]
   /** G added (or removed) so a matched opponent stands at the player's level. */
   bonusG?: number
+  /** Cosmetic colour variant (see season/season.ts SKINS). */
+  skin?: string
 }
 
 export const formOf = (e: Entrant) => e.bakugan.evolutions[e.form] ?? e.bakugan.evolutions[0]

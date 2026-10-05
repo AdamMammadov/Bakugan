@@ -245,6 +245,25 @@ function Face({ parts }: { parts: AvatarParts }) {
           <meshStandardMaterial color="#1a1a22" transparent opacity={0.8} />
         </mesh>
       )}
+      {parts.accessory === 'visor' && (
+        <mesh position={[0, 0, 0.02]}>
+          <boxGeometry args={[0.28, 0.07, 0.02]} />
+          <meshStandardMaterial color="#4dd6ff" emissive="#4dd6ff" emissiveIntensity={0.6} transparent opacity={0.7} />
+        </mesh>
+      )}
+      {parts.accessory === 'crown' &&
+        [-0.08, 0, 0.08].map((x) => (
+          <mesh key={x} position={[x, 0.24, -0.04]}>
+            <coneGeometry args={[0.035, 0.1, 4]} />
+            <meshStandardMaterial color="#f5c518" metalness={0.8} roughness={0.25} />
+          </mesh>
+        ))}
+      {parts.accessory === 'halo' && (
+        <mesh position={[0, 0.34, -0.04]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.13, 0.015, 8, 32]} />
+          <meshStandardMaterial color="#fff6b0" emissive="#fff6b0" emissiveIntensity={2} toneMapped={false} />
+        </mesh>
+      )}
       {(parts.accessory === 'goggles' || parts.accessory === 'headband') && (
         <mesh position={[0, 0.09, -0.04]} rotation={[0.2, 0, 0]}>
           <torusGeometry args={[0.15, 0.022, 6, 24]} />

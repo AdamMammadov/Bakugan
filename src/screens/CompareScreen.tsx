@@ -41,6 +41,7 @@ function fillOwn(start: Entrant[], collection: OwnedBakugan[]): Entrant[] {
         bakugan: BAKUGAN.find((b) => b.id === o.id)!,
         form: o.form,
         cards: unlockedCards(o).map((a) => a.id),
+        skin: o.skin,
       })
   }
   return team
@@ -74,7 +75,8 @@ export function CompareScreen() {
 
   function brawl() {
     playSfx('brawl')
-    const pack = (team: Entrant[]) => team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards, bonusG: e.bonusG }))
+    const pack = (team: Entrant[]) =>
+      team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards, bonusG: e.bonusG, skin: e.skin }))
     if (profile) setTeam(own.map((e) => e.bakugan.id))
     enterArena({
       left: pack(left),
@@ -190,7 +192,7 @@ function TeamCard({
   const replace = (pick: Entrant) => {
     const o = ownedOf(pick.bakugan.id)
     if (owned && (!o || pick.form > o.form)) return
-    const entrant = o ? { ...pick, cards: unlockedCards(o).map((a) => a.id) } : pick
+    const entrant = o ? { ...pick, cards: unlockedCards(o).map((a) => a.id), skin: o.skin } : pick
     playSfx('tick')
     const next = [...team]
     // picking a Bakugan already in the team swaps the two slots
@@ -239,7 +241,13 @@ function TeamCard({
               <span className="font-display mt-1 text-sm leading-tight font-bold">{formOf(e).name}</span>
               <span className="text-xs text-white/50">
                 {power(e)}G
-                {e.bonusG ? <span className="text-white/35"> ({e.bonusG > 0 ? '+' : ''}{e.bonusG} level match)</span> : null}
+                {e.bonusG ? (
+                  <span className="text-white/35">
+                    {' '}
+                    ({e.bonusG > 0 ? '+' : ''}
+                    {e.bonusG} level match)
+                  </span>
+                ) : null}
               </span>
             </button>
           )

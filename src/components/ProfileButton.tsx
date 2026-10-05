@@ -7,6 +7,7 @@ import { Avatar } from './Avatar'
 
 const ITEMS: [PageScreen | 'admin', string][] = [
   ['profile', 'PROFILE'],
+  ['pass', 'SEASON PASS'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
   ['characters', 'CHARACTERS'],
   ['rankings', 'RANKINGS'],
@@ -71,7 +72,7 @@ export function ProfileButton() {
         style={{ borderColor: `${color}88` }}
       >
         {profile ? (
-          <Avatar avatar={profile.avatar} color={color} size={28} />
+          <Avatar avatar={profile.avatar} color={color} size={28} frame={profile.cosmetics?.frame} />
         ) : (
           <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/30 text-sm">☰</span>
         )}

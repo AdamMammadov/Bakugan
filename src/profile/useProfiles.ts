@@ -3,6 +3,21 @@ import { persist } from 'zustand/middleware'
 import { BAKUGAN, type Bakugan, type Entrant } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
 import type { Avatar } from './avatar'
+import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
+import {
+  challengeRequirement,
+  PASS_BAKUGAN_PRICE,
+  dailyChallenges,
+  dayKey,
+  isPremiumLevel,
+  PASS_XP,
+  passLevel,
+  passRewards,
+  weekKey,
+  weeklyChallenges,
+  type ChallengeStat,
+  type Reward,
+} from '../season/season'
 
 /**
  * Player profiles, saved in the browser (localStorage).
@@ -52,6 +67,31 @@ export interface OwnedBakugan {
   wins: number
   battles: number
   kos: number
+  /** Equipped skin id (cosmetic colour variant). */
+  skin?: string
+  /** Ability cards unlocked early with Card Keys. */
+  bonusCards?: number
+}
+
+interface ChallengeProgress {
+  key: string
+  stats: Partial<Record<ChallengeStat, number>>
+  /** Challenge ids already completed (their XP is paid out once). */
+  done: string[]
+}
+
+export interface SeasonProgress {
+  id: number
+  passXp: number
+  premium: boolean
+  /** Pass levels whose reward was collected. */
+  claimed: number[]
+  wins: number
+  /** Battle pass XP earned today, against the daily cap. */
+  battleDay: string
+  battleXp: number
+  day: ChallengeProgress
+  week: ChallengeProgress
 }
 
 export interface Profile {
@@ -72,6 +112,16 @@ export interface Profile {
   /** Brawler Rating: up with wins, down with losses. */
   rating: number
   stats: { battles: number; wins: number; losses: number; kos: number; streak: number; bestStreak: number }
+  season?: SeasonProgress
+  /** Earned cosmetics ("skin:ember", "frame:gold", "title:…", "outfit:royal", "acc:crown") and what is worn. */
+  cosmetics?: { owned: string[]; title?: string; frame?: string }
+  /** XP Boosts: the next battles give +50% Bakugan XP. */
+  boosts?: number
+  /** Card Keys: each unlocks the next ability card of a Bakugan early. */
+  cardKeys?: number
+  seasonHistory?: { season: number; level: number; tier: string; score: number }[]
+  /** Shown once after a season ends. */
+  seasonNotice?: { ended: number; title: string; level: number } | null
 }
 
 export interface BattleReport {
@@ -80,6 +130,10 @@ export interface BattleReport {
   team: string[]
   /** KOs scored per Bakugan id. */
   kos: Record<string, number>
+  /** Ability cards the player activated. */
+  abilities?: number
+  /** Won without losing a Bakugan. */
+  flawless?: boolean
 }
 
 export interface BattleReward {
@@ -92,6 +146,10 @@ export interface BattleReward {
   unlocked: string[]
   /** New rank name when the player moved up a tier. */
   rankUp: string | null
+  passXp: number
+  passLevelUp: number | null
+  challengesDone: string[]
+  boosted: boolean
 }
 
 export type ProfileInput = Pick<Profile, 'firstName' | 'lastName' | 'bio' | 'element' | 'avatar'>
@@ -110,7 +168,7 @@ export const canEvolve = (owned: OwnedBakugan) => {
 
 /** Number of ability cards this Bakugan has unlocked. */
 export const cardCount = (owned: OwnedBakugan) =>
-  Math.min(bakuganById(owned.id).abilities.length, START_CARDS + Math.floor(owned.xp / CARD_XP))
+  Math.min(bakuganById(owned.id).abilities.length, START_CARDS + (owned.bonusCards ?? 0) + Math.floor(owned.xp / CARD_XP))
 
 export const unlockedCards = (owned: OwnedBakugan) => bakuganById(owned.id).abilities.slice(0, cardCount(owned))
 
@@ -120,7 +178,13 @@ export const cardUnlockXp = (index: number) => Math.max(0, index - START_CARDS +
 /** XP at which the next ability card unlocks, or null when all are unlocked. */
 export const nextCardXp = (owned: OwnedBakugan) => {
   const n = cardCount(owned)
-  return n >= bakuganById(owned.id).abilities.length ? null : cardUnlockXp(n)
+  return n >= bakuganById(owned.id).abilities.length ? null : cardUnlockXp(n - (owned.bonusCards ?? 0))
+}
+
+/** Season Bakugan of the running season are earned on the Season page, not bought. */
+export const inShop = (bakuganId: string) => {
+  const s = seasonOfBakugan(bakuganId)
+  return !s || s.season < currentSeason().id
 }
 
 /** The Bakugan a new player of this attribute starts with. */
@@ -128,6 +192,8 @@ export const starterFor = (element: ElementId) => BAKUGAN.find((b) => b.element 
 
 /** BP price and total-XP unlock of a Bakugan for this player. */
 export function priceOf(p: Profile, bakugan: Bakugan) {
+  // pass Bakugan of an earlier season: in the shop, but expensive so the pass keeps its value
+  if (seasonOfBakugan(bakugan.id)?.role === 'pass') return { bp: PASS_BAKUGAN_PRICE, xp: Infinity }
   const own = bakugan.element === p.element
   return { bp: own ? PRICES.ownElement : PRICES.otherElement, xp: own ? PRICES.ownElementXp : PRICES.otherElementXp }
 }
@@ -147,10 +213,105 @@ export const teamEntrants = (p: Profile): Entrant[] =>
   p.team
     .map((id) => p.collection.find((o) => o.id === id))
     .filter((o): o is OwnedBakugan => !!o)
-    .map((owned) => ({ bakugan: bakuganById(owned.id), form: owned.form, cards: unlockedCards(owned).map((a) => a.id) }))
+    .map((owned) => ({
+      bakugan: bakuganById(owned.id),
+      form: owned.form,
+      cards: unlockedCards(owned).map((a) => a.id),
+      skin: owned.skin,
+    }))
 
 const own = (id: string): OwnedBakugan => ({ id, form: 0, xp: 0, wins: 0, battles: 0, kos: 0 })
 const roll = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1))
+
+// ---------------------------------------------------------------- season
+
+const freshChallenges = (key: string): ChallengeProgress => ({ key, stats: {}, done: [] })
+
+export function emptySeason(id: number, now = Date.now()): SeasonProgress {
+  return {
+    id,
+    passXp: 0,
+    premium: false,
+    claimed: [],
+    wins: 0,
+    battleDay: dayKey(now),
+    battleXp: 0,
+    day: freshChallenges(dayKey(now)),
+    week: freshChallenges(weekKey(now)),
+  }
+}
+
+/** The profile's progress for the running season, rolling over to a new season when needed. */
+export function seasonFor(p: Profile, now = Date.now()): SeasonProgress {
+  const id = currentSeason(now).id
+  const s = p.season && p.season.id === id ? p.season : emptySeason(id, now)
+  return {
+    ...s,
+    day: s.day.key === dayKey(now) ? s.day : freshChallenges(dayKey(now)),
+    week: s.week.key === weekKey(now) ? s.week : freshChallenges(weekKey(now)),
+    battleXp: s.battleDay === dayKey(now) ? s.battleXp : 0,
+    battleDay: dayKey(now),
+  }
+}
+
+/** Ends a finished season: history entry, a rank title, and a softer rating for the new one. */
+function rollSeason(p: Profile, now = Date.now()): Profile {
+  const id = currentSeason(now).id
+  if (!p.season || p.season.id === id) return p.season ? p : { ...p, season: emptySeason(id, now) }
+  const old = p.season
+  const tier = tierOf(rankScore(p)).name
+  const title = `Season ${old.id} ${tier}`
+  const owned = new Set(p.cosmetics?.owned ?? [])
+  owned.add(`title:${title}`)
+  return {
+    ...p,
+    rating: Math.floor(p.rating * 0.6),
+    season: emptySeason(id, now),
+    cosmetics: { ...p.cosmetics, owned: [...owned] },
+    seasonHistory: [...(p.seasonHistory ?? []), { season: old.id, level: passLevel(old.passXp), tier, score: rankScore(p) }],
+    seasonNotice: { ended: old.id, title, level: passLevel(old.passXp) },
+  }
+}
+
+/** Gives a pass reward to the profile. Returns null when it cannot be given yet. */
+function grant(p: Profile, r: Reward, seasonId: number): Profile | null {
+  const addCosmetic = (key: string) => {
+    const owned = new Set(p.cosmetics?.owned ?? [])
+    owned.add(key)
+    return { ...p, cosmetics: { ...p.cosmetics, owned: [...owned] } }
+  }
+  switch (r.kind) {
+    case 'bp':
+      return { ...p, bp: p.bp + r.amount }
+    case 'boost':
+      return { ...p, boosts: (p.boosts ?? 0) + r.amount }
+    case 'cardKey':
+      return { ...p, cardKeys: (p.cardKeys ?? 0) + r.amount }
+    case 'title':
+      return addCosmetic(`title:${r.name}`)
+    case 'frame':
+      return addCosmetic(`frame:${r.id}`)
+    case 'skin':
+      return addCosmetic(`skin:${r.id}`)
+    case 'outfit':
+      return addCosmetic(`outfit:${r.id}`)
+    case 'accessory':
+      return addCosmetic(`acc:${r.id}`)
+    case 'seasonBakugan': {
+      const id = seasonBakugan(seasonId).pass[r.slot]
+      if (!id) return null
+      if (p.collection.some((o) => o.id === id)) return { ...p, bp: p.bp + 5000 }
+      return { ...p, collection: [...p.collection, own(id)], team: p.team.length < 3 ? [...p.team, id] : p.team }
+    }
+    case 'bundle': {
+      let next: Profile | null = p
+      for (const item of r.items) next = next && grant(next, item, seasonId)
+      return next
+    }
+  }
+}
+
+export const hasCosmetic = (p: Profile | null, key: string) => !!p?.cosmetics?.owned.includes(key)
 
 // ---------------------------------------------------------------- store
 
@@ -167,6 +328,20 @@ interface ProfilesState {
   acquire: (bakuganId: string, how: 'bp' | 'xp') => boolean
   /** Applies XP, BP, rating and stats for the active player; returns what was gained. */
   recordBattle: (report: BattleReport) => BattleReward | null
+  /** Rolls the active player over into a new season when the old one has ended. */
+  syncSeason: () => void
+  dismissSeasonNotice: () => void
+  /** Collects the reward of a reached pass level. */
+  claimLevel: (level: number) => boolean
+  claimAll: () => number
+  /** Takes an in-play season Bakugan once its requirements are met. */
+  claimSeasonBakugan: (bakuganId: string) => boolean
+  applyCardKey: (bakuganId: string) => void
+  equip: (slot: 'title' | 'frame', value: string | undefined) => void
+  setSkin: (bakuganId: string, skin: string | undefined) => void
+  /** Testing helpers for the admin panel until payments exist. */
+  adminSetPremium: (premium: boolean) => void
+  adminAddPassXp: (xp: number) => void
 }
 
 const patchActive = (s: ProfilesState, fn: (p: Profile) => Profile) => ({
@@ -228,11 +403,25 @@ export const useProfiles = create<ProfilesState>()(
       recordBattle: (report) => {
         const p = get().profiles.find((x) => x.id === get().activeId)
         if (!p) return null
-        const reward: BattleReward = { xp: {}, bp: 0, rating: 0, evolveReady: [], newCards: {}, unlocked: [], rankUp: null }
+        const reward: BattleReward = {
+          xp: {},
+          bp: 0,
+          rating: 0,
+          evolveReady: [],
+          newCards: {},
+          unlocked: [],
+          rankUp: null,
+          passXp: 0,
+          passLevelUp: null,
+          challengesDone: [],
+          boosted: false,
+        }
+        const boosted = (p.boosts ?? 0) > 0
         const collection = p.collection.map((o) => {
           if (!report.team.includes(o.id)) return o
           const kos = report.kos[o.id] ?? 0
-          const gained = (report.won ? roll(XP.winMin, XP.winMax) : roll(XP.lossMin, XP.lossMax)) + kos * XP.ko
+          const base = (report.won ? roll(XP.winMin, XP.winMax) : roll(XP.lossMin, XP.lossMax)) + kos * XP.ko
+          const gained = boosted ? Math.round(base * 1.5) : base
           const next = { ...o, xp: o.xp + gained, battles: o.battles + 1, wins: o.wins + (report.won ? 1 : 0), kos: o.kos + kos }
           reward.xp[o.id] = gained
           if (canEvolve(next) && !canEvolve(o)) reward.evolveReady.push(o.id)
@@ -256,15 +445,131 @@ export const useProfiles = create<ProfilesState>()(
           streak,
           bestStreak: Math.max(p.stats.bestStreak, streak),
         }
-        set((s) => patchActive(s, (x) => ({ ...x, collection, stats, xp, rating, bp: x.bp + reward.bp })))
+        // season pass: battle XP (capped per day) plus daily and weekly challenges
+        const season = seasonFor(p)
+        const totalKos = Object.values(report.kos).reduce((a, b) => a + b, 0)
+        const ownWin = report.won && report.team.some((id) => bakuganById(id).element === p.element)
+        const bump = (c: ChallengeProgress): ChallengeProgress => ({
+          ...c,
+          stats: {
+            ...c.stats,
+            battles: (c.stats.battles ?? 0) + 1,
+            wins: (c.stats.wins ?? 0) + (report.won ? 1 : 0),
+            kos: (c.stats.kos ?? 0) + totalKos,
+            abilities: (c.stats.abilities ?? 0) + (report.abilities ?? 0),
+            ownWins: (c.stats.ownWins ?? 0) + (ownWin ? 1 : 0),
+            flawless: (c.stats.flawless ?? 0) + (report.won && report.flawless ? 1 : 0),
+          },
+        })
+        let day = bump(season.day)
+        let week = bump(season.week)
+        let challengeXp = 0
+        for (const [list, prog, setProg] of [
+          [dailyChallenges(), day, (v: ChallengeProgress) => (day = v)],
+          [weeklyChallenges(), week, (v: ChallengeProgress) => (week = v)],
+        ] as const) {
+          const done = [...prog.done]
+          for (const c of list)
+            if (!done.includes(c.id) && (prog.stats[c.stat] ?? 0) >= c.goal) {
+              done.push(c.id)
+              challengeXp += c.xp
+              reward.challengesDone.push(c.text)
+            }
+          setProg({ ...prog, done })
+        }
+        const battlePass = Math.min(
+          report.won ? PASS_XP.win : PASS_XP.loss,
+          Math.max(0, PASS_XP.dailyBattleCap - season.battleXp),
+        )
+        reward.passXp = battlePass + challengeXp
+        reward.boosted = boosted
+        const nextSeason: SeasonProgress = {
+          ...season,
+          passXp: season.passXp + reward.passXp,
+          battleXp: season.battleXp + battlePass,
+          wins: season.wins + (report.won ? 1 : 0),
+          day,
+          week,
+        }
+        if (passLevel(nextSeason.passXp) > passLevel(season.passXp)) reward.passLevelUp = passLevel(nextSeason.passXp)
+
+        set((s) =>
+          patchActive(s, (x) => ({
+            ...x,
+            collection,
+            stats,
+            xp,
+            rating,
+            bp: x.bp + reward.bp,
+            season: nextSeason,
+            boosts: boosted ? (x.boosts ?? 0) - 1 : x.boosts,
+          })),
+        )
         return reward
       },
+      syncSeason: () => set((s) => patchActive(s, (p) => rollSeason(p))),
+      dismissSeasonNotice: () => set((s) => patchActive(s, (p) => ({ ...p, seasonNotice: null }))),
+      claimLevel: (level) => {
+        const p = get().profiles.find((x) => x.id === get().activeId)
+        if (!p) return false
+        const season = seasonFor(p)
+        if (season.claimed.includes(level) || passLevel(season.passXp) < level) return false
+        if (isPremiumLevel(level) && !season.premium) return false
+        const next = grant(p, passRewards(season.id)[level], season.id)
+        if (!next) return false
+        set((s) => patchActive(s, () => ({ ...next, season: { ...season, claimed: [...season.claimed, level] } })))
+        return true
+      },
+      claimAll: () => {
+        let n = 0
+        for (let l = 1; l <= 50; l++) if (get().claimLevel(l)) n++
+        return n
+      },
+      claimSeasonBakugan: (bakuganId) => {
+        const p = get().profiles.find((x) => x.id === get().activeId)
+        if (!p || p.collection.some((o) => o.id === bakuganId)) return false
+        const season = seasonFor(p)
+        if (!seasonBakugan(season.id).challenge.includes(bakuganId)) return false
+        const req = challengeRequirement(bakuganById(bakuganId).element === p.element)
+        if (season.wins < req.wins || passLevel(season.passXp) < req.level || p.bp < req.bp) return false
+        set((s) =>
+          patchActive(s, (x) => ({
+            ...x,
+            bp: x.bp - req.bp,
+            collection: [...x.collection, own(bakuganId)],
+            team: x.team.length < 3 ? [...x.team, bakuganId] : x.team,
+          })),
+        )
+        return true
+      },
+      applyCardKey: (bakuganId) =>
+        set((s) =>
+          patchActive(s, (p) => {
+            const o = p.collection.find((x) => x.id === bakuganId)
+            if (!o || (p.cardKeys ?? 0) < 1 || cardCount(o) >= bakuganById(o.id).abilities.length) return p
+            return {
+              ...p,
+              cardKeys: (p.cardKeys ?? 0) - 1,
+              collection: p.collection.map((x) => (x.id === bakuganId ? { ...x, bonusCards: (x.bonusCards ?? 0) + 1 } : x)),
+            }
+          }),
+        ),
+      equip: (slot, value) =>
+        set((s) => patchActive(s, (p) => ({ ...p, cosmetics: { owned: [], ...p.cosmetics, [slot]: value } }))),
+      setSkin: (bakuganId, skin) =>
+        set((s) =>
+          patchActive(s, (p) => ({ ...p, collection: p.collection.map((o) => (o.id === bakuganId ? { ...o, skin } : o)) })),
+        ),
+      adminSetPremium: (premium) => set((s) => patchActive(s, (p) => ({ ...p, season: { ...seasonFor(p), premium } }))),
+      adminAddPassXp: (xp) =>
+        set((s) => patchActive(s, (p) => ({ ...p, season: { ...seasonFor(p), passXp: seasonFor(p).passXp + xp } }))),
     }),
     {
       name: 'bakugan-profiles',
       version: 3,
       // v3 (new economy and rules): every earlier test profile is cleared so everyone starts from zero
-      migrate: (state, version) => (version < 3 ? { profiles: [], activeId: null } : (state as { profiles: Profile[]; activeId: string | null })),
+      migrate: (state, version) =>
+        version < 3 ? { profiles: [], activeId: null } : (state as { profiles: Profile[]; activeId: string | null }),
     },
   ),
 )

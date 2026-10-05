@@ -7,6 +7,7 @@ import { BAKUGAN } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import {
   ACCESSORIES,
+  LOCKED_ACCESSORIES,
   CHARACTER_BY_ID,
   CHARACTERS,
   DEFAULT_PARTS,
@@ -21,6 +22,7 @@ import {
   type AvatarParts,
 } from '../profile/avatar'
 import { useProfiles } from '../profile/useProfiles'
+import { OUTFITS as PASS_OUTFITS } from '../season/season'
 import { useGame } from '../store/useGame'
 
 type Tab = 'characters' | 'build' | 'photo'
@@ -33,6 +35,7 @@ export function ProfileEditor() {
   const go = useGame((s) => s.go)
   const existing = useProfiles((s) => s.profiles.find((p) => p.id === editId) ?? null)
   const hasProfiles = useProfiles((s) => s.profiles.length > 0)
+  const ownedCosmetics = existing?.cosmetics?.owned ?? []
   const create = useProfiles((s) => s.create)
   const update = useProfiles((s) => s.update)
 
@@ -168,8 +171,19 @@ export function ProfileEditor() {
               <Swatches label="HAIR COLOR" options={HAIR_COLORS} value={parts.hairColor} onPick={(v) => setPart('hairColor', v)} />
               <Choices label="EYES" options={EYE_STYLES} value={parts.eyes} onPick={(v) => setPart('eyes', v)} />
               <Swatches label="EYE COLOR" options={EYE_COLORS} value={parts.eyeColor} onPick={(v) => setPart('eyeColor', v)} />
-              <Swatches label="OUTFIT" options={OUTFITS} value={parts.outfit} onPick={(v) => setPart('outfit', v)} />
-              <Choices label="EXTRA" options={ACCESSORIES} value={parts.accessory} onPick={(v) => setPart('accessory', v)} />
+              <Swatches
+                label="OUTFIT"
+                options={[...OUTFITS, ...Object.entries(PASS_OUTFITS).filter(([id]) => ownedCosmetics.includes(`outfit:${id}`)).map(([, o]) => o.color)]}
+                value={parts.outfit}
+                onPick={(v) => setPart('outfit', v)}
+              />
+              <Choices
+                label="EXTRA"
+                options={ACCESSORIES}
+                locked={LOCKED_ACCESSORIES.filter((a) => !ownedCosmetics.includes(`acc:${a}`))}
+                value={parts.accessory}
+                onPick={(v) => setPart('accessory', v)}
+              />
             </div>
           )}
 
@@ -284,7 +298,20 @@ function Swatches({ label, options, value, onPick }: { label: string; options: s
   )
 }
 
-function Choices<T extends string>({ label, options, value, onPick }: { label: string; options: T[]; value: T; onPick: (v: T) => void }) {
+function Choices<T extends string>({
+  label,
+  options,
+  value,
+  onPick,
+  locked = [],
+}: {
+  label: string
+  options: T[]
+  value: T
+  onPick: (v: T) => void
+  /** Options shown but not yet earned (Season Pass). */
+  locked?: T[]
+}) {
   return (
     <div className="flex items-center gap-3">
       <span className="font-display w-24 shrink-0 text-[10px] tracking-[0.3em] text-white/40">{label}</span>
@@ -292,10 +319,13 @@ function Choices<T extends string>({ label, options, value, onPick }: { label: s
         {options.map((o) => (
           <button
             key={o}
+            disabled={locked.includes(o)}
+            title={locked.includes(o) ? 'Earn it in the Season Pass' : undefined}
             onClick={() => onPick(o)}
-            className="rounded-md border px-2.5 py-1 text-xs capitalize transition"
+            className="rounded-md border px-2.5 py-1 text-xs capitalize transition disabled:opacity-35"
             style={{ borderColor: value === o ? '#fff' : 'rgba(255,255,255,0.15)', color: value === o ? '#fff' : 'rgba(255,255,255,0.6)' }}
           >
+            {locked.includes(o) && '🔒 '}
             {o}
           </button>
         ))}

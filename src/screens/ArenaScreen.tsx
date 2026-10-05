@@ -44,7 +44,7 @@ const TYPE_ICON: Record<Ability['type'], string> = {
 }
 
 const toTeam = (members: TeamMember[]): Entrant[] =>
-  members.map((m) => ({ bakugan: BAKUGAN.find((b) => b.id === m.id)!, form: m.form, cards: m.cards, bonusG: m.bonusG }))
+  members.map((m) => ({ bakugan: BAKUGAN.find((b) => b.id === m.id)!, form: m.form, cards: m.cards, bonusG: m.bonusG, skin: m.skin }))
 
 const actives = (s: BattleState): [number, number] => [s.sides[0].active, s.sides[1].active]
 
@@ -66,6 +66,8 @@ export function ArenaScreen() {
   const timers = useRef<number[]>([])
   // KOs scored by each of the player's Bakugan, for XP
   const kos = useRef<Record<string, number>>({})
+  // ability cards the player activated, for Season Pass challenges
+  const abilitiesUsed = useRef(0)
   const [reward, setReward] = useState<BattleReward | null>(null)
   // lets the turn loop call `run` without the two callbacks depending on each other
   const runRef = useRef<(state: BattleState, action: Action) => void>(() => {})
@@ -139,6 +141,8 @@ export function ArenaScreen() {
             won: next.winner === 0,
             team: next.sides[0].team.map((f) => f.bakugan.id),
             kos: kos.current,
+            abilities: abilitiesUsed.current,
+            flawless: next.sides[0].team.every((f) => f.hp > 0),
           }),
         )
       }
@@ -157,6 +161,7 @@ export function ArenaScreen() {
 
   const run = useCallback((state: BattleState, action: Action) => {
     const { state: next, event: ev } = act(state, action)
+    if (action.kind === 'ability' && ev.actor === 0) abilitiesUsed.current++
     if (ev.ko && ev.actor === 0) {
       const id = activeOf(state.sides[0]).bakugan.id
       kos.current[id] = (kos.current[id] ?? 0) + 1
@@ -221,6 +226,7 @@ export function ArenaScreen() {
       setEvent(null)
       setReward(null)
       kos.current = {}
+      abilitiesUsed.current = 0
       setBusy(true)
       playSfx('brawl')
       say('BAKUGAN, BRAWL!', `${activeOf(s.sides[0]).name} vs ${activeOf(s.sides[1]).name}`)
@@ -433,6 +439,13 @@ function RewardList({ reward }: { reward: BattleReward }) {
       text: `+${reward.bp} BP`,
       extra: `${reward.rating >= 0 ? '+' : ''}${reward.rating} rating`,
     },
+    {
+      id: 'pass',
+      color: '#7ec8e3',
+      text: `+${reward.passXp} PASS XP`,
+      extra: reward.passLevelUp ? `PASS LEVEL ${reward.passLevelUp}!` : reward.boosted ? 'XP boost used (+50% Bakugan XP)' : 'Season Pass',
+    },
+    ...reward.challengesDone.map((c, i) => ({ id: `ch-${i}`, color: '#3ee07a', text: 'CHALLENGE DONE', extra: c })),
     ...(reward.rankUp ? [{ id: 'rank', color: '#ffffff', text: `RANK UP: ${reward.rankUp.toUpperCase()}`, extra: 'new tier reached' }] : []),
     ...Object.entries(reward.xp).map(([id, xp]) => {
       const b = bakuganById(id)

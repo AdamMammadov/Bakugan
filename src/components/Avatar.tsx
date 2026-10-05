@@ -1,9 +1,30 @@
 import { useId } from 'react'
 import { asset } from '../asset'
 import { CHARACTER_BY_ID, DEFAULT_PARTS, type Avatar as AvatarValue, type AvatarParts } from '../profile/avatar'
+import { FRAMES } from '../season/season'
 
-/** A player's picture: an uploaded photo or a drawn character. */
-export function Avatar({ avatar, color = '#9aa3b5', size = 96 }: { avatar: AvatarValue; color?: string; size?: number }) {
+/** A player's picture: an uploaded photo or a drawn character, optionally inside an earned frame. */
+export function Avatar({
+  avatar,
+  color = '#9aa3b5',
+  size = 96,
+  frame,
+}: {
+  avatar: AvatarValue
+  color?: string
+  size?: number
+  /** Frame id from the Season Pass (see FRAMES). */
+  frame?: string
+}) {
+  const ring = frame ? FRAMES[frame]?.ring : undefined
+  if (ring) {
+    const pad = Math.max(3, Math.round(size / 18))
+    return (
+      <div className="shrink-0 rounded-full" style={{ padding: pad, background: ring, boxShadow: `0 0 ${size / 4}px ${color}88` }}>
+        <Avatar avatar={avatar} color={color} size={size - pad * 2} />
+      </div>
+    )
+  }
   const style = { width: size, height: size, boxShadow: `0 0 ${size / 5}px ${color}66`, borderColor: color }
   if (avatar.kind === 'photo') {
     return <img src={avatar.dataUrl} alt="" className="shrink-0 rounded-full border-2 object-cover" style={style} />
@@ -160,6 +181,15 @@ export function AvatarDrawing({ parts, color }: { parts: AvatarParts; color: str
         </g>
       )}
       {accessory === 'headband' && <rect x="62" y="66" width="76" height="9" rx="3" fill={shade(outfit, 1.1)} />}
+      {accessory === 'visor' && (
+        <path d="M58 90 L142 90 L136 108 Q100 116 64 108 Z" fill="#4dd6ff" fillOpacity="0.55" stroke="#0e1a2a" strokeWidth="3" />
+      )}
+      {accessory === 'crown' && (
+        <path d="M66 52 L74 26 L88 44 L100 18 L112 44 L126 26 L134 52 Z" fill="#f5c518" stroke="#a87c00" strokeWidth="2.5" />
+      )}
+      {accessory === 'halo' && (
+        <ellipse cx="100" cy="30" rx="34" ry="8" fill="none" stroke="#fff6b0" strokeWidth="5" opacity="0.9" />
+      )}
       {accessory === 'cap' && (
         <g>
           <path d="M62 78 Q62 40 100 40 Q138 40 138 78 Z" fill={outfit} />

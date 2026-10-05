@@ -5,6 +5,7 @@ import { playSfx } from '../audio/sfx'
 import { GPowerCounter } from '../components/GPowerCounter'
 import { abilityLabel, abilitySelfBonus, BAKUGAN, type Ability } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
+import { useActiveProfile } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 import { EFFECT_DURATION } from '../three/AbilityEffect'
 import { savePhoto } from '../photo'
@@ -22,6 +23,8 @@ export function Viewer() {
   const element = ELEMENT_BY_ID[bakugan.element]
   useEffect(() => preloadModels(bakugan), [bakugan])
 
+  // the player's equipped skin, if they own this Bakugan
+  const skin = useActiveProfile()?.collection.find((o) => o.id === bakugan.id)?.skin
   const [phase, setPhase] = useState<Phase>('ball')
   const [evolution, setEvolution] = useState(0)
   const [ballOpen, setBallOpen] = useState(false)
@@ -87,7 +90,15 @@ export function Viewer() {
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Canvas shadows camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={[1, 2]}>
-        <BrawlScene bakugan={bakugan} element={element} phase={phase} form={evolution} ballOpen={ballOpen} activeAbility={activeAbility} />
+        <BrawlScene
+          bakugan={bakugan}
+          element={element}
+          phase={phase}
+          form={evolution}
+          ballOpen={ballOpen}
+          activeAbility={activeAbility}
+          skin={skin}
+        />
         <PhotoCapture
           request={photoRequest}
           onCapture={(url) => void savePhoto(url, { name: evo.name, brawler: bakugan.brawler, gPower, element })}

@@ -2,6 +2,7 @@ import { useGame, type PageScreen } from '../store/useGame'
 
 const TABS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
+  ['pass', 'SEASON PASS'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
@@ -13,7 +14,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   const back = useGame((s) => s.back)
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
-  const target = ['profile', 'rankings', 'clans', 'encyclopedia', 'characters', 'profileEdit'].includes(back) ? 'hub' : back
+  const target = ['profile', 'pass', 'rankings', 'clans', 'encyclopedia', 'characters', 'profileEdit'].includes(back) ? 'hub' : back
   return (
     <div className="flex items-center justify-between gap-6">
       <div className="flex items-center gap-8">

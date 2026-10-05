@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { playMusic } from './audio/music'
 import { MuteButton } from './components/MuteButton'
 import { ProfileButton } from './components/ProfileButton'
+import { SeasonNotice } from './components/SeasonNotice'
 import { CompareScreen } from './screens/CompareScreen'
 import { ElementHub } from './screens/ElementHub'
 import { ElementWheel } from './screens/ElementWheel'
@@ -13,6 +14,7 @@ import { ClansScreen } from './screens/ClansScreen'
 import { RankingsScreen } from './screens/RankingsScreen'
 import { EncyclopediaScreen } from './screens/EncyclopediaScreen'
 import { AdminScreen } from './screens/AdminScreen'
+import { SeasonPassScreen } from './screens/SeasonPassScreen'
 import { useGame } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
@@ -43,11 +45,13 @@ export default function App() {
           {screen === 'clans' && <ClansScreen key="clans" />}
           {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
           {screen === 'admin' && <AdminScreen key="admin" />}
+          {screen === 'pass' && <SeasonPassScreen key="pass" />}
           {screen === 'characters' && <CharacterShowroom key="characters" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}
-      {screen !== 'intro' && !['arena', 'viewer', 'profile', 'profileEdit', 'rankings', 'clans', 'encyclopedia', 'characters', 'admin'].includes(screen) && <ProfileButton />}
+      <SeasonNotice />
+      {screen !== 'intro' && !['arena', 'viewer', 'profile', 'profileEdit', 'rankings', 'clans', 'encyclopedia', 'characters', 'pass', 'admin'].includes(screen) && <ProfileButton />}
     </div>
   )
 }

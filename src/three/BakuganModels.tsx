@@ -6,6 +6,7 @@ import { asset } from '../asset'
 import { BakuganBall } from './BakuganBall'
 import { HydranoidBall } from './balls/HydranoidBall'
 import { NormalizedModel } from './NormalizedModel'
+import { SKIN_BY_ID } from '../season/season'
 import { PlaceholderMonster } from './PlaceholderMonster'
 import type { PoseRef } from './pose'
 
@@ -22,7 +23,10 @@ const PROCEDURAL_BALLS: Record<string, ComponentType<{ openRef: RefObject<boolea
  * stand-in. Evolved forms stand a little taller.
  */
 export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?: PoseRef }) {
-  const element = ELEMENT_BY_ID[entrant.bakugan.element]
+  const base = ELEMENT_BY_ID[entrant.bakugan.element]
+  // an equipped skin recolours the Bakugan
+  const skin = entrant.skin ? SKIN_BY_ID[entrant.skin] : undefined
+  const element = skin ? { ...base, color: skin.color, glow: skin.glow } : base
   const models = formModels(entrant)
   const size = 1 + entrant.form * 0.12
   const placeholder = (
@@ -33,21 +37,34 @@ export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?:
   if (!models?.monster) return placeholder
   return (
     <Suspense fallback={placeholder}>
-      <NormalizedModel url={asset(models.monster)} height={MONSTER_HEIGHT * size} yaw={models.monsterYaw} poseRef={poseRef} />
+      <NormalizedModel
+        url={asset(models.monster)}
+        height={MONSTER_HEIGHT * size}
+        yaw={models.monsterYaw}
+        poseRef={poseRef}
+        tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
+      />
     </Suspense>
   )
 }
 
 /** The ball form. The procedural ball can open (`openRef`); a .glb ball is shown as-is. */
-export function BallModel({ bakugan, openRef }: { bakugan: Bakugan; openRef: RefObject<boolean> }) {
-  const element = ELEMENT_BY_ID[bakugan.element]
-  const Custom = PROCEDURAL_BALLS[bakugan.id]
+export function BallModel({ bakugan, openRef, skin: skinId }: { bakugan: Bakugan; openRef: RefObject<boolean>; skin?: string }) {
+  const skin = skinId ? SKIN_BY_ID[skinId] : undefined
+  const element = skin ? { ...ELEMENT_BY_ID[bakugan.element], color: skin.color } : ELEMENT_BY_ID[bakugan.element]
+  // a skinned ball uses the plain ball so the skin colour shows
+  const Custom = skin ? undefined : PROCEDURAL_BALLS[bakugan.id]
   const placeholder = Custom ? <Custom openRef={openRef} /> : <BakuganBall color={element.color} openRef={openRef} />
   if (!bakugan.models?.ball) return placeholder
   return (
     <Suspense fallback={placeholder}>
       <group position={[0, -BALL_SIZE / 2, 0]}>
-        <NormalizedModel url={asset(bakugan.models.ball)} height={BALL_SIZE} openRef={openRef} />
+        <NormalizedModel
+          url={asset(bakugan.models.ball)}
+          height={BALL_SIZE}
+          openRef={openRef}
+          tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
+        />
       </group>
     </Suspense>
   )

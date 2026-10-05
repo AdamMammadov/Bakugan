@@ -21,6 +21,8 @@ interface Row {
   losses: number
   clan: string | null
   cpu: boolean
+  frame?: string
+  title?: string
 }
 
 export function RankingsScreen() {
@@ -42,6 +44,8 @@ export function RankingsScreen() {
       losses: p.stats.losses,
       clan: clanOf(clans, p.id)?.tag ?? null,
       cpu: false,
+      frame: p.cosmetics?.frame,
+      title: p.cosmetics?.title,
     })),
     ...BOTS.map((b) => ({
       id: b.id,
@@ -135,12 +139,13 @@ export function RankingsScreen() {
                   <td className="font-display rounded-l-lg px-3 py-2 text-lg font-black text-white/70">{i + 1}</td>
                   <td>
                     <div className="flex items-center gap-3">
-                      <Avatar avatar={r.avatar} color={el.color} size={36} />
+                      <Avatar avatar={r.avatar} color={el.color} size={36} frame={r.frame} />
                       <img src={el.icon} alt="" className="h-5 w-5" />
                       <span className="font-semibold">
                         {r.clan && <span className="mr-1 text-white/45">[{r.clan}]</span>}
                         {r.name}
                       </span>
+                      {r.title && <span className="text-xs text-amber-200/80">✦ {r.title}</span>}
                       {r.cpu && <span className="rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>}
                       {me && <span className="rounded px-1.5 text-[10px] tracking-widest" style={{ background: el.color }}>YOU</span>}
                     </div>
