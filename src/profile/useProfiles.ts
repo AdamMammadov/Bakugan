@@ -4,6 +4,7 @@ import { BAKUGAN, type Bakugan, type Entrant } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
 import type { Avatar } from './avatar'
 import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
+import { cosmeticsOnSale, PACKS } from '../shop/shop'
 import {
   challengeRequirement,
   PASS_BAKUGAN_PRICE,
@@ -364,11 +365,10 @@ interface ProfilesState {
   /** Takes an in-play season Bakugan once its requirements are met. */
   claimSeasonBakugan: (bakuganId: string) => boolean
   applyCardKey: (bakuganId: string) => void
+  /** Buys a BP-priced shop item (cosmetic or pack). Money items wait for the online version. */
+  buyShopItem: (key: string) => boolean
   equip: (slot: 'title' | 'frame', value: string | undefined) => void
   setSkin: (bakuganId: string, skin: string | undefined) => void
-  /** Testing helpers for the admin panel until payments exist. */
-  adminSetPremium: (premium: boolean) => void
-  adminAddPassXp: (xp: number) => void
 }
 
 const patchActive = (s: ProfilesState, fn: (p: Profile) => Profile) => ({
@@ -581,15 +581,28 @@ export const useProfiles = create<ProfilesState>()(
             }
           }),
         ),
+      buyShopItem: (key) => {
+        const p = get().profiles.find((x) => x.id === get().activeId)
+        const item = [...cosmeticsOnSale(), ...PACKS].find((i) => i.key === key)
+        if (!p || !item || !('bp' in item.price) || p.bp < item.price.bp) return false
+        if (item.kind !== 'boost' && item.kind !== 'cardKey' && hasCosmetic(p, key)) return false
+        const cost = item.price.bp
+        set((s) =>
+          patchActive(s, (x) => {
+            const paid = { ...x, bp: x.bp - cost }
+            if (item.kind === 'boost') return { ...paid, boosts: (x.boosts ?? 0) + (item.amount ?? 0) }
+            if (item.kind === 'cardKey') return { ...paid, cardKeys: (x.cardKeys ?? 0) + (item.amount ?? 0) }
+            return { ...paid, cosmetics: { ...x.cosmetics, owned: [...(x.cosmetics?.owned ?? []), key] } }
+          }),
+        )
+        return true
+      },
       equip: (slot, value) =>
         set((s) => patchActive(s, (p) => ({ ...p, cosmetics: { owned: [], ...p.cosmetics, [slot]: value } }))),
       setSkin: (bakuganId, skin) =>
         set((s) =>
           patchActive(s, (p) => ({ ...p, collection: p.collection.map((o) => (o.id === bakuganId ? { ...o, skin } : o)) })),
         ),
-      adminSetPremium: (premium) => set((s) => patchActive(s, (p) => ({ ...p, season: { ...seasonFor(p), premium } }))),
-      adminAddPassXp: (xp) =>
-        set((s) => patchActive(s, (p) => ({ ...p, season: { ...seasonFor(p), passXp: seasonFor(p).passXp + xp } }))),
     }),
     {
       name: 'bakugan-profiles',

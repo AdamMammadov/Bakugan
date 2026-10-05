@@ -66,3 +66,27 @@ body,
   from { transform: scale(1.5); }
   to { transform: scale(1); }
 }
+
+/* Legendary avatar frames turn slowly */
+@keyframes frame-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.frame-spin {
+  animation: frame-spin 6s linear infinite;
+}
+
+/* Legendary shop cards shimmer */
+@keyframes legendary-shine {
+  0%,
+  100% {
+    box-shadow: 0 0 18px #f5c51855;
+  }
+  50% {
+    box-shadow: 0 0 34px #f5c518aa;
+  }
+}
+.legendary-shine {
+  animation: legendary-shine 2.4s ease-in-out infinite;
+}

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { matchedOpponent, TEAM_SIZE } from '../battle/engine'
+import { aiForTier, matchedOpponent, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
@@ -62,15 +62,17 @@ export function CompareScreen() {
   const [free, setFree] = useState<Entrant[]>(() => fillTeam([{ bakugan: mine, form: compareForm }]))
   const [own, setOwn] = useState<Entrant[]>(() => (profile ? fillOwn(teamEntrants(profile), profile.collection) : []))
   const left = profile ? own : free
-  // the system always picks the opponent, on the player's level; nobody chooses their rival's forms
-  const [right, setRight] = useState<Entrant[]>(() => matchedOpponent(left))
   const tier = profile ? tierOf(rankScore(profile)).index : 0
+  // the bot of the player's rank: its Bakugan get a small G edge on top of the level match
+  const opponent = (team: Entrant[]) => matchedOpponent(team, Math.random, aiForTier(tier).edge)
+  // the system always picks the opponent, on the player's level; nobody chooses their rival's forms
+  const [right, setRight] = useState<Entrant[]>(() => opponent(left))
   const bot = botCharacter(right[0].bakugan.element)
 
   const setLeft = (team: Entrant[]) => {
     if (profile) setOwn(team)
     else setFree(team)
-    setRight(matchedOpponent(team))
+    setRight(opponent(team))
   }
 
   function brawl() {
@@ -122,7 +124,7 @@ export function CompareScreen() {
               key={m}
               onClick={() => {
                 setRanked(m === 'ranked')
-                setRight(matchedOpponent(own))
+                setRight(opponent(own))
               }}
               className="font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition"
               style={{
@@ -147,7 +149,7 @@ export function CompareScreen() {
               ? undefined
               : () => {
                   playSfx('select')
-                  setRight(matchedOpponent(left))
+                  setRight(opponent(left))
                 }
           }
         />

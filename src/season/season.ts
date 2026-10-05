@@ -60,45 +60,120 @@ export const PASS_XP = { win: 250, loss: 100, dailyBattleCap: 2500 }
 
 // ---------------------------------------------------------------- cosmetics
 
-export interface Skin {
-  id: string
+/**
+ * How rare a cosmetic is. Common and Rare ones are bought with BP; Epic and Legendary ones
+ * only with real money (or the pass), and they show it: Legendary skins sparkle in battle and
+ * Legendary frames turn.
+ */
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary'
+
+export const RARITY: Record<Rarity, { name: string; color: string }> = {
+  common: { name: 'Common', color: '#a3acbd' },
+  rare: { name: 'Rare', color: '#3b9bff' },
+  epic: { name: 'Epic', color: '#b45cff' },
+  legendary: { name: 'Legendary', color: '#f5c518' },
+}
+
+/**
+ * Where a cosmetic comes from: the shop, the pass of a season (it goes to the shop once that
+ * season is over), or earned only (never sold).
+ */
+export type CosmeticSource = { shop: true } | { pass: number } | { earned: true }
+
+interface CosmeticBase {
   name: string
+  rarity: Rarity
+  from: CosmeticSource
+}
+
+export interface Skin extends CosmeticBase {
+  id: string
   color: string
   glow: string
 }
 
+const SHOP = { shop: true } as const
+const PASS_1 = { pass: 1 } as const
+const EARNED = { earned: true } as const
+
 /** Colour variants for Bakugan, shown in the viewer and the arena. */
 export const SKINS: Skin[] = [
-  { id: 'ember', name: 'Ember', color: '#ff6a00', glow: '#ffb347' },
-  { id: 'frost', name: 'Frost', color: '#7fd8ff', glow: '#e0f7ff' },
-  { id: 'shadow', name: 'Shadow', color: '#2a1f3d', glow: '#9a6cff' },
-  { id: 'storm', name: 'Storm', color: '#2f5fa8', glow: '#9ad0ff' },
-  { id: 'crystal', name: 'Crystal', color: '#cfefff', glow: '#ffffff' },
-  { id: 'gold', name: 'Golden', color: '#d4af37', glow: '#fff1a8' },
-  { id: 'neon', name: 'Neon', color: '#1fdc6a', glow: '#b6ff9e' },
+  // Season 1 pass
+  { id: 'frost', name: 'Frost', color: '#7fd8ff', glow: '#e0f7ff', rarity: 'common', from: PASS_1 },
+  { id: 'storm', name: 'Storm', color: '#2f5fa8', glow: '#9ad0ff', rarity: 'rare', from: PASS_1 },
+  { id: 'neon', name: 'Neon', color: '#1fdc6a', glow: '#b6ff9e', rarity: 'rare', from: PASS_1 },
+  { id: 'ember', name: 'Ember', color: '#ff6a00', glow: '#ffb347', rarity: 'epic', from: PASS_1 },
+  { id: 'shadow', name: 'Shadow', color: '#2a1f3d', glow: '#9a6cff', rarity: 'epic', from: PASS_1 },
+  { id: 'crystal', name: 'Crystal', color: '#cfefff', glow: '#ffffff', rarity: 'legendary', from: PASS_1 },
+  { id: 'gold', name: 'Golden', color: '#d4af37', glow: '#fff1a8', rarity: 'legendary', from: PASS_1 },
+  // shop
+  { id: 'ruby', name: 'Ruby', color: '#c8102e', glow: '#ff6b81', rarity: 'common', from: SHOP },
+  { id: 'jade', name: 'Jade', color: '#00a86b', glow: '#7dffc4', rarity: 'common', from: SHOP },
+  { id: 'ocean', name: 'Ocean', color: '#0b5fa5', glow: '#7cc7ff', rarity: 'common', from: SHOP },
+  { id: 'desert', name: 'Desert', color: '#c2a15a', glow: '#ffe2a0', rarity: 'common', from: SHOP },
+  { id: 'sunset', name: 'Sunset', color: '#ff5e62', glow: '#ffc371', rarity: 'rare', from: SHOP },
+  { id: 'ivory', name: 'Ivory', color: '#efe9da', glow: '#ffffff', rarity: 'rare', from: SHOP },
+  { id: 'toxic', name: 'Toxic', color: '#9bdc28', glow: '#e4ff7a', rarity: 'rare', from: SHOP },
+  { id: 'magma', name: 'Magma', color: '#5a0f0a', glow: '#ff5a1f', rarity: 'epic', from: SHOP },
+  { id: 'aurora', name: 'Aurora', color: '#1b6b73', glow: '#9cffd9', rarity: 'epic', from: SHOP },
+  { id: 'void', name: 'Void', color: '#0a0612', glow: '#b066ff', rarity: 'legendary', from: SHOP },
+  { id: 'prism', name: 'Prism', color: '#d9e6ff', glow: '#ff9cf5', rarity: 'legendary', from: SHOP },
 ]
 export const SKIN_BY_ID = Object.fromEntries(SKINS.map((s) => [s.id, s])) as Record<string, Skin>
 
-/** Avatar frames: a ring drawn around the player's picture. */
-export const FRAMES: Record<string, { name: string; ring: string }> = {
-  bronze: { name: 'Bronze Frame', ring: 'linear-gradient(135deg,#8a5a2b,#e0a46a,#6b3f1a)' },
-  silver: { name: 'Silver Frame', ring: 'linear-gradient(135deg,#8e9aa8,#f2f6fa,#6f7a86)' },
-  gold: { name: 'Gold Frame', ring: 'linear-gradient(135deg,#a8801c,#ffe58a,#8a6510)' },
-  amethyst: { name: 'Amethyst Frame', ring: 'linear-gradient(135deg,#5b2a86,#d6a8ff,#3d1a5c)' },
-  royal: { name: 'Royal Frame', ring: 'conic-gradient(#d4af37,#7a2cff,#d4af37,#ff3b6b,#d4af37)' },
-  season: { name: 'Season Legend Frame', ring: 'conic-gradient(#ff3b2f,#f5c518,#3ee07a,#2a62c8,#7a2cff,#ff3b2f)' },
-  champion: { name: 'Champion Frame', ring: 'conic-gradient(#fff1a8,#d4af37,#fff,#d4af37,#fff1a8)' },
+/** Avatar frames: a ring drawn around the player's picture (Legendary ones turn). */
+export const FRAMES: Record<string, CosmeticBase & { ring: string }> = {
+  bronze: { name: 'Bronze Frame', ring: 'linear-gradient(135deg,#8a5a2b,#e0a46a,#6b3f1a)', rarity: 'common', from: PASS_1 },
+  silver: { name: 'Silver Frame', ring: 'linear-gradient(135deg,#8e9aa8,#f2f6fa,#6f7a86)', rarity: 'rare', from: PASS_1 },
+  gold: { name: 'Gold Frame', ring: 'linear-gradient(135deg,#a8801c,#ffe58a,#8a6510)', rarity: 'rare', from: PASS_1 },
+  amethyst: { name: 'Amethyst Frame', ring: 'linear-gradient(135deg,#5b2a86,#d6a8ff,#3d1a5c)', rarity: 'epic', from: PASS_1 },
+  royal: {
+    name: 'Royal Frame',
+    ring: 'conic-gradient(#d4af37,#7a2cff,#d4af37,#ff3b6b,#d4af37)',
+    rarity: 'legendary',
+    from: PASS_1,
+  },
+  season: {
+    name: 'Season Legend Frame',
+    ring: 'conic-gradient(#ff3b2f,#f5c518,#3ee07a,#2a62c8,#7a2cff,#ff3b2f)',
+    rarity: 'legendary',
+    from: EARNED,
+  },
+  champion: {
+    name: 'Champion Frame',
+    ring: 'conic-gradient(#fff1a8,#d4af37,#fff,#d4af37,#fff1a8)',
+    rarity: 'legendary',
+    from: EARNED,
+  },
+  steel: { name: 'Steel Frame', ring: 'linear-gradient(135deg,#4a525c,#b9c2cc,#3a4048)', rarity: 'common', from: SHOP },
+  emerald: { name: 'Emerald Frame', ring: 'linear-gradient(135deg,#0d5c3a,#5ff0a8,#0a4029)', rarity: 'rare', from: SHOP },
+  inferno: { name: 'Inferno Frame', ring: 'linear-gradient(135deg,#7a0d00,#ff7a1a,#ffd36b,#7a0d00)', rarity: 'epic', from: SHOP },
+  galaxy: {
+    name: 'Galaxy Frame',
+    ring: 'conic-gradient(#120a3a,#6a3cff,#ff6ad5,#3ad7ff,#120a3a)',
+    rarity: 'legendary',
+    from: SHOP,
+  },
 }
 
 /** Brawler outfit colours for the avatar builder. */
-export const OUTFITS: Record<string, { name: string; color: string }> = {
-  royal: { name: 'Royal Violet Set', color: '#5b2a86' },
-  gold: { name: 'Gold Rush Set', color: '#c9a227' },
-  obsidian: { name: 'Obsidian Set', color: '#15151c' },
+export const OUTFITS: Record<string, CosmeticBase & { color: string }> = {
+  royal: { name: 'Royal Violet Set', color: '#5b2a86', rarity: 'epic', from: PASS_1 },
+  obsidian: { name: 'Obsidian Set', color: '#15151c', rarity: 'epic', from: PASS_1 },
+  gold: { name: 'Gold Rush Set', color: '#c9a227', rarity: 'legendary', from: PASS_1 },
+  crimson: { name: 'Crimson Set', color: '#7a0f1f', rarity: 'common', from: SHOP },
+  navy: { name: 'Navy Set', color: '#14204a', rarity: 'common', from: SHOP },
+  forest: { name: 'Forest Set', color: '#174d33', rarity: 'rare', from: SHOP },
+  arctic: { name: 'Arctic Set', color: '#bfe3f2', rarity: 'rare', from: SHOP },
+  sunrise: { name: 'Sunrise Set', color: '#ff7a3d', rarity: 'epic', from: SHOP },
 }
 
-/** Avatar accessories that are earned in the pass. */
-export const PASS_ACCESSORIES: Record<string, string> = { visor: 'Battle Visor', crown: 'Brawler Crown', halo: 'Light Halo' }
+/** Avatar accessories (drawn on the avatar and the 3D brawler). */
+export const ACCESSORIES: Record<string, CosmeticBase> = {
+  visor: { name: 'Battle Visor', rarity: 'epic', from: PASS_1 },
+  crown: { name: 'Brawler Crown', rarity: 'legendary', from: PASS_1 },
+  halo: { name: 'Light Halo', rarity: 'legendary', from: PASS_1 },
+}
 
 // ---------------------------------------------------------------- rewards
 
@@ -193,7 +268,7 @@ export function rewardLabel(r: Reward, seasonBakuganName?: (slot: number) => str
     case 'outfit':
       return OUTFITS[r.id]?.name ?? 'Outfit'
     case 'accessory':
-      return PASS_ACCESSORIES[r.id] ?? 'Accessory'
+      return ACCESSORIES[r.id]?.name ?? 'Accessory'
     case 'seasonBakugan':
       return seasonBakuganName?.(r.slot) ?? 'Season Bakugan'
     case 'bundle':
@@ -202,7 +277,18 @@ export function rewardLabel(r: Reward, seasonBakuganName?: (slot: number) => str
 }
 
 export const rewardIcon = (r: Reward): string =>
-  ({ bp: '◈', boost: '⇧', cardKey: '🗝', title: '✦', frame: '◯', skin: '◆', outfit: '👕', accessory: '♛', seasonBakugan: '⬢', bundle: '★' })[r.kind]
+  ({
+    bp: '◈',
+    boost: '⇧',
+    cardKey: '🗝',
+    title: '✦',
+    frame: '◯',
+    skin: '◆',
+    outfit: '👕',
+    accessory: '♛',
+    seasonBakugan: '⬢',
+    bundle: '★',
+  })[r.kind]
 
 // ---------------------------------------------------------------- challenges
 

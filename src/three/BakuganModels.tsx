@@ -1,4 +1,4 @@
-import { useGLTF } from '@react-three/drei'
+import { Sparkles, useGLTF } from '@react-three/drei'
 import { Suspense, type ComponentType, type RefObject } from 'react'
 import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
@@ -34,17 +34,37 @@ export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?:
       <PlaceholderMonster color={element.color} glow={element.glow} poseRef={poseRef} />
     </group>
   )
-  if (!models?.monster) return placeholder
+  // a Legendary skin shows off with sparkles around the Bakugan
+  const sparkles = skin?.rarity === 'legendary' && (
+    <Sparkles
+      count={40}
+      scale={[MONSTER_HEIGHT * size, MONSTER_HEIGHT * size * 1.2, MONSTER_HEIGHT * size]}
+      position={[0, (MONSTER_HEIGHT * size) / 2, 0]}
+      size={6}
+      speed={0.4}
+      color={skin.glow}
+    />
+  )
+  if (!models?.monster)
+    return (
+      <>
+        {placeholder}
+        {sparkles}
+      </>
+    )
   return (
-    <Suspense fallback={placeholder}>
-      <NormalizedModel
-        url={asset(models.monster)}
-        height={MONSTER_HEIGHT * size}
-        yaw={models.monsterYaw}
-        poseRef={poseRef}
-        tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
-      />
-    </Suspense>
+    <>
+      <Suspense fallback={placeholder}>
+        <NormalizedModel
+          url={asset(models.monster)}
+          height={MONSTER_HEIGHT * size}
+          yaw={models.monsterYaw}
+          poseRef={poseRef}
+          tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
+        />
+      </Suspense>
+      {sparkles}
+    </>
   )
 }
 
@@ -72,6 +92,10 @@ export function BallModel({ bakugan, openRef, skin: skinId }: { bakugan: Bakugan
 
 /** Starts downloading a Bakugan's models ahead of time so the brawl doesn't stall on them. */
 export function preloadModels(bakugan: Bakugan) {
-  const urls = [bakugan.models?.ball, bakugan.models?.monster, ...bakugan.evolutions.flatMap((e) => [e.models?.ball, e.models?.monster])]
+  const urls = [
+    bakugan.models?.ball,
+    bakugan.models?.monster,
+    ...bakugan.evolutions.flatMap((e) => [e.models?.ball, e.models?.monster]),
+  ]
   for (const url of urls) if (url) useGLTF.preload(asset(url))
 }

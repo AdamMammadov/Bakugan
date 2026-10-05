@@ -13,7 +13,7 @@ import { ProfileScreen } from './screens/ProfileScreen'
 import { ClansScreen } from './screens/ClansScreen'
 import { RankingsScreen } from './screens/RankingsScreen'
 import { EncyclopediaScreen } from './screens/EncyclopediaScreen'
-import { AdminScreen } from './screens/AdminScreen'
+import { ShopScreen } from './screens/ShopScreen'
 import { SeasonPassScreen } from './screens/SeasonPassScreen'
 import { useGame } from './store/useGame'
 
@@ -45,8 +45,8 @@ export default function App() {
           {screen === 'rankings' && <RankingsScreen key="rankings" />}
           {screen === 'clans' && <ClansScreen key="clans" />}
           {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
-          {screen === 'admin' && <AdminScreen key="admin" />}
           {screen === 'pass' && <SeasonPassScreen key="pass" />}
+          {screen === 'shop' && <ShopScreen key="shop" />}
           {screen === 'showroom' && <BakuganShowroom key="showroom" />}
           {screen === 'characters' && <CharacterShowroom key="characters" />}
         </AnimatePresence>
@@ -63,9 +63,9 @@ export default function App() {
           'clans',
           'encyclopedia',
           'showroom',
+          'shop',
           'characters',
           'pass',
-          'admin',
         ].includes(screen) && <ProfileButton />}
     </div>
   )

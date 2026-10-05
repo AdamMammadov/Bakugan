@@ -16,11 +16,11 @@ export type Screen =
   | 'encyclopedia'
   | 'characters'
   | 'showroom'
+  | 'shop'
   | 'pass'
-  | 'admin'
 
-export type PageScreen = 'profile' | 'pass' | 'rankings' | 'clans' | 'encyclopedia' | 'showroom' | 'characters'
-const PAGES: PageScreen[] = ['profile', 'pass', 'rankings', 'clans', 'encyclopedia', 'showroom', 'characters']
+export type PageScreen = 'profile' | 'pass' | 'shop' | 'rankings' | 'clans' | 'encyclopedia' | 'showroom' | 'characters'
+const PAGES: PageScreen[] = ['profile', 'pass', 'shop', 'rankings', 'clans', 'encyclopedia', 'showroom', 'characters']
 
 export interface TeamMember {
   id: string

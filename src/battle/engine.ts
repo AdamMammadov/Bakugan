@@ -53,6 +53,8 @@ export interface Side {
 export interface BattleState {
   sides: [Side, Side]
   turn: SideIndex
+  /** Side that opens every round (decided by a coin toss at the start). */
+  first: SideIndex
   round: number
   /** Gate Card currently set on the field and who set it. */
   gate: { card: GateCard; owner: SideIndex } | null
@@ -60,10 +62,7 @@ export interface BattleState {
   log: string[]
 }
 
-export type Action =
-  | { kind: 'basic' }
-  | { kind: 'ability'; card: Card }
-  | { kind: 'switch'; to: number }
+export type Action = { kind: 'basic' } | { kind: 'ability'; card: Card } | { kind: 'switch'; to: number }
 
 /** What happened during one action; drives the arena animation. */
 export interface BattleEvent {
@@ -107,10 +106,18 @@ function makeSide(team: Entrant[], gates: GateCard[], rng: () => number): Side {
     team.flatMap((e) =>
       e.bakugan.abilities
         .filter((a) => !e.cards || e.cards.includes(a.id))
-        .map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id }))),
+        .map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id })),
+    ),
     rng,
   )
-  return { team: fighters, active: 0, deck: deck.slice(START_HAND), hand: deck.slice(0, START_HAND), used: [], gates: shuffle(gates, rng) }
+  return {
+    team: fighters,
+    active: 0,
+    deck: deck.slice(START_HAND),
+    hand: deck.slice(0, START_HAND),
+    used: [],
+    gates: shuffle(gates, rng),
+  }
 }
 
 export function startBattle(
@@ -118,10 +125,11 @@ export function startBattle(
   right: Entrant[],
   gates: [GateCard[], GateCard[]],
   rng: () => number = Math.random,
+  first: SideIndex = 0,
 ): BattleState {
   const sides: [Side, Side] = [makeSide(left, gates[0], rng), makeSide(right, gates[1], rng)]
-  const state: BattleState = { sides, turn: 0, round: 1, gate: null, winner: null, log: [] }
-  setGate(state, 0)
+  const state: BattleState = { sides, turn: first, first, round: 1, gate: null, winner: null, log: [] }
+  setGate(state, first)
   state.log.push(`${activeOf(sides[0]).name} vs ${activeOf(sides[1]).name} — brawl!`)
   return state
 }
@@ -271,9 +279,9 @@ export function act(prev: BattleState, action: Action): { state: BattleState; ev
     const drawer = state.sides[target]
     if (drawer.deck.length && drawer.hand.length < HAND_SIZE) drawer.hand.push(drawer.deck.shift()!)
     // a new round starts once both players have acted; the gate alternates
-    if (actor === 1) {
+    if (actor !== state.first) {
       state.round += 1
-      setGate(state, (state.round % 2 === 1 ? 0 : 1) as SideIndex)
+      setGate(state, state.round % 2 === 1 ? state.first : other(state.first))
     }
   }
   return { state, event }
@@ -295,12 +303,25 @@ export interface AiLevel {
   noise: number
   /** Turns searched ahead (1 = only its own move). */
   depth: number
+  /** Extra G for the bot's Bakugan, as a share of the player's (0.05 = +5%). */
+  edge?: number
 }
 
 export const AI_EASY: AiLevel = { noise: 80, depth: 1 }
 
-/** Bots get sharper as the player climbs the ranks (tier 0 = Rookie). */
-export const aiForTier = (tier: number): AiLevel => ({ noise: Math.max(4, 30 - tier * 6), depth: tier >= 4 ? 4 : tier >= 2 ? 3 : 2 })
+/**
+ * Bots get sharper and a little stronger as the player climbs the ranks (index = tier, 0 = Rookie).
+ * Tuned by simulation so a Rookie wins a bit under half of their brawls and higher ranks take real skill.
+ */
+const BOT_LEVELS: AiLevel[] = [
+  { noise: 20, depth: 2, edge: 0.03 },
+  { noise: 15, depth: 2, edge: 0.05 },
+  { noise: 10, depth: 3, edge: 0.06 },
+  { noise: 6, depth: 3, edge: 0.08 },
+  { noise: 3, depth: 3, edge: 0.09 },
+  { noise: 0, depth: 4, edge: 0.11 },
+]
+export const aiForTier = (tier: number): AiLevel => BOT_LEVELS[Math.min(Math.max(tier, 0), BOT_LEVELS.length - 1)]
 
 /** How good the position is for `me`. */
 function evaluate(state: BattleState, me: SideIndex): number {
@@ -339,7 +360,10 @@ export function chooseAction(state: BattleState, level: AiLevel = AI_EASY, rng: 
 
 /** A random team of different Bakugan. */
 export function randomTeam(size = TEAM_SIZE, exclude: string[] = [], rng: () => number = Math.random): Entrant[] {
-  const pool = shuffle(BAKUGAN.filter((b) => !exclude.includes(b.id)), rng)
+  const pool = shuffle(
+    BAKUGAN.filter((b) => !exclude.includes(b.id)),
+    rng,
+  )
   const picks = (pool.length >= size ? pool : shuffle(BAKUGAN, rng)).slice(0, size)
   return picks.map((bakugan) => ({ bakugan, form: Math.floor(rng() * Math.min(2, bakugan.evolutions.length)) }))
 }
@@ -347,9 +371,10 @@ export function randomTeam(size = TEAM_SIZE, exclude: string[] = [], rng: () => 
 /**
  * An opponent on the player's level: as many Bakugan as the player brings, any attribute,
  * the same forms and the same number of ability cards. Bakugan differ in base power, so
- * each opponent gets a G adjustment that puts it level with the player's Bakugan in that slot.
+ * each opponent gets a G adjustment that puts it level with the player's Bakugan in that slot,
+ * plus the bot's `edge` for the player's rank.
  */
-export function matchedOpponent(player: Entrant[], rng: () => number = Math.random): Entrant[] {
+export function matchedOpponent(player: Entrant[], rng: () => number = Math.random, edge = 0): Entrant[] {
   const mine = new Set(player.map((e) => e.bakugan.id))
   const others = BAKUGAN.filter((b) => !mine.has(b.id))
   const pool = shuffle(others.length >= player.length ? others : BAKUGAN, rng)
@@ -358,6 +383,7 @@ export function matchedOpponent(player: Entrant[], rng: () => number = Math.rand
     const form = Math.min(slot.form, bakugan.evolutions.length - 1)
     const cards = slot.cards?.length ?? slot.bakugan.abilities.length
     const entrant: Entrant = { bakugan, form, cards: bakugan.abilities.slice(0, cards).map((a) => a.id) }
-    return { ...entrant, bonusG: formBrawlG(slot) + (slot.bonusG ?? 0) - formBrawlG(entrant) }
+    const level = formBrawlG(slot) + (slot.bonusG ?? 0)
+    return { ...entrant, bonusG: level + Math.round(level * edge) - formBrawlG(entrant) }
   })
 }

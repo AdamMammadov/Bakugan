@@ -15,6 +15,7 @@ import {
   PASS_LEVELS,
   PASS_TOTAL_XP,
   PASS_XP,
+  RARITY,
   passLevel,
   passRewards,
   rewardIcon,
@@ -24,8 +25,15 @@ import {
   weeklyChallenges,
   type Challenge,
 } from '../season/season'
+import { formatUsd, passPrice, rewardRarity, rewardWorth } from '../shop/shop'
 
 const GOLD = '#f5c518'
+
+/** Shop value of the premium levels of a season's pass. */
+const premiumWorth = (season: number) =>
+  passRewards(season)
+    .map((r, l) => (l > 0 && isPremiumLevel(l) ? rewardWorth(r) : { usd: 0, bp: 0 }))
+    .reduce((a, b) => ({ usd: a.usd + b.usd, bp: a.bp + b.bp }))
 
 export function SeasonPassScreen() {
   const profile = useActiveProfile()
@@ -39,7 +47,10 @@ export function SeasonPassScreen() {
   return (
     <motion.div
       className="absolute inset-0 overflow-y-auto px-12 py-10"
-      style={{ backgroundImage: `radial-gradient(circle at 80% 0%, ${GOLD}22, transparent 45%), ${GRID}`, backgroundSize: `100% 100%, ${GRID_SIZE}` }}
+      style={{
+        backgroundImage: `radial-gradient(circle at 80% 0%, ${GOLD}22, transparent 45%), ${GRID}`,
+        backgroundSize: `100% 100%, ${GRID_SIZE}`,
+      }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -53,7 +64,11 @@ export function SeasonPassScreen() {
           <h1 className="font-display text-5xl font-black tracking-wider">SEASON {info.id} PASS</h1>
         </div>
       </div>
-      {!profile ? <p className="mt-10 text-white/60">Create a player profile to take part in the season.</p> : <Pass profile={profile} />}
+      {!profile ? (
+        <p className="mt-10 text-white/60">Create a player profile to take part in the season.</p>
+      ) : (
+        <Pass profile={profile} />
+      )}
     </motion.div>
   )
 }
@@ -65,6 +80,8 @@ function Pass({ profile }: { profile: Profile }) {
   const rewards = passRewards(season.id)
   const level = passLevel(season.passXp)
   const passIds = seasonBakugan(season.id).pass
+  const price = passPrice()
+  const worth = premiumWorth(season.id)
   const bakuganName = (slot: number) => (passIds[slot] ? bakuganById(passIds[slot]).name : null)
   const into = season.passXp - LEVEL_XP[level]
   const need = level < PASS_LEVELS ? levelCost(level + 1) : 1
@@ -87,7 +104,10 @@ function Pass({ profile }: { profile: Profile }) {
           <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${level >= PASS_LEVELS ? 100 : (into / need) * 100}%`, background: `linear-gradient(90deg, #7ec8e3, ${GOLD})` }}
+              style={{
+                width: `${level >= PASS_LEVELS ? 100 : (into / need) * 100}%`,
+                background: `linear-gradient(90deg, #7ec8e3, ${GOLD})`,
+              }}
             />
           </div>
           <p className="mt-2 text-sm text-white/55">
@@ -97,15 +117,33 @@ function Pass({ profile }: { profile: Profile }) {
         </div>
         <div className="flex w-64 flex-col items-stretch justify-center gap-2 text-center">
           {season.premium ? (
-            <p className="font-display rounded-lg border-2 py-3 font-black tracking-[0.3em]" style={{ borderColor: GOLD, color: GOLD }}>
+            <p
+              className="font-display rounded-lg border-2 py-3 font-black tracking-[0.3em]"
+              style={{ borderColor: GOLD, color: GOLD }}
+            >
               ★ PREMIUM PASS
             </p>
           ) : (
             <>
-              <button disabled className="font-display rounded-lg border-2 py-3 font-black tracking-[0.3em] opacity-70" style={{ borderColor: GOLD, color: GOLD }}>
-                BUY PASS
+              <button
+                disabled
+                title="Payments open with the online version"
+                className="font-display rounded-lg border-2 py-3 font-black tracking-[0.3em] opacity-80"
+                style={{ borderColor: GOLD, color: GOLD }}
+              >
+                BUY PASS · {formatUsd(price.price)}
               </button>
-              <p className="text-xs text-white/45">Payments arrive with the online update. 23 premium levels: 4 season Bakugan, skins, sets and more.</p>
+              {price.discount > 0 && (
+                <p className="text-xs font-bold text-emerald-300">
+                  LAST WEEK: {Math.round(price.discount * 100)}% OFF{' '}
+                  <span className="text-white/40 line-through">{formatUsd(price.full)}</span>
+                </p>
+              )}
+              <p className="text-xs text-white/55">
+                23 premium levels worth {formatUsd(worth.usd)} + {worth.bp.toLocaleString('en')} BP in the shop: 4 season Bakugan,
+                Epic and Legendary skins, sets and more.
+              </p>
+              <p className="text-[10px] text-white/35">Payments open with the online version.</p>
             </>
           )}
           {claimable.length > 0 && (
@@ -142,12 +180,22 @@ function Pass({ profile }: { profile: Profile }) {
             >
               <div className="flex items-center justify-between">
                 <span className="font-display text-lg font-black">{l}</span>
-                <span className="font-display rounded px-1.5 text-[9px] tracking-widest" style={{ background: premium ? GOLD : '#ffffff22', color: premium ? '#000' : '#fff' }}>
+                <span
+                  className="font-display rounded px-1.5 text-[9px] tracking-widest"
+                  style={{ background: premium ? GOLD : '#ffffff22', color: premium ? '#000' : '#fff' }}
+                >
                   {premium ? 'PASS' : 'FREE'}
                 </span>
               </div>
               <span className="mt-2 text-3xl">{rewardIcon(r)}</span>
-              <span className="mt-1 min-h-10 text-xs leading-tight text-white/80">{rewardLabel(r, (s) => bakuganName(s) ?? 'Season Bakugan (to be announced)')}</span>
+              <span className="mt-1 min-h-10 text-xs leading-tight text-white/80">
+                {rewardLabel(r, (s) => bakuganName(s) ?? 'Season Bakugan (to be announced)')}
+              </span>
+              {rewardRarity(r) && (
+                <span className="text-[9px] tracking-widest" style={{ color: RARITY[rewardRarity(r)!].color }}>
+                  {RARITY[rewardRarity(r)!].name.toUpperCase()}
+                </span>
+              )}
               <div className="mt-auto pt-2">
                 {claimed ? (
                   <span className="text-xs text-emerald-300">✓ CLAIMED</span>
@@ -165,7 +213,9 @@ function Pass({ profile }: { profile: Profile }) {
                     CLAIM
                   </button>
                 ) : (
-                  <span className="text-[10px] text-white/40">{reached ? 'COMING SOON' : `${(LEVEL_XP[l] - season.passXp).toLocaleString('en')} XP`}</span>
+                  <span className="text-[10px] text-white/40">
+                    {reached ? 'COMING SOON' : `${(LEVEL_XP[l] - season.passXp).toLocaleString('en')} XP`}
+                  </span>
                 )}
               </div>
             </div>
@@ -174,8 +224,20 @@ function Pass({ profile }: { profile: Profile }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-6">
-        <Challenges title="DAILY CHALLENGES" list={dailyChallenges()} stats={season.day.stats} done={season.day.done} resets="day" />
-        <Challenges title="WEEKLY CHALLENGES" list={weeklyChallenges()} stats={season.week.stats} done={season.week.done} resets="week" />
+        <Challenges
+          title="DAILY CHALLENGES"
+          list={dailyChallenges()}
+          stats={season.day.stats}
+          done={season.day.done}
+          resets="day"
+        />
+        <Challenges
+          title="WEEKLY CHALLENGES"
+          list={weeklyChallenges()}
+          stats={season.week.stats}
+          done={season.week.done}
+          resets="week"
+        />
       </div>
 
       <SeasonBakugan profile={profile} />
@@ -217,7 +279,10 @@ function Challenges({
                 </span>
               </div>
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full" style={{ width: `${(v / c.goal) * 100}%`, background: ok ? '#3ee07a' : '#7ec8e3' }} />
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${(v / c.goal) * 100}%`, background: ok ? '#3ee07a' : '#7ec8e3' }}
+                />
               </div>
             </div>
           )
@@ -276,7 +341,9 @@ function SeasonBakugan({ profile }: { profile: Profile }) {
                 <img src={el.icon} alt="" className="h-9 w-9" />
                 <div>
                   <p className="font-display font-bold">{b.name}</p>
-                  <p className="text-xs text-white/50">{b.element === profile.element ? 'Your attribute · easier' : 'Other attribute'}</p>
+                  <p className="text-xs text-white/50">
+                    {b.element === profile.element ? 'Your attribute · easier' : 'Other attribute'}
+                  </p>
                 </div>
               </div>
               {owned(id) ? (
@@ -305,5 +372,8 @@ function SeasonBakugan({ profile }: { profile: Profile }) {
   )
 }
 
-const Req = ({ ok, text }: { ok: boolean; text: string }) => <li className={ok ? 'text-emerald-300' : 'text-white/55'}>{ok ? '✓' : '○'} {text}</li>
-
+const Req = ({ ok, text }: { ok: boolean; text: string }) => (
+  <li className={ok ? 'text-emerald-300' : 'text-white/55'}>
+    {ok ? '✓' : '○'} {text}
+  </li>
+)

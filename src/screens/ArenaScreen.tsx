@@ -44,7 +44,13 @@ const TYPE_ICON: Record<Ability['type'], string> = {
 }
 
 const toTeam = (members: TeamMember[]): Entrant[] =>
-  members.map((m) => ({ bakugan: BAKUGAN.find((b) => b.id === m.id)!, form: m.form, cards: m.cards, bonusG: m.bonusG, skin: m.skin }))
+  members.map((m) => ({
+    bakugan: BAKUGAN.find((b) => b.id === m.id)!,
+    form: m.form,
+    cards: m.cards,
+    bonusG: m.bonusG,
+    skin: m.skin,
+  }))
 
 const actives = (s: BattleState): [number, number] => [s.sides[0].active, s.sides[1].active]
 
@@ -54,7 +60,11 @@ export function ArenaScreen() {
   const teams = useMemo(() => [toTeam(setup.left), toTeam(setup.right)] as const, [setup])
   useEffect(() => teams.flat().forEach((e) => preloadModels(e.bakugan)), [teams])
 
-  const fresh = useCallback(() => startBattle(teams[0], teams[1], [gateDeck(teams[0]), gateDeck(teams[1])]), [teams])
+  // a coin toss decides who opens each round
+  const fresh = useCallback(
+    () => startBattle(teams[0], teams[1], [gateDeck(teams[0]), gateDeck(teams[1])], Math.random, Math.random() < 0.5 ? 0 : 1),
+    [teams],
+  )
   const [battle, setBattle] = useState<BattleState>(fresh)
   // What the HUD shows; lags `battle` until each hit lands.
   const [shown, setShown] = useState<BattleState>(battle)
@@ -82,7 +92,12 @@ export function ArenaScreen() {
     }
     const a = profile.avatar
     return {
-      parts: a.kind === 'custom' ? a.parts : a.kind === 'preset' ? (CHARACTER_BY_ID[a.id]?.parts ?? DEFAULT_PARTS) : botCharacter(profile.element).parts,
+      parts:
+        a.kind === 'custom'
+          ? a.parts
+          : a.kind === 'preset'
+            ? (CHARACTER_BY_ID[a.id]?.parts ?? DEFAULT_PARTS)
+            : botCharacter(profile.element).parts,
       photo: a.kind === 'photo' ? a.dataUrl : undefined,
       model: a.kind === 'preset' ? CHARACTER_BY_ID[a.id]?.model : undefined,
       name: profile.firstName,
@@ -148,7 +163,8 @@ export function ArenaScreen() {
       }
       return
     }
-    if (next.turn === 1) later(ENEMY_DELAY_MS, () => runRef.current(next, chooseAction(next, aiForTier(useGame.getState().arena?.bot.tier ?? 0))))
+    if (next.turn === 1)
+      later(ENEMY_DELAY_MS, () => runRef.current(next, chooseAction(next, aiForTier(useGame.getState().arena?.bot.tier ?? 0))))
     else {
       setBusy(false)
       if (next.round !== prev.round && next.gate) {
@@ -159,60 +175,69 @@ export function ArenaScreen() {
     }
   }, [])
 
-  const run = useCallback((state: BattleState, action: Action) => {
-    const { state: next, event: ev } = act(state, action)
-    if (action.kind === 'ability' && ev.actor === 0) abilitiesUsed.current++
-    if (ev.ko && ev.actor === 0) {
-      const id = activeOf(state.sides[0]).bakugan.id
-      kos.current[id] = (kos.current[id] ?? 0) + 1
-    }
-    setBusy(true)
+  const run = useCallback(
+    (state: BattleState, action: Action) => {
+      const { state: next, event: ev } = act(state, action)
+      if (action.kind === 'ability' && ev.actor === 0) abilitiesUsed.current++
+      if (ev.ko && ev.actor === 0) {
+        const id = activeOf(state.sides[0]).bakugan.id
+        kos.current[id] = (kos.current[id] ?? 0) + 1
+      }
+      setBusy(true)
 
-    if (action.kind === 'switch') {
-      setEvent({ event: ev, key: Date.now() })
-      playSfx('brawl')
-      const incoming = next.sides[ev.actor].team[action.to]
-      cue(ev.actor, 'point', `${incoming.name.toUpperCase()}, STAND!`, `${activeOf(state.sides[ev.actor]).name}, return!`, `${incoming.name}, stand!`)
-      later(300, () => {
-        setShown(next)
-        setOnField(actives(next))
-      })
-      later(ENTRY_MS, () => waitQuiet(() => nextTurn(next, state)))
-      return
-    }
-
-    /** The Bakugan acts: animation, hit and HUD update. */
-    const perform = () => {
-      setEvent({ event: ev, key: Date.now() })
-      if (ev.damage > 0 && !ev.blocked) later(IMPACT_AT * 1000, () => cue(ev.target, 'flinch'))
-      later(IMPACT_AT * 1000, () => {
-        if (ev.damage > 0 && !ev.blocked) playSfx('hit')
-        if (ev.actorG || ev.targetG) playSfx('gPower')
-        setShown(next)
-      })
-      later(ACTION_DURATION * 1000, () => {
-        if (ev.enters) {
-          // the defeated Bakugan has fallen; the next one rises in its place
+      if (action.kind === 'switch') {
+        setEvent({ event: ev, key: Date.now() })
+        playSfx('brawl')
+        const incoming = next.sides[ev.actor].team[action.to]
+        cue(
+          ev.actor,
+          'point',
+          `${incoming.name.toUpperCase()}, STAND!`,
+          `${activeOf(state.sides[ev.actor]).name}, return!`,
+          `${incoming.name}, stand!`,
+        )
+        later(300, () => {
+          setShown(next)
           setOnField(actives(next))
-          playSfx('brawl')
-          const name = next.sides[ev.enters.side].team[ev.enters.index].name
-          cue(ev.enters.side, 'point', 'BAKUGAN, STAND!', name, `Bakugan stand! Go, ${name}!`)
-          later(ENTRY_MS, () => waitQuiet(() => nextTurn(next, state)))
-        } else waitQuiet(() => nextTurn(next, state))
-      })
-    }
+        })
+        later(ENTRY_MS, () => waitQuiet(() => nextTurn(next, state)))
+        return
+      }
 
-    if (action.kind === 'ability') {
-      // the brawler raises the card and calls it out first; the Bakugan strikes when the call ends
-      playSfx('ability')
-      cue(ev.actor, 'card', 'ABILITY ACTIVATE!', action.card.ability.name, `Ability activate! ${action.card.ability.name}!`)
-      waitQuiet(perform, 900)
-    } else {
-      playSfx('gateCard')
-      cue(ev.actor, 'point')
-      perform()
-    }
-  }, [nextTurn])
+      /** The Bakugan acts: animation, hit and HUD update. */
+      const perform = () => {
+        setEvent({ event: ev, key: Date.now() })
+        if (ev.damage > 0 && !ev.blocked) later(IMPACT_AT * 1000, () => cue(ev.target, 'flinch'))
+        later(IMPACT_AT * 1000, () => {
+          if (ev.damage > 0 && !ev.blocked) playSfx('hit')
+          if (ev.actorG || ev.targetG) playSfx('gPower')
+          setShown(next)
+        })
+        later(ACTION_DURATION * 1000, () => {
+          if (ev.enters) {
+            // the defeated Bakugan has fallen; the next one rises in its place
+            setOnField(actives(next))
+            playSfx('brawl')
+            const name = next.sides[ev.enters.side].team[ev.enters.index].name
+            cue(ev.enters.side, 'point', 'BAKUGAN, STAND!', name, `Bakugan stand! Go, ${name}!`)
+            later(ENTRY_MS, () => waitQuiet(() => nextTurn(next, state)))
+          } else waitQuiet(() => nextTurn(next, state))
+        })
+      }
+
+      if (action.kind === 'ability') {
+        // the brawler raises the card and calls it out first; the Bakugan strikes when the call ends
+        playSfx('ability')
+        cue(ev.actor, 'card', 'ABILITY ACTIVATE!', action.card.ability.name, `Ability activate! ${action.card.ability.name}!`)
+        waitQuiet(perform, 900)
+      } else {
+        playSfx('gateCard')
+        cue(ev.actor, 'point')
+        perform()
+      }
+    },
+    [nextTurn],
+  )
   useEffect(() => {
     runRef.current = run
   }, [run])
@@ -233,8 +258,13 @@ export function ArenaScreen() {
       cue(0, 'point', 'BAKUGAN, BRAWL!', undefined, 'Bakugan, brawl!')
       later(900, () => cue(1, 'point', 'BAKUGAN, STAND!', activeOf(s.sides[1]).name))
       later(delay, () => {
+        if (s.turn === 1) {
+          say('OPPONENT GOES FIRST', s.gate ? `Gate Card: ${s.gate.card.name}` : undefined)
+          later(ENEMY_DELAY_MS * 2, () => runRef.current(s, chooseAction(s, aiForTier(useGame.getState().arena?.bot.tier ?? 0))))
+          return
+        }
         setBusy(false)
-        say('YOUR TURN', s.gate ? `Gate Card: ${s.gate.card.name}` : undefined)
+        say('YOU GO FIRST', s.gate ? `Gate Card: ${s.gate.card.name}` : undefined)
       })
     },
     [fresh],
@@ -279,7 +309,12 @@ export function ArenaScreen() {
             key={c.call.key}
             className={`pointer-events-none absolute bottom-[31%] z-10 ${i === 0 ? 'left-[4%]' : 'right-[4%]'}`}
           >
-            <div className="brawler-call" style={{ borderColor: i === 0 ? element.color : ELEMENT_BY_ID[shown.sides[1].team[onField[1]].bakugan.element].color }}>
+            <div
+              className="brawler-call"
+              style={{
+                borderColor: i === 0 ? element.color : ELEMENT_BY_ID[shown.sides[1].team[onField[1]].bakugan.element].color,
+              }}
+            >
               <span className="brawler-call-name text-white/60">{i === 0 ? player.name : botChar.name}</span>
               <span className="brawler-call-title">{c.call.title}</span>
               {c.call.sub && <span className="brawler-call-sub">{c.call.sub}</span>}
@@ -342,7 +377,9 @@ export function ArenaScreen() {
       </div>
 
       {/* hand */}
-      <div className={`${battle.winner !== null ? 'hidden' : ''} absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 pr-28 pb-5 pl-56`}>
+      <div
+        className={`${battle.winner !== null ? 'hidden' : ''} absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 pr-28 pb-5 pl-56`}
+      >
         <HandButton
           disabled={!myTurn}
           onClick={() => run(battle, { kind: 'basic' })}
@@ -388,7 +425,10 @@ export function ArenaScreen() {
             transition={{ type: 'spring', stiffness: 400, damping: 22 }}
             onAnimationComplete={() => window.setTimeout(() => setShout((s) => (s?.key === shout.key ? null : s)), 900)}
           >
-            <p className="font-display text-5xl font-black tracking-wider italic" style={{ textShadow: `0 0 30px ${element.color}` }}>
+            <p
+              className="font-display text-5xl font-black tracking-wider italic"
+              style={{ textShadow: `0 0 30px ${element.color}` }}
+            >
               {shout.text}
             </p>
             {shout.sub && <p className="font-display mt-2 text-xl tracking-widest text-white/80">{shout.sub}</p>}
@@ -404,7 +444,10 @@ export function ArenaScreen() {
             initial={{ opacity: 0, scaleY: 0 }}
             animate={{ opacity: 1, scaleY: 1 }}
           >
-            <p className="font-display text-7xl font-black tracking-widest italic" style={{ textShadow: `0 0 40px ${element.color}` }}>
+            <p
+              className="font-display text-7xl font-black tracking-widest italic"
+              style={{ textShadow: `0 0 40px ${element.color}` }}
+            >
               {battle.winner === 0 ? 'VICTORY!' : 'DEFEAT'}
             </p>
             <p className="font-display mt-2 tracking-[0.3em] text-white/60">
@@ -413,7 +456,10 @@ export function ArenaScreen() {
             </p>
             {reward && <RewardList reward={reward} />}
             <div className="mt-6 flex gap-4">
-              <button onClick={rematch} className="font-display border-2 border-white/70 px-8 py-3 tracking-[0.3em] hover:bg-white/10">
+              <button
+                onClick={rematch}
+                className="font-display border-2 border-white/70 px-8 py-3 tracking-[0.3em] hover:bg-white/10"
+              >
                 REMATCH
               </button>
               <button
@@ -443,10 +489,16 @@ function RewardList({ reward }: { reward: BattleReward }) {
       id: 'pass',
       color: '#7ec8e3',
       text: `+${reward.passXp} PASS XP`,
-      extra: reward.passLevelUp ? `PASS LEVEL ${reward.passLevelUp}!` : reward.boosted ? 'XP boost used (+50% Bakugan XP)' : 'Season Pass',
+      extra: reward.passLevelUp
+        ? `PASS LEVEL ${reward.passLevelUp}!`
+        : reward.boosted
+          ? 'XP boost used (+50% Bakugan XP)'
+          : 'Season Pass',
     },
     ...reward.challengesDone.map((c, i) => ({ id: `ch-${i}`, color: '#3ee07a', text: 'CHALLENGE DONE', extra: c })),
-    ...(reward.rankUp ? [{ id: 'rank', color: '#ffffff', text: `RANK UP: ${reward.rankUp.toUpperCase()}`, extra: 'new tier reached' }] : []),
+    ...(reward.rankUp
+      ? [{ id: 'rank', color: '#ffffff', text: `RANK UP: ${reward.rankUp.toUpperCase()}`, extra: 'new tier reached' }]
+      : []),
     ...Object.entries(reward.xp).map(([id, xp]) => {
       const b = bakuganById(id)
       const extra = [
@@ -490,7 +542,13 @@ function TeamPanel({ state, side, field, label }: { state: BattleState; side: Si
   const fighter = s.team[field]
   return (
     <div>
-      <LifePanel fighter={fighter} power={powerOf(state, fighter)} bonus={gateBonus(state, fighter)} label={label} align={right ? 'right' : 'left'} />
+      <LifePanel
+        fighter={fighter}
+        power={powerOf(state, fighter)}
+        bonus={gateBonus(state, fighter)}
+        label={label}
+        align={right ? 'right' : 'left'}
+      />
       <div className={`mt-2 flex gap-2 ${right ? 'flex-row-reverse' : 'pl-20'} ${right ? 'pr-20' : ''}`}>
         {s.team.map((f, i) => {
           const el = ELEMENT_BY_ID[f.bakugan.element]
@@ -502,10 +560,16 @@ function TeamPanel({ state, side, field, label }: { state: BattleState; side: Si
             >
               <div className="flex items-center gap-1">
                 <img src={el.icon} alt="" className="h-4 w-4" />
-                <span className="truncate text-[10px] font-bold">{f.hp === 0 ? '✕ ' : ''}{f.name}</span>
+                <span className="truncate text-[10px] font-bold">
+                  {f.hp === 0 ? '✕ ' : ''}
+                  {f.name}
+                </span>
               </div>
               <div className="mt-1 h-1 overflow-hidden rounded bg-white/10">
-                <div className="h-full transition-all duration-500" style={{ width: `${(f.hp / MAX_HP) * 100}%`, background: el.color }} />
+                <div
+                  className="h-full transition-all duration-500"
+                  style={{ width: `${(f.hp / MAX_HP) * 100}%`, background: el.color }}
+                />
               </div>
             </div>
           )

@@ -15,8 +15,6 @@ import {
   cardUnlockXp,
   nextCardXp,
   nextEvolveXp,
-  inShop,
-  priceOf,
   rankScore,
   teamEntrants,
   tierOf,
@@ -27,7 +25,7 @@ import {
   type OwnedBakugan,
   type Profile,
 } from '../profile/useProfiles'
-import { FRAMES, OUTFITS, PASS_ACCESSORIES, SKIN_BY_ID, SKINS } from '../season/season'
+import { ACCESSORIES, FRAMES, OUTFITS, SKIN_BY_ID, SKINS } from '../season/season'
 import { useGame } from '../store/useGame'
 
 export function ProfileScreen() {
@@ -116,7 +114,10 @@ export function ProfileScreen() {
                 >
                   DELETE
                 </button>
-                <button onClick={() => setConfirmDelete(false)} className="font-display border-2 border-white/25 px-6 py-2 tracking-[0.3em] hover:bg-white/10">
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="font-display border-2 border-white/25 px-6 py-2 tracking-[0.3em] hover:bg-white/10"
+                >
                   KEEP
                 </button>
               </div>
@@ -130,13 +131,18 @@ export function ProfileScreen() {
 
 function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () => void; onDelete: () => void }) {
   const element = ELEMENT_BY_ID[profile.element]
-  const clan = clanOf(useClans((s) => s.clans), profile.id)
+  const clan = clanOf(
+    useClans((s) => s.clans),
+    profile.id,
+  )
   return (
     <header className="mt-8 flex items-start gap-8">
       <Avatar avatar={profile.avatar} color={element.color} size={150} frame={profile.cosmetics?.frame} />
       <div className="min-w-0 flex-1">
         <RankBadge profile={profile} color={element.color} />
-        {profile.cosmetics?.title && <p className="font-display mt-1 text-sm tracking-[0.2em] text-amber-200">✦ {profile.cosmetics.title}</p>}
+        {profile.cosmetics?.title && (
+          <p className="font-display mt-1 text-sm tracking-[0.2em] text-amber-200">✦ {profile.cosmetics.title}</p>
+        )}
         <h1 className="font-display text-5xl font-black tracking-wide">
           {clan && <span className="mr-3 text-3xl text-white/50">[{clan.tag}]</span>}
           {profile.firstName} {profile.lastName}
@@ -146,12 +152,17 @@ function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () =>
           <span className="font-display tracking-widest" style={{ color: element.color }}>
             {element.name.toUpperCase()}
           </span>
-          <span className="text-white/40">· {element.attribute} · since {new Date(profile.createdAt).toLocaleDateString('en-GB')}</span>
+          <span className="text-white/40">
+            · {element.attribute} · since {new Date(profile.createdAt).toLocaleDateString('en-GB')}
+          </span>
         </div>
         <p className="mt-4 max-w-3xl leading-relaxed whitespace-pre-line text-white/75">{profile.bio || 'No bio yet.'}</p>
       </div>
       <div className="flex shrink-0 flex-col gap-2">
-        <button onClick={onEdit} className="font-display border-2 border-white/40 px-5 py-2 text-xs tracking-[0.3em] hover:bg-white/10">
+        <button
+          onClick={onEdit}
+          className="font-display border-2 border-white/40 px-5 py-2 text-xs tracking-[0.3em] hover:bg-white/10"
+        >
           EDIT PROFILE
         </button>
         <button onClick={onDelete} className="font-display px-5 py-2 text-xs tracking-[0.3em] text-white/35 hover:text-red-300">
@@ -191,12 +202,18 @@ function Team({ profile }: { profile: Profile }) {
   const team = teamEntrants(profile)
   return (
     <section className="mt-10">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BATTLE TEAM · {team.reduce((n, e) => n + formBrawlG(e), 0)}G</h2>
+      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
+        BATTLE TEAM · {team.reduce((n, e) => n + formBrawlG(e), 0)}G
+      </h2>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {team.map((e, i) => {
           const el = ELEMENT_BY_ID[e.bakugan.element]
           return (
-            <div key={e.bakugan.id} className="flex items-center gap-3 rounded-lg border-2 bg-black/40 px-4 py-2" style={{ borderColor: `${el.color}aa` }}>
+            <div
+              key={e.bakugan.id}
+              className="flex items-center gap-3 rounded-lg border-2 bg-black/40 px-4 py-2"
+              style={{ borderColor: `${el.color}aa` }}
+            >
               <span className="font-display text-[10px] tracking-widest text-white/40">{i === 0 ? 'LEAD' : `#${i + 1}`}</span>
               <img src={el.icon} alt="" className="h-8 w-8" />
               <span className="font-display font-bold">{e.bakugan.evolutions[e.form].name}</span>
@@ -213,35 +230,26 @@ function Team({ profile }: { profile: Profile }) {
 }
 
 function Collection({ profile }: { profile: Profile }) {
-  const shop = BAKUGAN.filter((b) => !profile.collection.some((o) => o.id === b.id) && inShop(b.id)).sort(
-    (a, b) => Number(b.element === profile.element) - Number(a.element === profile.element),
-  )
+  const openPage = useGame((s) => s.openPage)
   return (
-    <>
-      <section className="mt-10">
+    <section className="mt-10">
+      <div className="flex items-center justify-between">
         <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
           BAKUGAN COLLECTION · {profile.collection.length}/{BAKUGAN.length}
         </h2>
-        <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
-          {profile.collection.map((owned) => (
-            <OwnedCard key={owned.id} bakugan={bakuganById(owned.id)} owned={owned} profile={profile} />
-          ))}
-        </div>
-      </section>
-      {shop.length > 0 && (
-        <section className="mt-10">
-          <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BAKUGAN SHOP</h2>
-          <p className="mt-1 text-sm text-white/45">
-            Win battles for Battle Points. Bakugan of your own attribute cost less; very high player XP unlocks them too.
-          </p>
-          <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
-            {shop.map((b) => (
-              <ShopCard key={b.id} bakugan={b} profile={profile} />
-            ))}
-          </div>
-        </section>
-      )}
-    </>
+        <button
+          onClick={() => openPage('shop')}
+          className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.3em] hover:bg-white/10"
+        >
+          GET MORE IN THE SHOP →
+        </button>
+      </div>
+      <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
+        {profile.collection.map((owned) => (
+          <OwnedCard key={owned.id} bakugan={bakuganById(owned.id)} owned={owned} profile={profile} />
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -267,7 +275,10 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border bg-black/40 p-5 backdrop-blur" style={{ borderColor: `${element.color}55` }}>
+    <div
+      className="relative overflow-hidden rounded-xl border bg-black/40 p-5 backdrop-blur"
+      style={{ borderColor: `${element.color}55` }}
+    >
       <AnimatePresence>
         {flash > 0 && (
           <motion.div
@@ -285,13 +296,17 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
         <div className="min-w-0 flex-1">
           <p className="font-display text-2xl font-bold">{bakugan.evolutions[owned.form].name}</p>
           <p className="text-sm text-white/50">
-            {element.name} · {formBrawlG({ bakugan, form: owned.form })}G · {owned.wins}W / {owned.battles} battles · {owned.kos} KOs
+            {element.name} · {formBrawlG({ bakugan, form: owned.form })}G · {owned.wins}W / {owned.battles} battles · {owned.kos}{' '}
+            KOs
           </p>
         </div>
         <button
           onClick={toggleTeam}
           className="font-display rounded border px-2 py-1 text-[10px] tracking-widest transition"
-          style={{ borderColor: inTeam !== -1 ? element.color : 'rgba(255,255,255,0.2)', background: inTeam !== -1 ? `${element.color}33` : 'transparent' }}
+          style={{
+            borderColor: inTeam !== -1 ? element.color : 'rgba(255,255,255,0.2)',
+            background: inTeam !== -1 ? `${element.color}33` : 'transparent',
+          }}
         >
           {inTeam === -1 ? '+ TEAM' : inTeam === 0 ? '★ LEAD' : `TEAM #${inTeam + 1}`}
         </button>
@@ -402,7 +417,11 @@ function Locker({ profile }: { profile: Profile }) {
   const color = ELEMENT_BY_ID[profile.element].color
   const label = (k: string) => {
     const [kind, id] = k.split(':')
-    return kind === 'skin' ? `${SKIN_BY_ID[id]?.name} Bakugan skin` : kind === 'outfit' ? `${OUTFITS[id]?.name} (avatar builder)` : `${PASS_ACCESSORIES[id]} (avatar builder)`
+    return kind === 'skin'
+      ? `${SKIN_BY_ID[id]?.name} Bakugan skin`
+      : kind === 'outfit'
+        ? `${OUTFITS[id]?.name} (avatar builder)`
+        : `${ACCESSORIES[id]?.name} (avatar builder)`
   }
   return (
     <section className="mt-10">
@@ -411,7 +430,9 @@ function Locker({ profile }: { profile: Profile }) {
         Rewards from the Season Pass. XP Boosts: {profile.boosts ?? 0} (each gives +50% Bakugan XP for one battle) · Card Keys:{' '}
         {profile.cardKeys ?? 0} (use them on a Bakugan above)
       </p>
-      {owned.length === 0 && <p className="mt-3 text-sm text-white/40">Nothing yet — climb the Season Pass to fill your locker.</p>}
+      {owned.length === 0 && (
+        <p className="mt-3 text-sm text-white/40">Nothing yet — climb the Season Pass to fill your locker.</p>
+      )}
       {titles.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="font-display w-20 text-[10px] tracking-[0.3em] text-white/40">TITLE</span>
@@ -456,55 +477,6 @@ function Locker({ profile }: { profile: Profile }) {
   )
 }
 
-function ShopCard({ bakugan, profile }: { bakugan: Bakugan; profile: Profile }) {
-  const acquire = useProfiles((s) => s.acquire)
-  const element = ELEMENT_BY_ID[bakugan.element]
-  const price = priceOf(profile, bakugan)
-  const canBuy = profile.bp >= price.bp
-  const canClaim = profile.xp >= price.xp
-  const own = bakugan.element === profile.element
-  return (
-    <div className="rounded-xl border border-dashed bg-black/30 p-5" style={{ borderColor: `${element.color}55` }}>
-      <div className="flex items-center gap-4">
-        <img src={element.icon} alt="" className={`h-14 w-14 ${canBuy || canClaim ? '' : 'opacity-50 grayscale'}`} />
-        <div>
-          <p className="font-display text-2xl font-bold">{bakugan.name}</p>
-          <p className="text-sm text-white/45">
-            {element.name} · {bakugan.baseG}G · {own ? 'your attribute' : 'other attribute'}
-          </p>
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <button
-          disabled={!canBuy}
-          onClick={() => acquire(bakugan.id, 'bp') && playSfx('victory')}
-          className="rounded-md border px-2 py-2 text-xs transition enabled:hover:bg-white/10 disabled:opacity-40"
-          style={{ borderColor: element.color }}
-        >
-          <span className="font-display block font-bold">{price.bp.toLocaleString('en')} BP</span>
-          <span className="text-[10px] text-white/50">
-            {canBuy ? 'BUY' : `${(price.bp - profile.bp).toLocaleString('en')} BP to go`}
-          </span>
-        </button>
-        <button
-          disabled={!canClaim}
-          onClick={() => acquire(bakugan.id, 'xp') && playSfx('victory')}
-          className="rounded-md border border-white/20 px-2 py-2 text-xs transition enabled:hover:bg-white/10 disabled:opacity-40"
-        >
-          <span className="font-display block font-bold">{Number.isFinite(price.xp) ? `${price.xp.toLocaleString('en')} XP` : '—'}</span>
-          <span className="text-[10px] text-white/50">
-            {!Number.isFinite(price.xp) ? 'season pass Bakugan: BP only' : canClaim ? 'CLAIM' : 'player XP needed'}
-          </span>
-        </button>
-        <button disabled className="rounded-md border border-amber-400/40 px-2 py-2 text-xs opacity-60" title="Coming later">
-          <span className="font-display block font-bold text-amber-300">GAME PASS</span>
-          <span className="text-[10px] text-white/50">coming soon</span>
-        </button>
-      </div>
-    </div>
-  )
-}
-
 /** Rank name with progress towards the next tier. */
 export function RankBadge({ profile, color }: { profile: Profile; color: string }) {
   const score = rankScore(profile)
@@ -518,7 +490,10 @@ export function RankBadge({ profile, color }: { profile: Profile; color: string 
       {tier.next && (
         <>
           <div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full" style={{ width: `${((score - from) / (tier.next.min - from)) * 100}%`, background: color }} />
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${((score - from) / (tier.next.min - from)) * 100}%`, background: color }}
+            />
           </div>
           <span className="text-xs text-white/40">
             {tier.next.min - score} to {tier.next.name}
@@ -541,7 +516,10 @@ function Cards({ profile }: { profile: Profile }) {
           return (
             <div key={owned.id}>
               <p className="font-display text-sm font-bold" style={{ color: element.color }}>
-                {bakugan.name} <span className="font-normal text-white/40">· {n}/{bakugan.abilities.length}</span>
+                {bakugan.name}{' '}
+                <span className="font-normal text-white/40">
+                  · {n}/{bakugan.abilities.length}
+                </span>
               </p>
               <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2">
                 {bakugan.abilities.map((a, i) => {
@@ -550,9 +528,15 @@ function Cards({ profile }: { profile: Profile }) {
                     <div
                       key={a.id}
                       className="rounded-lg border bg-black/40 p-3"
-                      style={{ borderColor: locked ? 'rgba(255,255,255,0.08)' : `${element.color}77`, opacity: locked ? 0.45 : 1 }}
+                      style={{
+                        borderColor: locked ? 'rgba(255,255,255,0.08)' : `${element.color}77`,
+                        opacity: locked ? 0.45 : 1,
+                      }}
                     >
-                      <p className="font-display text-[11px] font-bold tracking-wider" style={{ color: locked ? '#888' : element.color }}>
+                      <p
+                        className="font-display text-[11px] font-bold tracking-wider"
+                        style={{ color: locked ? '#888' : element.color }}
+                      >
                         {locked ? `🔒 UNLOCKS AT ${cardUnlockXp(i)} XP` : abilityLabel(a)}
                       </p>
                       <p className="font-display mt-0.5 text-sm font-bold">{a.name}</p>

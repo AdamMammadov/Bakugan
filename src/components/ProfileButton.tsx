@@ -5,15 +5,15 @@ import { useActiveProfile } from '../profile/useProfiles'
 import { useGame, type PageScreen } from '../store/useGame'
 import { Avatar } from './Avatar'
 
-const ITEMS: [PageScreen | 'admin', string][] = [
+const ITEMS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
   ['pass', 'SEASON PASS'],
+  ['shop', 'SHOP'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
   ['showroom', 'BAKUGAN SHOWROOM'],
   ['characters', 'CHARACTERS'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
-  ['admin', 'ADMIN PANEL'],
 ]
 
 /** One compact corner button: the player's chip, opening a menu of the player pages. */
@@ -21,7 +21,6 @@ export function ProfileButton() {
   const profile = useActiveProfile()
   const openPage = useGame((s) => s.openPage)
   const editProfile = useGame((s) => s.editProfile)
-  const go = useGame((s) => s.go)
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
 
@@ -58,8 +57,7 @@ export function ProfileButton() {
                 label={label}
                 onClick={() => {
                   setOpen(false)
-                  if (id === 'admin') go('admin')
-                  else openPage(id)
+                  openPage(id)
                 }}
               />
             ))}

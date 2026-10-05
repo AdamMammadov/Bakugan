@@ -16,12 +16,19 @@ export function Avatar({
   /** Frame id from the Season Pass (see FRAMES). */
   frame?: string
 }) {
-  const ring = frame ? FRAMES[frame]?.ring : undefined
+  const ring = frame ? FRAMES[frame] : undefined
   if (ring) {
     const pad = Math.max(3, Math.round(size / 18))
     return (
-      <div className="shrink-0 rounded-full" style={{ padding: pad, background: ring, boxShadow: `0 0 ${size / 4}px ${color}88` }}>
-        <Avatar avatar={avatar} color={color} size={size - pad * 2} />
+      <div className="relative shrink-0 rounded-full" style={{ padding: pad, boxShadow: `0 0 ${size / 4}px ${color}88` }}>
+        {/* Legendary frames turn slowly */}
+        <div
+          className={`absolute inset-0 rounded-full ${ring.rarity === 'legendary' ? 'frame-spin' : ''}`}
+          style={{ background: ring.ring }}
+        />
+        <div className="relative">
+          <Avatar avatar={avatar} color={color} size={size - pad * 2} />
+        </div>
       </div>
     )
   }
@@ -33,7 +40,11 @@ export function Avatar({
   const parts = avatar.kind === 'custom' ? avatar.parts : (character?.parts ?? DEFAULT_PARTS)
   return (
     <div className="shrink-0 overflow-hidden rounded-full border-2" style={style}>
-      {character?.image ? <CharacterPortrait src={character.image} color={color} /> : <AvatarDrawing parts={parts} color={color} />}
+      {character?.image ? (
+        <CharacterPortrait src={character.image} color={color} />
+      ) : (
+        <AvatarDrawing parts={parts} color={color} />
+      )}
     </div>
   )
 }
@@ -95,7 +106,13 @@ export function AvatarDrawing({ parts, color }: { parts: AvatarParts; color: str
         return (
           <g key={x}>
             {eyes === 'happy' ? (
-              <path d={`M${x - 7} 102 Q${x} 92 ${x + 7} 102`} stroke="#2a1a14" strokeWidth="3" fill="none" strokeLinecap="round" />
+              <path
+                d={`M${x - 7} 102 Q${x} 92 ${x + 7} 102`}
+                stroke="#2a1a14"
+                strokeWidth="3"
+                fill="none"
+                strokeLinecap="round"
+              />
             ) : (
               <>
                 {eyes === 'sharp' ? (
@@ -139,7 +156,10 @@ export function AvatarDrawing({ parts, color }: { parts: AvatarParts; color: str
         <path d="M60 100 Q58 46 100 46 Q142 46 140 100 L132 82 L120 88 L112 78 L100 88 L88 78 L80 88 L68 82 Z" fill={hairColor} />
       )}
       {(hair === 'short' || hair === 'ponytail' || hair === 'twintails') && (
-        <path d="M62 94 Q58 48 100 48 Q142 48 138 94 Q132 70 116 68 L108 80 L102 68 Q84 66 74 76 Q66 82 62 94 Z" fill={hairColor} />
+        <path
+          d="M62 94 Q58 48 100 48 Q142 48 138 94 Q132 70 116 68 L108 80 L102 68 Q84 66 74 76 Q66 82 62 94 Z"
+          fill={hairColor}
+        />
       )}
       {hair === 'ponytail' && <path d="M74 74 Q70 96 76 112 Q66 100 66 84 Z" fill={hairColor} />}
       {hair === 'twintails' && (
@@ -168,7 +188,12 @@ export function AvatarDrawing({ parts, color }: { parts: AvatarParts; color: str
       )}
       {accessory === 'mask' && (
         <g>
-          <path d="M60 92 Q100 78 140 92 L136 108 Q118 112 104 104 L100 108 L96 104 Q82 112 64 108 Z" fill="#eef0f6" stroke="#9aa3b5" strokeWidth="1.5" />
+          <path
+            d="M60 92 Q100 78 140 92 L136 108 Q118 112 104 104 L100 108 L96 104 Q82 112 64 108 Z"
+            fill="#eef0f6"
+            stroke="#9aa3b5"
+            strokeWidth="1.5"
+          />
           <path d="M72 96 Q84 92 94 99 Q84 104 72 100 Z" fill="#1e3a8a" />
           <path d="M128 96 Q116 92 106 99 Q116 104 128 100 Z" fill="#1e3a8a" />
         </g>

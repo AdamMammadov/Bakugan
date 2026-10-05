@@ -3,6 +3,7 @@ import { useGame, type PageScreen } from '../store/useGame'
 const TABS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
   ['pass', 'SEASON PASS'],
+  ['shop', 'SHOP'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
@@ -15,7 +16,17 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   const back = useGame((s) => s.back)
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
-  const target = ['profile', 'pass', 'rankings', 'clans', 'encyclopedia', 'showroom', 'characters', 'profileEdit'].includes(back)
+  const target = [
+    'profile',
+    'pass',
+    'shop',
+    'rankings',
+    'clans',
+    'encyclopedia',
+    'showroom',
+    'characters',
+    'profileEdit',
+  ].includes(back)
     ? 'hub'
     : back
   return (
