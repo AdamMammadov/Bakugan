@@ -58,6 +58,8 @@ export const CHARACTERS: Character[] = [
     name: 'Runo Misaki',
     element: 'haos',
     bakugan: 'Tigrerra',
+    image: 'characters/runo.webp',
+    model: 'models/brawlers/runo.glb',
     parts: { skin: '#ffe0c7', hair: 'twintails', hairColor: '#3fb8b0', eyes: 'bright', eyeColor: '#c89a20', outfit: '#f2c230', accessory: 'none' },
   },
   {
@@ -74,6 +76,8 @@ export const CHARACTERS: Character[] = [
     name: 'Shun Kazami',
     element: 'ventus',
     bakugan: 'Skyress',
+    image: 'characters/shun.webp',
+    model: 'models/brawlers/shun.glb',
     parts: { skin: '#f6cfae', hair: 'ponytail', hairColor: '#1a1a22', eyes: 'sharp', eyeColor: '#2c8a4a', outfit: '#2c8a4a', accessory: 'none' },
   },
   {

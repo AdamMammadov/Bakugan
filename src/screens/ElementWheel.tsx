@@ -218,7 +218,7 @@ function InfoPanel({ element }: { element: ElementInfo }) {
               {roster.map((b) => (
                 <span key={b.id} className="text-white/85">
                   <span className="font-semibold">{b.name}</span>
-                  <span className="text-white/45"> · {b.baseG}G · {b.evolutions.length} forms</span>
+                  <span className="text-white/45"> · {b.baseG}G · {b.evolutions.length} {b.evolutions.length === 1 ? 'form' : 'forms'}</span>
                 </span>
               ))}
             </InfoRow>

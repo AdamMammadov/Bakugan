@@ -1,4 +1,5 @@
 import { BAKUGAN, type Entrant } from './bakugan'
+import { ROSTER } from './roster'
 import type { ElementId } from './elements'
 
 /**
@@ -31,6 +32,8 @@ export const CHARACTER_GATES: GateCard[] = [
   ['skyress', 'Skyress'],
   ['tigrerra', 'Tigrerra'],
   ['hydranoid', 'Hydranoid'],
+  // launch roster Bakugan that have their own Character Gate Card
+  ...ROSTER.filter((b) => b.characterGate).map((b) => [b.id, b.name]),
 ].map(([bakugan, name]) => ({
   id: `char-${bakugan}`,
   kind: 'character' as const,

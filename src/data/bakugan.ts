@@ -1,4 +1,5 @@
 import type { ElementId } from './elements'
+import { ROSTER } from './roster'
 
 /**
  * How an ability works in battle:
@@ -82,6 +83,8 @@ export interface Bakugan {
     /** Extra rotation (radians) if the monster model does not face +Z. */
     monsterYaw?: number
   }
+  /** Has its own Character Gate Card (doubles its power). */
+  characterGate?: boolean
 }
 
 /**
@@ -239,6 +242,9 @@ export const BAKUGAN: Bakugan[] = [
     ],
   },
 ]
+
+// the launch roster: 6 more Bakugan per attribute (src/data/roster.ts)
+BAKUGAN.push(...ROSTER)
 
 export const bakuganForElement = (element: ElementId) => BAKUGAN.filter((b) => b.element === element)
 
