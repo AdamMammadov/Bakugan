@@ -9,6 +9,7 @@ const ITEMS: [PageScreen | 'admin', string][] = [
   ['profile', 'PROFILE'],
   ['pass', 'SEASON PASS'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
+  ['showroom', 'BAKUGAN SHOWROOM'],
   ['characters', 'CHARACTERS'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],

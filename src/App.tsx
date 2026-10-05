@@ -19,6 +19,7 @@ import { useGame } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
 const Viewer = lazy(() => import('./screens/Viewer').then((m) => ({ default: m.Viewer })))
+const BakuganShowroom = lazy(() => import('./screens/BakuganShowroom').then((m) => ({ default: m.BakuganShowroom })))
 const CharacterShowroom = lazy(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
 const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
 
@@ -46,12 +47,26 @@ export default function App() {
           {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
           {screen === 'admin' && <AdminScreen key="admin" />}
           {screen === 'pass' && <SeasonPassScreen key="pass" />}
+          {screen === 'showroom' && <BakuganShowroom key="showroom" />}
           {screen === 'characters' && <CharacterShowroom key="characters" />}
         </AnimatePresence>
       </Suspense>
       {screen !== 'intro' && <MuteButton />}
       <SeasonNotice />
-      {screen !== 'intro' && !['arena', 'viewer', 'profile', 'profileEdit', 'rankings', 'clans', 'encyclopedia', 'characters', 'pass', 'admin'].includes(screen) && <ProfileButton />}
+      {screen !== 'intro' &&
+        ![
+          'arena',
+          'viewer',
+          'profile',
+          'profileEdit',
+          'rankings',
+          'clans',
+          'encyclopedia',
+          'showroom',
+          'characters',
+          'pass',
+          'admin',
+        ].includes(screen) && <ProfileButton />}
     </div>
   )
 }

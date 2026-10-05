@@ -6,6 +6,7 @@ const TABS: [PageScreen, string][] = [
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
+  ['showroom', 'BAKUGAN'],
   ['characters', 'CHARACTERS'],
 ]
 
@@ -14,7 +15,9 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   const back = useGame((s) => s.back)
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
-  const target = ['profile', 'pass', 'rankings', 'clans', 'encyclopedia', 'characters', 'profileEdit'].includes(back) ? 'hub' : back
+  const target = ['profile', 'pass', 'rankings', 'clans', 'encyclopedia', 'showroom', 'characters', 'profileEdit'].includes(back)
+    ? 'hub'
+    : back
   return (
     <div className="flex items-center justify-between gap-6">
       <div className="flex items-center gap-8">
