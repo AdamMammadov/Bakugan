@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ripped models being converted (tools/preview/convert.html)
+tmp-rip

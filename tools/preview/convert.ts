@@ -40,6 +40,47 @@ const root = await load()
 // textures stream in after the model itself
 await new Promise((r) => setTimeout(r, 2500))
 root.updateMatrixWorld(true)
+// front=<texture suffix>:<min y>: triangles of that texture above that height (glasses frames
+// lying on the face) become their own mesh, drawn in front of the eyes
+if (q.get('front')) {
+  const [suffix, minY] = q.get('front')!.split(':')
+  const splits: [THREE.Mesh, THREE.Mesh][] = []
+  root.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh || Array.isArray(m.material)) return
+    const src = (((m.material as THREE.MeshPhongMaterial).map?.image as HTMLImageElement | undefined)?.src ?? '')
+    if (!src.endsWith(suffix)) return
+    const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry
+    const pos = g.attributes.position
+    const keep: number[] = []
+    const lift: number[] = []
+    for (let t = 0; t < pos.count; t += 3) ((pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3 > Number(minY) ? lift : keep).push(t)
+    const pick = (tris: number[]) => {
+      const out = new THREE.BufferGeometry()
+      for (const name of Object.keys(g.attributes)) {
+        const attr = g.attributes[name] as THREE.BufferAttribute
+        const arr = new Float32Array(tris.length * 3 * attr.itemSize)
+        tris.forEach((t, i) => {
+          for (let v = 0; v < 3; v++) for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.array[(t + v) * attr.itemSize + k]
+        })
+        out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
+      }
+      return out
+    }
+    if (!lift.length) return
+    m.geometry = pick(keep)
+    const front = new THREE.Mesh(pick(lift), m.material)
+    front.name = `front-${m.name}`
+    splits.push([m, front])
+  })
+  for (const [m, front] of splits) m.parent!.add(front)
+}
+// hide=<mesh,…>: drop meshes (for finding which part is which)
+if (q.get('hide')) {
+  const drop: THREE.Object3D[] = []
+  root.traverse((o) => q.get('hide')!.split(',').includes(o.name) && drop.push(o))
+  drop.forEach((o) => o.removeFromParent())
+}
 // pixel-art textures from the DS: keep them crisp, and make the materials unlit-friendly
 /** Share of see-through pixels in a texture (0 = fully opaque). */
 function alphaShare(tex: THREE.Texture | null) {
@@ -68,6 +109,18 @@ function hasAlpha(tex: THREE.Texture | null) {
   const d = g.getImageData(0, 0, c.width, c.height).data
   for (let i = 3; i < d.length; i += 4) if (d[i] < 128) return true
   return false
+}
+// the toon-outline shell: a big mesh wrapping the whole model, head to toe
+const shells = new Set<THREE.Mesh>()
+{
+  const all = new THREE.Box3().setFromObject(root)
+  const height = all.max.y - all.min.y
+  root.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh) return
+    const b = new THREE.Box3().setFromObject(m)
+    if (b.max.y - b.min.y > 0.97 * height && m.geometry.attributes.position.count > 1200) shells.add(m)
+  })
 }
 root.traverse((o) => {
   const m = o as THREE.Mesh
@@ -110,6 +163,88 @@ root.traverse((o) => {
       span = hi - lo
     }
     const facePart = span > 0 && span < 0.3 && m.geometry.attributes.position.count < 400
+    // the eyeball (white, iris, highlight) sits behind the eye sheet and shows through its hole;
+    // it is drawn in front of the skin but behind the sheet
+    const texName = ((map?.image as HTMLImageElement | undefined)?.src ?? '').split('/').pop() ?? ''
+    const eyeball = !!map && texName.endsWith(q.get('eyeball') ?? '_texture1.png') && m.geometry.attributes.position.count < 600
+    // the toon outline: a slightly larger shell of the whole body sampling one dark spot of a
+    // texture; only its far side may be drawn, or it paints over the model
+    const outline = q.get('outline') !== '0' && shells.has(m)
+    if (outline) {
+      if (!m.name.startsWith('outline')) m.name = `outline-${m.name}`
+      // which way the shell's triangles wind (its signed volume) decides which side is "back"
+      const g = m.geometry
+      const pos = g.attributes.position
+      const idx = g.index
+      const tri = (i: number) => (idx ? idx.getX(i) : i)
+      const va = new THREE.Vector3()
+      const vb = new THREE.Vector3()
+      const vc = new THREE.Vector3()
+      let volume = 0
+      const n = idx ? idx.count : pos.count
+      for (let i = 0; i < n; i += 3) {
+        va.fromBufferAttribute(pos, tri(i))
+        vb.fromBufferAttribute(pos, tri(i + 1))
+        vc.fromBufferAttribute(pos, tri(i + 2))
+        volume += va.dot(vb.clone().cross(vc)) / 6
+      }
+      const outward = volume >= 0 ? 1 : -1
+      // push the shell a little outwards so it never lies on the body itself
+      if (!g.attributes.normal) g.computeVertexNormals()
+      const nrm = g.attributes.normal
+      const inflate = Number(q.get('inflate') ?? 0.4) * outward
+      for (let i = 0; i < pos.count; i++)
+        pos.setXYZ(i, pos.getX(i) + nrm.getX(i) * inflate, pos.getY(i) + nrm.getY(i) * inflate, pos.getZ(i) + nrm.getZ(i) * inflate)
+      pos.needsUpdate = true
+      if (q.get('outline') === 'drop') m.visible = false
+      // glTF only knows front or both sides, so turn the triangles round instead of drawing back faces
+      if (outward > 0) {
+        if (idx) {
+          for (let i = 0; i < idx.count; i += 3) {
+            const t = idx.getX(i + 1)
+            idx.setX(i + 1, idx.getX(i + 2))
+            idx.setX(i + 2, t)
+          }
+          idx.needsUpdate = true
+        } else {
+          for (const attr of Object.values(g.attributes) as THREE.BufferAttribute[]) {
+            for (let i = 0; i < attr.count; i += 3)
+              for (let k = 0; k < attr.itemSize; k++) {
+                const t = attr.array[(i + 1) * attr.itemSize + k]
+                attr.array[(i + 1) * attr.itemSize + k] = attr.array[(i + 2) * attr.itemSize + k]
+                attr.array[(i + 2) * attr.itemSize + k] = t
+              }
+            attr.needsUpdate = true
+          }
+        }
+      }
+      return new THREE.MeshBasicMaterial({ color: new THREE.Color('#' + (q.get('outlineColor') ?? '16110c')), side: THREE.FrontSide })
+    }
+    if (m.name.startsWith('front-')) {
+      const frontOffset = Number(q.get('frontOffset') ?? -800)
+      return new THREE.MeshBasicMaterial({
+        map,
+        color: new THREE.Color(Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1)),
+        transparent: hasAlpha(map),
+        alphaTest: 0.3,
+        polygonOffset: true,
+        polygonOffsetFactor: frontOffset / 10,
+        polygonOffsetUnits: frontOffset,
+        side: THREE.DoubleSide,
+      })
+    }
+    if (eyeball) {
+      if (!m.name.startsWith('eyeball')) m.name = `eyeball-${m.name}`
+      const ballOffset = Number(q.get('ballOffset') ?? -200)
+      return new THREE.MeshBasicMaterial({
+        map,
+        color: new THREE.Color('#' + (q.get('faceTint') ?? 'ffffff')),
+        polygonOffset: true,
+        polygonOffsetFactor: ballOffset / 10,
+        polygonOffsetUnits: ballOffset,
+        side: THREE.DoubleSide,
+      })
+    }
     // glTF has no polygon offset: tag face parts so the game can re-apply it
     if (facePart && !m.name.startsWith('face')) m.name = `face-${m.name}`
     // the game tints the see-through iris of the eye atlas; paint it in so the eyes have colour

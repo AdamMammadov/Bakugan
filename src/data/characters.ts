@@ -56,6 +56,22 @@ export const CHARACTER_INFO: Record<string, CharacterInfo> = {
     weaknesses: ['Shy and reluctant to fight', 'Burdened by a hidden secret'],
     style: 'Careful: patient Darkus plays that turn the opponent’s power against them.',
   },
+  klaus: {
+    role: 'Aquos brawler · ranked among the world’s best',
+    story:
+      'A refined, wealthy German brawler who was once second in the world rankings, until Dan beat him. He treasures his partner Sirenoid like family. Brainwashed by Masquerade, he turned on the Battle Brawlers, then broke free after losing and helps them whenever he is needed.',
+    strengths: ['Elegant, precise strategy', 'Deep bond with Sirenoid', 'Experience from the top of the rankings'],
+    weaknesses: ['Proud and a little vain', 'Was easily turned by Masquerade'],
+    style: 'Graceful: Aquos tricks that wear the opponent down.',
+  },
+  shuji: {
+    role: 'Big-talking brawler from Dan’s neighbourhood',
+    story:
+      'A loud, stubborn brawler who keeps losing and keeps switching attributes, blaming the ones he lost with as “defective”. He started out with Subterra Bakugan and never settles on one for long.',
+    strengths: ['Never short of confidence', 'Tries every attribute', 'Hits hard when he gets going'],
+    weaknesses: ['No real plan', 'Blames his Bakugan instead of learning', 'Gives up on an attribute too soon'],
+    style: 'Brute force: all-out attacks and little defence.',
+  },
   masquerade: {
     role: 'The masked Darkus brawler',
     story:

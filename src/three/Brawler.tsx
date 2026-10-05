@@ -183,11 +183,15 @@ function ModelBody({
       o.castShadow = true
       // eyes and mouths of the Wii models sit just behind the face skin; draw them in front
       const m = o as THREE.Mesh
-      if (m.isMesh && o.name.startsWith('face')) {
+      // the eyeballs go between the skin and the eye sheet, which has a see-through hole for them
+      // and glasses frames lying on the face go in front of the eyes
+      const eyeball = o.name.startsWith('eyeball')
+      const front = o.name.startsWith('front')
+      if (m.isMesh && (o.name.startsWith('face') || eyeball || front)) {
         const mat = (m.material as THREE.Material).clone()
         mat.polygonOffset = true
-        mat.polygonOffsetFactor = -40
-        mat.polygonOffsetUnits = -400
+        mat.polygonOffsetFactor = eyeball ? -20 : front ? -80 : -40
+        mat.polygonOffsetUnits = eyeball ? -200 : front ? -800 : -400
         m.material = mat
       }
     })
