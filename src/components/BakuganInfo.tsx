@@ -4,7 +4,18 @@ import { abilityLabel, battleEffect, type Bakugan } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 
 /** Full profile of a Bakugan: lore, evolutions and every ability card. */
-export function BakuganInfo({ bakugan, onClose, onInspect }: { bakugan: Bakugan; onClose: () => void; onInspect: () => void }) {
+export function BakuganInfo({
+  bakugan,
+  onClose,
+  onInspect,
+  locked,
+}: {
+  bakugan: Bakugan
+  onClose: () => void
+  onInspect: () => void
+  /** Shown instead of the 3D button when the player does not own this Bakugan yet. */
+  locked?: string
+}) {
   const element = ELEMENT_BY_ID[bakugan.element]
 
   useEffect(() => {
@@ -15,7 +26,7 @@ export function BakuganInfo({ bakugan, onClose, onInspect }: { bakugan: Bakugan;
 
   return (
     <motion.div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-8 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-8 backdrop-blur-sm"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -89,17 +100,20 @@ export function BakuganInfo({ bakugan, onClose, onInspect }: { bakugan: Bakugan;
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xs text-white/35">Card texts: BakuProject card database.</p>
         </div>
 
         <footer className="flex justify-end gap-3 border-t border-white/10 p-5">
-          <button
-            onClick={onInspect}
-            className="font-display border-2 px-6 py-2 text-sm tracking-[0.3em] transition hover:bg-white/10"
-            style={{ borderColor: element.color }}
-          >
-            INSPECT IN 3D →
-          </button>
+          {locked ? (
+            <p className="text-sm text-white/60">🔒 {locked}</p>
+          ) : (
+            <button
+              onClick={onInspect}
+              className="font-display border-2 px-6 py-2 text-sm tracking-[0.3em] transition hover:bg-white/10"
+              style={{ borderColor: element.color }}
+            >
+              INSPECT IN 3D →
+            </button>
+          )}
         </footer>
       </motion.div>
     </motion.div>

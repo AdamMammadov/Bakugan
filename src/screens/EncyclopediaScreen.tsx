@@ -6,7 +6,7 @@ import { PageNav } from '../components/PageNav'
 import { BAKUGAN, type Bakugan } from '../data/bakugan'
 import { CARD_TYPES, cardBakugan, loadCards, type CardType, type DbCard } from '../data/cardDb'
 import { CORRELATIONS, DIAGONAL, ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
-import { BP, EVOLVE_XP, PRICES, RATING, TIERS, XP } from '../profile/useProfiles'
+import { BP, EVOLVE_XP, ownsBakugan, PRICES, RATING, TIERS, unlockHint, useActiveProfile, XP } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 
 type Tab = 'bakugan' | 'cards' | 'attributes' | 'rules'
@@ -306,6 +306,7 @@ function BakuganTab({ cards, onCards }: { cards: DbCard[]; onCards: (name: strin
   const chooseElement = useGame((s) => s.chooseElement)
   const [element, setElement] = useState<ElementId | null>(null)
   const [info, setInfo] = useState<Bakugan | null>(null)
+  const profile = useActiveProfile()
 
   // every Bakugan that has its own cards, with the attributes its variants come in
   const index = useMemo(() => {
@@ -361,18 +362,23 @@ function BakuganTab({ cards, onCards }: { cards: DbCard[]; onCards: (name: strin
               <p className="mt-3 line-clamp-3 text-sm text-white/70">{b.description}</p>
               <p className="mt-2 text-xs text-white/45">Evolutions: {b.evolutions.map((e) => e.name).join(' → ')}</p>
               <div className="mt-4 flex gap-2">
-                <button onClick={() => setInfo(b)} className="font-display flex-1 border border-white/30 py-1.5 text-xs tracking-widest hover:bg-white/10">
+                <button
+                  onClick={() => setInfo(b)}
+                  className="font-display flex-1 border border-white/30 py-1.5 text-xs tracking-widest hover:bg-white/10"
+                >
                   FULL PROFILE
                 </button>
                 <button
+                  disabled={!ownsBakugan(profile, b.id)}
+                  title={ownsBakugan(profile, b.id) ? undefined : unlockHint(profile, b)}
                   onClick={() => {
                     chooseElement(b.element)
                     openBakugan(b.id)
                   }}
-                  className="font-display flex-1 border py-1.5 text-xs tracking-widest hover:bg-white/10"
+                  className="font-display flex-1 border py-1.5 text-xs tracking-widest hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                   style={{ borderColor: el.color }}
                 >
-                  VIEW IN 3D
+                  {ownsBakugan(profile, b.id) ? 'VIEW IN 3D' : '🔒 LOCKED'}
                 </button>
               </div>
             </div>
@@ -417,6 +423,7 @@ function BakuganTab({ cards, onCards }: { cards: DbCard[]; onCards: (name: strin
               chooseElement(info.element)
               openBakugan(info.id)
             }}
+            locked={ownsBakugan(profile, info.id) ? undefined : unlockHint(profile, info)}
           />
         )}
       </AnimatePresence>
@@ -460,7 +467,10 @@ function AttributesTab({ cards }: { cards: DbCard[] }) {
               </div>
             </div>
             <p className="mt-3 text-sm text-white/50">
-              Bakugan: {BAKUGAN.filter((b) => b.element === e.id).map((b) => b.name).join(', ') || '—'}
+              Bakugan:{' '}
+              {BAKUGAN.filter((b) => b.element === e.id)
+                .map((b) => b.name)
+                .join(', ') || '—'}
             </p>
           </div>
         )

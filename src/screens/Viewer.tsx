@@ -5,7 +5,7 @@ import { playSfx } from '../audio/sfx'
 import { GPowerCounter } from '../components/GPowerCounter'
 import { abilityLabel, abilitySelfBonus, BAKUGAN, type Ability } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
-import { useActiveProfile } from '../profile/useProfiles'
+import { EVOLVE_XP, ownedForm, useActiveProfile } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 import { EFFECT_DURATION } from '../three/AbilityEffect'
 import { savePhoto } from '../photo'
@@ -24,9 +24,19 @@ export function Viewer() {
   useEffect(() => preloadModels(bakugan), [bakugan])
 
   // the player's equipped skin, if they own this Bakugan
-  const skin = useActiveProfile()?.collection.find((o) => o.id === bakugan.id)?.skin
+  const profile = useActiveProfile()
+  const owned = profile?.collection.find((o) => o.id === bakugan.id)
+  const skin = owned?.skin
+  // forms past the one the player has reached stay locked until evolved
+  const reached = Math.max(0, ownedForm(profile, bakugan.id))
   const [phase, setPhase] = useState<Phase>('ball')
-  const [evolution, setEvolution] = useState(0)
+  const [evolution, setEvolution] = useState(reached)
+  const evolveHint = (i: number) => {
+    if (!owned) return profile ? 'Collect this Bakugan first' : 'Create a profile to evolve'
+    if (i > reached + 1) return `Evolve to ${bakugan.evolutions[i - 1].name} first`
+    const need = EVOLVE_XP[reached] ?? EVOLVE_XP[EVOLVE_XP.length - 1]
+    return `${Math.min(owned.xp, need).toLocaleString('en')} / ${need.toLocaleString('en')} Bakugan XP`
+  }
   const [ballOpen, setBallOpen] = useState(false)
   const [used, setUsed] = useState<string[]>([])
   const [activeAbility, setActiveAbility] = useState<{ ability: Ability; key: number } | null>(null)
@@ -134,23 +144,30 @@ export function Viewer() {
       <div className="absolute bottom-28 left-8">
         <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">EVOLUTION</p>
         <ol className="space-y-2 border-l border-white/15 pl-4">
-          {bakugan.evolutions.map((e, i) => (
-            <li key={`${e.name}-${e.series}`}>
-              <button
-                disabled={phase === 'brawling'}
-                onClick={() => {
-                  setEvolution(i)
-                  reset()
-                }}
-                className={`text-left transition ${i === evolution ? 'text-white' : 'text-white/40 hover:text-white/80'}`}
-              >
-                <span className="font-display text-sm font-bold">{e.name}</span>
-                <span className="block text-xs text-white/40">
-                  {e.series} · {e.gPower}G
-                </span>
-              </button>
-            </li>
-          ))}
+          {bakugan.evolutions.map((e, i) => {
+            const locked = i > reached
+            return (
+              <li key={`${e.name}-${e.series}`}>
+                <button
+                  disabled={phase === 'brawling' || locked}
+                  onClick={() => {
+                    setEvolution(i)
+                    reset()
+                  }}
+                  title={locked ? 'Locked: evolve this Bakugan to unlock' : undefined}
+                  className={`text-left transition disabled:cursor-not-allowed ${
+                    i === evolution ? 'text-white' : locked ? 'text-white/30' : 'text-white/40 hover:text-white/80'
+                  }`}
+                >
+                  <span className="font-display text-sm font-bold">
+                    {locked && '🔒 '}
+                    {e.name}
+                  </span>
+                  <span className="block text-xs text-white/40">{locked ? evolveHint(i) : `${e.series} · ${e.gPower}G`}</span>
+                </button>
+              </li>
+            )
+          })}
         </ol>
       </div>
 
@@ -163,9 +180,7 @@ export function Viewer() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
           >
-            <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">
-              ABILITY CARDS ({bakugan.abilities.length})
-            </p>
+            <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">ABILITY CARDS ({bakugan.abilities.length})</p>
             {/* scrolls on its own so the cards never cover the G-Power counter */}
             <div className="scroll-panel flex-1 space-y-3 overflow-y-auto pr-2">
               {bakugan.abilities.map((a) => {
@@ -252,7 +267,11 @@ export function Viewer() {
             >
               {shout.text}
             </p>
-            {shout.sub && <p className="font-display mt-3 text-2xl tracking-widest" style={{ color: element.glow }}>{shout.sub}</p>}
+            {shout.sub && (
+              <p className="font-display mt-3 text-2xl tracking-widest" style={{ color: element.glow }}>
+                {shout.sub}
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -260,7 +279,17 @@ export function Viewer() {
   )
 }
 
-function ActionButton({ label, onClick, color, subtle }: { label: string; onClick: () => void; color: string; subtle?: boolean }) {
+function ActionButton({
+  label,
+  onClick,
+  color,
+  subtle,
+}: {
+  label: string
+  onClick: () => void
+  color: string
+  subtle?: boolean
+}) {
   return (
     <motion.button
       onClick={onClick}

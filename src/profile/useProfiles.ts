@@ -188,7 +188,34 @@ export const inShop = (bakuganId: string) => {
 }
 
 /** The Bakugan a new player of this attribute starts with. */
-export const starterFor = (element: ElementId) => BAKUGAN.find((b) => b.element === element)!.id
+export const starterFor = (element: ElementId) =>
+  // the weakest Bakugan of the attribute: the rest are earned or bought
+  BAKUGAN.filter((b) => b.element === element).reduce((a, b) => (b.baseG < a.baseG ? b : a)).id
+
+/** Guests (no profile) only get each attribute's starter. */
+export const ownsBakugan = (p: Profile | null, id: string) =>
+  p ? p.collection.some((o) => o.id === id) : starterFor(bakuganById(id).element) === id
+
+/** The player's current form of a Bakugan (guests: base form only), or -1 if not owned. */
+export const ownedForm = (p: Profile | null, id: string) =>
+  p ? (p.collection.find((o) => o.id === id)?.form ?? -1) : ownsBakugan(null, id) ? 0 : -1
+
+/** How a player gets a Bakugan they do not own yet. */
+export function unlockHint(p: Profile | null, b: Bakugan): string {
+  if (!p) return 'Create a profile to collect it'
+  const s = seasonOfBakugan(b.id)
+  const now = currentSeason().id
+  if (s && s.season > now) return `Arrives in Season ${s.season}`
+  if (s && s.season === now) {
+    if (s.role === 'pass') return `Season ${s.season} Pass reward`
+    const r = challengeRequirement(b.element === p.element)
+    return `Season ${s.season}: ${r.wins} season wins, pass level ${r.level} and ${r.bp.toLocaleString('en')} BP`
+  }
+  const price = priceOf(p, b)
+  return Number.isFinite(price.xp)
+    ? `Shop: ${price.bp.toLocaleString('en')} BP or ${price.xp.toLocaleString('en')} player XP`
+    : `Shop: ${price.bp.toLocaleString('en')} BP`
+}
 
 /** BP price and total-XP unlock of a Bakugan for this player. */
 export function priceOf(p: Profile, bakugan: Bakugan) {

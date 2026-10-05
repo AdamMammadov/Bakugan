@@ -3,7 +3,6 @@ import { useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { Avatar, AvatarDrawing, CharacterPortrait } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
-import { BAKUGAN } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import {
   ACCESSORIES,
@@ -21,7 +20,7 @@ import {
   type Avatar as AvatarValue,
   type AvatarParts,
 } from '../profile/avatar'
-import { useProfiles } from '../profile/useProfiles'
+import { bakuganById, starterFor, useProfiles } from '../profile/useProfiles'
 import { OUTFITS as PASS_OUTFITS } from '../season/season'
 import { useGame } from '../store/useGame'
 
@@ -78,7 +77,8 @@ export function ProfileEditor() {
     const input = { firstName: firstName.trim(), lastName: lastName.trim(), bio: bio.trim(), element, avatar }
     if (existing) update(existing.id, input)
     else create(input)
-    useGame.setState({ element: useGame.getState().element ?? element })
+    // a new player lands on their own attribute, where their starter is
+    useGame.setState({ element: existing ? (useGame.getState().element ?? element) : element })
     go(back === 'profileEdit' ? 'profile' : back)
   }
 
@@ -230,7 +230,7 @@ export function ProfileEditor() {
           </div>
           {!existing && (
             <p className="mt-2 text-xs text-white/45">
-              You start with one Bakugan: {BAKUGAN.find((b) => b.element === element)?.name}. Win Battle Points to get more
+              You start with one Bakugan: {bakuganById(starterFor(element)).name}. Win Battle Points to get more
               from the shop.
             </p>
           )}
