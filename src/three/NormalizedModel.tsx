@@ -20,6 +20,7 @@ const POSE_CLIPS: Record<Pose['kind'], RegExp> = {
 export function NormalizedModel({
   url,
   height,
+  maxLength = Infinity,
   yaw = 0,
   poseRef,
   openRef,
@@ -29,6 +30,8 @@ export function NormalizedModel({
   /** Skin colours: the model is tinted towards `color` and glows in `glow`. */
   tint?: { color: string; glow: string }
   height: number
+  /** Longest the model may be front to back or side to side; long-tailed monsters shrink to fit. */
+  maxLength?: number
   yaw?: number
   poseRef?: PoseRef
   /** For ball models: while true, pieces move to the open pose stored in their glTF extras. */
@@ -101,9 +104,9 @@ export function NormalizedModel({
     const box = new THREE.Box3().setFromObject(scene)
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())
-    const scale = size.y > 0 ? height / size.y : 1
+    const scale = Math.min(size.y > 0 ? height / size.y : 1, maxLength / Math.max(size.x, size.z, 1e-6))
     return { scale, offset: [-center.x * scale, -box.min.y * scale, -center.z * scale] as const }
-  }, [scene, height])
+  }, [scene, height, maxLength])
 
   const root = useRef<THREE.Group>(null)
   const { actions, names } = useAnimations(gltf.animations, root)

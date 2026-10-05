@@ -1,5 +1,5 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
@@ -10,6 +10,8 @@ import { cardCount, EVOLVE_XP, ownedForm, unlockHint, useActiveProfile } from '.
 import { useGame } from '../store/useGame'
 import { BallModel, MonsterModel, preloadModels } from '../three/BakuganModels'
 import { BlobShadow } from '../three/BlobShadow'
+import { env, type Move, type Pose } from '../three/pose'
+import * as THREE from 'three'
 
 type Shelf = 'mine' | 'all'
 type View = 'monster' | 'ball'
@@ -25,6 +27,8 @@ export function BakuganShowroom() {
   const [sel, setSel] = useState<{ id: string; form: number } | null>(null)
   const [view, setView] = useState<View>('monster')
   const closed = useRef(false)
+  // the move being shown off (played on the model's joints and its whole body)
+  const pose = useRef<Pose | null>(null)
 
   const list = useMemo(
     () =>
@@ -94,7 +98,9 @@ export function BakuganShowroom() {
             <group key={`${bakugan.id}-${form}-${view}`}>
               {view === 'monster' ? (
                 <group scale={0.55}>
-                  <MonsterModel entrant={{ bakugan, form, skin: owned?.skin }} />
+                  <MoveBody pose={pose}>
+                    <MonsterModel entrant={{ bakugan, form, skin: owned?.skin }} poseRef={pose} />
+                  </MoveBody>
                 </group>
               ) : (
                 <group position={[0, 0.6, 0]} scale={1.2}>
@@ -261,6 +267,22 @@ export function BakuganShowroom() {
                     </button>
                   )}
                 </div>
+                {view === 'monster' && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {MOVES.map(([move, label]) => (
+                      <button
+                        key={move}
+                        onClick={() => {
+                          playSfx('tick')
+                          pose.current = { kind: move === 'roar' || move === 'guard' ? 'cast' : 'lunge', move, start: null }
+                        }}
+                        className="font-display rounded border border-white/20 px-2.5 py-1 text-[9px] tracking-[0.25em] text-white/70 hover:bg-white/10 hover:text-white"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {!hasModel && <p className="mt-3 text-xs text-white/40">3D model coming soon. Shown as a stand-in figure.</p>}
               </motion.section>
             </AnimatePresence>
@@ -326,6 +348,66 @@ export function BakuganShowroom() {
       </div>
     </motion.div>
   )
+}
+
+const MOVES: [Move, string][] = [
+  ['bite', 'BITE'],
+  ['breath', 'BLAST'],
+  ['clawSwipe', 'CLAW'],
+  ['tailWhip', 'TAIL SPIN'],
+  ['stomp', 'STOMP'],
+  ['roar', 'ROAR'],
+  ['guard', 'GUARD'],
+]
+
+/** Whole-body motion for a shown-off move: lunges, spins, rearing up, rising for a roar. */
+function MoveBody({ pose, children }: { pose: React.RefObject<Pose | null>; children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null)
+  useFrame(({ clock }) => {
+    const g = ref.current
+    const p = pose.current
+    if (!g) return
+    const now = clock.elapsedTime
+    if (p && p.start === null) p.start = now
+    const t = p?.start != null ? now - p.start : 99
+    let fwd = 0
+    let lift = 0
+    let pitch = 0
+    let yaw = 0
+    switch (p?.move) {
+      case 'bite':
+        fwd = 0.9 * env(t, 0.1, 0.85)
+        pitch = 0.08 * env(t, 0.2, 0.8)
+        break
+      case 'breath':
+        fwd = -0.3 * env(t, 0, 1.5)
+        pitch = -0.1 * env(t, 0, 1.5)
+        break
+      case 'clawSwipe':
+        pitch = -0.35 * env(t, 0, 0.7)
+        fwd = 0.6 * env(t, 0.35, 0.95)
+        yaw = 0.25 * env(t, 0.3, 0.95)
+        break
+      case 'tailWhip':
+        yaw = THREE.MathUtils.smoothstep(t, 0.05, 1.05) * Math.PI * 2 * (t < 1.2 ? 1 : 0)
+        break
+      case 'stomp':
+        pitch = -0.5 * env(t, 0, 0.75)
+        lift = 0.3 * env(t, 0, 0.75)
+        break
+      case 'roar':
+        lift = 0.6 * env(t, 0, 1.5)
+        pitch = -0.2 * env(t, 0, 1.5)
+        break
+      case 'guard':
+        fwd = -0.3 * env(t, 0, 1.4)
+        break
+    }
+    if (t > 2.2 && p) pose.current = null
+    g.position.set(0, lift, fwd)
+    g.rotation.set(pitch, yaw, 0)
+  })
+  return <group ref={ref}>{children}</group>
 }
 
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {

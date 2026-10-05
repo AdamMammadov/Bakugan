@@ -1,0 +1,30 @@
+{
+  "_doc": "Splits a one-piece monster into the pivot nodes the game animates (see src/three/pose.ts). Coordinates are the model's own, forward = +Z. Parts are tried in order; a triangle goes to the first part whose test matches its centre, otherwise to the body. 'bake' turns the part (radians XYZ) around its pivot once, e.g. to bring T-posed arms down.",
+  "hydranoid": [
+    { "name": "tail_tip", "parent": "tail", "pivot": [0, 6, -14], "test": "z < -14" },
+    { "name": "tail", "pivot": [0, 6.5, -4], "test": "z < -4" },
+    { "name": "head", "parent": "neck", "pivot": [0, 9.5, 8.3], "test": "z > 8.3 && y > 8.6" },
+    { "name": "neck", "pivot": [0, 6.8, 5.8], "test": "z > 5.8 && y > 6.4" },
+    { "name": "leg_fl", "pivot": [2.2, 4.2, 4.5], "test": "y < 4.2 && z > 2.5 && x > 0" },
+    { "name": "leg_fr", "pivot": [-2.2, 4.2, 4.5], "test": "y < 4.2 && z > 2.5 && x <= 0" },
+    { "name": "leg_bl", "pivot": [2.2, 3.8, -1], "test": "y < 3.8 && z < 1.5 && z > -4 && x > 0" },
+    { "name": "leg_br", "pivot": [-2.2, 3.8, -1], "test": "y < 3.8 && z < 1.5 && z > -4 && x <= 0" }
+  ],
+  "tigrerra": [
+    { "name": "tail", "pivot": [0, 4.5, -5.3], "test": "z < -5.3" },
+    { "name": "jaw", "parent": "head", "pivot": [0, 4.8, 5.6], "test": "z > 5.6 && y < 4.6 && y > 3.3" },
+    { "name": "head", "pivot": [0, 5.5, 4.3], "test": "z > 4.3 && y > 3.3" },
+    { "name": "leg_fl", "pivot": [1.6, 4, 3.5], "test": "y < 4 && z > 1.8 && x > 0" },
+    { "name": "leg_fr", "pivot": [-1.6, 4, 3.5], "test": "y < 4 && z > 1.8 && x <= 0" },
+    { "name": "leg_bl", "pivot": [1.6, 3.8, -3.3], "test": "y < 3.8 && z < -1.5 && z > -6 && x > 0" },
+    { "name": "leg_br", "pivot": [-1.6, 3.8, -3.3], "test": "y < 3.8 && z < -1.5 && z > -6 && x <= 0" }
+  ],
+  "preyas": [
+    { "name": "head", "pivot": [0, 11, 0], "test": "y > 11.1 && Math.abs(x) < 1.3" },
+    { "name": "leg_fl", "pivot": [1.6, 10.3, 0], "test": "x > 1.6 && y > 8.5", "bake": [0, 0, -1.25] },
+    { "name": "leg_fr", "pivot": [-1.6, 10.3, 0], "test": "x < -1.6 && y > 8.5", "bake": [0, 0, 1.25] },
+    { "name": "tail", "pivot": [0, 7.5, -1], "test": "z < -1.2" },
+    { "name": "leg_bl", "pivot": [0.9, 5.5, 0], "test": "y < 5.5 && x > 0" },
+    { "name": "leg_br", "pivot": [-0.9, 5.5, 0], "test": "y < 5.5 && x <= 0" }
+  ]
+}

@@ -58,6 +58,7 @@ export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?:
         <NormalizedModel
           url={asset(models.monster)}
           height={MONSTER_HEIGHT * size}
+          maxLength={MONSTER_HEIGHT * size * 1.7}
           yaw={models.monsterYaw}
           poseRef={poseRef}
           tint={skin ? { color: skin.color, glow: skin.glow } : undefined}

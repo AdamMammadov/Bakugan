@@ -303,6 +303,90 @@ root.traverse((o) => {
   if ((m.material as unknown as THREE.Material[]).length === 1) m.material = (m.material as unknown as THREE.Material[])[0]
 })
 
+// rig=<name>: cut a one-piece monster into the named pivot nodes the game animates (rigs.json)
+if (q.get('rig')) {
+  type Part = { name: string; parent?: string; pivot: [number, number, number]; test: string; bake?: [number, number, number] }
+  const parts: Part[] = (await (await fetch('/tools/preview/rigs.json')).json())[q.get('rig')!]
+  const tests = parts.map((p) => new Function('x', 'y', 'z', `return ${p.test}`) as (x: number, y: number, z: number) => boolean)
+  // triangles per part (index -1 = body), per material
+  const buckets = new Map<number, { geo: THREE.BufferGeometry; tris: number[]; mat: THREE.Material }[]>()
+  const meshes: THREE.Mesh[] = []
+  root.traverse((o) => (o as THREE.Mesh).isMesh && meshes.push(o as THREE.Mesh))
+  for (const m of meshes) {
+    m.updateMatrixWorld(true)
+    const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrixWorld)
+    const mats = Array.isArray(m.material) ? m.material : [m.material]
+    const groups = g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }]
+    const pos = g.attributes.position
+    for (const grp of groups) {
+      const per = new Map<number, number[]>()
+      for (let t = grp.start; t < grp.start + grp.count; t += 3) {
+        const x = (pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3
+        const y = (pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3
+        const z = (pos.getZ(t) + pos.getZ(t + 1) + pos.getZ(t + 2)) / 3
+        const k = tests.findIndex((f) => f(x, y, z))
+        if (!per.has(k)) per.set(k, [])
+        per.get(k)!.push(t)
+      }
+      for (const [k, tris] of per) {
+        if (!buckets.has(k)) buckets.set(k, [])
+        buckets.get(k)!.push({ geo: g, tris, mat: mats[grp.materialIndex ?? 0] })
+      }
+    }
+    m.removeFromParent()
+  }
+  const take = (g: THREE.BufferGeometry, tris: number[]) => {
+    const out = new THREE.BufferGeometry()
+    for (const name of Object.keys(g.attributes)) {
+      const attr = g.attributes[name] as THREE.BufferAttribute
+      const arr = new Float32Array(tris.length * 3 * attr.itemSize)
+      tris.forEach((t, i) => {
+        for (let v = 0; v < 3; v++) for (let c = 0; c < attr.itemSize; c++) arr[(i * 3 + v) * attr.itemSize + c] = attr.array[(t + v) * attr.itemSize + c]
+      })
+      out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
+    }
+    return out
+  }
+  const nodes = new Map<string, THREE.Group>()
+  for (const part of parts) {
+    const n = new THREE.Group()
+    n.name = part.name
+    nodes.set(part.name, n)
+  }
+  const body = new THREE.Group()
+  body.name = 'body'
+  root.add(body)
+  for (const [k, list] of [...buckets].sort((a, b) => a[0] - b[0])) {
+    const part = parts[k]
+    for (const { geo, tris, mat } of list) {
+      const piece = take(geo, tris)
+      if (!part) {
+        body.add(new THREE.Mesh(piece, mat))
+        continue
+      }
+      const pivot = new THREE.Vector3(...part.pivot)
+      piece.translate(-pivot.x, -pivot.y, -pivot.z)
+      if (part.bake) {
+        piece.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...part.bake)))
+        piece.computeVertexNormals()
+      }
+      const mesh = new THREE.Mesh(piece, mat)
+      mesh.name = `${part.name}-mesh`
+      nodes.get(part.name)!.add(mesh)
+    }
+  }
+  // place each node at its pivot, relative to its parent's pivot
+  for (const part of parts) {
+    const n = nodes.get(part.name)
+    if (!n) continue
+    const parent = part.parent ? nodes.get(part.parent) : undefined
+    const base = part.parent ? new THREE.Vector3(...parts.find((p) => p.name === part.parent)!.pivot) : new THREE.Vector3()
+    n.position.set(part.pivot[0] - base.x, part.pivot[1] - base.y, part.pivot[2] - base.z)
+    ;(parent ?? root).add(n)
+  }
+  ;(window as any).rigParts = [...nodes.keys()]
+}
+
 // stand on the floor, centred, 1.75 units tall (a person in metres)
 const box = new THREE.Box3().setFromObject(root)
 const size = box.getSize(new THREE.Vector3())
