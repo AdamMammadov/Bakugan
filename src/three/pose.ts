@@ -74,6 +74,8 @@ export interface RigPose {
   frontR: number
   hindL: number
   hindR: number
+  /** Wing beat: positive raises both wings. */
+  wing: number
 }
 
 /** Idle breathing + the active move, layered. `t` is seconds since the move started. */
@@ -89,6 +91,7 @@ export function rigPose(move: Move | null, t: number, now: number): RigPose {
     frontR: 0,
     hindL: 0,
     hindR: 0,
+    wing: Math.sin(now * 3.2) * 0.35,
   }
   switch (move) {
     case 'bite':
@@ -96,11 +99,14 @@ export function rigPose(move: Move | null, t: number, now: number): RigPose {
       p.head += 0.35 * env(t, 0.45, 0.85) - 0.25 * env(t, 0.05, 0.5)
       p.jaw += 0.75 * env(t, 0.05, 0.62) - 0.15 * env(t, 0.62, 0.9)
       p.tailLift += 0.15 * env(t, 0.1, 0.8)
+      p.wing -= 0.5 * env(t, 0.1, 0.8)
       break
     case 'breath':
       p.neck += 0.3 * env(t, 0, 1.4) - 0.25 * env(t, 0, 0.35)
       p.head += 0.25 * env(t, 0.2, 1.4) - 0.3 * env(t, 0, 0.35)
       p.jaw += 0.85 * env(t, 0.1, 1.5)
+      // a big wing beat drives the blast
+      p.wing += 0.7 * env(t, 0, 0.5) - 0.6 * env(t, 0.5, 1.1)
       break
     case 'clawSwipe':
       p.frontR -= 1.5 * env(t, 0.1, 0.85)
@@ -125,6 +131,7 @@ export function rigPose(move: Move | null, t: number, now: number): RigPose {
       p.head -= 0.55 * env(t, 0.1, 1.4)
       p.jaw += 0.95 * env(t, 0.1, 1.4) + Math.sin(t * 45) * 0.04 * env(t, 0.2, 1.3)
       p.tailLift += 0.3 * env(t, 0, 1.5)
+      p.wing += Math.sin(t * 14) * 0.6 * env(t, 0, 1.5)
       break
     case 'guard':
       p.neck += 0.35 * env(t, 0, 1.4)
@@ -132,6 +139,8 @@ export function rigPose(move: Move | null, t: number, now: number): RigPose {
       p.tailYaw += 0.7 * env(t, 0, 1.4)
       p.frontL += 0.25 * env(t, 0, 1.4)
       p.frontR += 0.25 * env(t, 0, 1.4)
+      // wings wrap round the body
+      p.wing -= 1.0 * env(t, 0, 1.4)
       break
     case 'hit': {
       // the blow lands at ~0.75 s into the attacker's move
@@ -142,6 +151,7 @@ export function rigPose(move: Move | null, t: number, now: number): RigPose {
       p.tailYaw += 0.4 * h
       p.frontL += 0.2 * h
       p.frontR -= 0.2 * h
+      p.wing += 0.5 * h
       break
     }
   }

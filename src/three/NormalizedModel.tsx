@@ -75,7 +75,8 @@ export function NormalizedModel({
     const nodes: { node: THREE.Object3D; pos: THREE.Vector3; rot: THREE.Euler; u: Record<string, unknown> }[] = []
     scene.traverse((o) => {
       const u = o.userData
-      if (u.openPos || u.openRot || u.openOnly || u.closedOnly) nodes.push({ node: o, pos: o.position.clone(), rot: o.rotation.clone(), u })
+      if (u.openPos || u.openRot || u.openOnly || u.closedOnly)
+        nodes.push({ node: o, pos: o.position.clone(), rot: o.rotation.clone(), u })
     })
     return nodes
   }, [scene])
@@ -131,8 +132,10 @@ export function NormalizedModel({
       fr: get('leg_fr'),
       bl: get('leg_bl'),
       br: get('leg_br'),
+      wl: get('wing_l'),
+      wr: get('wing_r'),
     }
-    return nodes.neck || nodes.tail ? nodes : null
+    return nodes.neck || nodes.tail || nodes.head || nodes.wl ? nodes : null
   }, [scene])
 
   useFrame(({ clock }) => {
@@ -150,6 +153,9 @@ export function NormalizedModel({
     rig.fr?.rotation.set(p.frontR, 0, 0)
     rig.bl?.rotation.set(p.hindL, 0, 0)
     rig.br?.rotation.set(p.hindR, 0, 0)
+    // wings beat about the body's long axis; the right one mirrors the left
+    rig.wl?.rotation.set(0, 0, p.wing)
+    rig.wr?.rotation.set(0, 0, -p.wing)
   })
 
   const lastPose = useRef<Pose | null>(null)

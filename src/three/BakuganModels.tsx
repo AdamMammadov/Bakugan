@@ -1,5 +1,7 @@
 import { Sparkles, useGLTF } from '@react-three/drei'
-import { Suspense, type ComponentType, type RefObject } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { Suspense, useRef, type ComponentType, type RefObject } from 'react'
+import * as THREE from 'three'
 import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { asset } from '../asset'
@@ -53,20 +55,30 @@ export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?:
       </>
     )
   return (
-    <>
+    <Hover on={!!models.fly}>
       <Suspense fallback={placeholder}>
         <NormalizedModel
           url={asset(models.monster)}
           height={MONSTER_HEIGHT * size}
-          maxLength={MONSTER_HEIGHT * size * 1.7}
+          // wide wings must not reach across the field
+          maxLength={MONSTER_HEIGHT * size * (models.fly ? 1.25 : 1.7)}
           yaw={models.monsterYaw}
           poseRef={poseRef}
           tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
         />
       </Suspense>
       {sparkles}
-    </>
+    </Hover>
   )
+}
+
+/** Winged Bakugan hover above the ground, rising and sinking gently. */
+function Hover({ on, children }: { on: boolean; children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null)
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.position.y = on ? MONSTER_HEIGHT * (0.25 + Math.sin(clock.elapsedTime * 1.6) * 0.05) : 0
+  })
+  return <group ref={ref}>{children}</group>
 }
 
 /** The ball form. The procedural ball can open (`openRef`); a .glb ball is shown as-is. */

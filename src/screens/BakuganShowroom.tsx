@@ -21,7 +21,8 @@ export function BakuganShowroom() {
   const profile = useActiveProfile()
   const openBakugan = useGame((s) => s.openBakugan)
   const chooseElement = useGame((s) => s.chooseElement)
-  const [shelf, setShelf] = useState<Shelf>(profile ? 'mine' : 'all')
+  const [shelf, setShelf] = useState<Shelf>('all')
+  const [search, setSearch] = useState('')
   const [element, setElement] = useState<ElementId | null>(null)
   // the picked Bakugan and form; falls back to the first one on the shelf
   const [sel, setSel] = useState<{ id: string; form: number } | null>(null)
@@ -32,11 +33,18 @@ export function BakuganShowroom() {
 
   const list = useMemo(
     () =>
-      BAKUGAN.filter((b) => (!element || b.element === element) && (shelf === 'all' || ownedForm(profile, b.id) >= 0)).sort(
+      BAKUGAN.filter(
+        (b) =>
+          (!element || b.element === element) &&
+          (shelf === 'all' || ownedForm(profile, b.id) >= 0) &&
+          // a search looks through every name, evolutions included
+          (!search.trim() ||
+            [b.name, ...b.evolutions.map((e) => e.name)].some((n) => n.toLowerCase().includes(search.trim().toLowerCase()))),
+      ).sort(
         (a, b) =>
           ELEMENTS.findIndex((e) => e.id === a.element) - ELEMENTS.findIndex((e) => e.id === b.element) || a.baseG - b.baseG,
       ),
-    [shelf, element, profile],
+    [shelf, element, profile, search],
   )
   const index = Math.max(
     0,
@@ -139,6 +147,12 @@ export function BakuganShowroom() {
               {s === 'mine' ? `MY BAKUGAN · ${profile ? profile.collection.length : 0}` : `ALL IN GAME · ${BAKUGAN.length}`}
             </button>
           ))}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search Bakugan…"
+            className="w-48 rounded border border-white/15 bg-black/50 px-3 py-2 text-sm outline-none placeholder:text-white/35 focus:border-white/50"
+          />
           <span className="mx-2 h-6 w-px bg-white/15" />
           <button
             onClick={() => setElement(null)}
