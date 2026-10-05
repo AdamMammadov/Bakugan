@@ -7,6 +7,7 @@ import { Avatar } from './Avatar'
 
 const ITEMS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
+  ['inventory', 'INVENTORY'],
   ['pass', 'SEASON PASS'],
   ['shop', 'SHOP'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
@@ -51,7 +52,7 @@ export function ProfileButton() {
                 }}
               />
             )}
-            {ITEMS.filter(([id]) => profile || id !== 'profile').map(([id, label]) => (
+            {ITEMS.filter(([id]) => profile || (id !== 'profile' && id !== 'inventory')).map(([id, label]) => (
               <MenuItem
                 key={id}
                 label={label}

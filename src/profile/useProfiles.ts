@@ -118,6 +118,8 @@ export interface Profile {
   cosmetics?: { owned: string[]; title?: string; frame?: string }
   /** XP Boosts: the next battles give +50% Bakugan XP. */
   boosts?: number
+  /** The player switched boosts off to save them for later. */
+  boostsOff?: boolean
   /** Card Keys: each unlocks the next ability card of a Bakugan early. */
   cardKeys?: number
   seasonHistory?: { season: number; level: number; tier: string; score: number }[]
@@ -368,6 +370,10 @@ interface ProfilesState {
   /** Buys a BP-priced shop item (cosmetic or pack). Money items wait for the online version. */
   buyShopItem: (key: string) => boolean
   equip: (slot: 'title' | 'frame', value: string | undefined) => void
+  /** Turns the automatic use of XP Boosts on or off. */
+  setBoostsOn: (on: boolean) => void
+  /** Wears an owned outfit colour or accessory on the drawn (custom) avatar. */
+  wearOnAvatar: (part: 'outfit' | 'accessory', value: string) => void
   setSkin: (bakuganId: string, skin: string | undefined) => void
 }
 
@@ -443,7 +449,7 @@ export const useProfiles = create<ProfilesState>()(
           challengesDone: [],
           boosted: false,
         }
-        const boosted = (p.boosts ?? 0) > 0
+        const boosted = (p.boosts ?? 0) > 0 && !p.boostsOff
         const collection = p.collection.map((o) => {
           if (!report.team.includes(o.id)) return o
           const kos = report.kos[o.id] ?? 0
@@ -597,6 +603,13 @@ export const useProfiles = create<ProfilesState>()(
         )
         return true
       },
+      setBoostsOn: (on) => set((s) => patchActive(s, (p) => ({ ...p, boostsOff: !on }))),
+      wearOnAvatar: (part, value) =>
+        set((s) =>
+          patchActive(s, (p) =>
+            p.avatar.kind === 'custom' ? { ...p, avatar: { ...p.avatar, parts: { ...p.avatar.parts, [part]: value } } } : p,
+          ),
+        ),
       equip: (slot, value) =>
         set((s) => patchActive(s, (p) => ({ ...p, cosmetics: { owned: [], ...p.cosmetics, [slot]: value } }))),
       setSkin: (bakuganId, skin) =>

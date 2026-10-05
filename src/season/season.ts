@@ -56,7 +56,7 @@ export const passLevel = (xp: number) => {
 }
 
 /** Pass XP from battles, and the daily cap on it. */
-export const PASS_XP = { win: 250, loss: 100, dailyBattleCap: 2500 }
+export const PASS_XP = { win: 200, loss: 80, dailyBattleCap: 2000 }
 
 // ---------------------------------------------------------------- cosmetics
 
@@ -303,20 +303,20 @@ export interface Challenge {
 }
 
 const DAILY: Challenge[] = [
-  { id: 'd-win3', text: 'Win 3 brawls', stat: 'wins', goal: 3, xp: 500 },
-  { id: 'd-play5', text: 'Play 5 brawls', stat: 'battles', goal: 5, xp: 400 },
-  { id: 'd-ko6', text: 'Defeat 6 Bakugan', stat: 'kos', goal: 6, xp: 450 },
-  { id: 'd-cards10', text: 'Activate 10 ability cards', stat: 'abilities', goal: 10, xp: 400 },
-  { id: 'd-own2', text: 'Win 2 brawls with a Bakugan of your attribute', stat: 'ownWins', goal: 2, xp: 450 },
-  { id: 'd-flawless1', text: 'Win a brawl without losing a Bakugan', stat: 'flawless', goal: 1, xp: 500 },
+  { id: 'd-win3', text: 'Win 3 brawls', stat: 'wins', goal: 3, xp: 350 },
+  { id: 'd-play5', text: 'Play 5 brawls', stat: 'battles', goal: 5, xp: 300 },
+  { id: 'd-ko6', text: 'Defeat 6 Bakugan', stat: 'kos', goal: 6, xp: 300 },
+  { id: 'd-cards10', text: 'Activate 10 ability cards', stat: 'abilities', goal: 10, xp: 300 },
+  { id: 'd-own2', text: 'Win 2 brawls with a Bakugan of your attribute', stat: 'ownWins', goal: 2, xp: 350 },
+  { id: 'd-flawless1', text: 'Win a brawl without losing a Bakugan', stat: 'flawless', goal: 1, xp: 350 },
 ]
 
 const WEEKLY: Challenge[] = [
-  { id: 'w-win20', text: 'Win 20 brawls', stat: 'wins', goal: 20, xp: 3000 },
-  { id: 'w-ko40', text: 'Defeat 40 Bakugan', stat: 'kos', goal: 40, xp: 2500 },
-  { id: 'w-cards60', text: 'Activate 60 ability cards', stat: 'abilities', goal: 60, xp: 2500 },
-  { id: 'w-play30', text: 'Play 30 brawls', stat: 'battles', goal: 30, xp: 2000 },
-  { id: 'w-flawless8', text: 'Win 8 brawls without losing a Bakugan', stat: 'flawless', goal: 8, xp: 3000 },
+  { id: 'w-win20', text: 'Win 20 brawls', stat: 'wins', goal: 20, xp: 2000 },
+  { id: 'w-ko40', text: 'Defeat 40 Bakugan', stat: 'kos', goal: 40, xp: 1800 },
+  { id: 'w-cards60', text: 'Activate 60 ability cards', stat: 'abilities', goal: 60, xp: 1800 },
+  { id: 'w-play30', text: 'Play 30 brawls', stat: 'battles', goal: 30, xp: 1500 },
+  { id: 'w-flawless8', text: 'Win 8 brawls without losing a Bakugan', stat: 'flawless', goal: 8, xp: 2000 },
 ]
 
 export const dayKey = (now = Date.now()) => new Date(now).toISOString().slice(0, 10)

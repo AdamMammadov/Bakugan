@@ -25,7 +25,7 @@ import {
   type OwnedBakugan,
   type Profile,
 } from '../profile/useProfiles'
-import { ACCESSORIES, FRAMES, OUTFITS, SKIN_BY_ID, SKINS } from '../season/season'
+import { SKINS } from '../season/season'
 import { useGame } from '../store/useGame'
 
 export function ProfileScreen() {
@@ -407,72 +407,23 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
   )
 }
 
-/** Everything earned in the Season Pass: titles, frames, skins, sets, boosts and keys. */
+/** Short summary of what the player owns, opening the inventory. */
 function Locker({ profile }: { profile: Profile }) {
-  const equip = useProfiles((s) => s.equip)
+  const openPage = useGame((s) => s.openPage)
   const owned = profile.cosmetics?.owned ?? []
-  const titles = owned.filter((k) => k.startsWith('title:')).map((k) => k.slice(6))
-  const frames = owned.filter((k) => k.startsWith('frame:')).map((k) => k.slice(6))
-  const other = owned.filter((k) => /^(skin|outfit|acc):/.test(k))
-  const color = ELEMENT_BY_ID[profile.element].color
-  const label = (k: string) => {
-    const [kind, id] = k.split(':')
-    return kind === 'skin'
-      ? `${SKIN_BY_ID[id]?.name} Bakugan skin`
-      : kind === 'outfit'
-        ? `${OUTFITS[id]?.name} (avatar builder)`
-        : `${ACCESSORIES[id]?.name} (avatar builder)`
-  }
+  const count = (prefix: string) => owned.filter((k) => k.startsWith(prefix)).length
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">LOCKER</h2>
-      <p className="mt-1 text-sm text-white/45">
-        Rewards from the Season Pass. XP Boosts: {profile.boosts ?? 0} (each gives +50% Bakugan XP for one battle) · Card Keys:{' '}
-        {profile.cardKeys ?? 0} (use them on a Bakugan above)
+    <section className="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/30 px-6 py-4">
+      <p className="text-sm text-white/60">
+        Inventory: {count('skin:')} skins · {count('frame:')} frames · {count('outfit:') + count('acc:')} outfits & accessories ·{' '}
+        {profile.boosts ?? 0} XP Boosts · {profile.cardKeys ?? 0} Card Keys
       </p>
-      {owned.length === 0 && (
-        <p className="mt-3 text-sm text-white/40">Nothing yet — climb the Season Pass to fill your locker.</p>
-      )}
-      {titles.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="font-display w-20 text-[10px] tracking-[0.3em] text-white/40">TITLE</span>
-          {[undefined, ...titles].map((t) => (
-            <button
-              key={t ?? 'none'}
-              onClick={() => equip('title', t)}
-              className="rounded-full border px-3 py-1 text-xs"
-              style={{ borderColor: profile.cosmetics?.title === t ? '#fde68a' : 'rgba(255,255,255,0.15)' }}
-            >
-              {t ?? 'None'}
-            </button>
-          ))}
-        </div>
-      )}
-      {frames.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <span className="font-display w-20 text-[10px] tracking-[0.3em] text-white/40">FRAME</span>
-          {[undefined, ...frames].map((f) => (
-            <button
-              key={f ?? 'none'}
-              onClick={() => equip('frame', f)}
-              title={f ? FRAMES[f]?.name : 'No frame'}
-              className={`rounded-full transition ${profile.cosmetics?.frame === f ? 'scale-110' : 'opacity-60 hover:opacity-100'}`}
-            >
-              <Avatar avatar={profile.avatar} color={color} size={44} frame={f} />
-            </button>
-          ))}
-        </div>
-      )}
-      {other.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="font-display w-20 text-[10px] tracking-[0.3em] text-white/40">ITEMS</span>
-          {other.map((k) => (
-            <span key={k} className="rounded border border-white/15 px-2 py-1 text-xs text-white/70">
-              {label(k)}
-            </span>
-          ))}
-        </div>
-      )}
+      <button
+        onClick={() => openPage('inventory')}
+        className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.3em] hover:bg-white/10"
+      >
+        OPEN INVENTORY →
+      </button>
     </section>
   )
 }

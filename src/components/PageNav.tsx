@@ -2,6 +2,7 @@ import { useGame, type PageScreen } from '../store/useGame'
 
 const TABS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
+  ['inventory', 'INVENTORY'],
   ['pass', 'SEASON PASS'],
   ['shop', 'SHOP'],
   ['rankings', 'RANKINGS'],
@@ -18,6 +19,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   const openPage = useGame((s) => s.openPage)
   const target = [
     'profile',
+    'inventory',
     'pass',
     'shop',
     'rankings',
