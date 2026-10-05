@@ -90,3 +90,11 @@ body,
 .legendary-shine {
   animation: legendary-shine 2.4s ease-in-out infinite;
 }
+
+/* sideways-scrolling strips without a visible scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
