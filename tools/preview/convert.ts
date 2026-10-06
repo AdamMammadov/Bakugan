@@ -144,14 +144,14 @@ root.traverse((o) => {
   m.material = mats.map((old) => {
     let map = (old as THREE.MeshPhongMaterial).map ?? null
     // hue=<degrees>: an attribute variant, recoloured in the texture itself (shading and detail
-    // stay, only the colours turn); sat=<factor> tunes the saturation
-    if (map && (q.get('hue') || q.get('sat'))) {
+    // stay, only the colours turn); sat=<factor> tunes the saturation, bright=<factor> the brightness
+    if (map && (q.get('hue') || q.get('sat') || q.get('bright'))) {
       const img = map.image as HTMLImageElement
       const c = document.createElement('canvas')
       c.width = img.width
       c.height = img.height
       const g = c.getContext('2d')!
-      g.filter = `hue-rotate(${q.get('hue') ?? 0}deg) saturate(${q.get('sat') ?? 1})`
+      g.filter = `hue-rotate(${q.get('hue') ?? 0}deg) saturate(${q.get('sat') ?? 1}) brightness(${q.get('bright') ?? 1})`
       g.drawImage(img, 0, 0)
       const t = new THREE.CanvasTexture(c)
       t.flipY = map.flipY
