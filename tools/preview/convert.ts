@@ -5,6 +5,7 @@ import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 const q = new URLSearchParams(location.search)
@@ -12,6 +13,7 @@ const src = q.get('src')!
 const dir = src.slice(0, src.lastIndexOf('/') + 1)
 
 async function load(): Promise<THREE.Object3D> {
+  if (src.endsWith('.glb')) return (await new GLTFLoader().loadAsync('/' + src)).scene
   if (src.endsWith('.dae')) return (await new ColladaLoader().loadAsync('/' + src)).scene
   const mtl = await new MTLLoader().setPath('/' + dir).loadAsync(src.slice(dir.length).replace('.obj', '.mtl'))
   mtl.preload()
@@ -141,6 +143,9 @@ root.traverse((o) => {
   const mats = Array.isArray(m.material) ? m.material : [m.material]
   m.material = mats.map((old) => {
     const map = (old as THREE.MeshPhongMaterial).map ?? null
+    // meshes made from a picture (image-to-3D) carry their colours on the vertices
+    if (!map && m.geometry.attributes.color)
+      return new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, metalness: 0.05, side: THREE.DoubleSide })
     if (map) {
       map.magFilter = THREE.NearestFilter
       // Wii rips address their face atlases with negative UVs
