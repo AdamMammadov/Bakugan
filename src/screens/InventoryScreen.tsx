@@ -176,18 +176,18 @@ function Skins({ profile }: { profile: Profile }) {
       {/* try-on preview */}
       <div className="flex flex-col">
         <div className="relative h-[26rem] overflow-hidden rounded-2xl border border-white/10 bg-black/50">
-          <Canvas camera={{ position: [0, 1.6, 5], fov: 40 }} dpr={[1, 2]}>
+          <Canvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={[1, 2]}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[3, 6, 4]} intensity={2.2} />
             <pointLight position={[-3, 2.5, -2]} intensity={20} color={trying ? SKIN_BY_ID[trying].glow : element.glow} />
             <Suspense fallback={null}>
-              <group key={`${owned.id}-${trying}`} scale={0.55}>
+              <group key={`${owned.id}-${trying}`} scale={0.85}>
                 <MonsterModel entrant={{ bakugan, form: owned.form, skin: trying }} />
               </group>
             </Suspense>
-            <BlobShadow size={2.6} />
+            <BlobShadow size={3.6} />
             <OrbitControls
-              target={[0, 0.9, 0]}
+              target={[0, 1.4, 0]}
               enablePan={false}
               minDistance={2}
               maxDistance={8}

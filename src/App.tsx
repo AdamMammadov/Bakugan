@@ -31,6 +31,13 @@ export default function App() {
     if (screen !== 'intro') playMusic(screen === 'arena' ? 'battle' : 'menu')
   }, [screen])
 
+  // download every Bakugan model in the background once the player is in, so the viewer,
+  // showroom and arena show the real models straight away
+  useEffect(() => {
+    const t = window.setTimeout(() => void import('./three/BakuganModels').then((m) => m.preloadAllModels()), 1500)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
     <div className="relative h-full w-full">
       <Suspense fallback={null}>

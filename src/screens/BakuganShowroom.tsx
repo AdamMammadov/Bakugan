@@ -93,19 +93,19 @@ export function BakuganShowroom() {
       exit={{ opacity: 0 }}
     >
       {bakugan && (
-        <Canvas camera={{ position: [0, 1.6, 5.2], fov: 40 }} dpr={[1, 2]}>
+        <Canvas camera={{ position: [0, 2.1, 6], fov: 40 }} dpr={[1, 2]}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 6, 4]} intensity={2.2} />
           <pointLight position={[-3, 2.5, -2]} intensity={20} color={el.glow} />
           <pointLight position={[0, 2, 5]} intensity={6} color="#ffffff" />
           <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[1.4, 64]} />
+            <circleGeometry args={[1.9, 64]} />
             <meshStandardMaterial color="#101118" emissive={el.color} emissiveIntensity={0.15} />
           </mesh>
           <Suspense fallback={null}>
             <group key={`${bakugan.id}-${form}-${view}`}>
               {view === 'monster' ? (
-                <group scale={0.55}>
+                <group scale={0.85}>
                   <MoveBody pose={pose}>
                     <MonsterModel entrant={{ bakugan, form, skin: owned?.skin }} poseRef={pose} />
                   </MoveBody>
@@ -117,9 +117,9 @@ export function BakuganShowroom() {
               )}
             </group>
           </Suspense>
-          <BlobShadow size={view === 'monster' ? 2.6 : 1.4} />
+          <BlobShadow size={view === 'monster' ? 3.6 : 1.4} />
           <OrbitControls
-            target={[0, view === 'monster' ? 0.9 : 0.6, 0]}
+            target={[0, view === 'monster' ? 1.4 : 0.6, 0]}
             enablePan={false}
             minDistance={1.6}
             maxDistance={9}

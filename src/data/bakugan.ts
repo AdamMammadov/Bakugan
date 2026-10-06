@@ -267,6 +267,7 @@ export const BAKUGAN: Bakugan[] = [
     series: 'Battle Brawlers',
     baseG: 380,
     brawlG: 480,
+    models: { monster: 'models/gorem/monster.glb' },
     description: 'A towering stone warrior with near-impenetrable armour and crushing fists.',
     abilities: [
       {
@@ -565,8 +566,9 @@ export const BAKUGAN: Bakugan[] = [
     ],
     evolutions: [
       { name: 'Hydranoid', series: 'Battle Brawlers', gPower: 450 },
-      { name: 'Dual Hydranoid', series: 'Battle Brawlers', gPower: 480 },
-      { name: 'Alpha Hydranoid', series: 'Battle Brawlers', gPower: 550 },
+      { name: 'Dual Hydranoid', series: 'Battle Brawlers', gPower: 480, models: { monster: 'models/hydranoid/dual.glb' } },
+      // three-headed Alpha uses the closest model we have: the upright, many-headed Dual Hydranoid
+      { name: 'Alpha Hydranoid', series: 'Battle Brawlers', gPower: 550, models: { monster: 'models/hydranoid/dual.glb' } },
     ],
   },
 ]

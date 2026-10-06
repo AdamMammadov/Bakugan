@@ -2,7 +2,7 @@ import { Sparkles, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useRef, type ComponentType, type RefObject } from 'react'
 import * as THREE from 'three'
-import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
+import { BAKUGAN, formModels, type Bakugan, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { asset } from '../asset'
 import { BakuganBall } from './BakuganBall'
@@ -56,7 +56,8 @@ export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?:
     )
   return (
     <Hover on={!!models.fly}>
-      <Suspense fallback={placeholder}>
+      {/* nothing until the real model has loaded, so the stand-in never flashes up first */}
+      <Suspense fallback={null}>
         <NormalizedModel
           url={asset(models.monster)}
           height={MONSTER_HEIGHT * size}
@@ -90,7 +91,7 @@ export function BallModel({ bakugan, openRef, skin: skinId }: { bakugan: Bakugan
   const placeholder = Custom ? <Custom openRef={openRef} /> : <BakuganBall color={element.color} openRef={openRef} />
   if (!bakugan.models?.ball) return placeholder
   return (
-    <Suspense fallback={placeholder}>
+    <Suspense fallback={null}>
       <group position={[0, -BALL_SIZE / 2, 0]}>
         <NormalizedModel
           url={asset(bakugan.models.ball)}
@@ -101,6 +102,11 @@ export function BallModel({ bakugan, openRef, skin: skinId }: { bakugan: Bakugan
       </group>
     </Suspense>
   )
+}
+
+/** Downloads every Bakugan model in the background, so pages show them without a wait. */
+export function preloadAllModels() {
+  for (const b of BAKUGAN) preloadModels(b)
 }
 
 /** Starts downloading a Bakugan's models ahead of time so the brawl doesn't stall on them. */
