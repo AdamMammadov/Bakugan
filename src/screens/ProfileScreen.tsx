@@ -25,7 +25,7 @@ import {
   type OwnedBakugan,
   type Profile,
 } from '../profile/useProfiles'
-import { SKINS } from '../season/season'
+import { SKINS, skinFits } from '../season/season'
 import { useGame } from '../store/useGame'
 
 export function ProfileScreen() {
@@ -264,7 +264,7 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
   const cardNext = nextCardXp(owned)
   const applyCardKey = useProfiles((s) => s.applyCardKey)
   const setSkin = useProfiles((s) => s.setSkin)
-  const skins = SKINS.filter((sk) => profile.cosmetics?.owned.includes(`skin:${sk.id}`))
+  const skins = SKINS.filter((sk) => profile.cosmetics?.owned.includes(`skin:${sk.id}`) && skinFits(sk, bakugan.id))
   const [flash, setFlash] = useState(0)
 
   function toggleTeam() {

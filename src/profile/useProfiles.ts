@@ -18,6 +18,8 @@ import {
   weeklyChallenges,
   type ChallengeStat,
   type Reward,
+  SKIN_BY_ID,
+  skinFits,
 } from '../season/season'
 
 /**
@@ -614,7 +616,12 @@ export const useProfiles = create<ProfilesState>()(
         set((s) => patchActive(s, (p) => ({ ...p, cosmetics: { owned: [], ...p.cosmetics, [slot]: value } }))),
       setSkin: (bakuganId, skin) =>
         set((s) =>
-          patchActive(s, (p) => ({ ...p, collection: p.collection.map((o) => (o.id === bakuganId ? { ...o, skin } : o)) })),
+          patchActive(s, (p) =>
+            // a model skin only goes on its own Bakugan
+            skin && SKIN_BY_ID[skin] && !skinFits(SKIN_BY_ID[skin], bakuganId)
+              ? p
+              : { ...p, collection: p.collection.map((o) => (o.id === bakuganId ? { ...o, skin } : o)) },
+          ),
         ),
     }),
     {

@@ -615,6 +615,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   trox: { monster: 'models/trox/monster.glb', scale: 1.1 },
   hydorous: { monster: 'models/hydorous/monster.glb', scale: 1.1 },
   howlkor: { monster: 'models/howlkor/monster.glb', scale: 1.15 },
+  manion: { monster: 'models/manion/monster.glb', scale: 1.1 },
+  pegatrix: { monster: 'models/pegatrix/monster.glb', scale: 1.15 },
   nemus: { ball: 'models/nemus/ball.glb' },
   elfin: { ball: 'models/elfin/ball.glb' },
   ingram: { ball: 'models/ingram/ball.glb' },

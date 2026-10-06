@@ -90,7 +90,12 @@ export interface Skin extends CosmeticBase {
   id: string
   color: string
   glow: string
+  /** A model skin: its own 3D model per Bakugan id, and it only fits those Bakugan. */
+  models?: Record<string, string>
 }
+
+/** Whether a skin can be worn by a Bakugan: colour skins fit all, model skins only their own. */
+export const skinFits = (skin: Skin, bakuganId: string) => !skin.models || bakuganId in skin.models
 
 const SHOP = { shop: true } as const
 const PASS_1 = { pass: 1 } as const
@@ -118,6 +123,16 @@ export const SKINS: Skin[] = [
   { id: 'aurora', name: 'Aurora', color: '#1b6b73', glow: '#9cffd9', rarity: 'epic', from: SHOP },
   { id: 'void', name: 'Void', color: '#0a0612', glow: '#b066ff', rarity: 'legendary', from: SHOP },
   { id: 'prism', name: 'Prism', color: '#d9e6ff', glow: '#ff9cf5', rarity: 'legendary', from: SHOP },
+  // model skins
+  {
+    id: 'titanium-trox',
+    name: 'Titanium Trox',
+    color: '#8a9099',
+    glow: '#dce6f0',
+    rarity: 'legendary',
+    from: SHOP,
+    models: { trox: 'models/trox/titanium.glb' },
+  },
 ]
 export const SKIN_BY_ID = Object.fromEntries(SKINS.map((s) => [s.id, s])) as Record<string, Skin>
 

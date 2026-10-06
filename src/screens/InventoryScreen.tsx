@@ -18,7 +18,7 @@ import {
   type OwnedBakugan,
   type Profile,
 } from '../profile/useProfiles'
-import { ACCESSORIES, FRAMES, OUTFITS, RARITY, SKIN_BY_ID, SKINS, type Rarity } from '../season/season'
+import { ACCESSORIES, FRAMES, OUTFITS, RARITY, SKIN_BY_ID, SKINS, skinFits, type Rarity } from '../season/season'
 import { useGame } from '../store/useGame'
 import { BlobShadow } from '../three/BlobShadow'
 import { MonsterModel } from '../three/BakuganModels'
@@ -110,9 +110,10 @@ function Empty({ text }: { text: string }) {
 
 function Skins({ profile }: { profile: Profile }) {
   const setSkin = useProfiles((s) => s.setSkin)
-  const skins = SKINS.filter((s) => owns(profile, `skin:${s.id}`))
   const [bakuganId, setBakuganId] = useState(profile.collection[0]?.id)
   const owned = profile.collection.find((o) => o.id === bakuganId) ?? profile.collection[0]
+  // model skins only fit their own Bakugan
+  const skins = SKINS.filter((s) => owns(profile, `skin:${s.id}`) && (!owned || skinFits(s, owned.id)))
   // the skin being tried on: starts as the one the Bakugan wears
   const [trying, setTrying] = useState<string | undefined>(owned?.skin)
   if (!owned) return null

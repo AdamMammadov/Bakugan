@@ -7,7 +7,7 @@ import { PageNav } from '../components/PageNav'
 import { BAKUGAN, type Bakugan } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { DEFAULT_PARTS, type Accessory } from '../profile/avatar'
-import { hasCosmetic, inShop, priceOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
+import { bakuganById, hasCosmetic, inShop, priceOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
 import { FRAMES, OUTFITS, RARITY, SKIN_BY_ID, timeLeft, type Rarity } from '../season/season'
 import { cosmeticsOnSale, featuredToday, formatPrice, PACKS, type ShopItem } from '../shop/shop'
 import { useGame } from '../store/useGame'
@@ -204,7 +204,11 @@ function ItemCard({ item, profile, onMoney }: { item: ShopItem; profile: Profile
       </div>
       <p className="font-display text-lg font-bold">{item.name}</p>
       <p className="mt-1 flex-1 text-xs text-white/50">
-        {KIND_HINT[item.kind]}
+        {item.kind === 'skin' && SKIN_BY_ID[item.key.slice(5)]?.models
+          ? `A new 3D look for ${Object.keys(SKIN_BY_ID[item.key.slice(5)].models!)
+              .map((id) => bakuganById(id).name)
+              .join(', ')} only.`
+          : KIND_HINT[item.kind]}
         {item.passSeason && <span className="block text-amber-300/70">From the Season {item.passSeason} Pass</span>}
       </p>
       <button

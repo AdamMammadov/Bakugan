@@ -35,8 +35,9 @@ export function MonsterModel({
   frontAt?: number
 }) {
   const base = ELEMENT_BY_ID[entrant.bakugan.element]
-  // an equipped skin recolours the Bakugan
+  // an equipped skin recolours the Bakugan, or swaps in its own model (model skins)
   const skin = entrant.skin ? SKIN_BY_ID[entrant.skin] : undefined
+  const skinModel = skin?.models?.[entrant.bakugan.id]
   const element = skin ? { ...base, color: skin.color, glow: skin.glow } : base
   const models = formModels(entrant)
   const size = (1 + entrant.form * 0.12) * (models?.scale ?? 1)
@@ -68,14 +69,14 @@ export function MonsterModel({
       {/* nothing until the real model has loaded, so the stand-in never flashes up first */}
       <Suspense fallback={null}>
         <NormalizedModel
-          url={asset(models.monster)}
+          url={asset(skinModel ?? models.monster)}
           height={MONSTER_HEIGHT * size}
           // wide wings must not reach across the field
           maxLength={MONSTER_HEIGHT * size * (models.fly ? 1.25 : 2)}
           frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}
-          tint={skin ? { color: skin.color, glow: skin.glow } : models.tint}
+          tint={skinModel ? undefined : skin ? { color: skin.color, glow: skin.glow } : models.tint}
         />
       </Suspense>
       {sparkles}

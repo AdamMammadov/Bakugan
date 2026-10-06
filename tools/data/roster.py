@@ -47,6 +47,8 @@ ROSTER = [
     ('tripod-epsilon', 'Tripod Epsilon', 'aquos', 'Marucho Marukura', 330, [],
      'A three-legged Trap Bakugan that Marucho deploys to support his Guardian, pinning opponents in place.'),
     # ---- Subterra
+    ('manion', 'Manion', 'subterra', 'Klaus von Hertzon', 380, [],
+     'A mysterious sphinx with a lion\'s body, huge wings and golden armour over its head, back and forearms. It soars on its great wingspan and strikes from above with four pairs of razor claws. Klaus kept a Subterra Manion in his collection.'),
     ('cycloid', 'Cycloid', 'subterra', 'Billy Gilbert', 400, [],
      'A huge one-horned cyclops found in Bakugan Valley. Tough and eager to fight, his Left and Right Giganti smash the very Gate Card he stands on.'),
     ('wilda', 'Wilda', 'subterra', 'Mira Fermin', 450, [('Magma Wilda', 'New Vestroia', 550)],
@@ -75,6 +77,8 @@ ROSTER = [
     ('monarus', 'Monarus', 'ventus', 'Wild Bakugan', 320, [],
      'A fairy-like Bakugan riding the wind on butterfly wings — small, quick and hard to pin down.'),
     # ---- Haos
+    ('pegatrix', 'Pegatrix', 'haos', 'Lia Venegas', 400, [],
+     'A winged unicorn-Pegasus from the new generation, Lia Venegas\'s partner in Battle Planet: strong-willed and powerful in battle, yet always finding the beauty in the world around her.'),
     ('tentaclear', 'Tentaclear', 'haos', 'Julio Santana', 350, [],
      'Julio\'s Guardian, a floating eye with tentacles. It cannot speak, but its gaze fires blinding beams of light.'),
     ('nemus', 'Nemus', 'haos', 'Baron Leltoy', 440, [('Saint Nemus', 'New Vestroia', 540)],
@@ -110,10 +114,10 @@ NEW_VESTROIA = {'Spectra Phantom', 'Mylene Farrow', 'Gus Grav', 'Mira Fermin', '
                 'Volt Luster', 'Lync Volan', 'Professor Clay'}
 
 # Bakugan from a later series than the brawler sets above show
-SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet'}
+SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet', 'pegatrix': 'Battle Planet'}
 # added after launch: they take their filler cards from their own slots, so adding them does not
 # reshuffle the cards of the Bakugan already in players' collections
-ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor']
+ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix']
 # a Bakugan that shares a few character cards with another one (Diablo is a side of Preyas II)
 CARD_ALIASES = {'preyas-diablo': ('Preyas', 2)}
 

@@ -1115,6 +1115,87 @@ export const ROSTER: Bakugan[] = [
     ]
   },
   {
+    "id": "manion",
+    "name": "Manion",
+    "element": "subterra",
+    "brawler": "Klaus von Hertzon",
+    "series": "Battle Brawlers",
+    "baseG": 380,
+    "brawlG": 480,
+    "description": "A mysterious sphinx with a lion's body, huge wings and golden armour over its head, back and forearms. It soars on its great wingspan and strikes from above with four pairs of razor claws. Klaus kept a Subterra Manion in his collection.",
+    "abilities": [
+      {
+        "id": "copycat",
+        "name": "Copycat",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Copy any power level changes from your opponent's last Ability Card.",
+        "estimated": true
+      },
+      {
+        "id": "desert-hole",
+        "name": "Desert Hole",
+        "type": "boost",
+        "amount": 75,
+        "effect": "aura",
+        "description": "If you have more Gate Cards on the field than your opponent, your Subterra Bakugan gains +75 G's for each more."
+      },
+      {
+        "id": "earth-power",
+        "name": "Earth Power",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Increase your Subterra Bakugan's power level by +50 G's.",
+        "estimated": true
+      },
+      {
+        "id": "floodgate",
+        "name": "Floodgate",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Set a Gate Card from your deck.",
+        "estimated": true
+      },
+      {
+        "id": "gate-building",
+        "name": "Gate Building",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Draw and set a Gate Card.",
+        "estimated": true
+      },
+      {
+        "id": "gatekeeper",
+        "name": "Gatekeeper",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Send an Attribute Gate Card from your deck to your used pile, and have your Subterra Bakugan gain G's equal to its increase.",
+        "estimated": true
+      },
+      {
+        "id": "grand-slide",
+        "name": "Grand Slide",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Move an opponent's Gate Card next to the Gate Card your Subterra Bakugan is on, then your Subterra Bakugan moves to it.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Manion",
+        "series": "Battle Brawlers",
+        "gPower": 380
+      }
+    ]
+  },
+  {
     "id": "cycloid",
     "name": "Cycloid",
     "element": "subterra",
@@ -2172,6 +2253,85 @@ export const ROSTER: Bakugan[] = [
       }
     ],
     "characterGate": true
+  },
+  {
+    "id": "pegatrix",
+    "name": "Pegatrix",
+    "element": "haos",
+    "brawler": "Lia Venegas",
+    "series": "Battle Planet",
+    "baseG": 400,
+    "brawlG": 500,
+    "description": "A winged unicorn-Pegasus from the new generation, Lia Venegas's partner in Battle Planet: strong-willed and powerful in battle, yet always finding the beauty in the world around her.",
+    "abilities": [
+      {
+        "id": "recovery",
+        "name": "Recovery",
+        "type": "attack",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Add 3 Ability Cards from an ally's used pile to their deck, besides copies of this Ability Card.",
+        "estimated": true
+      },
+      {
+        "id": "shade-ability",
+        "name": "Shade Ability",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Negate all Ability Card effects and power level changes on an opponent's Bakugan."
+      },
+      {
+        "id": "venomous-beast-torrent-attack",
+        "name": "Venomous Beast Torrent Attack",
+        "type": "attack",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Your Haos Griffon is defeated and replaced with another 1 of your currently defeated Haos Bakugan.",
+        "estimated": true
+      },
+      {
+        "id": "ability-counter",
+        "name": "Ability Counter",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Negate an opponent's Ability Card in battle, or that targets your Haos Bakugan."
+      },
+      {
+        "id": "divine-blessing",
+        "name": "Divine Blessing",
+        "type": "attack",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Each player draws an Ability Card.",
+        "estimated": true
+      },
+      {
+        "id": "double-down",
+        "name": "Double Down",
+        "type": "attack",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "The next time an allied Bakugan gains G's from an Ability Card, the increase is doubled. (Non-Stackable) (Can only be activated outside of battle)",
+        "estimated": true
+      },
+      {
+        "id": "enhancement",
+        "name": "Enhancement",
+        "type": "boost",
+        "amount": 75,
+        "effect": "aura",
+        "description": "An allied Bakugan gains +75 G's."
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Pegatrix",
+        "series": "Battle Planet",
+        "gPower": 400
+      }
+    ]
   },
   {
     "id": "tentaclear",
