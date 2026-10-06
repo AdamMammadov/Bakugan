@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { aiForTier, matchedOpponent, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
@@ -18,7 +18,7 @@ import {
   useProfiles,
   type OwnedBakugan,
 } from '../profile/useProfiles'
-import { botCharacter } from '../profile/avatar'
+import { opponentCharacter } from '../profile/avatar'
 import { useGame } from '../store/useGame'
 
 /** Fills a team up to three with Bakugan not already in it. */
@@ -67,7 +67,9 @@ export function CompareScreen() {
   const opponent = (team: Entrant[]) => matchedOpponent(team, Math.random, aiForTier(tier).edge)
   // the system always picks the opponent, on the player's level; nobody chooses their rival's forms
   const [right, setRight] = useState<Entrant[]>(() => opponent(left))
-  const bot = botCharacter(right[0].bakugan.element)
+  const avoid = profile?.avatar.kind === 'preset' ? profile.avatar.id : undefined
+  // picked once per opponent team, not on every render
+  const bot = useMemo(() => opponentCharacter(right[0].bakugan, avoid), [right, avoid])
 
   const setLeft = (team: Entrant[]) => {
     if (profile) setOwn(team)

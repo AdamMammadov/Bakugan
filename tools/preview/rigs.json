@@ -771,5 +771,165 @@
       ],
       "test": "y < 5.5 && x <= 0"
     }
+  ],
+  "hammer-gorem": [
+    {
+      "name": "drop",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "test": "y < 2 && (Math.abs(z) > 4.5 || Math.abs(x) > 5)"
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        4.5,
+        24,
+        0
+      ],
+      "test": "(x > 4.5 && y > 21.5 && y < 26) || (x > 6.5 && y > 20 && y < 30)",
+      "bake": [
+        0,
+        0,
+        -1.3
+      ]
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -4.5,
+        24,
+        0
+      ],
+      "test": "(x < -4.5 && y > 21.5 && y < 26) || (x < -6.5 && y > 20 && y < 30)",
+      "bake": [
+        0,
+        0,
+        1.3
+      ]
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        26,
+        0
+      ],
+      "test": "y > 26.5 && Math.abs(x) < 1.6"
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        2,
+        12,
+        0
+      ],
+      "test": "y < 12 && x > 0"
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -2,
+        12,
+        0
+      ],
+      "test": "y < 12 && x <= 0"
+    }
+  ],
+  "cycloid": [
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -3.5,
+        13,
+        0
+      ],
+      "test": "x < -3.2"
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        3.5,
+        13,
+        0
+      ],
+      "test": "x > 3.2 && y > 5"
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        14.5,
+        0
+      ],
+      "test": "y > 14.5 && Math.abs(x) < 2.5"
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        1.5,
+        5,
+        0
+      ],
+      "test": "y < 5 && x > 0"
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -1.5,
+        5,
+        0
+      ],
+      "test": "y < 5 && x <= 0"
+    }
+  ],
+  "wilda": [
+    {
+      "name": "leg_fl",
+      "pivot": [
+        330,
+        900,
+        0
+      ],
+      "test": "x > 330"
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -330,
+        900,
+        0
+      ],
+      "test": "x < -330"
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        1000,
+        0
+      ],
+      "test": "y > 1000 && Math.abs(x) < 220"
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        150,
+        500,
+        0
+      ],
+      "test": "y < 500 && x > 0"
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -150,
+        500,
+        0
+      ],
+      "test": "y < 500 && x <= 0"
+    }
   ]
 }

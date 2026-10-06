@@ -25,7 +25,7 @@ import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck, gateElementOf } from '../data/gates'
 import { bakuganById, useActiveProfile, useProfiles, type BattleReward } from '../profile/useProfiles'
 import { useGame, type TeamMember } from '../store/useGame'
-import { botCharacter, CHARACTER_BY_ID, DEFAULT_PARTS } from '../profile/avatar'
+import { botCharacter, CHARACTER_BY_ID, DEFAULT_PARTS, DEFAULT_VOICE, opponentCharacter } from '../profile/avatar'
 import { ACTION_DURATION, ArenaScene, IMPACT_AT, type BrawlerInfo } from '../three/ArenaScene'
 import type { BrawlerCall, BrawlerGesture } from '../three/Brawler'
 import { preloadModels } from '../three/BakuganModels'
@@ -84,11 +84,11 @@ export function ArenaScreen() {
 
   // the two brawlers: who they are, what they do and what they call out
   const profile = useActiveProfile()
-  const botChar = CHARACTER_BY_ID[setup.bot.characterId] ?? botCharacter(teams[1][0].bakugan.element)
+  const botChar = CHARACTER_BY_ID[setup.bot.characterId] ?? opponentCharacter(teams[1][0].bakugan)
   const player = useMemo(() => {
     if (!profile) {
       const c = botCharacter(teams[0][0].bakugan.element)
-      return { parts: c.parts, photo: undefined, model: c.model, name: 'You' }
+      return { parts: c.parts, photo: undefined, model: c.model, name: 'You', voice: c.voice }
     }
     const a = profile.avatar
     return {
@@ -101,6 +101,7 @@ export function ArenaScreen() {
       photo: a.kind === 'photo' ? a.dataUrl : undefined,
       model: a.kind === 'preset' ? CHARACTER_BY_ID[a.id]?.model : undefined,
       name: profile.firstName,
+      voice: (a.kind === 'preset' ? CHARACTER_BY_ID[a.id]?.voice : undefined) ?? DEFAULT_VOICE,
     }
   }, [profile, teams])
   type Cue = Pick<BrawlerInfo, 'gesture'> & { call: BrawlerCall | null }
@@ -116,7 +117,7 @@ export function ArenaScreen() {
       next[side] = { gesture: { kind, key }, call: title ? { key, title, sub } : c[side].call }
       return next
     })
-    if (voice) callOut(voice, side)
+    if (voice) callOut(voice, side === 0 ? player.voice : botChar.voice)
     // the bubble disappears after a moment unless a newer call replaced it
     if (title)
       later(2200, () =>

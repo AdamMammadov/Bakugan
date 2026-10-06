@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import { lazy, Suspense, useEffect } from 'react'
-import { playMusic } from './audio/music'
+import { playMusic, type Track } from './audio/music'
 import { MuteButton } from './components/MuteButton'
 import { ProfileButton } from './components/ProfileButton'
 import { SeasonNotice } from './components/SeasonNotice'
@@ -16,7 +16,7 @@ import { EncyclopediaScreen } from './screens/EncyclopediaScreen'
 import { ShopScreen } from './screens/ShopScreen'
 import { InventoryScreen } from './screens/InventoryScreen'
 import { SeasonPassScreen } from './screens/SeasonPassScreen'
-import { useGame } from './store/useGame'
+import { useGame, type Screen } from './store/useGame'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
 const Viewer = lazy(() => import('./screens/Viewer').then((m) => ({ default: m.Viewer })))
@@ -24,11 +24,29 @@ const BakuganShowroom = lazy(() => import('./screens/BakuganShowroom').then((m) 
 const CharacterShowroom = lazy(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
 const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
 
+/** Which theme plays where: each part of the game has its own. */
+const TRACK_FOR: Partial<Record<Screen, Track>> = {
+  wheel: 'home',
+  hub: 'home',
+  viewer: 'home',
+  compare: 'faceoff',
+  arena: 'battle',
+  shop: 'shop',
+  inventory: 'shop',
+  pass: 'anthem',
+  profile: 'anthem',
+  rankings: 'anthem',
+  clans: 'anthem',
+  encyclopedia: 'gallery',
+  showroom: 'gallery',
+  characters: 'gallery',
+}
+
 export default function App() {
   const screen = useGame((s) => s.screen)
   // the battle theme in the arena, the calm theme everywhere else (after the first click)
   useEffect(() => {
-    if (screen !== 'intro') playMusic(screen === 'arena' ? 'battle' : 'menu')
+    if (screen !== 'intro') playMusic(TRACK_FOR[screen] ?? 'menu')
   }, [screen])
 
   // download every Bakugan model in the background once the player is in, so the viewer,

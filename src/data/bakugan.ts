@@ -86,6 +86,8 @@ export interface Bakugan {
     fly?: boolean
     /** How big this Bakugan stands next to the others (1 = normal). */
     scale?: number
+    /** Recolours the model, e.g. an evolution shown with its base form's model. */
+    tint?: { color: string; glow: string }
   }
   /** Has its own Character Gate Card (doubles its power). */
   characterGate?: boolean
@@ -336,8 +338,8 @@ export const BAKUGAN: Bakugan[] = [
     ],
     evolutions: [
       { name: 'Gorem', series: 'Battle Brawlers', gPower: 380 },
-      { name: 'Hammer Gorem', series: 'Battle Brawlers', gPower: 450 },
-      { name: 'Hammer Gorem', series: 'New Vestroia', gPower: 500 },
+      { name: 'Hammer Gorem', series: 'Battle Brawlers', gPower: 450, models: { monster: 'models/gorem/hammer.glb' } },
+      { name: 'Hammer Gorem', series: 'New Vestroia', gPower: 500, models: { monster: 'models/gorem/hammer.glb' } },
     ],
   },
   {
@@ -593,8 +595,13 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   sirenoid: { monster: 'models/sirenoid/monster.glb', fly: true },
   fourtress: { monster: 'models/fourtress/monster.glb' },
   tentaclear: { monster: 'models/tentaclear/monster.glb', fly: true },
+  cycloid: { monster: 'models/cycloid/monster.glb' },
+  wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
+// Magma Wilda has no model of its own yet: Wilda's, glowing like lava
+const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.name === 'Magma Wilda')
+if (magma) magma.models = { ...ROSTER_MODELS.wilda, tint: { color: '#8a2a10', glow: '#ff6a1a' } }
 
 BAKUGAN.push(...ROSTER)
 

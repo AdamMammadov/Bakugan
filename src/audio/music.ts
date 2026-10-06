@@ -2,10 +2,11 @@ import { useGame } from '../store/useGame'
 import { audio } from './sfx'
 
 /**
- * Background music, synthesised live with WebAudio (no files to download): a calm theme for
- * the menus and a driving one for battles. It ducks while the brawlers are talking.
+ * Background music, synthesised live with WebAudio (no files to download). Each part of the
+ * game has its own theme so the same tune does not follow the player everywhere; it ducks while
+ * the brawlers are talking.
  */
-export type Track = 'menu' | 'battle'
+export type Track = 'menu' | 'home' | 'gallery' | 'shop' | 'anthem' | 'faceoff' | 'battle'
 
 interface Song {
   bpm: number
@@ -21,6 +22,10 @@ interface Song {
   pad: boolean
   /** Melody: step → chord tone (0 root, 1 third, 2 fifth, 3 octave), so it always fits the harmony. */
   lead?: Record<number, number>
+  /** Melody on every bar instead of every other one. */
+  leadEveryBar?: boolean
+  leadWave?: OscillatorType
+  arpWave?: OscillatorType
 }
 
 const SONGS: Record<Track, Song> = {
@@ -37,6 +42,95 @@ const SONGS: Record<Track, Song> = {
     hat: [2, 6, 10, 14],
     bass: { 0: 0, 6: 0, 8: 7, 12: 0 },
     arp: [0, 2, 4, 6, 8, 10, 12, 14],
+    pad: true,
+  },
+  // the attribute wheel, the attribute pages and the 3D viewer: a light adventure theme in G
+  home: {
+    bpm: 104,
+    chords: [
+      [55, 'maj'],
+      [52, 'min'],
+      [48, 'maj'],
+      [50, 'maj'],
+    ],
+    kick: [0, 10],
+    snare: [8],
+    hat: [2, 6, 10, 14],
+    bass: { 0: 0, 3: 7, 8: 0, 11: 12, 14: 7 },
+    arp: [0, 2, 4, 6, 8, 10, 12, 14],
+    arpWave: 'sine',
+    pad: true,
+    lead: { 0: 2, 4: 3, 6: 2, 8: 1, 12: 0 },
+    leadWave: 'triangle',
+  },
+  // encyclopedia and showrooms: slow and spacious, for reading and looking around
+  gallery: {
+    bpm: 72,
+    chords: [
+      [50, 'min'],
+      [53, 'maj'],
+      [48, 'maj'],
+      [45, 'min'],
+    ],
+    kick: [],
+    snare: [],
+    hat: [4, 12],
+    bass: { 0: 0, 8: 7 },
+    arp: [0, 6, 12],
+    arpWave: 'sine',
+    pad: true,
+  },
+  // shop and inventory: a bouncy groove in C
+  shop: {
+    bpm: 112,
+    chords: [
+      [48, 'maj'],
+      [45, 'min'],
+      [53, 'maj'],
+      [55, 'maj'],
+    ],
+    kick: [0, 6, 8],
+    snare: [4, 12],
+    hat: [2, 6, 10, 14],
+    bass: { 0: 0, 3: 0, 6: 12, 8: 7, 11: 0, 14: 12 },
+    arp: [],
+    pad: false,
+    lead: { 0: 0, 2: 1, 4: 2, 7: 3, 10: 2, 12: 1 },
+    leadEveryBar: true,
+    leadWave: 'triangle',
+  },
+  // profile, Season Pass, rankings and clans: a proud anthem in B-flat
+  anthem: {
+    bpm: 94,
+    chords: [
+      [46, 'maj'],
+      [53, 'maj'],
+      [55, 'min'],
+      [51, 'maj'],
+    ],
+    kick: [0, 8],
+    snare: [4, 12],
+    hat: [0, 4, 8, 12],
+    bass: { 0: 0, 4: 0, 8: 7, 12: 12 },
+    arp: [],
+    pad: true,
+    lead: { 0: 0, 4: 1, 8: 2, 12: 3 },
+    leadWave: 'sawtooth',
+  },
+  // team face-off: tense, a pulse building up to the brawl
+  faceoff: {
+    bpm: 120,
+    chords: [
+      [52, 'min'],
+      [52, 'min'],
+      [48, 'maj'],
+      [47, 'maj'],
+    ],
+    kick: [0, 4, 8, 12],
+    snare: [],
+    hat: [2, 6, 10, 14],
+    bass: { 0: 0, 2: 0, 4: 0, 6: 0, 8: 0, 10: 0, 12: 0, 14: 0 },
+    arp: [0, 3, 6, 9, 12],
     pad: true,
   },
   battle: {
@@ -153,11 +247,12 @@ function schedule(song: Song, s: number, at: number) {
   if (song.hat.includes(i)) drum('hat', at)
   if (i in song.bass) voice('sawtooth', midi(root - 24 + song.bass[i]), at, sixteenth * 1.8, 0.22, 600)
   if (song.pad && i === 0) notes.forEach((n) => voice('sawtooth', midi(n), at, sixteenth * 16, 0.045, 1400, 0.6))
-  if (song.arp.includes(i)) voice('triangle', midi(notes[(i / 2) % 3] + 12), at, sixteenth * 1.6, 0.07, 3000)
-  if (song.lead && i in song.lead && bar % 2 === 1) {
+  if (song.arp.includes(i))
+    voice(song.arpWave ?? 'triangle', midi(notes[Math.floor(i / 2) % 3] + 12), at, sixteenth * 1.6, 0.07, 3000)
+  if (song.lead && i in song.lead && (song.leadEveryBar || bar % 2 === 1)) {
     const tone = song.lead[i]
     const note = tone === 3 ? root + 12 : notes[tone]
-    voice('square', midi(note + 12), at, sixteenth * 1.5, 0.045, 2200)
+    voice(song.leadWave ?? 'square', midi(note + 12), at, sixteenth * 1.5, 0.045, 2200)
   }
 }
 

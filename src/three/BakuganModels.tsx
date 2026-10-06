@@ -75,7 +75,7 @@ export function MonsterModel({
           frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}
-          tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
+          tint={skin ? { color: skin.color, glow: skin.glow } : models.tint}
         />
       </Suspense>
       {sparkles}
