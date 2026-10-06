@@ -613,6 +613,9 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   cycloid: { monster: 'models/cycloid/monster.glb' },
   'preyas-diablo': { monster: 'models/preyas-diablo/monster.glb' },
   trox: { monster: 'models/trox/monster.glb', scale: 1.1 },
+  hydorous: { monster: 'models/hydorous/monster.glb', scale: 1.1 },
+  howlkor: { monster: 'models/howlkor/monster.glb', scale: 1.15 },
+  nemus: { ball: 'models/nemus/ball.glb' },
   elfin: { ball: 'models/elfin/ball.glb' },
   ingram: { ball: 'models/ingram/ball.glb' },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
@@ -622,7 +625,10 @@ for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
 const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.name === 'Magma Wilda')
 const angelo = ROSTER.find((b) => b.id === 'preyas-diablo')?.evolutions.find((e) => e.name === 'Preyas Angelo')
 if (angelo) angelo.models = { monster: 'models/preyas-diablo/angelo.glb' }
-if (magma) magma.models = { ...ROSTER_MODELS.wilda, tint: { color: '#8a2a10', glow: '#ff6a1a' } }
+if (magma)
+  magma.models = { ...ROSTER_MODELS.wilda, ball: 'models/wilda/magma-ball.glb', tint: { color: '#8a2a10', glow: '#ff6a1a' } }
+const saint = ROSTER.find((b) => b.id === 'nemus')?.evolutions.find((e) => e.name === 'Saint Nemus')
+if (saint) saint.models = { ball: 'models/nemus/saint-ball.glb' }
 
 BAKUGAN.push(...ROSTER)
 

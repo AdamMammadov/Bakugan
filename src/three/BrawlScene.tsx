@@ -71,7 +71,7 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
         )}
       </Suspense>
 
-      <BallActor bakugan={bakugan} ballOpen={ballOpen} phase={phase} brawlStart={brawlStart} skin={skin} />
+      <BallActor bakugan={bakugan} form={form} ballOpen={ballOpen} phase={phase} brawlStart={brawlStart} skin={skin} />
       {phase === 'brawling' && (
         <group scale={[2.2, 1.2, 2.2]}>
           <LightPillar color={element.glow} delay={T.pillar} />
@@ -139,8 +139,10 @@ function BallActor({
   brawlStart,
   ballOpen,
   skin,
+  form,
 }: {
   bakugan: Bakugan
+  form: number
   phase: Phase
   ballOpen: boolean
   brawlStart: RefObject<number | null>
@@ -190,7 +192,7 @@ function BallActor({
   return (
     <>
       <group ref={ref}>
-        <BallModel bakugan={bakugan} openRef={open} skin={skin} />
+        <BallModel bakugan={bakugan} form={form} openRef={open} skin={skin} />
       </group>
       <BlobShadow ref={shadow} />
     </>

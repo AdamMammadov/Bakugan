@@ -38,6 +38,8 @@ ROSTER = [
      'Pure strength and brute force: six blade-armed tentacles, shoulder spikes and a golden diamond that fires a water blast. Elico can breathe under water and change attribute.'),
     ('preyas-diablo', 'Preyas Diablo', 'aquos', 'Marucho Marukura', 400, [('Preyas Angelo', 'Battle Brawlers', 500)],
      'One face of Marucho\'s Preyas II: the fiery, hot-headed Diablo, part Aquos and part Pyrus. Turned round it becomes Preyas Angelo, the calm, shining side that is part Aquos and part Haos.'),
+    ('hydorous', 'Hydorous', 'aquos', 'Shun Kazami', 400, [],
+     'The prince of the seas: a fast, agile and ruthless lion-like Bakugan from the new generation, Shun Kazami\'s Guardian in Battle Planet. His all-out aggression is the opposite of Shun\'s calm, and the two complete each other.'),
     ('juggernoid', 'Juggernoid', 'aquos', 'Christopher', 340, [],
      'A turtle-like Bakugan whose shell shrugs off almost any attack. Christopher\'s steady Guardian.'),
     ('siege', 'Siege', 'aquos', 'Jenny', 350, [],
@@ -97,6 +99,8 @@ ROSTER = [
      'A humanoid Bakugan with huge extending claws, Guardian of the brawler Shuji.'),
     ('leonidas', 'Leonidas', 'darkus', 'Leo (video game)', 480, [('Omega Leonidas', 'Video game', 580)],
      'A one-of-a-kind dragon born in the Doom Dimension, the hero of the first Bakugan video game. He can take any attribute and evolves into Omega Leonidas to stop Vladitor.'),
+    ('howlkor', 'Howlkor', 'darkus', 'Lightning', 400, [],
+     'A giant three-headed, Cerberus-like hound from the new generation and the Guardian of Lightning. Howlkor is so set on winning that he often scares his own brawler.'),
     ('vladitor', 'Vladitor', 'darkus', 'Video game villain', 490, [('Battle Ax Vladitor', 'Video game', 600)],
      'The final foe of the first Bakugan video game, a towering Darkus warlord. As Battle Ax Vladitor his power is immense.'),
 ]
@@ -106,10 +110,10 @@ NEW_VESTROIA = {'Spectra Phantom', 'Mylene Farrow', 'Gus Grav', 'Mira Fermin', '
                 'Volt Luster', 'Lync Volan', 'Professor Clay'}
 
 # Bakugan from a later series than the brawler sets above show
-SERIES = {'trox': 'Battle Planet'}
+SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet'}
 # added after launch: they take their filler cards from their own slots, so adding them does not
 # reshuffle the cards of the Bakugan already in players' collections
-ADDED = ['preyas-diablo', 'trox']
+ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor']
 # a Bakugan that shares a few character cards with another one (Diablo is a side of Preyas II)
 CARD_ALIASES = {'preyas-diablo': ('Preyas', 2)}
 

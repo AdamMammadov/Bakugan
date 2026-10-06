@@ -802,6 +802,84 @@ export const ROSTER: Bakugan[] = [
     ]
   },
   {
+    "id": "hydorous",
+    "name": "Hydorous",
+    "element": "aquos",
+    "brawler": "Shun Kazami",
+    "series": "Battle Planet",
+    "baseG": 400,
+    "brawlG": 500,
+    "description": "The prince of the seas: a fast, agile and ruthless lion-like Bakugan from the new generation, Shun Kazami's Guardian in Battle Planet. His all-out aggression is the opposite of Shun's calm, and the two complete each other.",
+    "abilities": [
+      {
+        "id": "holograph-divide",
+        "name": "Holograph Divide",
+        "type": "boost",
+        "amount": 50,
+        "effect": "aura",
+        "description": "Your Aquos Bakugan gains +50 G's at the start of each of your turns."
+      },
+      {
+        "id": "maelstrom",
+        "name": "Maelstrom",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
+        "estimated": true
+      },
+      {
+        "id": "tides-of-fate",
+        "name": "Tides Of Fate",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "Choose an Ability Card from your deck and place it on top.",
+        "estimated": true
+      },
+      {
+        "id": "tsunami-wave",
+        "name": "Tsunami Wave",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "If you control Aquos Siege and 2 other Aquos Bakugan, all Bakugan on the field besides Aquos Siege are defeated.",
+        "estimated": true
+      },
+      {
+        "id": "water-refrain",
+        "name": "Water Refrain",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "All previous Ability Cards used in this chain are negated."
+      },
+      {
+        "id": "water-slap",
+        "name": "Water Slap",
+        "type": "weaken",
+        "amount": 50,
+        "effect": "waterJet",
+        "description": "Your opponent's Bakugan loses -50 G's."
+      },
+      {
+        "id": "aquos-cyclone",
+        "name": "Aquos Cyclone",
+        "type": "boost",
+        "amount": 125,
+        "effect": "aura",
+        "description": "Your Aquos Bakugan gains +125 G's on your second turn after this Ability Card's activation."
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Hydorous",
+        "series": "Battle Planet",
+        "gPower": 400
+      }
+    ]
+  },
+  {
     "id": "juggernoid",
     "name": "Juggernoid",
     "element": "aquos",
@@ -2989,6 +3067,83 @@ export const ROSTER: Bakugan[] = [
       }
     ],
     "characterGate": true
+  },
+  {
+    "id": "howlkor",
+    "name": "Howlkor",
+    "element": "darkus",
+    "brawler": "Lightning",
+    "series": "Battle Planet",
+    "baseG": 400,
+    "brawlG": 500,
+    "description": "A giant three-headed, Cerberus-like hound from the new generation and the Guardian of Lightning. Howlkor is so set on winning that he often scares his own brawler.",
+    "abilities": [
+      {
+        "id": "eye-for-an-eye",
+        "name": "Eye For An Eye",
+        "type": "weaken",
+        "amount": 200,
+        "effect": "shadowOrb",
+        "description": "Both 1 of your Darkus Bakugan and an opponent's Bakugan lose -200 G's."
+      },
+      {
+        "id": "grand-down",
+        "name": "Grand Down",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "The Gate Card your Darkus Bakugan is standing on is nullified."
+      },
+      {
+        "id": "oregano-revenge",
+        "name": "Oregano Revenge",
+        "type": "weaken",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "Each of your opponent's Bakugan in battle loses -100 G's, and up to the same number of yours in battle gain +100 G's."
+      },
+      {
+        "id": "spiced-assault",
+        "name": "Spiced Assault",
+        "type": "boost",
+        "amount": 30,
+        "effect": "aura",
+        "description": "Send any number of Ability Cards from your deck to your used pile; your Darkus Bakugan gains +30 G's for each sent."
+      },
+      {
+        "id": "all-for-one",
+        "name": "All For One",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "All allied Bakugan have half their G's transferred to 1 of your Darkus Bakugan.",
+        "estimated": true
+      },
+      {
+        "id": "black-is-darkness",
+        "name": "Black Is Darkness",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "Bring all adjacent enemy Bakugan to your Darkus Bakugan's Gate Card.",
+        "estimated": true
+      },
+      {
+        "id": "call-of-the-void",
+        "name": "Call Of The Void",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "If your deck is empty, your Darkus Bakugan gains +200 G's."
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Howlkor",
+        "series": "Battle Planet",
+        "gPower": 400
+      }
+    ]
   },
   {
     "id": "vladitor",

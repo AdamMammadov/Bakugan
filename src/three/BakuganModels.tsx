@@ -93,18 +93,30 @@ function Hover({ on, children }: { on: boolean; children: React.ReactNode }) {
 }
 
 /** The ball form. The procedural ball can open (`openRef`); a .glb ball is shown as-is. */
-export function BallModel({ bakugan, openRef, skin: skinId }: { bakugan: Bakugan; openRef: RefObject<boolean>; skin?: string }) {
+export function BallModel({
+  bakugan,
+  form = 0,
+  openRef,
+  skin: skinId,
+}: {
+  bakugan: Bakugan
+  /** An evolution can have a ball of its own; otherwise the Bakugan's ball is used. */
+  form?: number
+  openRef: RefObject<boolean>
+  skin?: string
+}) {
+  const ballUrl = bakugan.evolutions[form]?.models?.ball ?? bakugan.models?.ball
   const skin = skinId ? SKIN_BY_ID[skinId] : undefined
   const element = skin ? { ...ELEMENT_BY_ID[bakugan.element], color: skin.color } : ELEMENT_BY_ID[bakugan.element]
   // a skinned ball uses the plain ball so the skin colour shows
   const Custom = skin ? undefined : PROCEDURAL_BALLS[bakugan.id]
   const placeholder = Custom ? <Custom openRef={openRef} /> : <BakuganBall color={element.color} openRef={openRef} />
-  if (!bakugan.models?.ball) return placeholder
+  if (!ballUrl) return placeholder
   return (
     <Suspense fallback={null}>
       <group position={[0, -BALL_SIZE / 2, 0]}>
         <NormalizedModel
-          url={asset(bakugan.models.ball)}
+          url={asset(ballUrl)}
           height={BALL_SIZE}
           openRef={openRef}
           tint={skin ? { color: skin.color, glow: skin.glow } : undefined}

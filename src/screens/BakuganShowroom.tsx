@@ -82,7 +82,9 @@ export function BakuganShowroom() {
 
   const el = ELEMENT_BY_ID[bakugan?.element ?? element ?? 'pyrus']
   const evo = bakugan?.evolutions[form]
-  const hasModel = bakugan && (view === 'ball' ? bakugan.models?.ball : formModels({ bakugan, form })?.monster)
+  const hasModel =
+    bakugan &&
+    (view === 'ball' ? (bakugan.evolutions[form]?.models?.ball ?? bakugan.models?.ball) : formModels({ bakugan, form })?.monster)
 
   return (
     <motion.div
@@ -112,7 +114,7 @@ export function BakuganShowroom() {
                 </group>
               ) : (
                 <group position={[0, 0.6, 0]} scale={1.2}>
-                  <BallModel bakugan={bakugan} openRef={closed} skin={owned?.skin} />
+                  <BallModel bakugan={bakugan} form={form} openRef={closed} skin={owned?.skin} />
                 </group>
               )}
             </group>
