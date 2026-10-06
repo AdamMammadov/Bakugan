@@ -1,4 +1,5 @@
-"""Builds src/data/roster.ts: the 36 launch Bakugan beyond the original six (6 per attribute).
+"""Builds src/data/roster.ts: the launch Bakugan beyond the original six (6 per attribute, plus a
+few more added since: Preyas Diablo and Trox).
 
 Facts (brawler, evolutions, story) come from the series as summarised on Wikipedia's
 "List of Bakugan" and "List of Bakugan Battle Brawlers characters"; ability cards come from
@@ -35,6 +36,8 @@ ROSTER = [
      'Marucho\'s cheerful Guardian in New Vestroia, a frog-like humanoid who shoots arrows from her fingers. Like Preyas she can change attribute in battle.'),
     ('elico', 'Elico', 'aquos', 'Mylene Farrow', 430, [('Blast Elico', 'New Vestroia', 530)],
      'Pure strength and brute force: six blade-armed tentacles, shoulder spikes and a golden diamond that fires a water blast. Elico can breathe under water and change attribute.'),
+    ('preyas-diablo', 'Preyas Diablo', 'aquos', 'Marucho Marukura', 400, [('Preyas Angelo', 'Battle Brawlers', 500)],
+     'One face of Marucho\'s Preyas II: the fiery, hot-headed Diablo, part Aquos and part Pyrus. Turned round it becomes Preyas Angelo, the calm, shining side that is part Aquos and part Haos.'),
     ('juggernoid', 'Juggernoid', 'aquos', 'Christopher', 340, [],
      'A turtle-like Bakugan whose shell shrugs off almost any attack. Christopher\'s steady Guardian.'),
     ('siege', 'Siege', 'aquos', 'Jenny', 350, [],
@@ -65,6 +68,8 @@ ROSTER = [
      'A raven-like humanoid Bakugan, the Guardian of the young brawler Nene.'),
     ('hylash', 'Hylash', 'ventus', 'Shun Kazami', 340, [],
      'Shun\'s Trap Bakugan, a swift partner that sets up openings for Ingram.'),
+    ('trox', 'Trox', 'ventus', 'Wynton Styles', 400, [],
+     'A tyrannosaurus-like Bakugan from the new generation of brawlers: unbelievably strong and fiercely loyal to Wynton Styles, who brawls with him as his main partner.'),
     ('monarus', 'Monarus', 'ventus', 'Wild Bakugan', 320, [],
      'A fairy-like Bakugan riding the wind on butterfly wings — small, quick and hard to pin down.'),
     # ---- Haos
@@ -99,6 +104,14 @@ ROSTER = [
 # brawlers who appear from New Vestroia (season 2) on
 NEW_VESTROIA = {'Spectra Phantom', 'Mylene Farrow', 'Gus Grav', 'Mira Fermin', 'Ace Grit', 'Baron Leltoy', 'Shadow Prove',
                 'Volt Luster', 'Lync Volan', 'Professor Clay'}
+
+# Bakugan from a later series than the brawler sets above show
+SERIES = {'trox': 'Battle Planet'}
+# added after launch: they take their filler cards from their own slots, so adding them does not
+# reshuffle the cards of the Bakugan already in players' collections
+ADDED = ['preyas-diablo', 'trox']
+# a Bakugan that shares a few character cards with another one (Diablo is a side of Preyas II)
+CARD_ALIASES = {'preyas-diablo': ('Preyas', 2)}
 
 ELEMENT_EFFECT = {'pyrus': 'fireball', 'aquos': 'waterJet', 'subterra': 'quake', 'ventus': 'tornado', 'haos': 'lightBeam', 'darkus': 'shadowOrb'}
 
@@ -139,8 +152,11 @@ def main():
     gates = {re.sub(r'^(Pyrus|Aquos|Subterra|Ventus|Haos|Darkus)\s+', '', c['name']) for c in cards if c['type'] == 'character-gate'}
 
     out = []
-    for i, (bid, name, element, brawler, g, evos, desc) in enumerate(ROSTER):
-        bases = {name, name.replace('Fourtress', 'Fortress')}
+    launch = [r for r in ROSTER if r[0] not in ADDED]
+    for bid, name, element, brawler, g, evos, desc in ROSTER:
+        i = launch.index(next(r for r in launch if r[0] == bid)) if bid not in ADDED else len(launch) + ADDED.index(bid)
+        alias, alias_max = CARD_ALIASES.get(bid, (None, 5))
+        bases = {name, name.replace('Fourtress', 'Fortress')} | ({alias} if alias else set())
         own = [c for c in cards if c['type'] == 'character' and c['user']
                and re.sub(r'^(Pyrus|Aquos|Subterra|Ventus|Haos|Darkus)\s+', '', c['user']) in bases]
         # this attribute's variant first, then the generic cards of the Bakugan
@@ -148,7 +164,7 @@ def main():
         own = [c for c in own if not re.match(r'^(Pyrus|Aquos|Subterra|Ventus|Haos|Darkus)\s', c['user']) or c['user'].lower().startswith(element)]
         picked, seen = [], set()
         for c in own:
-            if c['name'] not in seen and len(picked) < 5:
+            if c['name'] not in seen and len(picked) < alias_max:
                 picked.append(c)
                 seen.add(c['name'])
         pool = attr_cards[element]
@@ -159,10 +175,11 @@ def main():
             if c['name'] not in seen:
                 picked.append(c)
                 seen.add(c['name'])
-        evolutions = [{'name': name, 'series': 'New Vestroia' if brawler in NEW_VESTROIA else 'Battle Brawlers', 'gPower': g}] + [{'name': n, 'series': s, 'gPower': p} for n, s, p in evos]
+        series = SERIES.get(bid) or ('New Vestroia' if brawler in NEW_VESTROIA else 'Battle Brawlers')
+        evolutions = [{'name': name, 'series': series, 'gPower': g}] + [{'name': n, 'series': s, 'gPower': p} for n, s, p in evos]
         out.append({
             'id': bid, 'name': name, 'element': element, 'brawler': brawler,
-            'series': 'New Vestroia' if brawler in NEW_VESTROIA else 'Battle Brawlers',
+            'series': series,
             'baseG': g, 'brawlG': g + 100, 'description': desc,
             'abilities': [ability(c, element) for c in picked],
             'evolutions': evolutions,
@@ -170,7 +187,7 @@ def main():
         })
 
     ts = ['import type { Bakugan } from \'./bakugan\'', '',
-          '/**', ' * The launch roster beyond the original six: 6 more Bakugan per attribute.',
+          '/**', ' * The launch roster beyond the original six: 6 more Bakugan per attribute, plus later additions.',
           ' * Generated by tools/data/roster.py — edit the script, not this file.', ' */',
           'export const ROSTER: Bakugan[] = ' + json.dumps(out, indent=2, ensure_ascii=False), '']
     open('src/data/roster.ts', 'w').write('\n'.join(ts))

@@ -611,6 +611,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   fourtress: { monster: 'models/fourtress/monster.glb' },
   tentaclear: { monster: 'models/tentaclear/monster.glb', fly: true },
   cycloid: { monster: 'models/cycloid/monster.glb' },
+  'preyas-diablo': { monster: 'models/preyas-diablo/monster.glb' },
+  trox: { monster: 'models/trox/monster.glb', scale: 1.1 },
   elfin: { ball: 'models/elfin/ball.glb' },
   ingram: { ball: 'models/ingram/ball.glb' },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
@@ -618,6 +620,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
 // Magma Wilda has no model of its own yet: Wilda's, glowing like lava
 const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.name === 'Magma Wilda')
+const angelo = ROSTER.find((b) => b.id === 'preyas-diablo')?.evolutions.find((e) => e.name === 'Preyas Angelo')
+if (angelo) angelo.models = { monster: 'models/preyas-diablo/angelo.glb' }
 if (magma) magma.models = { ...ROSTER_MODELS.wilda, tint: { color: '#8a2a10', glow: '#ff6a1a' } }
 
 BAKUGAN.push(...ROSTER)
