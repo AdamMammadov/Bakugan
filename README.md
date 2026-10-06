@@ -63,8 +63,8 @@ Drop files into `public/sounds/` with these names; anything missing falls back t
 - Neo Dragonoid ball model (Dragonoid's ball form): ripped from *Bakugan: Defenders of the Core* (Wii), via [The Models Resource](https://models.spriters-resource.com)
 - Wilda model: ripped from *Bakugan: Defenders of the Core* (Wii), via [The Models Resource](https://models.spriters-resource.com)
 - Trox, Hydorous, Howlkor and Pegatrix models: ripped from *Bakugan: Champions of Vestroia* (Switch), via [The Models Resource](https://models.spriters-resource.com)
-- Titanium Trox skin model: ripped from *Bakugan Brawl Simulator* (Roblox), via [The Models Resource](https://models.spriters-resource.com)
-- Elfin, Ingram, Nemus, Saint Nemus and Magma Wilda ball models: ripped from *Bakugan: Defenders of the Core* (DS), via [The Models Resource](https://models.spriters-resource.com)
+- Titanium Trox, Titanium Dragonoid and Golden Dragonoid skin models: ripped from *Bakugan Brawl Simulator* (Roblox), via [The Models Resource](https://models.spriters-resource.com)
+- Elfin, Ingram, Nemus, Saint Nemus, Magma Wilda and Knight Percival ball models: ripped from *Bakugan: Defenders of the Core* (DS), via [The Models Resource](https://models.spriters-resource.com)
 - Hydranoid, Dual Hydranoid, Tigrerra, Blade Tigrerra, Preyas, Gorem, Skyress, Storm Skyress, Ravenoid, Harpus, Sirenoid, Fourtress, Tentaclear, Hammer Gorem, Cycloid, Dragonoid, Delta Dragonoid, Preyas Diablo, Preyas Angelo and Manion models: ripped from *Bakugan Battle Brawlers* (DS), via [The Models Resource](https://models.spriters-resource.com); cut into animated parts with `tools/preview/rigs.json`
 - Dan Kuso and Masquerade brawler models and portraits: ripped from *Bakugan Battle Brawlers* (DS), via [The Models Resource](https://models.spriters-resource.com); converted with `tools/preview/convert.html`
 - Alice, Julie, Marucho, Runo, Shun, Klaus and Shuji brawler models and portraits: ripped from *Bakugan Battle Brawlers* (Wii), via [The Models Resource](https://models.spriters-resource.com)

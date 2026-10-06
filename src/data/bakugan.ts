@@ -631,6 +631,8 @@ if (magma)
   magma.models = { ...ROSTER_MODELS.wilda, ball: 'models/wilda/magma-ball.glb', tint: { color: '#8a2a10', glow: '#ff6a1a' } }
 const saint = ROSTER.find((b) => b.id === 'nemus')?.evolutions.find((e) => e.name === 'Saint Nemus')
 if (saint) saint.models = { ball: 'models/nemus/saint-ball.glb' }
+const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')
+if (knight) knight.models = { ball: 'models/percival/knight-ball.glb' }
 
 BAKUGAN.push(...ROSTER)
 

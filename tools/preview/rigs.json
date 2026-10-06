@@ -1641,5 +1641,153 @@
       ],
       "test": "y < 5 && x <= 0"
     }
+  ],
+  "dragonoid-gold": [
+    {
+      "name": "wing_l",
+      "pivot": [
+        1.8,
+        7,
+        -0.5
+      ],
+      "test": "x > 2.2 && y > 5.8 && z < 0.5"
+    },
+    {
+      "name": "wing_r",
+      "pivot": [
+        -1.8,
+        7,
+        -0.5
+      ],
+      "test": "x < -2.2 && y > 5.8 && z < 0.5"
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        8.4,
+        0
+      ],
+      "test": "y > 8.4 && Math.abs(x) < 1.5 && z > -1"
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0,
+        3,
+        -1.5
+      ],
+      "test": "z < -1.5 && y < 5.5"
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        2.5,
+        7,
+        0
+      ],
+      "test": "x > 1.6 && y > 3 && y < 7.5 && z > -1"
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -2.5,
+        7,
+        0
+      ],
+      "test": "x < -1.6 && y > 3 && y < 7.5 && z > -1"
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        1.5,
+        3,
+        0
+      ],
+      "test": "y < 3 && x > 0"
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -1.5,
+        3,
+        0
+      ],
+      "test": "y < 3 && x <= 0"
+    }
+  ],
+  "dragonoid-titanium": [
+    {
+      "name": "wing_l",
+      "pivot": [
+        8,
+        30,
+        -2
+      ],
+      "test": "(x > 10 && y > 26) || x > 22"
+    },
+    {
+      "name": "wing_r",
+      "pivot": [
+        -8,
+        30,
+        -2
+      ],
+      "test": "(x < -10 && y > 26) || x < -22"
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        38,
+        2
+      ],
+      "test": "y > 38 && Math.abs(x) < 6"
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0,
+        14,
+        -6
+      ],
+      "test": "z < -8 && y < 26 && Math.abs(x) <= 10"
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        10,
+        26,
+        0
+      ],
+      "test": "x > 8 && x <= 22 && y > 10 && y <= 26"
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -10,
+        26,
+        0
+      ],
+      "test": "x < -8 && x >= -22 && y > 10 && y <= 26"
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        6,
+        10,
+        0
+      ],
+      "test": "y < 10 && x > 0"
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -6,
+        10,
+        0
+      ],
+      "test": "y < 10 && x <= 0"
+    }
   ]
 }

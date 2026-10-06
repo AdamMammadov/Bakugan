@@ -65,14 +65,14 @@ export function MonsterModel({
       </>
     )
   return (
-    <Hover on={!!models.fly}>
+    <Hover on={!!models.fly && !skinModel}>
       {/* nothing until the real model has loaded, so the stand-in never flashes up first */}
       <Suspense fallback={null}>
         <NormalizedModel
           url={asset(skinModel ?? models.monster)}
           height={MONSTER_HEIGHT * size}
           // wide wings must not reach across the field
-          maxLength={MONSTER_HEIGHT * size * (models.fly ? 1.25 : 2)}
+          maxLength={MONSTER_HEIGHT * size * (models.fly && !skinModel ? 1.25 : 2)}
           frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}

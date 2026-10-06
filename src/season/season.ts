@@ -133,6 +133,25 @@ export const SKINS: Skin[] = [
     from: SHOP,
     models: { trox: 'models/trox/titanium.glb' },
   },
+  {
+    id: 'titanium-dragonoid',
+    name: 'Titanium Dragonoid',
+    color: '#8a9099',
+    glow: '#ff5a4a',
+    rarity: 'legendary',
+    from: SHOP,
+    models: { dragonoid: 'models/dragonoid/titanium.glb' },
+  },
+  // the Season 2 pass's top skin; in the shop once that season is over
+  {
+    id: 'golden-dragonoid',
+    name: 'Golden Dragonoid',
+    color: '#f0a020',
+    glow: '#fff1a8',
+    rarity: 'legendary',
+    from: { pass: 2 },
+    models: { dragonoid: 'models/dragonoid/golden.glb' },
+  },
 ]
 export const SKIN_BY_ID = Object.fromEntries(SKINS.map((s) => [s.id, s])) as Record<string, Skin>
 
@@ -208,10 +227,13 @@ export type Reward =
 const PREMIUM = new Set([4, 5, 8, 9, 10, 14, 15, 18, 19, 20, 24, 25, 28, 29, 30, 34, 35, 38, 39, 40, 44, 45, 48])
 export const isPremiumLevel = (level: number) => PREMIUM.has(level)
 
+/** Each season's showpiece pass skin (level 45). */
+const SEASON_SKIN: Record<number, string> = { 2: 'golden-dragonoid' }
+
 export function passRewards(season: number): Reward[] {
   const t = (name: string): Reward => ({ kind: 'title', name: `Season ${season} ${name}` })
   // index = level (index 0 unused)
-  return [
+  const rewards: Reward[] = [
     { kind: 'bp', amount: 0 },
     { kind: 'bp', amount: 300 },
     { kind: 'boost', amount: 2 },
@@ -264,6 +286,9 @@ export function passRewards(season: number): Reward[] {
     { kind: 'bp', amount: 2500 },
     { kind: 'bundle', items: [t('Champion'), { kind: 'frame', id: 'champion' }, { kind: 'bp', amount: 5000 }] },
   ]
+  // a season can put its own showpiece skin on premium level 45
+  if (SEASON_SKIN[season]) rewards[45] = { kind: 'skin', id: SEASON_SKIN[season] }
+  return rewards
 }
 
 export function rewardLabel(r: Reward, seasonBakuganName?: (slot: number) => string | null): string {
