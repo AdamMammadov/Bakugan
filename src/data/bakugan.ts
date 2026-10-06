@@ -108,7 +108,7 @@ export const BAKUGAN: Bakugan[] = [
     series: 'Battle Brawlers',
     baseG: 340,
     brawlG: 440,
-    models: { ball: 'models/dragonoid/neo-ball.glb' },
+    models: { ball: 'models/dragonoid/neo-ball.glb', monster: 'models/dragonoid/monster.glb', fly: true, scale: 1.15 },
     description: 'A proud dragon Bakugan and Dan’s partner, destined to evolve into the Perfect Core guardian.',
     abilities: [
       {
@@ -181,10 +181,25 @@ export const BAKUGAN: Bakugan[] = [
     ],
     evolutions: [
       { name: 'Dragonoid', series: 'Battle Brawlers', gPower: 340 },
-      { name: 'Delta Dragonoid', series: 'Battle Brawlers', gPower: 450 },
-      { name: 'Ultimate Dragonoid', series: 'Battle Brawlers', gPower: 550 },
-      // game model ripped from Bakugan: Defenders of the Core (Wii), via The Models Resource
-      { name: 'Neo Dragonoid', series: 'New Vestroia', gPower: 500 },
+      {
+        name: 'Delta Dragonoid',
+        series: 'Battle Brawlers',
+        gPower: 450,
+        models: { monster: 'models/dragonoid/delta.glb', scale: 1.25 },
+      },
+      // Ultimate and Neo have no models of their own yet: Delta's, recoloured
+      {
+        name: 'Ultimate Dragonoid',
+        series: 'Battle Brawlers',
+        gPower: 550,
+        models: { monster: 'models/dragonoid/delta.glb', scale: 1.3, tint: { color: '#b3121a', glow: '#ffc93c' } },
+      },
+      {
+        name: 'Neo Dragonoid',
+        series: 'New Vestroia',
+        gPower: 500,
+        models: { monster: 'models/dragonoid/delta.glb', scale: 1.3, tint: { color: '#e0401c', glow: '#fff0a0' } },
+      },
     ],
   },
   {
@@ -596,6 +611,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   fourtress: { monster: 'models/fourtress/monster.glb' },
   tentaclear: { monster: 'models/tentaclear/monster.glb', fly: true },
   cycloid: { monster: 'models/cycloid/monster.glb' },
+  elfin: { ball: 'models/elfin/ball.glb' },
+  ingram: { ball: 'models/ingram/ball.glb' },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
