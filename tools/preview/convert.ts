@@ -142,7 +142,24 @@ root.traverse((o) => {
   }
   const mats = Array.isArray(m.material) ? m.material : [m.material]
   m.material = mats.map((old) => {
-    const map = (old as THREE.MeshPhongMaterial).map ?? null
+    let map = (old as THREE.MeshPhongMaterial).map ?? null
+    // hue=<degrees>: an attribute variant, recoloured in the texture itself (shading and detail
+    // stay, only the colours turn); sat=<factor> tunes the saturation
+    if (map && (q.get('hue') || q.get('sat'))) {
+      const img = map.image as HTMLImageElement
+      const c = document.createElement('canvas')
+      c.width = img.width
+      c.height = img.height
+      const g = c.getContext('2d')!
+      g.filter = `hue-rotate(${q.get('hue') ?? 0}deg) saturate(${q.get('sat') ?? 1})`
+      g.drawImage(img, 0, 0)
+      const t = new THREE.CanvasTexture(c)
+      t.flipY = map.flipY
+      t.wrapS = map.wrapS
+      t.wrapT = map.wrapT
+      t.colorSpace = THREE.SRGBColorSpace
+      map = t
+    }
     // meshes made from a picture (image-to-3D) carry their colours on the vertices
     if (!map && m.geometry.attributes.color)
       return new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, metalness: 0.05, side: THREE.DoubleSide })
