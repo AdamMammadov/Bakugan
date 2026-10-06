@@ -105,7 +105,7 @@ export function BakuganShowroom() {
           <Suspense fallback={null}>
             <group key={`${bakugan.id}-${form}-${view}`}>
               {view === 'monster' ? (
-                <group scale={0.85}>
+                <group scale={0.78 / Math.max(1, (formModels({ bakugan, form })?.scale ?? 1) * (1 + form * 0.12))}>
                   <MoveBody pose={pose}>
                     <MonsterModel entrant={{ bakugan, form, skin: owned?.skin }} poseRef={pose} />
                   </MoveBody>

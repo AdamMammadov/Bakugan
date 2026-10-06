@@ -349,6 +349,7 @@ if (q.get('rig')) {
   }
   const nodes = new Map<string, THREE.Group>()
   for (const part of parts) {
+    if (part.name === 'drop') continue
     const n = new THREE.Group()
     n.name = part.name
     nodes.set(part.name, n)
@@ -358,6 +359,8 @@ if (q.get('rig')) {
   root.add(body)
   for (const [k, list] of [...buckets].sort((a, b) => a[0] - b[0])) {
     const part = parts[k]
+    // a part named "drop" holds stray pieces that float apart from the model
+    if (part?.name === 'drop') continue
     for (const { geo, tris, mat } of list) {
       const piece = take(geo, tris)
       if (!part) {

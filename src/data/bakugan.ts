@@ -84,6 +84,8 @@ export interface Bakugan {
     monsterYaw?: number
     /** Winged Bakugan hover above the ground instead of standing on it. */
     fly?: boolean
+    /** How big this Bakugan stands next to the others (1 = normal). */
+    scale?: number
   }
   /** Has its own Character Gate Card (doubles its power). */
   characterGate?: boolean
@@ -491,8 +493,8 @@ export const BAKUGAN: Bakugan[] = [
     ],
     evolutions: [
       { name: 'Tigrerra', series: 'Battle Brawlers', gPower: 340 },
-      { name: 'Blade Tigrerra', series: 'Battle Brawlers', gPower: 450 },
-      { name: 'Blade Tigrerra', series: 'New Vestroia', gPower: 500 },
+      { name: 'Blade Tigrerra', series: 'Battle Brawlers', gPower: 450, models: { monster: 'models/tigrerra/blade.glb' } },
+      { name: 'Blade Tigrerra', series: 'New Vestroia', gPower: 500, models: { monster: 'models/tigrerra/blade.glb' } },
     ],
   },
   {
@@ -503,7 +505,7 @@ export const BAKUGAN: Bakugan[] = [
     series: 'Battle Brawlers',
     baseG: 450,
     brawlG: 550,
-    models: { ball: 'models/hydranoid/ball.glb', monster: 'models/hydranoid/monster.glb' },
+    models: { ball: 'models/hydranoid/ball.glb', monster: 'models/hydranoid/monster.glb', scale: 1.6 },
     description: 'A ravenous dark dragon that grows more heads — and more power — with each evolution.',
     abilities: [
       {
@@ -566,9 +568,19 @@ export const BAKUGAN: Bakugan[] = [
     ],
     evolutions: [
       { name: 'Hydranoid', series: 'Battle Brawlers', gPower: 450 },
-      { name: 'Dual Hydranoid', series: 'Battle Brawlers', gPower: 480, models: { monster: 'models/hydranoid/dual.glb' } },
+      {
+        name: 'Dual Hydranoid',
+        series: 'Battle Brawlers',
+        gPower: 480,
+        models: { monster: 'models/hydranoid/dual.glb', scale: 1.25 },
+      },
       // three-headed Alpha uses the closest model we have: the upright, many-headed Dual Hydranoid
-      { name: 'Alpha Hydranoid', series: 'Battle Brawlers', gPower: 550, models: { monster: 'models/hydranoid/dual.glb' } },
+      {
+        name: 'Alpha Hydranoid',
+        series: 'Battle Brawlers',
+        gPower: 550,
+        models: { monster: 'models/hydranoid/dual.glb', scale: 1.25 },
+      },
     ],
   },
 ]
@@ -578,6 +590,9 @@ export const BAKUGAN: Bakugan[] = [
 const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   ravenoid: { monster: 'models/ravenoid/monster.glb', fly: true },
   harpus: { monster: 'models/harpus/monster.glb', fly: true },
+  sirenoid: { monster: 'models/sirenoid/monster.glb', fly: true },
+  fourtress: { monster: 'models/fourtress/monster.glb' },
+  tentaclear: { monster: 'models/tentaclear/monster.glb', fly: true },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
 

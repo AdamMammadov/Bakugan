@@ -1,10 +1,10 @@
 import { OrbitControls, Sparkles } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
-import { type RefObject, Suspense, useEffect, useRef } from 'react'
+import { type RefObject, Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import type { Ability, Bakugan } from '../data/bakugan'
+import { formModels, type Ability, type Bakugan } from '../data/bakugan'
 import type { ElementInfo } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { BallModel, MonsterModel } from './BakuganModels'
@@ -99,7 +99,7 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
         </group>
       )}
 
-      <CameraRig phase={phase} />
+      <CameraRig phase={phase} size={(formModels({ bakugan, form })?.scale ?? 1) * (1 + form * 0.12)} />
 
       <EffectComposer multisampling={0}>
         <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
@@ -242,11 +242,17 @@ function MonsterActor({
 }
 
 /** Flies the camera to a preset when the phase changes, then hands control back to the user. */
-function CameraRig({ phase }: { phase: Phase }) {
+function CameraRig({ phase, size }: { phase: Phase; size: number }) {
   const controls = useRef<OrbitControlsImpl>(null)
   const { camera } = useThree()
   const flying = useRef(0)
-  const preset = phase === 'brawling' || phase === 'monster' ? CAMERA.monster : phase === 'gate' ? CAMERA.gate : CAMERA.ball
+  const preset = useMemo(() => {
+    if (phase !== 'brawling' && phase !== 'monster') return phase === 'gate' ? CAMERA.gate : CAMERA.ball
+    // a big Bakugan pushes the camera back so its head stays in the picture
+    const k = Math.max(1, size)
+    const target = CAMERA.monster.target.clone().multiplyScalar(k)
+    return { target, pos: CAMERA.monster.pos.clone().sub(CAMERA.monster.target).multiplyScalar(k).add(target) }
+  }, [phase, size])
 
   useEffect(() => {
     flying.current = 1.4

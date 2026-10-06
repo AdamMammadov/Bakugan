@@ -6,6 +6,7 @@ import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
+import { formModels } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { DEFAULT_PARTS, type Accessory } from '../profile/avatar'
 import {
@@ -181,7 +182,10 @@ function Skins({ profile }: { profile: Profile }) {
             <directionalLight position={[3, 6, 4]} intensity={2.2} />
             <pointLight position={[-3, 2.5, -2]} intensity={20} color={trying ? SKIN_BY_ID[trying].glow : element.glow} />
             <Suspense fallback={null}>
-              <group key={`${owned.id}-${trying}`} scale={0.85}>
+              <group
+                key={`${owned.id}-${trying}`}
+                scale={0.78 / Math.max(1, (formModels({ bakugan, form: owned.form })?.scale ?? 1) * (1 + owned.form * 0.12))}
+              >
                 <MonsterModel entrant={{ bakugan, form: owned.form, skin: trying }} />
               </group>
             </Suspense>

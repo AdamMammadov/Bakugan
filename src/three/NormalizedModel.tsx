@@ -21,6 +21,7 @@ export function NormalizedModel({
   url,
   height,
   maxLength = Infinity,
+  frontAt,
   yaw = 0,
   poseRef,
   openRef,
@@ -32,6 +33,8 @@ export function NormalizedModel({
   height: number
   /** Longest the model may be front to back or side to side; long-tailed monsters shrink to fit. */
   maxLength?: number
+  /** Puts the model's front (its +Z end) here instead of centring it, so long bodies extend backwards. */
+  frontAt?: number
   yaw?: number
   poseRef?: PoseRef
   /** For ball models: while true, pieces move to the open pose stored in their glTF extras. */
@@ -106,8 +109,9 @@ export function NormalizedModel({
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())
     const scale = Math.min(size.y > 0 ? height / size.y : 1, maxLength / Math.max(size.x, size.z, 1e-6))
-    return { scale, offset: [-center.x * scale, -box.min.y * scale, -center.z * scale] as const }
-  }, [scene, height, maxLength])
+    const z = frontAt === undefined ? -center.z * scale : frontAt - box.max.z * scale
+    return { scale, offset: [-center.x * scale, -box.min.y * scale, z] as const }
+  }, [scene, height, maxLength, frontAt])
 
   const root = useRef<THREE.Group>(null)
   const { actions, names } = useAnimations(gltf.animations, root)

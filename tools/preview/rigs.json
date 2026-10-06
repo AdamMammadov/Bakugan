@@ -582,5 +582,194 @@
       ],
       "test": "y < 11 && x <= 0"
     }
+  ],
+  "sirenoid": [
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        14,
+        0
+      ],
+      "test": "y > 14 && Math.abs(x) < 1.6 && z < 2.5"
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        1,
+        11.5,
+        1.5
+      ],
+      "test": "z > 2.5 && y > 8"
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0,
+        6,
+        0
+      ],
+      "test": "y < 6"
+    }
+  ],
+  "fourtress": [
+    {
+      "name": "drop",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "test": "Math.abs(z) > 5 && Math.abs(x) > 4"
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        3,
+        11,
+        0
+      ],
+      "test": "x > 3 && y > 9",
+      "bake": [
+        0,
+        0,
+        -1.2
+      ]
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -3,
+        11,
+        0
+      ],
+      "test": "x < -3 && y > 9",
+      "bake": [
+        0,
+        0,
+        1.2
+      ]
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        13,
+        0
+      ],
+      "test": "y > 13 && Math.abs(x) < 1.6"
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        0.8,
+        2.5,
+        0
+      ],
+      "test": "y < 2.5 && x > 0"
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -0.8,
+        2.5,
+        0
+      ],
+      "test": "y < 2.5 && x <= 0"
+    }
+  ],
+  "tentaclear": [
+    {
+      "name": "wing_l",
+      "pivot": [
+        1.6,
+        7,
+        0
+      ],
+      "test": "x > 1.6"
+    },
+    {
+      "name": "wing_r",
+      "pivot": [
+        -1.6,
+        7,
+        0
+      ],
+      "test": "x < -1.6"
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        9,
+        0
+      ],
+      "test": "y > 9.2"
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0,
+        5,
+        0
+      ],
+      "test": "y < 4.8"
+    }
+  ],
+  "blade-tigrerra": [
+    {
+      "name": "tail",
+      "pivot": [
+        0,
+        9,
+        -1.8
+      ],
+      "test": "z < -1.8"
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        12,
+        0
+      ],
+      "test": "y > 12 && Math.abs(x) < 2.2"
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        3.2,
+        11,
+        0
+      ],
+      "test": "x > 3 && y > 5 && y < 12"
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -3.2,
+        11,
+        0
+      ],
+      "test": "x < -3 && y > 5 && y < 12"
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        1.5,
+        5.5,
+        0
+      ],
+      "test": "y < 5.5 && x > 0"
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -1.5,
+        5.5,
+        0
+      ],
+      "test": "y < 5.5 && x <= 0"
+    }
   ]
 }

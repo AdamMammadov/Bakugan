@@ -31,6 +31,11 @@ export const IMPACT_AT = 0.75
 export const ACTION_DURATION = 1.7
 
 const CHEST_Y = 1.6 * FIGHTER_SCALE
+/**
+ * Where each monster's front stands, ahead of its spot (model units): the two fronts stay a few
+ * units apart however long the bodies are, and long tails reach back instead of into the opponent.
+ */
+const FRONT_AT = 1.9
 
 interface Props {
   fighters: [Entrant, Entrant]
@@ -74,14 +79,26 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
         shadow-camera-far={120}
       />
       {fighters.map((f, i) => (
-        <pointLight key={i} position={[sideX(i as SideIndex) * 1.6, 8, -4]} intensity={90} color={ELEMENT_BY_ID[f.bakugan.element].glow} />
+        <pointLight
+          key={i}
+          position={[sideX(i as SideIndex) * 1.6, 8, -4]}
+          intensity={90}
+          color={ELEMENT_BY_ID[f.bakugan.element].glow}
+        />
       ))}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[110, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
       </mesh>
-      <Sparkles count={300} scale={[70, 28, 44]} position={[0, 11, 0]} size={2} speed={0.3} color={gateElement?.glow ?? '#9aa3b5'} />
+      <Sparkles
+        count={300}
+        scale={[70, 28, 44]}
+        position={[0, 11, 0]}
+        size={2}
+        speed={0.3}
+        color={gateElement?.glow ?? '#9aa3b5'}
+      />
 
       {/* the field Gate Card both Bakugan stand on */}
       <group rotation={[0, Math.PI / 2, 0]} scale={27}>
@@ -110,7 +127,13 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
           scale={BRAWLER_SCALE}
         >
           <Suspense fallback={null}>
-            <Brawler parts={b.parts} photo={b.photo} model={b.model} gesture={b.gesture} color={ELEMENT_BY_ID[fighters[i].bakugan.element].color} />
+            <Brawler
+              parts={b.parts}
+              photo={b.photo}
+              model={b.model}
+              gesture={b.gesture}
+              color={ELEMENT_BY_ID[fighters[i].bakugan.element].color}
+            />
           </Suspense>
           <BlobShadow size={0.9} />
         </group>
@@ -252,7 +275,7 @@ function Fighter({
           {/* rotations pivot around the hips so rearing up looks natural */}
           <group ref={motion} position={[0, 0, -HIP_Z]}>
             <group position={[0, 0, HIP_Z]}>
-              <MonsterModel entrant={entrant} poseRef={anim} />
+              <MonsterModel entrant={entrant} poseRef={anim} frontAt={FRONT_AT} />
             </group>
           </group>
           <BlobShadow size={3.2} />
@@ -305,7 +328,9 @@ function ActionFx({ event, fighters }: { event: BattleEvent; fighters: [Entrant,
       <>
         <Projectile from={from} to={to} preset={preset} color={me.color} glow={me.glow} />
         <Impact at={to} color={me.glow} delay={IMPACT_AT} />
-        {!blocked && <Projectile from={to} to={from} preset="aura" color={me.glow} glow="#ffffff" delay={IMPACT_AT + 0.1} travel={0.6} />}
+        {!blocked && (
+          <Projectile from={to} to={from} preset="aura" color={me.glow} glow="#ffffff" delay={IMPACT_AT + 0.1} travel={0.6} />
+        )}
       </>
     )
   }

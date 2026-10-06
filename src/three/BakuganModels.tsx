@@ -24,13 +24,22 @@ const PROCEDURAL_BALLS: Record<string, ComponentType<{ openRef: RefObject<boolea
  * The monster form: the form's (or Bakugan's) .glb when provided, otherwise the procedural
  * stand-in. Evolved forms stand a little taller.
  */
-export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?: PoseRef }) {
+export function MonsterModel({
+  entrant,
+  poseRef,
+  frontAt,
+}: {
+  entrant: Entrant
+  poseRef?: PoseRef
+  /** In the arena: where the monster's front stands, so long bodies never reach into the opponent. */
+  frontAt?: number
+}) {
   const base = ELEMENT_BY_ID[entrant.bakugan.element]
   // an equipped skin recolours the Bakugan
   const skin = entrant.skin ? SKIN_BY_ID[entrant.skin] : undefined
   const element = skin ? { ...base, color: skin.color, glow: skin.glow } : base
   const models = formModels(entrant)
-  const size = 1 + entrant.form * 0.12
+  const size = (1 + entrant.form * 0.12) * (models?.scale ?? 1)
   const placeholder = (
     <group scale={size}>
       <PlaceholderMonster color={element.color} glow={element.glow} poseRef={poseRef} />
@@ -62,7 +71,8 @@ export function MonsterModel({ entrant, poseRef }: { entrant: Entrant; poseRef?:
           url={asset(models.monster)}
           height={MONSTER_HEIGHT * size}
           // wide wings must not reach across the field
-          maxLength={MONSTER_HEIGHT * size * (models.fly ? 1.25 : 1.7)}
+          maxLength={MONSTER_HEIGHT * size * (models.fly ? 1.25 : 2)}
+          frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}
           tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
