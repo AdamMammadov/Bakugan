@@ -3,11 +3,56 @@ import { useState } from 'react'
 import { BakuganInfo } from '../components/BakuganInfo'
 import { bakuganForElement, type Bakugan } from '../data/bakugan'
 import { GRID, GRID_SIZE } from '../components/grid'
-import { ELEMENT_BY_ID } from '../data/elements'
-import { ownsBakugan, seasonFor, unlockHint, useActiveProfile } from '../profile/useProfiles'
+import { ELEMENT_BY_ID, type ElementInfo } from '../data/elements'
+import { ownsBakugan, seasonFor, unlockHint, useActiveProfile, type Profile } from '../profile/useProfiles'
 import { currentSeason } from '../season/current'
 import { passLevel, timeLeft } from '../season/season'
 import { useGame } from '../store/useGame'
+
+/**
+ * Shown when a player looks at an attribute that is not their own: they brawl as their own
+ * attribute, so these Bakugan are locked until bought; or they can start a profile here.
+ */
+function OtherAttribute({ profile, element }: { profile: Profile; element: ElementInfo }) {
+  const chooseElement = useGame((s) => s.chooseElement)
+  const openPage = useGame((s) => s.openPage)
+  const editProfile = useGame((s) => s.editProfile)
+  const own = ELEMENT_BY_ID[profile.element]
+  return (
+    <div
+      className="mt-8 flex flex-wrap items-center gap-4 rounded-xl border bg-black/50 px-6 py-4"
+      style={{ borderColor: `${own.color}88` }}
+    >
+      <img src={own.icon} alt="" className="h-10 w-10" />
+      <p className="flex-1 text-white/80">
+        You brawl as <span style={{ color: own.color }}>{own.name}</span> ({profile.firstName}). {element.name} Bakugan are locked
+        for this profile: buy them in the shop, or start a new {element.name} profile to begin with one.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => chooseElement(profile.element)}
+          className="font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
+          style={{ borderColor: own.color }}
+        >
+          ← MY {own.name.toUpperCase()} BAKUGAN
+        </button>
+        <button
+          onClick={() => openPage('shop')}
+          className="font-display rounded border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
+        >
+          SHOP
+        </button>
+        <button
+          onClick={() => editProfile(null)}
+          className="font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
+          style={{ borderColor: element.color }}
+        >
+          + NEW {element.name.toUpperCase()} PROFILE
+        </button>
+      </div>
+    </div>
+  )
+}
 
 /** Season countdown and pass level, opening the Season Pass. */
 function SeasonChip() {
@@ -67,6 +112,8 @@ export function ElementHub() {
         </div>
         <SeasonChip />
       </header>
+
+      {profile && profile.element !== elementId && <OtherAttribute profile={profile} element={element} />}
 
       <div className="mt-12 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">
         {roster.map((b, i) => {

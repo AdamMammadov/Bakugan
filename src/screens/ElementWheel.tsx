@@ -5,6 +5,7 @@ import { bakuganForElement } from '../data/bakugan'
 import { CORRELATIONS, DIAGONAL, ELEMENT_BY_ID, ELEMENTS, type ElementInfo } from '../data/elements'
 import { asset } from '../asset'
 import { GRID, GRID_SIZE } from '../components/grid'
+import { useActiveProfile } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 
 const ART = 640 // size of the wheel art in source pixels
@@ -23,16 +24,19 @@ function elementAt(angle: number): ElementInfo {
 export function ElementWheel() {
   const chooseElement = useGame((s) => s.chooseElement)
   const wheelRef = useRef<HTMLDivElement>(null)
-  const [hovered, setHovered] = useState<ElementInfo>(ELEMENTS[0])
+  // a returning player's wheel starts on their own attribute
+  const profile = useActiveProfile()
+  const start = profile ? ELEMENT_BY_ID[profile.element] : ELEMENTS[0]
+  const [hovered, setHovered] = useState<ElementInfo>(start)
   const [chosen, setChosen] = useState<ElementInfo | null>(null)
   const [size, setSize] = useState(640)
 
   // Continuous (unwrapped) angles so the springs never spin the long way round.
-  const cursorAngle = useRef(0)
+  const cursorAngle = useRef(start.wheelAngle)
   const runeRotation = useSpring(0, { stiffness: 60, damping: 18 })
-  const pointerRotation = useSpring(0, { stiffness: 260, damping: 26 })
-  const wedgeAngle = useRef(0)
-  const wedgeRotation = useSpring(0, { stiffness: 320, damping: 28 })
+  const pointerRotation = useSpring(start.wheelAngle, { stiffness: 260, damping: 26 })
+  const wedgeAngle = useRef(start.wheelAngle)
+  const wedgeRotation = useSpring(start.wheelAngle, { stiffness: 320, damping: 28 })
 
   useEffect(() => {
     const resize = () => setSize(Math.min(window.innerHeight * 0.86, window.innerWidth * 0.5, 760))
@@ -134,7 +138,11 @@ export function ElementWheel() {
         />
 
         {/* selection wedge (snaps to the sector) and needle (follows the cursor) */}
-        <motion.svg viewBox="-320 -320 640 640" className="pointer-events-none absolute inset-0 h-full w-full" style={{ rotate: wedgeRotation }}>
+        <motion.svg
+          viewBox="-320 -320 640 640"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          style={{ rotate: wedgeRotation }}
+        >
           <defs>
             <radialGradient id="wedge" r="0.5">
               <stop offset="0.25" stopColor={active.color} stopOpacity="0" />
@@ -143,7 +151,11 @@ export function ElementWheel() {
           </defs>
           <path d={wedgePath(296, 30)} fill="url(#wedge)" />
         </motion.svg>
-        <motion.svg viewBox="-320 -320 640 640" className="pointer-events-none absolute inset-0 h-full w-full" style={{ rotate: pointerRotation }}>
+        <motion.svg
+          viewBox="-320 -320 640 640"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          style={{ rotate: pointerRotation }}
+        >
           <line x1="0" y1="-40" x2="0" y2="-296" stroke={active.glow} strokeWidth="3" strokeLinecap="round" opacity="0.9" />
           <polygon points="0,-318 -10,-300 10,-300" fill={active.glow} />
         </motion.svg>
@@ -218,7 +230,10 @@ function InfoPanel({ element }: { element: ElementInfo }) {
               {roster.map((b) => (
                 <span key={b.id} className="text-white/85">
                   <span className="font-semibold">{b.name}</span>
-                  <span className="text-white/45"> · {b.baseG}G · {b.evolutions.length} {b.evolutions.length === 1 ? 'form' : 'forms'}</span>
+                  <span className="text-white/45">
+                    {' '}
+                    · {b.baseG}G · {b.evolutions.length} {b.evolutions.length === 1 ? 'form' : 'forms'}
+                  </span>
                 </span>
               ))}
             </InfoRow>
