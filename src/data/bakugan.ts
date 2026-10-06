@@ -623,12 +623,12 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
-// Magma Wilda has no model of its own yet: Wilda's, glowing like lava
 const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.name === 'Magma Wilda')
 const angelo = ROSTER.find((b) => b.id === 'preyas-diablo')?.evolutions.find((e) => e.name === 'Preyas Angelo')
 if (angelo) angelo.models = { monster: 'models/preyas-diablo/angelo.glb' }
 if (magma)
-  magma.models = { ...ROSTER_MODELS.wilda, ball: 'models/wilda/magma-ball.glb', tint: { color: '#8a2a10', glow: '#ff6a1a' } }
+  // made from a single picture with tools/ai/image_to_3d.py
+  magma.models = { monster: 'models/wilda/magma.glb', ball: 'models/wilda/magma-ball.glb', scale: 1.2 }
 const saint = ROSTER.find((b) => b.id === 'nemus')?.evolutions.find((e) => e.name === 'Saint Nemus')
 if (saint) saint.models = { ball: 'models/nemus/saint-ball.glb' }
 const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')

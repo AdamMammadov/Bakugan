@@ -63,7 +63,7 @@ if (q.get('front')) {
         const attr = g.attributes[name] as THREE.BufferAttribute
         const arr = new Float32Array(tris.length * 3 * attr.itemSize)
         tris.forEach((t, i) => {
-          for (let v = 0; v < 3; v++) for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.array[(t + v) * attr.itemSize + k]
+          for (let v = 0; v < 3; v++) for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.getComponent(t + v, k)
         })
         out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
       }
@@ -346,7 +346,7 @@ if (q.get('rig')) {
       const attr = g.attributes[name] as THREE.BufferAttribute
       const arr = new Float32Array(tris.length * 3 * attr.itemSize)
       tris.forEach((t, i) => {
-        for (let v = 0; v < 3; v++) for (let c = 0; c < attr.itemSize; c++) arr[(i * 3 + v) * attr.itemSize + c] = attr.array[(t + v) * attr.itemSize + c]
+        for (let v = 0; v < 3; v++) for (let c = 0; c < attr.itemSize; c++) arr[(i * 3 + v) * attr.itemSize + c] = attr.getComponent(t + v, c)
       })
       out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
     }
@@ -440,7 +440,7 @@ if (!NO_SPLIT) wrap.traverse((o) => {
         const attr = g.attributes[name] as THREE.BufferAttribute
         const arr = new Float32Array(tris.length * 3 * attr.itemSize)
         tris.forEach((t, i) => {
-          for (let v = 0; v < 3; v++) for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.array[(t + v) * attr.itemSize + k]
+          for (let v = 0; v < 3; v++) for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.getComponent(t + v, k)
         })
         out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
       }
