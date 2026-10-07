@@ -148,18 +148,20 @@ export function NormalizedModel({
     const pose = poseRef?.current ?? null
     const t = pose?.start != null ? now - pose.start : 0
     const p = rigPose(pose?.move ?? null, t, now)
-    rig.neck?.rotation.set(p.neck, 0, 0)
-    rig.head?.rotation.set(p.head, 0, 0)
-    rig.jaw?.rotation.set(p.jaw, 0, 0)
-    rig.tail?.rotation.set(p.tailLift, p.tailYaw, 0)
-    rig.tip?.rotation.set(0, p.tipYaw, 0)
-    rig.fl?.rotation.set(p.frontL, 0, 0)
-    rig.fr?.rotation.set(p.frontR, 0, 0)
-    rig.bl?.rotation.set(p.hindL, 0, 0)
-    rig.br?.rotation.set(p.hindR, 0, 0)
+    // a part may turn less than the pose asks (userData.swing, from tools/preview/rigs.json)
+    const k = (o: THREE.Object3D | null) => (o?.userData.swing as number | undefined) ?? 1
+    rig.neck?.rotation.set(p.neck * k(rig.neck), 0, 0)
+    rig.head?.rotation.set(p.head * k(rig.head), 0, 0)
+    rig.jaw?.rotation.set(p.jaw * k(rig.jaw), 0, 0)
+    rig.tail?.rotation.set(p.tailLift * k(rig.tail), p.tailYaw * k(rig.tail), 0)
+    rig.tip?.rotation.set(0, p.tipYaw * k(rig.tip), 0)
+    rig.fl?.rotation.set(p.frontL * k(rig.fl), 0, 0)
+    rig.fr?.rotation.set(p.frontR * k(rig.fr), 0, 0)
+    rig.bl?.rotation.set(p.hindL * k(rig.bl), 0, 0)
+    rig.br?.rotation.set(p.hindR * k(rig.br), 0, 0)
     // wings beat about the body's long axis; the right one mirrors the left
-    rig.wl?.rotation.set(0, 0, p.wing)
-    rig.wr?.rotation.set(0, 0, -p.wing)
+    rig.wl?.rotation.set(0, 0, p.wing * k(rig.wl))
+    rig.wr?.rotation.set(0, 0, -p.wing * k(rig.wr))
   })
 
   const lastPose = useRef<Pose | null>(null)

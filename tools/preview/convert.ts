@@ -327,7 +327,14 @@ root.traverse((o) => {
 
 // rig=<name>: cut a one-piece monster into the named pivot nodes the game animates (rigs.json)
 if (q.get('rig')) {
-  type Part = { name: string; parent?: string; pivot: [number, number, number]; test: string; bake?: [number, number, number] }
+  type Part = {
+    name: string
+    parent?: string
+    pivot: [number, number, number]
+    test: string
+    bake?: [number, number, number]
+    swing?: number
+  }
   const parts: Part[] = (await (await fetch('/tools/preview/rigs.json')).json())[q.get('rig')!]
   const tests = parts.map((p) => new Function('x', 'y', 'z', `return ${p.test}`) as (x: number, y: number, z: number) => boolean)
   // triangles per part (index -1 = body), per material
@@ -374,6 +381,8 @@ if (q.get('rig')) {
     if (part.name === 'drop') continue
     const n = new THREE.Group()
     n.name = part.name
+    // swing=<factor> damps how far the game turns this part (saved as glTF extras)
+    if (part.swing !== undefined) n.userData.swing = part.swing
     nodes.set(part.name, n)
   }
   const body = new THREE.Group()
