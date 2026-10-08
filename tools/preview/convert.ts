@@ -325,6 +325,42 @@ root.traverse((o) => {
   if ((m.material as unknown as THREE.Material[]).length === 1) m.material = (m.material as unknown as THREE.Material[])[0]
 })
 
+// ink=<share of the height>: a black inverted hull round every mesh, the inked edge the game
+// models have. The hull is the mesh pushed out along smooth normals and turned inside out, so only
+// its far side shows, as a rim round the silhouette and along creases.
+if (q.get('ink')) {
+  root.updateMatrixWorld(true)
+  const box = new THREE.Box3().setFromObject(root)
+  const width = Number(q.get('ink')) * (box.max.y - box.min.y)
+  const ink = new THREE.MeshBasicMaterial({ color: new THREE.Color('#' + (q.get('inkColor') ?? '140f1c')) })
+  const meshes: THREE.Mesh[] = []
+  root.traverse((o) => (o as THREE.Mesh).isMesh && meshes.push(o as THREE.Mesh))
+  for (const m of meshes) {
+    const base = new THREE.BufferGeometry()
+    base.setAttribute('position', m.geometry.attributes.position.clone())
+    if (m.geometry.index) base.setIndex(m.geometry.index.clone())
+    // welded, so the hull has no cracks along texture seams
+    const g = mergeVertices(base, 1e-5)
+    g.computeVertexNormals()
+    const local = width / new THREE.Vector3().setFromMatrixScale(m.matrixWorld).x
+    const pos = g.attributes.position
+    const nrm = g.attributes.normal
+    for (let i = 0; i < pos.count; i++)
+      pos.setXYZ(i, pos.getX(i) + nrm.getX(i) * local, pos.getY(i) + nrm.getY(i) * local, pos.getZ(i) + nrm.getZ(i) * local)
+    const idx = g.index!
+    for (let i = 0; i < idx.count; i += 3) {
+      const t = idx.getX(i + 1)
+      idx.setX(i + 1, idx.getX(i + 2))
+      idx.setX(i + 2, t)
+    }
+    g.deleteAttribute('normal')
+    const hull = new THREE.Mesh(g, ink)
+    hull.name = 'ink'
+    hull.applyMatrix4(m.matrix)
+    m.parent!.add(hull)
+  }
+}
+
 // rig=<name>: cut a one-piece monster into the named pivot nodes the game animates (rigs.json)
 if (q.get('rig')) {
   type Part = {
