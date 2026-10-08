@@ -622,7 +622,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   howlkor: { monster: 'models/howlkor/monster.glb', scale: 1.15 },
   manion: { monster: 'models/manion/monster.glb', scale: 1.1 },
   pegatrix: { monster: 'models/pegatrix/monster.glb', scale: 1.15 },
-  nemus: { ball: 'models/nemus/ball.glb' },
+  // Mega Nemus, made from a picture with Hunyuan3D-2.1, recoloured towards the art, inked and rigged
+  nemus: { ball: 'models/nemus/ball.glb', monster: 'models/nemus/monster.glb', scale: 1.1 },
   // made from a picture with TRELLIS.2 (image to 3D), tinted towards the art and rigged like the others
   hades: { monster: 'models/hades/monster.glb', scale: 1.15 },
   elfin: { ball: 'models/elfin/ball.glb', monster: 'models/elfin/monster.glb', fly: true, scale: 1.1 },
@@ -637,7 +638,7 @@ if (magma)
   // made from a picture with TRELLIS.2 (image to 3D), recoloured to the art and rigged like the others
   magma.models = { monster: 'models/wilda/magma.glb', ball: 'models/wilda/magma-ball.glb', scale: 1.2 }
 const saint = ROSTER.find((b) => b.id === 'nemus')?.evolutions.find((e) => e.name === 'Saint Nemus')
-if (saint) saint.models = { ball: 'models/nemus/saint-ball.glb' }
+if (saint) saint.models = { ...ROSTER_MODELS.nemus, ball: 'models/nemus/saint-ball.glb', scale: 1.2 }
 const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')
 if (knight) knight.models = { ball: 'models/percival/knight-ball.glb' }
 
