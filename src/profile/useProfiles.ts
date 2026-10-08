@@ -333,7 +333,7 @@ function grant(p: Profile, r: Reward, seasonId: number): Profile | null {
       const id = seasonBakugan(seasonId).pass[r.slot]
       if (!id) return null
       if (p.collection.some((o) => o.id === id)) return { ...p, bp: p.bp + 5000 }
-      return { ...p, collection: [...p.collection, own(id)], team: p.team.length < 3 ? [...p.team, id] : p.team }
+      return { ...p, collection: [...p.collection, own(id)], team: p.team.length ? p.team : [id] }
     }
     case 'bundle': {
       let next: Profile | null = p
@@ -430,7 +430,8 @@ export const useProfiles = create<ProfilesState>()(
             ...x,
             bp: how === 'bp' ? x.bp - price.bp : x.bp,
             collection: [...x.collection, own(bakuganId)],
-            team: x.team.length < 3 ? [...x.team, bakuganId] : x.team,
+            // the player picks how many Bakugan they brawl with; a new one only joins an empty team
+            team: x.team.length ? x.team : [bakuganId],
           })),
         )
         return true
@@ -572,7 +573,8 @@ export const useProfiles = create<ProfilesState>()(
             ...x,
             bp: x.bp - req.bp,
             collection: [...x.collection, own(bakuganId)],
-            team: x.team.length < 3 ? [...x.team, bakuganId] : x.team,
+            // the player picks how many Bakugan they brawl with; a new one only joins an empty team
+            team: x.team.length ? x.team : [bakuganId],
           })),
         )
         return true

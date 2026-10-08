@@ -377,9 +377,9 @@ export function ArenaScreen() {
         )}
       </div>
 
-      {/* hand */}
+      {/* hand: the strip spans the screen, so only the cards take clicks and the bench beside it stays usable */}
       <div
-        className={`${battle.winner !== null ? 'hidden' : ''} absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 pr-28 pb-5 pl-56`}
+        className={`${battle.winner !== null ? 'hidden' : ''} pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 pr-28 pb-5 pl-56 *:pointer-events-auto`}
       >
         <HandButton
           disabled={!myTurn}

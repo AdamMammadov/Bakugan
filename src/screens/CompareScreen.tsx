@@ -21,21 +21,21 @@ import {
 import { opponentCharacter } from '../profile/avatar'
 import { useGame } from '../store/useGame'
 
-/** Fills a team up to three with Bakugan not already in it. */
-function fillTeam(start: Entrant[]): Entrant[] {
-  const team = [...start]
+/** Fills a team up to `size` with Bakugan not already in it. */
+function fillTeam(start: Entrant[], size = TEAM_SIZE): Entrant[] {
+  const team = start.slice(0, size)
   for (const bakugan of BAKUGAN) {
-    if (team.length >= TEAM_SIZE) break
+    if (team.length >= size) break
     if (!team.some((e) => e.bakugan.id === bakugan.id)) team.push({ bakugan, form: 0 })
   }
   return team
 }
 
-/** Fills a player's team up to three from their collection. */
-function fillOwn(start: Entrant[], collection: OwnedBakugan[]): Entrant[] {
-  const team = [...start]
+/** Fills a player's team up to `size` from their collection. */
+function fillOwn(start: Entrant[], collection: OwnedBakugan[], size = TEAM_SIZE): Entrant[] {
+  const team = start.slice(0, size)
   for (const o of collection) {
-    if (team.length >= TEAM_SIZE) break
+    if (team.length >= size) break
     if (!team.some((e) => e.bakugan.id === o.id))
       team.push({
         bakugan: BAKUGAN.find((b) => b.id === o.id)!,
@@ -60,7 +60,12 @@ export function CompareScreen() {
   // Without a profile (guest) any Bakugan can be picked.
   const [ranked, setRanked] = useState(profile !== null)
   const [free, setFree] = useState<Entrant[]>(() => fillTeam([{ bakugan: mine, form: compareForm }]))
-  const [own, setOwn] = useState<Entrant[]>(() => (profile ? fillOwn(teamEntrants(profile), profile.collection) : []))
+  // the saved team, as many Bakugan as the player last brawled with
+  const [own, setOwn] = useState<Entrant[]>(() => {
+    if (!profile) return []
+    const saved = teamEntrants(profile)
+    return saved.length ? saved : fillOwn([], profile.collection, 1)
+  })
   const left = profile ? own : free
   const tier = profile ? tierOf(rankScore(profile)).index : 0
   // the bot of the player's rank: its Bakugan get a small G edge on top of the level match
@@ -75,6 +80,12 @@ export function CompareScreen() {
     if (profile) setOwn(team)
     else setFree(team)
     setRight(opponent(team))
+  }
+  // how many Bakugan each side brings: the player's choice, up to as many as they own
+  const most = profile ? Math.min(TEAM_SIZE, profile.collection.length) : TEAM_SIZE
+  const resize = (size: number) => {
+    playSfx('select')
+    setLeft(profile ? fillOwn(own, profile.collection, size) : fillTeam(free, size))
   }
 
   function brawl() {
@@ -140,7 +151,26 @@ export function CompareScreen() {
         </div>
       )}
 
-      <div className="mt-8 grid grid-cols-[1fr_auto_1fr] items-start gap-8">
+      <div className="mt-6 flex items-center gap-3">
+        <p className="font-display text-xs tracking-[0.4em] text-white/40">BAKUGAN PER SIDE</p>
+        {[1, 2, 3].map((n) => (
+          <button
+            key={n}
+            disabled={n > most}
+            title={n > most ? `Own ${n} Bakugan to brawl ${n} vs ${n}` : undefined}
+            onClick={() => resize(n)}
+            className="font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition disabled:opacity-30"
+            style={{
+              borderColor: left.length === n ? '#fff' : 'rgba(255,255,255,0.15)',
+              color: left.length === n ? '#fff' : 'rgba(255,255,255,0.5)',
+            }}
+          >
+            {n} VS {n}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-start gap-8">
         <TeamCard team={left} onChange={setLeft} label="YOUR TEAM" owned={profile ? profile.collection : undefined} />
         <div className="font-display mt-40 text-5xl font-black text-white/30 italic">VS</div>
         <TeamCard
@@ -186,7 +216,9 @@ function TeamCard({
   /** A player's collection: only these Bakugan, up to their current form, with their unlocked cards. */
   owned?: OwnedBakugan[]
 }) {
-  const [slot, setSlot] = useState(0)
+  const [picked, setSlot] = useState(0)
+  // the team can shrink under the picked slot
+  const slot = Math.min(picked, team.length - 1)
   const current = team[slot]
   const element = ELEMENT_BY_ID[current.bakugan.element]
   const power = (e: Entrant) => formBrawlG(e) + (e.bonusG ?? 0)
@@ -222,7 +254,7 @@ function TeamCard({
         </div>
       </div>
 
-      {/* the three slots */}
+      {/* one slot per Bakugan */}
       <div className="mt-4 grid grid-cols-3 gap-3">
         {team.map((e, i) => {
           const el = ELEMENT_BY_ID[e.bakugan.element]
