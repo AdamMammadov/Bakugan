@@ -333,10 +333,69 @@ if (q.get('rig')) {
     pivot: [number, number, number]
     test: string
     bake?: [number, number, number]
+    /**
+     * Bends the bake in smoothly instead of turning the part as one piece: the part's own vertices
+     * turn fully, body vertices within `radius` of them turn partly (less the further away), and
+     * every copy of a vertex turns alike, so the joint stays closed.
+     */
+    soft?: number
     swing?: number
   }
   const parts: Part[] = (await (await fetch('/tools/preview/rigs.json')).json())[q.get('rig')!]
   const tests = parts.map((p) => new Function('x', 'y', 'z', `return ${p.test}`) as (x: number, y: number, z: number) => boolean)
+  /**
+   * Bends part `k` into its baked pose across every mesh at once; `owner` says which part each
+   * triangle went to. A vertex position shared by several meshes or triangles turns alike everywhere.
+   */
+  const softBake = (meshes: { g: THREE.BufferGeometry; owner: Int16Array }[], k: number) => {
+    const part = parts[k]
+    const radius = part.soft!
+    const [px, py, pz] = part.pivot
+    const key = (pos: THREE.BufferAttribute, i: number) =>
+      `${pos.getX(i).toFixed(4)},${pos.getY(i).toFixed(4)},${pos.getZ(i).toFixed(4)}`
+    // which parts touch each vertex position (-1 = body)
+    const touches = new Map<string, Set<number>>()
+    for (const { g, owner } of meshes) {
+      const pos = g.attributes.position as THREE.BufferAttribute
+      for (let i = 0; i < pos.count; i++) {
+        const id = key(pos, i)
+        if (!touches.has(id)) touches.set(id, new Set())
+        touches.get(id)!.add(owner[Math.floor(i / 3)])
+      }
+    }
+    const toVec = (id: string) => new THREE.Vector3(...(id.split(',').map(Number) as [number, number, number]))
+    const inPart = [...touches].filter(([, set]) => set.has(k)).map(([id]) => toVec(id))
+    const weight = new Map<string, number>()
+    for (const [id, set] of touches) {
+      if (set.has(k)) weight.set(id, 1)
+      else if (set.size === 1 && set.has(-1)) {
+        const v = toVec(id)
+        let d = Infinity
+        for (const a of inPart) d = Math.min(d, a.distanceTo(v))
+        if (d < radius) weight.set(id, THREE.MathUtils.smoothstep(1 - d / radius, 0, 1))
+      }
+    }
+    const full = new THREE.Quaternion().setFromEuler(new THREE.Euler(...part.bake!))
+    const none = new THREE.Quaternion()
+    const q = new THREE.Quaternion()
+    const v = new THREE.Vector3()
+    for (const { g } of meshes) {
+      const pos = g.attributes.position as THREE.BufferAttribute
+      const nrm = g.attributes.normal as THREE.BufferAttribute | undefined
+      for (let i = 0; i < pos.count; i++) {
+        const w = weight.get(key(pos, i)) ?? 0
+        if (w <= 0) continue
+        q.slerpQuaternions(none, full, w)
+        v.set(pos.getX(i) - px, pos.getY(i) - py, pos.getZ(i) - pz).applyQuaternion(q)
+        pos.setXYZ(i, v.x + px, v.y + py, v.z + pz)
+        if (nrm) {
+          v.fromBufferAttribute(nrm, i).applyQuaternion(q)
+          nrm.setXYZ(i, v.x, v.y, v.z)
+        }
+      }
+    }
+  }
+  const owned: { g: THREE.BufferGeometry; owner: Int16Array }[] = []
   // triangles per part (index -1 = body), per material
   const buckets = new Map<number, { geo: THREE.BufferGeometry; tris: number[]; mat: THREE.Material }[]>()
   const meshes: THREE.Mesh[] = []
@@ -347,6 +406,7 @@ if (q.get('rig')) {
     const mats = Array.isArray(m.material) ? m.material : [m.material]
     const groups = g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }]
     const pos = g.attributes.position
+    const owner = new Int16Array(pos.count / 3).fill(-1)
     for (const grp of groups) {
       const per = new Map<number, number[]>()
       for (let t = grp.start; t < grp.start + grp.count; t += 3) {
@@ -354,6 +414,7 @@ if (q.get('rig')) {
         const y = (pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3
         const z = (pos.getZ(t) + pos.getZ(t + 1) + pos.getZ(t + 2)) / 3
         const k = tests.findIndex((f) => f(x, y, z))
+        owner[t / 3] = k
         if (!per.has(k)) per.set(k, [])
         per.get(k)!.push(t)
       }
@@ -362,8 +423,11 @@ if (q.get('rig')) {
         buckets.get(k)!.push({ geo: g, tris, mat: mats[grp.materialIndex ?? 0] })
       }
     }
+    owned.push({ g, owner })
     m.removeFromParent()
   }
+  // parts were picked by where triangles stood; now bend the soft bakes into place
+  parts.forEach((part, k) => part.bake && part.soft && softBake(owned, k))
   const take = (g: THREE.BufferGeometry, tris: number[]) => {
     const out = new THREE.BufferGeometry()
     for (const name of Object.keys(g.attributes)) {
@@ -400,7 +464,7 @@ if (q.get('rig')) {
       }
       const pivot = new THREE.Vector3(...part.pivot)
       piece.translate(-pivot.x, -pivot.y, -pivot.z)
-      if (part.bake) {
+      if (part.bake && !part.soft) {
         piece.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...part.bake)))
         piece.computeVertexNormals()
       }
