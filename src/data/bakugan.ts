@@ -623,6 +623,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   manion: { monster: 'models/manion/monster.glb', scale: 1.1 },
   pegatrix: { monster: 'models/pegatrix/monster.glb', scale: 1.15 },
   nemus: { ball: 'models/nemus/ball.glb' },
+  // made from a picture with TRELLIS.2 (image to 3D), tinted towards the art and rigged like the others
+  hades: { monster: 'models/hades/monster.glb', scale: 1.15 },
   elfin: { ball: 'models/elfin/ball.glb', monster: 'models/elfin/monster.glb', fly: true, scale: 1.1 },
   ingram: { ball: 'models/ingram/ball.glb' },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },

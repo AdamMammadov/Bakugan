@@ -87,7 +87,7 @@ export function BakuganShowroom() {
     bakugan &&
     (view === 'ball' ? (bakugan.evolutions[form]?.models?.ball ?? bakugan.models?.ball) : formModels({ bakugan, form })?.monster)
   // flyers hover, so the camera looks a little higher at them
-  const lookAt = view === 'ball' ? 0.6 : bakugan && formModels({ bakugan, form })?.fly ? 2 : 1.4
+  const lookAt = view === 'ball' ? 0.6 : bakugan && formModels({ bakugan, form })?.fly ? 2.3 : 1.4
 
   return (
     <motion.div
@@ -112,7 +112,7 @@ export function BakuganShowroom() {
               {view === 'monster' ? (
                 <group scale={0.78 / Math.max(1, (formModels({ bakugan, form })?.scale ?? 1) * (1 + form * 0.12))}>
                   <MoveBody pose={pose}>
-                    <MonsterModel entrant={{ bakugan, form, skin: owned?.skin }} poseRef={pose} />
+                    <MonsterModel entrant={{ bakugan, form, skin: owned?.skin }} poseRef={pose} showcase />
                   </MoveBody>
                 </group>
               ) : (

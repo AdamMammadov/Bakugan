@@ -26,6 +26,7 @@ export function NormalizedModel({
   poseRef,
   openRef,
   tint,
+  fill = 1,
 }: {
   url: string
   /** Skin colours: the model is tinted towards `color` and glows in `glow`. */
@@ -39,6 +40,11 @@ export function NormalizedModel({
   poseRef?: PoseRef
   /** For ball models: while true, pieces move to the open pose stored in their glTF extras. */
   openRef?: RefObject<boolean>
+  /**
+   * Up to how much taller a narrow model may grow (1 = never). Fitting by height leaves slim or
+   * wings-up models looking small next to bulky ones; this lets them catch up in a showcase.
+   */
+  fill?: number
 }) {
   const gltf = useGLTF(url)
   // Clone so the same model can appear twice (e.g. a mirror match in the arena).
@@ -108,10 +114,12 @@ export function NormalizedModel({
     const box = new THREE.Box3().setFromObject(scene)
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())
-    const scale = Math.min(size.y > 0 ? height / size.y : 1, maxLength / Math.max(size.x, size.z, 1e-6))
+    const spread = Math.max(size.x, size.z, 1e-6)
+    const grow = Math.min(fill, Math.max(1, (1.2 * size.y) / spread))
+    const scale = Math.min(size.y > 0 ? (height * grow) / size.y : 1, maxLength / spread)
     const z = frontAt === undefined ? -center.z * scale : frontAt - box.max.z * scale
     return { scale, offset: [-center.x * scale, -box.min.y * scale, z] as const }
-  }, [scene, height, maxLength, frontAt])
+  }, [scene, height, maxLength, frontAt, fill])
 
   const root = useRef<THREE.Group>(null)
   const { actions, names } = useAnimations(gltf.animations, root)

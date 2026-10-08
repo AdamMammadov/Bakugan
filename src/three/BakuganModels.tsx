@@ -28,11 +28,17 @@ export function MonsterModel({
   entrant,
   poseRef,
   frontAt,
+  showcase,
 }: {
   entrant: Entrant
   poseRef?: PoseRef
   /** In the arena: where the monster's front stands, so long bodies never reach into the opponent. */
   frontAt?: number
+  /**
+   * Shown on its own (showroom, inventory): slim Bakugan grow a little and wings may spread wider,
+   * so every Bakugan fills the stage about as much as the others.
+   */
+  showcase?: boolean
 }) {
   const base = ELEMENT_BY_ID[entrant.bakugan.element]
   // an equipped skin recolours the Bakugan, or swaps in its own model (model skins)
@@ -72,7 +78,10 @@ export function MonsterModel({
           url={asset(skinModel ?? models.monster)}
           height={MONSTER_HEIGHT * size}
           // wide wings must not reach across the field; a model can allow itself more (models.length)
-          maxLength={MONSTER_HEIGHT * size * (skinModel ? 2 : (models.length ?? (models.fly ? 1.25 : 2)))}
+          maxLength={
+            MONSTER_HEIGHT * size * Math.max(showcase ? 2.4 : 0, skinModel ? 2 : (models.length ?? (models.fly ? 1.25 : 2)))
+          }
+          fill={showcase ? 1.3 : 1}
           frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}

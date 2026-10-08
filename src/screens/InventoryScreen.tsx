@@ -188,13 +188,13 @@ function Skins({ profile }: { profile: Profile }) {
                 key={`${owned.id}-${trying}`}
                 scale={0.78 / Math.max(1, (formModels({ bakugan, form: owned.form })?.scale ?? 1) * (1 + owned.form * 0.12))}
               >
-                <MonsterModel entrant={{ bakugan, form: owned.form, skin: trying }} />
+                <MonsterModel entrant={{ bakugan, form: owned.form, skin: trying }} showcase />
               </group>
             </Suspense>
             <BlobShadow size={3.6} />
             <OrbitControls
               makeDefault
-              target={[0, formModels({ bakugan, form: owned.form })?.fly ? 2 : 1.4, 0]}
+              target={[0, formModels({ bakugan, form: owned.form })?.fly ? 2.3 : 1.4, 0]}
               enablePan={false}
               minDistance={2}
               maxDistance={8}
@@ -203,7 +203,7 @@ function Skins({ profile }: { profile: Profile }) {
             />
             <LiftDrag
               max={6}
-              base={formModels({ bakugan, form: owned.form })?.fly ? 2 : 1.4}
+              base={formModels({ bakugan, form: owned.form })?.fly ? 2.3 : 1.4}
               resetKey={`${owned.id}-${trying}`}
             />
           </Canvas>
