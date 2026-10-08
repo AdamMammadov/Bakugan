@@ -10,6 +10,7 @@ import { CHARACTER_INFO } from '../data/characters'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { CHARACTERS } from '../profile/avatar'
 import { Brawler, type BrawlerGesture } from '../three/Brawler'
+import { LiftDrag } from '../three/LiftDrag'
 
 /** Browse the series' brawlers: turn their 3D model around and read their profile. */
 export function CharacterShowroom() {
@@ -57,7 +58,16 @@ export function CharacterShowroom() {
           </group>
         </Suspense>
         <ContactShadows position={[0, 0.002, 0]} opacity={0.6} scale={4} blur={2} far={2} />
-        <OrbitControls target={[0, 0.95, 0]} enablePan={false} minDistance={1.4} maxDistance={6} autoRotate autoRotateSpeed={1.2} />
+        <OrbitControls
+          makeDefault
+          target={[0, 0.95, 0]}
+          enablePan={false}
+          minDistance={1.4}
+          maxDistance={6}
+          autoRotate
+          autoRotateSpeed={1.2}
+        />
+        <LiftDrag max={2.5} />
       </Canvas>
 
       <div className="pointer-events-none absolute inset-0 flex flex-col px-12 py-8">
@@ -121,7 +131,9 @@ export function CharacterShowroom() {
           </motion.section>
         </AnimatePresence>
 
-        <p className="mt-auto text-center text-xs tracking-[0.3em] text-white/35">DRAG TO TURN · SCROLL TO ZOOM · ← → TO SWITCH</p>
+        <p className="mt-auto text-center text-xs tracking-[0.3em] text-white/35">
+          DRAG TO TURN · RIGHT-DRAG UP / DOWN · SCROLL TO ZOOM · ← → TO SWITCH
+        </p>
         {/* character strip */}
         <div className="pointer-events-auto mt-3 flex items-center justify-center gap-3">
           <ArrowButton label="◀" onClick={() => step(-1)} />

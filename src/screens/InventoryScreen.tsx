@@ -21,6 +21,7 @@ import {
 import { ACCESSORIES, FRAMES, OUTFITS, RARITY, SKIN_BY_ID, SKINS, skinFits, type Rarity } from '../season/season'
 import { useGame } from '../store/useGame'
 import { BlobShadow } from '../three/BlobShadow'
+import { LiftDrag } from '../three/LiftDrag'
 import { MonsterModel } from '../three/BakuganModels'
 
 type Tab = 'skins' | 'avatar' | 'boosts' | 'equipment'
@@ -192,12 +193,18 @@ function Skins({ profile }: { profile: Profile }) {
             </Suspense>
             <BlobShadow size={3.6} />
             <OrbitControls
-              target={[0, 1.4, 0]}
+              makeDefault
+              target={[0, formModels({ bakugan, form: owned.form })?.fly ? 2 : 1.4, 0]}
               enablePan={false}
               minDistance={2}
               maxDistance={8}
               autoRotate
               autoRotateSpeed={1.5}
+            />
+            <LiftDrag
+              max={6}
+              base={formModels({ bakugan, form: owned.form })?.fly ? 2 : 1.4}
+              resetKey={`${owned.id}-${trying}`}
             />
           </Canvas>
           <p className="font-display absolute top-4 left-5 text-xs tracking-[0.3em] text-white/60">

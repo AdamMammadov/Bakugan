@@ -8,6 +8,7 @@ import type { BattleEvent, SideIndex } from '../battle/engine'
 import type { Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
+import { LiftDrag } from './LiftDrag'
 import { Impact, Projectile, ShieldDome } from './ArenaFx'
 import { MonsterModel } from './BakuganModels'
 import { BlobShadow } from './BlobShadow'
@@ -149,6 +150,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
         maxDistance={120}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
+      <LiftDrag max={30} />
       <EffectComposer>
         <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
         <Vignette offset={0.25} darkness={0.75} />

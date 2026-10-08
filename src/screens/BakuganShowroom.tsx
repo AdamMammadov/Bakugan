@@ -9,6 +9,7 @@ import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { cardCount, EVOLVE_XP, ownedForm, unlockHint, useActiveProfile } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 import { BallModel, MonsterModel, preloadModels } from '../three/BakuganModels'
+import { LiftDrag } from '../three/LiftDrag'
 import { BlobShadow } from '../three/BlobShadow'
 import { env, type Move, type Pose } from '../three/pose'
 import * as THREE from 'three'
@@ -85,6 +86,8 @@ export function BakuganShowroom() {
   const hasModel =
     bakugan &&
     (view === 'ball' ? (bakugan.evolutions[form]?.models?.ball ?? bakugan.models?.ball) : formModels({ bakugan, form })?.monster)
+  // flyers hover, so the camera looks a little higher at them
+  const lookAt = view === 'ball' ? 0.6 : bakugan && formModels({ bakugan, form })?.fly ? 2 : 1.4
 
   return (
     <motion.div
@@ -121,13 +124,15 @@ export function BakuganShowroom() {
           </Suspense>
           <BlobShadow size={view === 'monster' ? 3.6 : 1.4} />
           <OrbitControls
-            target={[0, view === 'monster' ? 1.4 : 0.6, 0]}
+            makeDefault
+            target={[0, lookAt, 0]}
             enablePan={false}
             minDistance={1.6}
             maxDistance={9}
             autoRotate
             autoRotateSpeed={1.2}
           />
+          <LiftDrag max={6} base={lookAt} resetKey={`${bakugan?.id}-${form}`} />
         </Canvas>
       )}
 
@@ -329,7 +334,9 @@ export function BakuganShowroom() {
           </div>
         )}
 
-        <p className="mt-4 text-center text-xs tracking-[0.3em] text-white/35">DRAG TO TURN · SCROLL TO ZOOM · ← → TO SWITCH</p>
+        <p className="mt-4 text-center text-xs tracking-[0.3em] text-white/35">
+          DRAG TO TURN · RIGHT-DRAG UP / DOWN · SCROLL TO ZOOM · ← → TO SWITCH
+        </p>
         {/* Bakugan strip */}
         {list.length > 0 && (
           <div className="pointer-events-auto mt-3 flex items-center gap-3">

@@ -71,8 +71,8 @@ export function MonsterModel({
         <NormalizedModel
           url={asset(skinModel ?? models.monster)}
           height={MONSTER_HEIGHT * size}
-          // wide wings must not reach across the field
-          maxLength={MONSTER_HEIGHT * size * (models.fly && !skinModel ? 1.25 : 2)}
+          // wide wings must not reach across the field; a model can allow itself more (models.length)
+          maxLength={MONSTER_HEIGHT * size * (skinModel ? 2 : (models.length ?? (models.fly ? 1.25 : 2)))}
           frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}

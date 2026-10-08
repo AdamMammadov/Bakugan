@@ -7,6 +7,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { formModels, type Ability, type Bakugan } from '../data/bakugan'
 import type { ElementInfo } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
+import { LiftDrag } from './LiftDrag'
 import { BallModel, MonsterModel } from './BakuganModels'
 import { BlobShadow } from './BlobShadow'
 import { GateCard } from './GateCard'
@@ -270,14 +271,17 @@ function CameraRig({ phase, size }: { phase: Phase; size: number }) {
   })
 
   return (
-    <OrbitControls
-      ref={controls}
-      makeDefault
-      enablePan={false}
-      minDistance={1.2}
-      maxDistance={65}
-      maxPolarAngle={Math.PI / 2 - 0.05}
-      onStart={() => (flying.current = 0)}
-    />
+    <>
+      <OrbitControls
+        ref={controls}
+        makeDefault
+        enablePan={false}
+        minDistance={1.2}
+        maxDistance={65}
+        maxPolarAngle={Math.PI / 2 - 0.05}
+        onStart={() => (flying.current = 0)}
+      />
+      <LiftDrag max={25} />
+    </>
   )
 }

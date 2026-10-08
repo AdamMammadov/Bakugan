@@ -86,6 +86,11 @@ export interface Bakugan {
     fly?: boolean
     /** How big this Bakugan stands next to the others (1 = normal). */
     scale?: number
+    /**
+     * How long or wide the model may be, in heights (default 2, flyers 1.25). Long or wide-winged
+     * Bakugan are shrunk to fit this, so raise it for those that would otherwise look small.
+     */
+    length?: number
     /** Recolours the model, e.g. an evolution shown with its base form's model. */
     tint?: { color: string; glow: string }
   }
@@ -365,7 +370,7 @@ export const BAKUGAN: Bakugan[] = [
     series: 'Battle Brawlers',
     baseG: 360,
     brawlG: 460,
-    models: { monster: 'models/skyress/monster.glb', fly: true },
+    models: { monster: 'models/skyress/monster.glb', fly: true, length: 1.7 },
     description: 'A phoenix of the winds that can be reborn from its own ashes.',
     abilities: [
       {
@@ -434,7 +439,7 @@ export const BAKUGAN: Bakugan[] = [
         name: 'Storm Skyress',
         series: 'Battle Brawlers',
         gPower: 450,
-        models: { monster: 'models/skyress/storm.glb', fly: true },
+        models: { monster: 'models/skyress/storm.glb', fly: true, length: 1.6 },
       },
     ],
   },
@@ -522,7 +527,7 @@ export const BAKUGAN: Bakugan[] = [
     series: 'Battle Brawlers',
     baseG: 450,
     brawlG: 550,
-    models: { ball: 'models/hydranoid/ball.glb', monster: 'models/hydranoid/monster.glb', scale: 1.6 },
+    models: { ball: 'models/hydranoid/ball.glb', monster: 'models/hydranoid/monster.glb', scale: 1.2, length: 2.9 },
     description: 'A ravenous dark dragon that grows more heads — and more power — with each evolution.',
     abilities: [
       {
