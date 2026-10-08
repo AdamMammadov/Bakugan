@@ -4,21 +4,23 @@ import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
+import { BpIcon, RewardIcon } from '../components/RewardIcon'
 import { BAKUGAN, type Bakugan } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { DEFAULT_PARTS, type Accessory } from '../profile/avatar'
 import { bakuganById, hasCosmetic, inShop, priceOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
 import { FRAMES, OUTFITS, RARITY, SKIN_BY_ID, timeLeft, type Rarity } from '../season/season'
-import { cosmeticsOnSale, featuredToday, formatPrice, PACKS, type ShopItem } from '../shop/shop'
+import { BP_PACKS, cosmeticsOnSale, featuredToday, formatUsd, PACKS, type Price, type ShopItem } from '../shop/shop'
 import { useGame } from '../store/useGame'
 
-type Tab = 'featured' | 'bakugan' | 'skins' | 'avatar' | 'boosts'
+type Tab = 'featured' | 'bakugan' | 'skins' | 'avatar' | 'boosts' | 'bp'
 const TABS: [Tab, string][] = [
   ['featured', "TODAY'S PICKS"],
   ['bakugan', 'BAKUGAN'],
   ['skins', 'BAKUGAN SKINS'],
   ['avatar', 'AVATAR'],
   ['boosts', 'BOOSTS & KEYS'],
+  ['bp', 'BATTLE POINTS'],
 ]
 const RARITY_ORDER: Rarity[] = ['common', 'rare', 'epic', 'legendary']
 const byRarity = (a: ShopItem, b: ShopItem) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)
@@ -30,6 +32,7 @@ const KIND_LABEL: Record<ShopItem['kind'], string> = {
   acc: 'Avatar accessory',
   boost: 'XP Boost pack',
   cardKey: 'Card Key',
+  bp: 'Battle Points',
 }
 const KIND_HINT: Record<ShopItem['kind'], string> = {
   skin: 'Recolours a Bakugan you own. Equip it on your Profile.',
@@ -38,6 +41,7 @@ const KIND_HINT: Record<ShopItem['kind'], string> = {
   acc: 'Worn by your avatar and your brawler in the arena.',
   boost: 'Each one gives +50% Bakugan XP for one brawl.',
   cardKey: "Unlocks a Bakugan's next ability card right away.",
+  bp: 'Spend them on Bakugan, Common and Rare cosmetics, XP Boosts and Card Keys.',
 }
 
 /** The shop: Bakugan for BP, cosmetics by rarity (BP or money), boosts and Card Keys. */
@@ -67,15 +71,15 @@ export function ShopScreen() {
     >
       <PageNav current="shop">
         {profile && (
-          <span className="font-display rounded-full border border-white/15 bg-black/40 px-4 py-1.5 text-xs tracking-[0.3em]">
-            {profile.bp.toLocaleString('en')} BP
+          <span className="font-display flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-4 py-1.5 text-xs tracking-[0.3em]">
+            <BpIcon size={18} /> {profile.bp.toLocaleString('en')}
           </span>
         )}
       </PageNav>
 
       <h1 className="font-display mt-8 text-4xl font-black tracking-wider">SHOP</h1>
       <p className="mt-1 text-white/55">
-        Bakugan are bought with Battle Points only, so money never buys power. Cosmetics come in four rarities:
+        Bakugan are bought with Battle Points, won in brawls or topped up below. Cosmetics come in four rarities:
       </p>
       <div className="mt-2 flex flex-wrap gap-3 text-xs">
         {RARITY_ORDER.map((r) => (
@@ -145,6 +149,15 @@ export function ShopScreen() {
           {grid(PACKS)}
         </section>
       )}
+      {tab === 'bp' && (
+        <section className="mt-6">
+          <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BATTLE POINTS</h2>
+          <p className="mt-1 text-sm text-white/50">
+            Battle Points are won in brawls (100 for a win). Short of time? Top them up here; bigger packs give more per dollar.
+          </p>
+          {grid(BP_PACKS)}
+        </section>
+      )}
 
       <AnimatePresence>
         {moneyItem && (
@@ -165,7 +178,7 @@ export function ShopScreen() {
               <h3 className="font-display mt-2 text-2xl font-bold">{moneyItem.name}</h3>
               <p className="mt-4 text-white/70">
                 Purchases with real money open with the online version of the game. This item will cost{' '}
-                {formatPrice(moneyItem.price)}.
+                {'usd' in moneyItem.price ? formatUsd(moneyItem.price.usd) : ''}.
               </p>
               <button
                 onClick={() => setMoneyItem(null)}
@@ -185,7 +198,7 @@ function ItemCard({ item, profile, onMoney }: { item: ShopItem; profile: Profile
   const buy = useProfiles((s) => s.buyShopItem)
   const [bought, setBought] = useState(0)
   const rarity = RARITY[item.rarity]
-  const pack = item.kind === 'boost' || item.kind === 'cardKey'
+  const pack = item.kind === 'boost' || item.kind === 'cardKey' || item.kind === 'bp'
   const owned = !pack && hasCosmetic(profile, item.key)
   const short = profile && 'bp' in item.price ? item.price.bp - profile.bp : 0
   return (
@@ -195,7 +208,8 @@ function ItemCard({ item, profile, onMoney }: { item: ShopItem; profile: Profile
     >
       <div className="flex items-start justify-between">
         <span className="font-display text-[10px] tracking-[0.3em]" style={{ color: rarity.color }}>
-          {rarity.name.toUpperCase()}
+          {/* BP packs are bought with money whatever their size, so they are not sorted by rarity */}
+          {item.kind === 'bp' ? 'TOP-UP' : rarity.name.toUpperCase()}
         </span>
         <span className="text-[10px] text-white/40">{KIND_LABEL[item.kind]}</span>
       </div>
@@ -223,7 +237,7 @@ function ItemCard({ item, profile, onMoney }: { item: ShopItem; profile: Profile
         className="font-display mt-4 rounded border py-2 text-sm tracking-widest transition enabled:hover:bg-white/10 disabled:opacity-45"
         style={{ borderColor: rarity.color }}
       >
-        {owned ? 'OWNED ✓' : formatPrice(item.price)}
+        {owned ? 'OWNED ✓' : <PriceTag price={item.price} />}
         {!owned && short > 0 && (
           <span className="block text-[10px] tracking-normal text-white/50">{short.toLocaleString('en')} BP to go</span>
         )}
@@ -264,10 +278,30 @@ function Preview({ item, profile }: { item: ShopItem; profile: Profile | null })
     return <Avatar avatar={{ kind: 'custom', parts: { ...DEFAULT_PARTS, outfit: OUTFITS[id].color } }} size={84} color={color} />
   if (kind === 'acc')
     return <Avatar avatar={{ kind: 'custom', parts: { ...DEFAULT_PARTS, accessory: id as Accessory } }} size={84} color={color} />
+  // packs: the drawn icon with how many come in it
   return (
-    <span className="font-display text-5xl" style={{ color }}>
-      {item.kind === 'boost' ? `⇧${item.amount}` : '🗝'}
+    <div className="relative">
+      <RewardIcon kind={item.kind === 'boost' ? 'boost' : item.kind === 'bp' ? 'bp' : 'cardKey'} size={84} />
+      {(item.amount ?? 1) > 1 && (
+        <span
+          className="font-display absolute -right-4 -bottom-1 rounded-full border bg-black/80 px-2 py-0.5 text-xs font-black"
+          style={{ borderColor: color, color }}
+        >
+          ×{item.amount!.toLocaleString('en')}
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** A price: Battle Points with the coin, or dollars. */
+function PriceTag({ price }: { price: Price }) {
+  return 'bp' in price ? (
+    <span className="inline-flex items-center gap-1.5">
+      <BpIcon size={16} /> {price.bp.toLocaleString('en')}
     </span>
+  ) : (
+    <>{formatUsd(price.usd)}</>
   )
 }
 
@@ -325,7 +359,9 @@ function BakuganOffer({ bakugan, profile }: { bakugan: Bakugan; profile: Profile
           className="rounded-md border px-2 py-2 text-xs transition enabled:hover:bg-white/10 disabled:opacity-40"
           style={{ borderColor: element.color }}
         >
-          <span className="font-display block font-bold">{price.bp.toLocaleString('en')} BP</span>
+          <span className="font-display flex items-center justify-center gap-1.5 font-bold">
+            <BpIcon size={16} /> {price.bp.toLocaleString('en')}
+          </span>
           <span className="text-[10px] text-white/50">
             {canBuy ? 'BUY' : `${(price.bp - profile.bp).toLocaleString('en')} BP to go`}
           </span>

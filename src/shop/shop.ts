@@ -4,7 +4,8 @@ import { ACCESSORIES, dayKey, FRAMES, OUTFITS, SKINS, type CosmeticSource, type 
 /**
  * The shop. Bakugan are bought with BP only (or unlocked with player XP), so money never buys
  * power. Cosmetics are priced by rarity: Common and Rare cost BP, Epic and Legendary cost real
- * money. XP Boosts come in a BP pack and two money packs; Card Keys cost BP.
+ * money. XP Boosts come in a BP pack and two money packs; Card Keys cost BP. Battle Points
+ * themselves can also be bought, for players who cannot win them fast enough.
  * Real-money purchases open with the online version (they need a server and payments).
  */
 
@@ -14,11 +15,11 @@ export type CosmeticKind = 'skin' | 'outfit' | 'frame' | 'acc'
 export interface ShopItem {
   /** Owned-cosmetic key ("skin:ruby") or pack id ("boost:5", "key:1"). */
   key: string
-  kind: CosmeticKind | 'boost' | 'cardKey'
+  kind: CosmeticKind | 'boost' | 'cardKey' | 'bp'
   name: string
   rarity: Rarity
   price: Price
-  /** Boosts or Card Keys in the pack. */
+  /** Boosts, Card Keys or Battle Points in the pack. */
   amount?: number
   /** Season whose pass first gave this cosmetic. */
   passSeason?: number
@@ -36,6 +37,18 @@ export const PACKS: ShopItem[] = [
   { key: 'boost:15', kind: 'boost', amount: 15, name: '15 XP Boosts', rarity: 'rare', price: { usd: 1.99 } },
   { key: 'boost:40', kind: 'boost', amount: 40, name: '40 XP Boosts', rarity: 'epic', price: { usd: 3.99 } },
   { key: 'key:1', kind: 'cardKey', amount: 1, name: 'Card Key', rarity: 'rare', price: { bp: 5000 } },
+]
+
+/**
+ * Battle Points for money. A win pays 100 BP, so the smallest pack is about 25 wins; bigger packs
+ * give more BP per dollar. A Bakugan of another attribute (15,000 BP) costs about $5 this way,
+ * and a past season's pass Bakugan (30,000 BP) about $10, so the Season Pass stays the better buy.
+ */
+export const BP_PACKS: ShopItem[] = [
+  { key: 'bp:2500', kind: 'bp', amount: 2500, name: '2,500 BP', rarity: 'common', price: { usd: 0.99 } },
+  { key: 'bp:14000', kind: 'bp', amount: 14000, name: '14,000 BP', rarity: 'rare', price: { usd: 4.99 } },
+  { key: 'bp:30000', kind: 'bp', amount: 30000, name: '30,000 BP', rarity: 'epic', price: { usd: 9.99 } },
+  { key: 'bp:65000', kind: 'bp', amount: 65000, name: '65,000 BP', rarity: 'legendary', price: { usd: 19.99 } },
 ]
 
 const cosmetic = (
@@ -69,7 +82,8 @@ export function cosmeticsOnSale(now = Date.now()): ShopItem[] {
   return ALL_COSMETICS.filter((c) => 'shop' in c.from || ('pass' in c.from && c.from.pass < season))
 }
 
-export const shopItem = (key: string): ShopItem | undefined => COSMETIC_BY_KEY[key] ?? PACKS.find((p) => p.key === key)
+export const shopItem = (key: string): ShopItem | undefined =>
+  COSMETIC_BY_KEY[key] ?? [...PACKS, ...BP_PACKS].find((p) => p.key === key)
 
 /** Six cosmetics in the spotlight today, the same for everyone. */
 export function featuredToday(now = Date.now()): ShopItem[] {

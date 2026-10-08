@@ -23,6 +23,7 @@ import { useGame } from '../store/useGame'
 import { BlobShadow } from '../three/BlobShadow'
 import { LiftDrag } from '../three/LiftDrag'
 import { MonsterModel } from '../three/BakuganModels'
+import { RewardIcon } from '../components/RewardIcon'
 
 type Tab = 'skins' | 'avatar' | 'boosts' | 'equipment'
 const TABS: [Tab, string][] = [
@@ -382,7 +383,9 @@ function BoostsAndKeys({ profile }: { profile: Profile }) {
     <section className="mt-6 grid grid-cols-[22rem_minmax(0,1fr)] gap-10">
       <div className="rounded-2xl border border-white/10 bg-black/40 p-6">
         <p className="font-display text-xs tracking-[0.4em] text-white/40">XP BOOSTS</p>
-        <p className="font-display mt-2 text-5xl font-black text-sky-300">⇧ {boosts}</p>
+        <p className="font-display mt-2 flex items-center gap-3 text-5xl font-black text-sky-300">
+          <RewardIcon kind="boost" size={56} /> {boosts}
+        </p>
         <p className="mt-2 text-sm text-white/60">
           Each one gives +50% Bakugan XP for one brawl. They are used one per brawl while switched on.
         </p>
@@ -399,7 +402,9 @@ function BoostsAndKeys({ profile }: { profile: Profile }) {
       </div>
 
       <div>
-        <p className="font-display text-xs tracking-[0.4em] text-white/40">CARD KEYS · {keys}</p>
+        <p className="font-display flex items-center gap-2 text-xs tracking-[0.4em] text-white/40">
+          <RewardIcon kind="cardKey" size={28} /> CARD KEYS · {keys}
+        </p>
         <p className="mt-1 text-sm text-white/60">A Card Key unlocks the next ability card of a Bakugan right away.</p>
         {keys === 0 && <Empty text="No Card Keys right now." />}
         <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">
@@ -442,7 +447,9 @@ function KeyTarget({ owned, keys }: { owned: OwnedBakugan; keys: number }) {
         className="font-display mt-2 w-full rounded border py-1.5 text-[10px] tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
         style={{ borderColor: element.color }}
       >
-        🗝 USE CARD KEY
+        <span className="inline-flex items-center gap-1.5">
+          <RewardIcon kind="cardKey" size={16} /> USE CARD KEY
+        </span>
       </button>
     </div>
   )

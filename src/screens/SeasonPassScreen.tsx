@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
+import { RewardIcon } from '../components/RewardIcon'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { bakuganById, seasonFor, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
 import { currentSeason, seasonBakugan } from '../season/current'
@@ -18,7 +19,6 @@ import {
   RARITY,
   passLevel,
   passRewards,
-  rewardIcon,
   rewardLabel,
   SEASON_DAYS,
   timeLeft,
@@ -187,7 +187,16 @@ function Pass({ profile }: { profile: Profile }) {
                   {premium ? 'PASS' : 'FREE'}
                 </span>
               </div>
-              <span className="mt-2 text-3xl">{rewardIcon(r)}</span>
+              <span className="mt-2">
+                <RewardIcon
+                  kind={r.kind}
+                  accent={
+                    r.kind === 'seasonBakugan' && passIds[r.slot]
+                      ? ELEMENT_BY_ID[bakuganById(passIds[r.slot]).element].color
+                      : undefined
+                  }
+                />
+              </span>
               <span className="mt-1 min-h-10 text-xs leading-tight text-white/80">
                 {rewardLabel(r, (s) => bakuganName(s) ?? 'Season Bakugan (to be announced)')}
               </span>

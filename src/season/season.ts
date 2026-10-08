@@ -316,20 +316,6 @@ export function rewardLabel(r: Reward, seasonBakuganName?: (slot: number) => str
   }
 }
 
-export const rewardIcon = (r: Reward): string =>
-  ({
-    bp: '◈',
-    boost: '⇧',
-    cardKey: '🗝',
-    title: '✦',
-    frame: '◯',
-    skin: '◆',
-    outfit: '👕',
-    accessory: '♛',
-    seasonBakugan: '⬢',
-    bundle: '★',
-  })[r.kind]
-
 // ---------------------------------------------------------------- challenges
 
 export type ChallengeStat = 'wins' | 'battles' | 'kos' | 'abilities' | 'ownWins' | 'flawless'

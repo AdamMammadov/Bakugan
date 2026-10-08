@@ -27,6 +27,7 @@ import {
 } from '../profile/useProfiles'
 import { SKINS, skinFits } from '../season/season'
 import { useGame } from '../store/useGame'
+import { RewardIcon } from '../components/RewardIcon'
 
 export function ProfileScreen() {
   const profile = useActiveProfile()
@@ -382,7 +383,9 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
             }}
             className="rounded border border-amber-300/60 px-2 py-1 text-amber-200 hover:bg-amber-300/10"
           >
-            🗝 USE CARD KEY ({profile.cardKeys})
+            <span className="inline-flex items-center gap-1.5">
+              <RewardIcon kind="cardKey" size={16} /> USE CARD KEY ({profile.cardKeys})
+            </span>
           </button>
         )}
         {skins.length > 0 && (

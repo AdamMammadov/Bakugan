@@ -4,6 +4,7 @@ import { ELEMENT_BY_ID } from '../data/elements'
 import { useActiveProfile } from '../profile/useProfiles'
 import { useGame, type PageScreen } from '../store/useGame'
 import { Avatar } from './Avatar'
+import { BpIcon } from './RewardIcon'
 
 const ITEMS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
@@ -76,8 +77,14 @@ export function ProfileButton() {
         ) : (
           <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/30 text-sm">☰</span>
         )}
-        <span className="font-display text-xs tracking-widest">
-          {profile ? `${profile.firstName.toUpperCase()} · ${profile.bp.toLocaleString('en')} BP` : 'MENU'}
+        <span className="font-display flex items-center gap-1.5 text-xs tracking-widest">
+          {profile ? (
+            <>
+              {profile.firstName.toUpperCase()} · <BpIcon size={15} /> {profile.bp.toLocaleString('en')}
+            </>
+          ) : (
+            'MENU'
+          )}
         </span>
         <span className="text-[10px] text-white/50">{open ? '▼' : '▲'}</span>
       </button>
