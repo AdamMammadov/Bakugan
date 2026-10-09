@@ -622,7 +622,7 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   howlkor: { monster: 'models/howlkor/monster.glb', scale: 1.15 },
   manion: { monster: 'models/manion/monster.glb', scale: 1.1 },
   pegatrix: { monster: 'models/pegatrix/monster.glb', scale: 1.15 },
-  // Mega Nemus, made from a picture with Hunyuan3D-2.1, recoloured towards the art, inked and rigged
+  // made from a game render with TRELLIS.2, its face and white armour fixed up from the render, inked and rigged
   nemus: { ball: 'models/nemus/ball.glb', monster: 'models/nemus/monster.glb', scale: 1.1 },
   // made from a picture with TRELLIS.2 (image to 3D), tinted towards the art and rigged like the others
   hades: { monster: 'models/hades/monster.glb', scale: 1.15 },
