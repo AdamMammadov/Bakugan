@@ -1,7 +1,8 @@
-# reproject.py model.glb ref.png fit.json tex_in tex_out cx cy rx ry
+# reproject.py model.glb ref.png fit.json tex_in tex_out cx cy rx ry [min_facing]
 # Paints the reference picture onto the model's texture inside an ellipse (ref pixel coords,
 # centre cx,cy radii rx,ry), only on the triangles the camera actually sees there (z-buffer),
-# fading out towards the ellipse edge.
+# fading out towards the ellipse edge. min_facing (0..1) skips triangles turned further away
+# from the camera than that (their paint would smear across side faces).
 import sys, json, math
 import numpy as np, trimesh
 from PIL import Image
@@ -45,6 +46,13 @@ for t in cand:
     upd = m & (Z > sub)
     sub[upd] = Z[upd]; ids[upd] = t
 visible = set(np.unique(idb[idb >= 0]).tolist())
+if len(sys.argv) > 10:
+    # how squarely each triangle faces the camera (towards the viewer = +PZ, image y down; depth
+    # scaled like x and y so the normal is true)
+    A3 = np.stack([PX, -PY, PZ * fit['scale']], 1)[F]
+    n = np.cross(A3[:, 1] - A3[:, 0], A3[:, 2] - A3[:, 0])
+    facing = n[:, 2] / np.maximum(np.linalg.norm(n, axis=1), 1e-12)
+    visible = {t for t in visible if facing[t] >= float(sys.argv[10])}
 print('candidates', len(cand), 'visible', len(visible))
 def sample(img, x, y):
     x = np.clip(x, 0, img.shape[1] - 1.001); y = np.clip(y, 0, img.shape[0] - 1.001)
@@ -55,6 +63,8 @@ def sample(img, x, y):
             out = out + img[y0 + dy, x0 + dx] * (wy * wx)[..., None]
     return out
 painted = 0
+# how far behind the nearest surface a texel may lie and still count as that surface (model units)
+DEPTH_EPS = 0.004 * (V[:, 1].max() - V[:, 1].min())
 acc = np.zeros(tex.shape[:2]); col = np.zeros(tex.shape)
 for t in visible:
     a, b, d = F[t]
@@ -71,9 +81,13 @@ for t in visible:
     m = (l0 >= -0.08) & (l1 >= -0.08) & (l2 >= -0.08)  # a little bleed past the edges
     if not m.any(): continue
     X = l0 * PX[a] + l1 * PX[b] + l2 * PX[d]; Y = l0 * PY[a] + l1 * PY[b] + l2 * PY[d]
+    # a triangle counts as seen if any of it is; each texel must itself be the front surface
+    Z = l0 * PZ[a] + l1 * PZ[b] + l2 * PZ[d]
+    zx = np.clip(((X - bx0) * S).astype(int), 0, bw * S - 1); zy = np.clip(((Y - by0) * S).astype(int), 0, bh * S - 1)
+    front = Z >= zb[zy, zx] - DEPTH_EPS
     rgba = sample(ref, X, Y)
     e = ell(X, Y)
-    w = np.clip((1 - e) / 0.35, 0, 1) * (rgba[..., 3] / 255) * m
+    w = np.clip((1 - e) / 0.35, 0, 1) * (rgba[..., 3] / 255) * m * front
     yy, xx = np.where(w > 0)
     acc[yy + vmin, xx + umin] = np.maximum(acc[yy + vmin, xx + umin], w[yy, xx])
     col[yy + vmin, xx + umin] = rgba[yy, xx, :3]
