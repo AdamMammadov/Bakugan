@@ -356,6 +356,8 @@ if (q.get('ink')) {
     g.deleteAttribute('normal')
     const hull = new THREE.Mesh(g, ink)
     hull.name = 'ink'
+    // a rig test that takes a mesh by name takes its outline too
+    hull.userData.of = m.name
     hull.applyMatrix4(m.matrix)
     m.parent!.add(hull)
   }
@@ -378,7 +380,10 @@ if (q.get('rig')) {
     swing?: number
   }
   const parts: Part[] = (await (await fetch('/tools/preview/rigs.json')).json())[q.get('rig')!]
-  const tests = parts.map((p) => new Function('x', 'y', 'z', `return ${p.test}`) as (x: number, y: number, z: number) => boolean)
+  // a test sees the triangle's centre and the name of its mesh (a part lifted off as its own mesh)
+  const tests = parts.map(
+    (p) => new Function('x', 'y', 'z', 'mesh', `return ${p.test}`) as (x: number, y: number, z: number, mesh: string) => boolean,
+  )
   /**
    * Bends part `k` into its baked pose across every mesh at once; `owner` says which part each
    * triangle went to. A vertex position shared by several meshes or triangles turns alike everywhere.
@@ -438,6 +443,7 @@ if (q.get('rig')) {
   root.traverse((o) => (o as THREE.Mesh).isMesh && meshes.push(o as THREE.Mesh))
   for (const m of meshes) {
     m.updateMatrixWorld(true)
+    const mesh = (m.userData.of as string | undefined) ?? m.name
     const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrixWorld)
     const mats = Array.isArray(m.material) ? m.material : [m.material]
     const groups = g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }]
@@ -449,7 +455,7 @@ if (q.get('rig')) {
         const x = (pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3
         const y = (pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3
         const z = (pos.getZ(t) + pos.getZ(t + 1) + pos.getZ(t + 2)) / 3
-        const k = tests.findIndex((f) => f(x, y, z))
+        const k = tests.findIndex((f) => f(x, y, z, mesh))
         owner[t / 3] = k
         if (!per.has(k)) per.set(k, [])
         per.get(k)!.push(t)

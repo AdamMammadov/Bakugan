@@ -628,6 +628,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   hades: { monster: 'models/hades/monster.glb', scale: 1.15 },
   elfin: { ball: 'models/elfin/ball.glb', monster: 'models/elfin/monster.glb', fly: true, scale: 1.1 },
   ingram: { ball: 'models/ingram/ball.glb' },
+  // made from a picture with Hunyuan3D-2.1, its tail mace lifted off the wing it was fused into, inked and rigged
+  leonidas: { monster: 'models/leonidas/monster.glb', scale: 1.15 },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]

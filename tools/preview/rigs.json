@@ -1,5 +1,5 @@
 {
-  "_doc": "Splits a one-piece monster into the pivot nodes the game animates (see src/three/pose.ts). Coordinates are the model's own, forward = +Z. Parts are tried in order; a triangle goes to the first part whose test matches its centre, otherwise to the body. 'bake' turns the part (radians XYZ) around its pivot once, e.g. to bring T-posed arms down. 'swing' (0..1) damps how far the game turns the part, for cuts that would show at full swing. 'soft' (a radius) bends a bake in smoothly across the joint (see convert.ts) so baked arms stay attached.",
+  "_doc": "Splits a one-piece monster into the pivot nodes the game animates (see src/three/pose.ts). Coordinates are the model's own, forward = +Z. Parts are tried in order; a triangle goes to the first part whose test matches its centre (x, y, z; `mesh` is its mesh's name, for a piece lifted off as its own mesh), otherwise to the body. 'bake' turns the part (radians XYZ) around its pivot once, e.g. to bring T-posed arms down. 'swing' (0..1) damps how far the game turns the part, for cuts that would show at full swing; below 0 it also turns the part the other way. 'soft' (a radius) bends a bake in smoothly across the joint (see convert.ts) so baked arms stay attached.",
   "hydranoid": [
     {
       "name": "tail_tip",
@@ -1967,6 +1967,28 @@
         0
       ],
       "test": "y < -0.1 && x <= 0.02"
+    }
+  ],
+  "leonidas": [
+    {
+      "name": "tail",
+      "pivot": [
+        0.12,
+        -0.2,
+        0.05
+      ],
+      "test": "mesh === 'mace' || (x > 0.12 && x < 0.47 && Math.hypot(y + 0.2, z - 0.06 + 0.6 * (x - 0.1)) < 0.08)",
+      "swing": -0.5
+    },
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        0.4,
+        0.36
+      ],
+      "test": "y > 0.4 && Math.abs(x) < 0.1 && z > 0.3",
+      "swing": 0.6
     }
   ]
 }
