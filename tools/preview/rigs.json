@@ -1,5 +1,5 @@
 {
-  "_doc": "Splits a one-piece monster into the pivot nodes the game animates (see src/three/pose.ts). Coordinates are the model's own, forward = +Z. Parts are tried in order; a triangle goes to the first part whose test matches its centre (x, y, z; `mesh` is its mesh's name, for a piece lifted off as its own mesh), otherwise to the body. 'bake' turns the part (radians XYZ) around its pivot once, e.g. to bring T-posed arms down. 'swing' (0..1) damps how far the game turns the part, for cuts that would show at full swing; below 0 it also turns the part the other way. 'soft' (a radius) bends a bake in smoothly across the joint (see convert.ts) so baked arms stay attached. A part named 'spin' (a propeller) turns round its upright axis all the time; its swing sets the speed.",
+  "_doc": "Splits a one-piece monster into the pivot nodes the game animates (see src/three/pose.ts). Coordinates are the model's own, forward = +Z. Parts are tried in order; a triangle goes to the first part whose test matches its centre (x, y, z; `mesh` is its mesh's name, for a piece lifted off as its own mesh), otherwise to the body. 'bake' turns the part (radians XYZ) around its pivot once, e.g. to bring T-posed arms down. 'swing' (0..1) damps how far the game turns the part, for cuts that would show at full swing; below 0 it also turns the part the other way. 'soft' (a radius) bends a bake in smoothly across the joint (see convert.ts) so baked arms stay attached.",
   "hydranoid": [
     {
       "name": "tail_tip",
@@ -1993,23 +1993,13 @@
   ],
   "brontes": [
     {
-      "name": "spin",
-      "parent": "head",
-      "pivot": [
-        -0.03,
-        0.42,
-        0.075
-      ],
-      "test": "z > 0.03 && z < 0.13 && x > -0.23 && x < 0.18 && ((y > 0.395 && y < 0.45 && Math.abs(x + 0.005) > 0.032) || (y > 0.372 && ((x > -0.19 && x < -0.11) || (x > 0.06 && x < 0.13 && z > 0.06))))"
-    },
-    {
       "name": "head",
       "pivot": [
         0,
         0.33,
         0.0
       ],
-      "test": "Math.abs(x) < 0.07 && y > 0.32 && z > -0.02",
+      "test": "(Math.abs(x) < 0.07 && y > 0.32 && z > -0.02) || (z > 0.03 && z < 0.13 && x > -0.23 && x < 0.18 && ((y > 0.395 && y < 0.45 && Math.abs(x + 0.005) > 0.032) || (y > 0.372 && ((x > -0.19 && x < -0.11) || (x > 0.06 && x < 0.13 && z > 0.06)))))",
       "swing": 0.5
     },
     {
@@ -2041,18 +2031,8 @@
         0.33,
         0.0
       ],
-      "test": "Math.abs(x) < 0.05 && y > 0.33 && z > -0.06",
+      "test": "(Math.abs(x) < 0.05 && y > 0.33 && z > -0.06) || (y > 0.44 && Math.abs(x) > 0.025 && Math.abs(x) < 0.16)",
       "swing": 0.5
-    },
-    {
-      "name": "spin",
-      "parent": "head",
-      "pivot": [
-        0,
-        0.44,
-        -0.01
-      ],
-      "test": "y > 0.44 && Math.abs(x) > 0.025 && Math.abs(x) < 0.16"
     },
     {
       "name": "leg_fl",

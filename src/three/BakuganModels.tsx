@@ -71,7 +71,7 @@ export function MonsterModel({
       </>
     )
   return (
-    <Hover on={(!!models.fly || !!models.hover) && !skinModel} lift={models.hover}>
+    <Hover on={!!models.fly && !skinModel}>
       {/* nothing until the real model has loaded, so the stand-in never flashes up first */}
       <Suspense fallback={null}>
         <NormalizedModel
@@ -81,8 +81,7 @@ export function MonsterModel({
           maxLength={
             MONSTER_HEIGHT * size * Math.max(showcase ? 2.4 : 0, skinModel ? 2 : (models.length ?? (models.fly ? 1.25 : 2)))
           }
-          // a floating Bakugan grows less, so its top stays clear of the page's buttons
-          fill={showcase ? (models.hover ? 1.12 : 1.3) : 1}
+          fill={showcase ? (models.fill ?? 1.3) : 1}
           frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}
@@ -94,11 +93,11 @@ export function MonsterModel({
   )
 }
 
-/** Winged Bakugan hover above the ground, rising and sinking gently; `lift` is how high (share of the height). */
-function Hover({ on, lift = 0.25, children }: { on: boolean; lift?: number; children: React.ReactNode }) {
+/** Winged Bakugan hover above the ground, rising and sinking gently. */
+function Hover({ on, children }: { on: boolean; children: React.ReactNode }) {
   const ref = useRef<THREE.Group>(null)
   useFrame(({ clock }) => {
-    if (ref.current) ref.current.position.y = on ? MONSTER_HEIGHT * (lift + Math.sin(clock.elapsedTime * 1.6) * 0.05) : 0
+    if (ref.current) ref.current.position.y = on ? MONSTER_HEIGHT * (0.25 + Math.sin(clock.elapsedTime * 1.6) * 0.05) : 0
   })
   return <group ref={ref}>{children}</group>
 }
