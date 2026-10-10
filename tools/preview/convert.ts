@@ -632,8 +632,10 @@ const yaw = Number(q.get('yaw') ?? 0)
 wrap.rotation.y = yaw
 const ty = Number(q.get('ty') ?? 1.45)
 const dist = Number(q.get('d') ?? 1.6)
-cam.position.set(0, ty + 0.05, dist)
-cam.lookAt(0, ty, 0)
+// tx: sideways, for a head that is not over the middle of the model
+const tx = Number(q.get('tx') ?? 0)
+cam.position.set(tx, ty + 0.05, dist)
+cam.lookAt(tx, ty, 0)
 renderer.render(scene, cam)
 ;(window as any).portrait = renderer.domElement.toDataURL('image/png')
 

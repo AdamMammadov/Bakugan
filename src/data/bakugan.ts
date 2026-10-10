@@ -638,6 +638,9 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // made with TRELLIS.2 from the Wii game's render (lower legs drawn in after the anime), its face painted
   // back from the render, recoloured towards it, inked and rigged
   brontes: { monster: 'models/brontes/monster.glb', scale: 1.05, fill: 1.12 },
+  // made with TRELLIS.2 from the Wii game's render (recoloured Aquos, a foot and a blade tip drawn in), its
+  // face painted back from the render, the armour brightened towards it, inked and rigged
+  elico: { monster: 'models/elico/monster.glb', scale: 1.1, fill: 1 },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
