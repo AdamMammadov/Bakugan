@@ -1,5 +1,6 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useGame, type PageScreen } from '../store/useGame'
+import { centreInStrip } from './strip'
 
 const TABS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
@@ -19,6 +20,9 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
   const nav = useRef<HTMLElement>(null)
+  // the open page's tab, brought into view when the page changes (not on every render)
+  const active = useRef<HTMLButtonElement>(null)
+  useEffect(() => centreInStrip(nav.current, active.current), [current])
   const target = [
     'profile',
     'inventory',
@@ -51,7 +55,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
           {TABS.map(([id, label]) => (
             <button
               key={id}
-              ref={id === current ? (n) => n?.scrollIntoView({ block: 'nearest', inline: 'center' }) : undefined}
+              ref={id === current ? active : undefined}
               onClick={() => openPage(id)}
               className={`font-display shrink-0 rounded-full px-4 py-1.5 text-xs tracking-[0.3em] whitespace-nowrap transition ${
                 id === current ? 'bg-white/15 text-white' : 'text-white/45 hover:text-white'

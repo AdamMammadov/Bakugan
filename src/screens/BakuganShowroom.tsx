@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { PageNav } from '../components/PageNav'
+import { centreInStrip } from '../components/strip'
 import { abilityLabel, BAKUGAN, formModels } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { cardCount, EVOLVE_XP, ownedForm, unlockHint, useActiveProfile } from '../profile/useProfiles'
@@ -52,6 +53,10 @@ export function BakuganShowroom() {
     list.findIndex((b) => b.id === sel?.id),
   )
   const bakugan = list[index]
+  // the picked Bakugan's chip, brought into view when the pick changes
+  const strip = useRef<HTMLDivElement>(null)
+  const chip = useRef<HTMLButtonElement>(null)
+  useEffect(() => centreInStrip(strip.current, chip.current), [bakugan?.id])
   // a Bakugan opens on the form the player has reached (or its base form)
   const form = bakugan ? (sel?.id === bakugan.id ? sel.form : Math.max(0, ownedForm(profile, bakugan.id))) : 0
   const setForm = (f: number) => bakugan && setSel({ id: bakugan.id, form: f })
@@ -341,14 +346,14 @@ export function BakuganShowroom() {
         {list.length > 0 && (
           <div className="pointer-events-auto mt-3 flex items-center gap-3">
             <ArrowButton label="◀" onClick={() => pick(index - 1)} />
-            <div className="flex flex-1 gap-2 overflow-x-auto py-1">
+            <div ref={strip} className="flex flex-1 gap-2 overflow-x-auto py-1">
               {list.map((b, i) => {
                 const have = ownedForm(profile, b.id) >= 0
                 const c = ELEMENT_BY_ID[b.element].color
                 return (
                   <button
                     key={b.id}
-                    ref={i === index ? (n) => n?.scrollIntoView({ block: 'nearest', inline: 'center' }) : undefined}
+                    ref={i === index ? chip : undefined}
                     onClick={() => pick(i)}
                     className={`font-display shrink-0 rounded-full border px-3 py-1.5 text-[11px] tracking-wider transition ${
                       i === index
