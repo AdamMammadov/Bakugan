@@ -12,6 +12,9 @@ const POSE_CLIPS: Record<Pose['kind'], RegExp> = {
   hit: /hit|damage|hurt|flinch/i,
 }
 
+/** How fast a rigged propeller ("spin" node) turns, radians per second. */
+const SPIN_SPEED = 7
+
 /**
  * Loads a .glb of unknown scale/origin and fits it: scaled to `height`, centred on X/Z,
  * standing on y = 0. Plays an idle-looking clip when the file has animations, and a
@@ -146,8 +149,9 @@ export function NormalizedModel({
       br: get('leg_br'),
       wl: get('wing_l'),
       wr: get('wing_r'),
+      spin: get('spin'),
     }
-    return nodes.neck || nodes.tail || nodes.head || nodes.wl ? nodes : null
+    return nodes.neck || nodes.tail || nodes.head || nodes.wl || nodes.spin ? nodes : null
   }, [scene])
 
   useFrame(({ clock }) => {
@@ -170,6 +174,8 @@ export function NormalizedModel({
     // wings beat about the body's long axis; the right one mirrors the left
     rig.wl?.rotation.set(0, 0, p.wing * k(rig.wl))
     rig.wr?.rotation.set(0, 0, -p.wing * k(rig.wr))
+    // a propeller turns round its own upright axis all the time (swing sets its speed)
+    rig.spin?.rotation.set(0, now * SPIN_SPEED * k(rig.spin), 0)
   })
 
   const lastPose = useRef<Pose | null>(null)

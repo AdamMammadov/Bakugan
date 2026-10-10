@@ -71,7 +71,7 @@ export function MonsterModel({
       </>
     )
   return (
-    <Hover on={!!models.fly && !skinModel}>
+    <Hover on={(!!models.fly || !!models.hover) && !skinModel} lift={models.hover}>
       {/* nothing until the real model has loaded, so the stand-in never flashes up first */}
       <Suspense fallback={null}>
         <NormalizedModel
@@ -93,11 +93,11 @@ export function MonsterModel({
   )
 }
 
-/** Winged Bakugan hover above the ground, rising and sinking gently. */
-function Hover({ on, children }: { on: boolean; children: React.ReactNode }) {
+/** Winged Bakugan hover above the ground, rising and sinking gently; `lift` is how high (share of the height). */
+function Hover({ on, lift = 0.25, children }: { on: boolean; lift?: number; children: React.ReactNode }) {
   const ref = useRef<THREE.Group>(null)
   useFrame(({ clock }) => {
-    if (ref.current) ref.current.position.y = on ? MONSTER_HEIGHT * (0.25 + Math.sin(clock.elapsedTime * 1.6) * 0.05) : 0
+    if (ref.current) ref.current.position.y = on ? MONSTER_HEIGHT * (lift + Math.sin(clock.elapsedTime * 1.6) * 0.05) : 0
   })
   return <group ref={ref}>{children}</group>
 }

@@ -84,6 +84,11 @@ export interface Bakugan {
     monsterYaw?: number
     /** Winged Bakugan hover above the ground instead of standing on it. */
     fly?: boolean
+    /**
+     * A low float off the ground (share of the height) for tall Bakugan that fly without wings,
+     * e.g. on a propeller; a full flyer's hover would lift their heads out of the battle view.
+     */
+    hover?: number
     /** How big this Bakugan stands next to the others (1 = normal). */
     scale?: number
     /**
@@ -631,8 +636,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // made from a picture with Hunyuan3D-2.1, its tail mace lifted off the wing it was fused into, inked and rigged
   leonidas: { monster: 'models/leonidas/monster.glb', scale: 1.15 },
   // made with TRELLIS.2 from the Wii game's render (lower legs drawn in after the anime), its face painted
-  // back from the render, recoloured towards it, inked and rigged
-  brontes: { monster: 'models/brontes/monster.glb', scale: 1.05 },
+  // back from the render, recoloured towards it, inked and rigged; it floats on its spinning propeller
+  brontes: { monster: 'models/brontes/monster.glb', hover: 0.08, scale: 1.05 },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
@@ -644,6 +649,9 @@ if (magma)
   magma.models = { monster: 'models/wilda/magma.glb', ball: 'models/wilda/magma-ball.glb', scale: 1.2 }
 const saint = ROSTER.find((b) => b.id === 'nemus')?.evolutions.find((e) => e.name === 'Saint Nemus')
 if (saint) saint.models = { ...ROSTER_MODELS.nemus, ball: 'models/nemus/saint-ball.glb', scale: 1.2 }
+const alto = ROSTER.find((b) => b.id === 'brontes')?.evolutions.find((e) => e.name === 'Alto Brontes')
+// made with TRELLIS.2 from an anime still (lower legs drawn in), face painted back from it; the propeller spins
+if (alto) alto.models = { monster: 'models/brontes/alto.glb', hover: 0.08, scale: 0.95 }
 const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')
 if (knight) knight.models = { ball: 'models/percival/knight-ball.glb' }
 
