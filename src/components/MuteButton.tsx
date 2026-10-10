@@ -1,7 +1,7 @@
 import { useGame } from '../store/useGame'
 
 const pill =
-  'font-display rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs tracking-[0.3em] text-white/60 backdrop-blur transition hover:text-white'
+  'font-display flex h-9 items-center rounded-full border border-white/15 bg-black/50 px-4 text-xs tracking-[0.3em] text-white/60 backdrop-blur transition hover:text-white'
 
 /** Music and sound switches in the corner. */
 export function MuteButton() {
@@ -10,7 +10,7 @@ export function MuteButton() {
   const toggleMute = useGame((s) => s.toggleMute)
   const toggleMusic = useGame((s) => s.toggleMusic)
   return (
-    <div className="fixed right-5 bottom-5 z-50 flex gap-2">
+    <div className="flex gap-2">
       <button onClick={toggleMusic} title="Background music" className={pill} style={{ opacity: music && !muted ? 1 : 0.5 }}>
         ♪ {music ? 'ON' : 'OFF'}
       </button>

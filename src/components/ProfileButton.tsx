@@ -35,7 +35,7 @@ export function ProfileButton() {
 
   const color = profile ? ELEMENT_BY_ID[profile.element].color : '#9aa3b5'
   return (
-    <div ref={box} className="fixed right-[15.5rem] bottom-5 z-50">
+    <div ref={box} className="relative">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -69,7 +69,7 @@ export function ProfileButton() {
       <button
         onClick={() => setOpen((o) => !o)}
         title="Menu"
-        className="flex items-center gap-2 rounded-full border bg-black/60 py-1 pr-4 pl-1 backdrop-blur transition hover:bg-black/80"
+        className="flex h-9 items-center gap-2 rounded-full border bg-black/60 pr-4 pl-1 backdrop-blur transition hover:bg-black/80"
         style={{ borderColor: `${color}88` }}
       >
         {profile ? (

@@ -78,23 +78,27 @@ export default function App() {
           {screen === 'characters' && <CharacterShowroom key="characters" />}
         </AnimatePresence>
       </Suspense>
-      {screen !== 'intro' && <MuteButton />}
       <SeasonNotice />
-      {screen !== 'intro' &&
-        ![
-          'arena',
-          'viewer',
-          'profile',
-          'profileEdit',
-          'rankings',
-          'clans',
-          'encyclopedia',
-          'showroom',
-          'shop',
-          'inventory',
-          'characters',
-          'pass',
-        ].includes(screen) && <ProfileButton />}
+      {/* the corner buttons share one row, so they line up whatever their widths */}
+      {screen !== 'intro' && (
+        <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">
+          {![
+            'arena',
+            'viewer',
+            'profile',
+            'profileEdit',
+            'rankings',
+            'clans',
+            'encyclopedia',
+            'showroom',
+            'shop',
+            'inventory',
+            'characters',
+            'pass',
+          ].includes(screen) && <ProfileButton />}
+          <MuteButton />
+        </div>
+      )}
     </div>
   )
 }
