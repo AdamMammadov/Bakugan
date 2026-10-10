@@ -81,7 +81,8 @@ export function MonsterModel({
           maxLength={
             MONSTER_HEIGHT * size * Math.max(showcase ? 2.4 : 0, skinModel ? 2 : (models.length ?? (models.fly ? 1.25 : 2)))
           }
-          fill={showcase ? 1.3 : 1}
+          // a floating Bakugan grows less, so its top stays clear of the page's buttons
+          fill={showcase ? (models.hover ? 1.12 : 1.3) : 1}
           frontAt={frontAt}
           yaw={models.monsterYaw}
           poseRef={poseRef}
