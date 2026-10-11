@@ -641,6 +641,9 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // made with TRELLIS.2 from the Wii game's render (recoloured Aquos, a foot and a blade tip drawn in), its
   // face painted back from the render, the armour brightened towards it, inked and rigged
   elico: { monster: 'models/elico/monster.glb', scale: 1.1, fill: 1 },
+  // made with TRELLIS.2 from the Wii game's render (a fin tip drawn in), which it turned into a front-facing
+  // flyer with both wings spread; inked and rigged
+  altair: { monster: 'models/altair/monster.glb', fly: true, scale: 0.85 },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
