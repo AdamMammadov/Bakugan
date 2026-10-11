@@ -15,6 +15,20 @@ if yaw:
     s = trimesh.Trimesh(V, s.faces, process=False, visual=s.visual)
 tex = np.array(Image.open(sys.argv[2]).convert('RGB')).astype(float); TH, TW = tex.shape[:2]
 zmin = float(sys.argv[4]); shapes = json.loads(sys.argv[5])
+
+def skip_mask(s, tex):
+    import os
+    from skimage import color as _c
+    r = os.environ.get('PAINT_SKIP')
+    if not r: return np.zeros(len(s.faces), bool)
+    lo, hi = map(float, r.split(','))
+    TH_, TW_ = tex.shape[:2]
+    uv_ = s.visual.uv[s.faces].mean(1)
+    col_ = tex[((1 - uv_[:, 1]) * (TH_ - 1)).astype(int).clip(0, TH_ - 1), (uv_[:, 0] * (TW_ - 1)).astype(int).clip(0, TW_ - 1)]
+    hsv_ = _c.rgb2hsv(np.asarray(col_, float)[None] / 255)[0]
+    return (hsv_[:, 0] * 360 > lo) & (hsv_[:, 0] * 360 < hi) & (hsv_[:, 1] > 0.25)
+skip = skip_mask(s, tex)
+
 K = 4000  # canvas pixels per model unit
 allp = np.array([p for sh in shapes for p in sh.get('poly', sh.get('line'))])
 x0, y0 = allp.min(0) - 0.02; x1, y1 = allp.max(0) + 0.02
@@ -33,7 +47,10 @@ cv = np.array(canvas).astype(float)
 C = V[F].mean(1)
 # only surfaces turned towards the front (normal z above the 6th argument), so nothing smears down the sides
 nz = s.face_normals[:, 2]; nmin = float(sys.argv[6]) if len(sys.argv) > 6 else 0.3
-cand = np.where((C[:, 0] > x0) & (C[:, 0] < x1) & (C[:, 1] > y0) & (C[:, 1] < y1) & (C[:, 2] > zmin))[0]
+# PAINT_ZMAX: leave out what lies in front of this depth (in the turned view), e.g. hair before a face
+import os
+zmax = float(os.environ.get('PAINT_ZMAX', '1e9'))
+cand = np.where((C[:, 0] > x0) & (C[:, 0] < x1) & (C[:, 1] > y0) & (C[:, 1] < y1) & (C[:, 2] > zmin) & (C[:, 2] < zmax) & ~skip)[0]
 zcand = cand
 cand = cand[nz[cand] > nmin]
 S = 0.25  # z-buffer at a quarter of the canvas resolution
