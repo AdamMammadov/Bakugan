@@ -635,7 +635,7 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   elfin: { ball: 'models/elfin/ball.glb', monster: 'models/elfin/monster.glb', fly: true, scale: 1.1 },
   // made with TRELLIS.2 from a render on the Bakugan Wiki; its blurry feathers and body cel-shaded after the
   // render's colours, inked and rigged
-  ingram: { ball: 'models/ingram/ball.glb', monster: 'models/ingram/monster.glb', fly: true, scale: 0.95, fill: 0.85 },
+  ingram: { ball: 'models/ingram/ball.glb', monster: 'models/ingram/monster.glb', fly: true, scale: 0.88, fill: 0.92 },
   // made from a picture with Hunyuan3D-2.1, its tail mace lifted off the wing it was fused into, inked and rigged
   leonidas: { monster: 'models/leonidas/monster.glb', scale: 1.15 },
   // made with TRELLIS.2 from the Wii game's render (lower legs drawn in after the anime), its face painted
