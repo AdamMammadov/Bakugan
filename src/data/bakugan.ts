@@ -643,7 +643,7 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   brontes: { monster: 'models/brontes/monster.glb', scale: 1.05, fill: 1.12 },
   // made with TRELLIS.2 from the Wii game's render (recoloured Aquos, a foot and a blade tip drawn in), its
   // face painted back from the render, the armour brightened towards it, inked and rigged
-  elico: { monster: 'models/elico/monster.glb', scale: 1.1, fill: 1 },
+  elico: { monster: 'models/elico/monster.glb', scale: 1, fill: 1 },
   // made with TRELLIS.2 from the Wii game's render (a fin tip drawn in), which it turned into a front-facing
   // flyer with both wings spread; inked and rigged
   altair: { monster: 'models/altair/monster.glb', fly: true, scale: 0.85 },
@@ -661,6 +661,10 @@ if (saint) saint.models = { ...ROSTER_MODELS.nemus, ball: 'models/nemus/saint-ba
 const alto = ROSTER.find((b) => b.id === 'brontes')?.evolutions.find((e) => e.name === 'Alto Brontes')
 // made with TRELLIS.2 from an anime still (lower legs drawn in), its face painted back from it
 if (alto) alto.models = { monster: 'models/brontes/alto.glb', scale: 0.95, fill: 1.12 }
+const master = ROSTER.find((b) => b.id === 'ingram')?.evolutions.find((e) => e.name === 'Master Ingram')
+// made with TRELLIS.2 from the Wii game's render, its visor and red eyes painted back on, inked and rigged; it
+// keeps Ingram's ball and stands rather than flies
+if (master) master.models = { ...ROSTER_MODELS.ingram, monster: 'models/ingram/master.glb', fly: false, fill: 1.12, scale: 0.95 }
 const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')
 if (knight) knight.models = { ball: 'models/percival/knight-ball.glb' }
 

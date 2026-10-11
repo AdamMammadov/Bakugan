@@ -1,4 +1,4 @@
-# paint_front.py model.glb tex_in tex_out zmin '<json shapes>' [min facing]: paints flat shapes drawn in the model's front
+# paint_front.py model.glb tex_in tex_out zmin '<json shapes>' [min facing] [yaw]: paints flat shapes drawn in the model's front
 # view (x right, y up, model units) onto the front-most surface facing +z (z-buffered, so only what the front
 # camera sees). Shapes are drawn in order: {"poly": [[x,y],...], "fill": [r,g,b]}, {"line": [[x,y],...],
 # "width": w, "fill": [r,g,b]}; an optional "mirror": true adds the x -> -x copy.
@@ -6,6 +6,13 @@ import sys, json, numpy as np, trimesh
 from PIL import Image, ImageDraw
 s = trimesh.load(sys.argv[1], force='mesh', process=False)
 V = np.asarray(s.vertices, float); F = np.asarray(s.faces); UV = np.asarray(s.visual.uv, float)
+# yaw (7th argument, radians): paint as seen with the model turned by this much about the up axis, as the
+# converter's yaw does, for a face that looks off to one side
+yaw = float(sys.argv[7]) if len(sys.argv) > 7 else 0.0
+if yaw:
+    cy_, sy_ = np.cos(yaw), np.sin(yaw)
+    V = np.stack([V[:, 0] * cy_ + V[:, 2] * sy_, V[:, 1], -V[:, 0] * sy_ + V[:, 2] * cy_], 1)
+    s = trimesh.Trimesh(V, s.faces, process=False, visual=s.visual)
 tex = np.array(Image.open(sys.argv[2]).convert('RGB')).astype(float); TH, TW = tex.shape[:2]
 zmin = float(sys.argv[4]); shapes = json.loads(sys.argv[5])
 K = 4000  # canvas pixels per model unit
@@ -44,7 +51,7 @@ for t in zcand:
     Z = l0 * z[0] + l1 * z[1] + l2 * z[2]
     sub = zb[ymin:ymax, xmin:xmax]; upd = m & (Z > sub); sub[upd] = Z[upd]
 out = tex.copy(); n = 0
-eps = 0.004
+eps = float(__import__("os").environ.get("PAINT_EPS", "0.004"))  # depth tolerance (model units)
 for t in cand:
     a, b, c = F[t]
     u = UV[[a, b, c], 0] * TW; v = (1 - UV[[a, b, c], 1]) * TH
