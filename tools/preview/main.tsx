@@ -17,6 +17,11 @@ const d = Number(q.get('d') ?? 4.2)
 const spin = Number(q.get('spin') ?? 0)
 /** Height of the point the camera looks at. */
 const ty = Number(q.get('ty') ?? 0)
+/** pose=<node>:<rx>:<ry>:<rz>,...: turns rigged parts (radians), to look at their joints mid-move. */
+const pose = (q.get('pose') ?? '')
+  .split(',')
+  .filter(Boolean)
+  .map((p) => p.split(':'))
 
 function Model() {
   const { scene } = useGLTF(`/models/${model}`)
@@ -27,6 +32,7 @@ function Model() {
       if (u.closedOnly) o.visible = !open
       if (open && u.openPos) o.position.add(new THREE.Vector3(...u.openPos))
       if (open && u.openRot) o.rotation.set(o.rotation.x + u.openRot[0], o.rotation.y + u.openRot[1], o.rotation.z + u.openRot[2])
+      for (const [name, x, y, z] of pose) if (o.name === name) o.rotation.set(Number(x), Number(y), Number(z))
     })
   }, [scene])
   return <primitive object={scene} rotation-x={spin} />

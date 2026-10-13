@@ -29,12 +29,15 @@ const root = await load()
     const uv = m.geometry.attributes.uv
     let lo = Infinity
     let hi = -Infinity
-    if (uv) for (let i = 0; i < uv.array.length; i++) {
-      lo = Math.min(lo, uv.array[i])
-      hi = Math.max(hi, uv.array[i])
-    }
+    if (uv)
+      for (let i = 0; i < uv.array.length; i++) {
+        lo = Math.min(lo, uv.array[i])
+        hi = Math.max(hi, uv.array[i])
+      }
     const mm = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshPhongMaterial
-    dbg.push(`${mm.type} map=${mm.map ? (mm.map.image as HTMLImageElement)?.src?.slice(-24) + ' ' + (mm.map.image as HTMLImageElement)?.width : 'none'} color=${mm.color?.getHexString()}`)
+    dbg.push(
+      `${mm.type} map=${mm.map ? (mm.map.image as HTMLImageElement)?.src?.slice(-24) + ' ' + (mm.map.image as HTMLImageElement)?.width : 'none'} color=${mm.color?.getHexString()}`,
+    )
     dbg.push(`${m.name} uv=${uv ? uv.itemSize : 'none'} [${lo.toFixed(2)},${hi.toFixed(2)}] groups=${m.geometry.groups.length}`)
   })
   ;(window as any).dbg = dbg
@@ -50,20 +53,22 @@ if (q.get('front')) {
   root.traverse((o) => {
     const m = o as THREE.Mesh
     if (!m.isMesh || Array.isArray(m.material)) return
-    const src = (((m.material as THREE.MeshPhongMaterial).map?.image as HTMLImageElement | undefined)?.src ?? '')
+    const src = ((m.material as THREE.MeshPhongMaterial).map?.image as HTMLImageElement | undefined)?.src ?? ''
     if (!src.endsWith(suffix)) return
     const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry
     const pos = g.attributes.position
     const keep: number[] = []
     const lift: number[] = []
-    for (let t = 0; t < pos.count; t += 3) ((pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3 > Number(minY) ? lift : keep).push(t)
+    for (let t = 0; t < pos.count; t += 3)
+      ((pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3 > Number(minY) ? lift : keep).push(t)
     const pick = (tris: number[]) => {
       const out = new THREE.BufferGeometry()
       for (const name of Object.keys(g.attributes)) {
         const attr = g.attributes[name] as THREE.BufferAttribute
         const arr = new Float32Array(tris.length * 3 * attr.itemSize)
         tris.forEach((t, i) => {
-          for (let v = 0; v < 3; v++) for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.getComponent(t + v, k)
+          for (let v = 0; v < 3; v++)
+            for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.getComponent(t + v, k)
         })
         out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
       }
@@ -216,7 +221,12 @@ root.traverse((o) => {
       const nrm = g.attributes.normal
       const inflate = Number(q.get('inflate') ?? 0.4) * outward
       for (let i = 0; i < pos.count; i++)
-        pos.setXYZ(i, pos.getX(i) + nrm.getX(i) * inflate, pos.getY(i) + nrm.getY(i) * inflate, pos.getZ(i) + nrm.getZ(i) * inflate)
+        pos.setXYZ(
+          i,
+          pos.getX(i) + nrm.getX(i) * inflate,
+          pos.getY(i) + nrm.getY(i) * inflate,
+          pos.getZ(i) + nrm.getZ(i) * inflate,
+        )
       pos.needsUpdate = true
       if (q.get('outline') === 'drop') m.visible = false
       // glTF only knows front or both sides, so turn the triangles round instead of drawing back faces
@@ -240,7 +250,10 @@ root.traverse((o) => {
           }
         }
       }
-      return new THREE.MeshBasicMaterial({ color: new THREE.Color('#' + (q.get('outlineColor') ?? '16110c')), side: THREE.FrontSide })
+      return new THREE.MeshBasicMaterial({
+        color: new THREE.Color('#' + (q.get('outlineColor') ?? '16110c')),
+        side: THREE.FrontSide,
+      })
     }
     if (m.name.startsWith('front-')) {
       const frontOffset = Number(q.get('frontOffset') ?? -800)
@@ -306,7 +319,19 @@ root.traverse((o) => {
     }
     const overlay = hasAlpha(map) || facePart
     const offset = facePart ? Number(q.get('faceOffset') ?? -60) : -2
-    if (q.get('basic') === '1') return new THREE.MeshBasicMaterial({ map, color: facePart ? new THREE.Color('#' + (q.get('faceTint') ?? 'ffffff')) : new THREE.Color(Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1)), transparent: overlay, alphaTest: overlay ? 0.3 : 0, side: THREE.DoubleSide, polygonOffset: overlay, polygonOffsetFactor: offset / 10, polygonOffsetUnits: offset })
+    if (q.get('basic') === '1')
+      return new THREE.MeshBasicMaterial({
+        map,
+        color: facePart
+          ? new THREE.Color('#' + (q.get('faceTint') ?? 'ffffff'))
+          : new THREE.Color(Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1), Number(q.get('gain') ?? 1)),
+        transparent: overlay,
+        alphaTest: overlay ? 0.3 : 0,
+        side: THREE.DoubleSide,
+        polygonOffset: overlay,
+        polygonOffsetFactor: offset / 10,
+        polygonOffsetUnits: offset,
+      })
     // Wii models store most textures at half brightness and double them when drawing
     const gain = facePart ? 1 : Number(q.get('gain') ?? 1)
     return new THREE.MeshStandardMaterial({
@@ -399,6 +424,9 @@ if (q.get('ink')) {
 }
 
 // rig=<name>: cut a one-piece monster into the named pivot nodes the game animates (rigs.json)
+// skin=<radius>: skin the parts instead of cutting them off: one mesh, a bone per part at its pivot, every
+// vertex of a part on its bone and the body round it (within radius, model units) bending partly with it, so
+// joints stretch instead of opening cracks as the parts turn
 if (q.get('rig')) {
   type Part = {
     name: string
@@ -504,62 +532,188 @@ if (q.get('rig')) {
     m.removeFromParent()
   }
   // parts were picked by where triangles stood; now bend the soft bakes into place
-  parts.forEach((part, k) => part.bake && part.soft && softBake(owned, k))
+  parts.forEach((part, k) => part.bake && (part.soft || q.get('skin')) && softBake(owned, k))
   const take = (g: THREE.BufferGeometry, tris: number[]) => {
     const out = new THREE.BufferGeometry()
     for (const name of Object.keys(g.attributes)) {
       const attr = g.attributes[name] as THREE.BufferAttribute
       const arr = new Float32Array(tris.length * 3 * attr.itemSize)
       tris.forEach((t, i) => {
-        for (let v = 0; v < 3; v++) for (let c = 0; c < attr.itemSize; c++) arr[(i * 3 + v) * attr.itemSize + c] = attr.getComponent(t + v, c)
+        for (let v = 0; v < 3; v++)
+          for (let c = 0; c < attr.itemSize; c++) arr[(i * 3 + v) * attr.itemSize + c] = attr.getComponent(t + v, c)
       })
       out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
     }
     return out
   }
-  const nodes = new Map<string, THREE.Group>()
-  for (const part of parts) {
-    if (part.name === 'drop') continue
-    const n = new THREE.Group()
-    n.name = part.name
-    // swing=<factor> damps how far the game turns this part (saved as glTF extras)
-    if (part.swing !== undefined) n.userData.swing = part.swing
-    nodes.set(part.name, n)
-  }
-  const body = new THREE.Group()
-  body.name = 'body'
-  root.add(body)
-  for (const [k, list] of [...buckets].sort((a, b) => a[0] - b[0])) {
-    const part = parts[k]
-    // a part named "drop" holds stray pieces that float apart from the model
-    if (part?.name === 'drop') continue
-    for (const { geo, tris, mat } of list) {
-      const piece = take(geo, tris)
-      if (!part) {
-        body.add(new THREE.Mesh(piece, mat))
-        continue
-      }
-      const pivot = new THREE.Vector3(...part.pivot)
-      piece.translate(-pivot.x, -pivot.y, -pivot.z)
-      if (part.bake && !part.soft) {
-        piece.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...part.bake)))
-        piece.computeVertexNormals()
-      }
-      const mesh = new THREE.Mesh(piece, mat)
-      mesh.name = `${part.name}-mesh`
-      nodes.get(part.name)!.add(mesh)
+  if (q.get('skin')) {
+    skin(Number(q.get('skin')))
+  } else {
+    const nodes = new Map<string, THREE.Group>()
+    for (const part of parts) {
+      if (part.name === 'drop') continue
+      const n = new THREE.Group()
+      n.name = part.name
+      // swing=<factor> damps how far the game turns this part (saved as glTF extras)
+      if (part.swing !== undefined) n.userData.swing = part.swing
+      nodes.set(part.name, n)
     }
+    const body = new THREE.Group()
+    body.name = 'body'
+    root.add(body)
+    for (const [k, list] of [...buckets].sort((a, b) => a[0] - b[0])) {
+      const part = parts[k]
+      // a part named "drop" holds stray pieces that float apart from the model
+      if (part?.name === 'drop') continue
+      for (const { geo, tris, mat } of list) {
+        const piece = take(geo, tris)
+        if (!part) {
+          body.add(new THREE.Mesh(piece, mat))
+          continue
+        }
+        const pivot = new THREE.Vector3(...part.pivot)
+        piece.translate(-pivot.x, -pivot.y, -pivot.z)
+        if (part.bake && !part.soft) {
+          piece.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...part.bake)))
+          piece.computeVertexNormals()
+        }
+        const mesh = new THREE.Mesh(piece, mat)
+        mesh.name = `${part.name}-mesh`
+        nodes.get(part.name)!.add(mesh)
+      }
+    }
+    // place each node at its pivot, relative to its parent's pivot
+    for (const part of parts) {
+      const n = nodes.get(part.name)
+      if (!n) continue
+      const parent = part.parent ? nodes.get(part.parent) : undefined
+      const base = part.parent ? new THREE.Vector3(...parts.find((p) => p.name === part.parent)!.pivot) : new THREE.Vector3()
+      n.position.set(part.pivot[0] - base.x, part.pivot[1] - base.y, part.pivot[2] - base.z)
+      ;(parent ?? root).add(n)
+    }
+    ;(window as any).rigParts = [...nodes.keys()]
   }
-  // place each node at its pivot, relative to its parent's pivot
-  for (const part of parts) {
-    const n = nodes.get(part.name)
-    if (!n) continue
-    const parent = part.parent ? nodes.get(part.parent) : undefined
-    const base = part.parent ? new THREE.Vector3(...parts.find((p) => p.name === part.parent)!.pivot) : new THREE.Vector3()
-    n.position.set(part.pivot[0] - base.x, part.pivot[1] - base.y, part.pivot[2] - base.z)
-    ;(parent ?? root).add(n)
+
+  /** The skinned rig (skin=<radius>): see the note at the top of this block. */
+  function skin(radius: number) {
+    const live = parts.map((p) => p.name !== 'drop')
+    // where each vertex position is: the parts whose triangles touch it (-1 = body)
+    const key = (pos: THREE.BufferAttribute, i: number) =>
+      `${pos.getX(i).toFixed(5)},${pos.getY(i).toFixed(5)},${pos.getZ(i).toFixed(5)}`
+    const touches = new Map<string, Set<number>>()
+    for (const { g, owner } of owned) {
+      const pos = g.attributes.position as THREE.BufferAttribute
+      for (let i = 0; i < pos.count; i++) {
+        const id = key(pos, i)
+        if (!touches.has(id)) touches.set(id, new Set())
+        touches.get(id)!.add(owner[Math.floor(i / 3)])
+      }
+    }
+    // each part's vertices in a grid of radius-sized cells, for nearest-vertex distances
+    const cell = (x: number) => Math.floor(x / radius)
+    const grids = parts.map(() => new Map<string, number[]>())
+    for (const [id, set] of touches) {
+      const [x, y, z] = id.split(',').map(Number)
+      for (const k of set) {
+        if (k < 0 || !live[k]) continue
+        const c = `${cell(x)},${cell(y)},${cell(z)}`
+        if (!grids[k].has(c)) grids[k].set(c, [])
+        grids[k].get(c)!.push(x, y, z)
+      }
+    }
+    const nearest = (k: number, x: number, y: number, z: number) => {
+      let best = Infinity
+      const [cx, cy, cz] = [cell(x), cell(y), cell(z)]
+      for (let i = -1; i <= 1; i++)
+        for (let j = -1; j <= 1; j++)
+          for (let l = -1; l <= 1; l++) {
+            const pts = grids[k].get(`${cx + i},${cy + j},${cz + l}`)
+            if (!pts) continue
+            for (let n = 0; n < pts.length; n += 3) best = Math.min(best, Math.hypot(pts[n] - x, pts[n + 1] - y, pts[n + 2] - z))
+          }
+      return best
+    }
+    // bones: the body at the origin, one per part at its pivot (relative to its parent's)
+    const rootBone = new THREE.Bone()
+    rootBone.name = 'body'
+    root.add(rootBone)
+    const bone = parts.map((part) => {
+      if (part.name === 'drop') return null
+      const b = new THREE.Bone()
+      b.name = part.name
+      // swing=<factor> damps how far the game turns this part (saved as glTF extras)
+      if (part.swing !== undefined) b.userData.swing = part.swing
+      return b
+    })
+    parts.forEach((part, k) => {
+      const b = bone[k]
+      if (!b) return
+      const pk = part.parent ? parts.findIndex((p) => p.name === part.parent) : -1
+      const base = pk >= 0 ? new THREE.Vector3(...parts[pk].pivot) : new THREE.Vector3()
+      b.position.set(part.pivot[0] - base.x, part.pivot[1] - base.y, part.pivot[2] - base.z)
+      ;(pk >= 0 ? bone[pk]! : rootBone).add(b)
+    })
+    const bones = [rootBone, ...(bone.filter(Boolean) as THREE.Bone[])]
+    const index = parts.map((_, k) => (bone[k] ? bones.indexOf(bone[k]!) : 0))
+    // up to four bones per vertex position: a part's own vertices go wholly with it, others within the
+    // radius of a part partly (smoothly less with distance), and what is left goes with the body
+    const weights = new Map<string, [number, number][]>()
+    for (const [id, set] of touches) {
+      const [x, y, z] = id.split(',').map(Number)
+      let pull: [number, number][] = []
+      parts.forEach((_, k) => {
+        if (!live[k]) return
+        const a = set.has(k) ? 1 : THREE.MathUtils.smoothstep(1 - nearest(k, x, y, z) / radius, 0, 1)
+        if (a > 0) pull.push([index[k], a])
+      })
+      const total = pull.reduce((t, [, a]) => t + a, 0)
+      if (total >= 1) pull = pull.map(([b, a]) => [b, a / total])
+      else pull.push([0, 1 - total])
+      pull.sort((a, b) => b[1] - a[1])
+      pull = pull.slice(0, 4)
+      const kept = pull.reduce((t, [, a]) => t + a, 0)
+      weights.set(
+        id,
+        pull.map(([b, a]) => [b, a / kept]),
+      )
+    }
+    // one skinned mesh per source mesh and material, the dropped pieces left out
+    const pieces = new Map<THREE.BufferGeometry, Map<THREE.Material, number[]>>()
+    for (const [k, list] of buckets) {
+      if (k >= 0 && !live[k]) continue
+      for (const { geo, tris, mat } of list) {
+        if (!pieces.has(geo)) pieces.set(geo, new Map())
+        const per = pieces.get(geo)!
+        if (!per.has(mat)) per.set(mat, [])
+        per.get(mat)!.push(...tris)
+      }
+    }
+    const skinned: THREE.SkinnedMesh[] = []
+    for (const [geo, per] of pieces)
+      for (const [mat, tris] of per) {
+        const piece = take(geo, tris)
+        const pos = piece.attributes.position as THREE.BufferAttribute
+        const joints = new Uint16Array(pos.count * 4)
+        const amounts = new Float32Array(pos.count * 4)
+        for (let i = 0; i < pos.count; i++) {
+          const w = weights.get(key(pos, i)) ?? [[0, 1]]
+          w.forEach(([b, a], j) => {
+            joints[i * 4 + j] = b
+            amounts[i * 4 + j] = a
+          })
+        }
+        piece.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(joints, 4))
+        piece.setAttribute('skinWeight', new THREE.Float32BufferAttribute(amounts, 4))
+        const m = new THREE.SkinnedMesh(piece, mat)
+        m.name = 'skin'
+        root.add(m)
+        skinned.push(m)
+      }
+    root.updateMatrixWorld(true)
+    const skeleton = new THREE.Skeleton(bones)
+    for (const m of skinned) m.bind(skeleton)
+    ;(window as any).rigParts = bones.map((b) => b.name)
   }
-  ;(window as any).rigParts = [...nodes.keys()]
 }
 
 // stand on the floor, centred, 1.75 units tall (a person in metres)
@@ -581,40 +735,46 @@ const SHOULDER = q.get('split') === '0' ? Infinity : Number(q.get('shoulder') ??
 const ARM_MIN_Y = Number(q.get('armY') ?? 1.1)
 const ARM_MAX_Y = Number(q.get('armTop') ?? 1.42)
 wrap.updateMatrixWorld(true)
-const parts: Record<'body' | 'armL' | 'armR', { geo: THREE.BufferGeometry; mat: THREE.Material }[]> = { body: [], armL: [], armR: [] }
-if (!NO_SPLIT) wrap.traverse((o) => {
-  const m = o as THREE.Mesh
-  if (!m.isMesh) return
-  const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrixWorld)
-  const mats = Array.isArray(m.material) ? m.material : [m.material]
-  const groups = g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }]
-  for (const grp of groups) {
-    const buckets = { body: [] as number[], armL: [] as number[], armR: [] as number[] }
-    const pos = g.attributes.position
-    for (let t = grp.start; t < grp.start + grp.count; t += 3) {
-      const cx = (pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3
-      const cy = (pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3
-      // only the T-posed arms: wide and up at shoulder height (not a flared coat hem)
-      const side = cy < ARM_MIN_Y || cy > ARM_MAX_Y ? 'body' : cx > SHOULDER ? 'armR' : cx < -SHOULDER ? 'armL' : 'body'
-      buckets[side].push(t)
-    }
-    for (const key of ['body', 'armL', 'armR'] as const) {
-      const tris = buckets[key]
-      if (!tris.length) continue
-      const out = new THREE.BufferGeometry()
-      for (const name of Object.keys(g.attributes)) {
-        if (name === 'skinIndex' || name === 'skinWeight') continue
-        const attr = g.attributes[name] as THREE.BufferAttribute
-        const arr = new Float32Array(tris.length * 3 * attr.itemSize)
-        tris.forEach((t, i) => {
-          for (let v = 0; v < 3; v++) for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.getComponent(t + v, k)
-        })
-        out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
+const parts: Record<'body' | 'armL' | 'armR', { geo: THREE.BufferGeometry; mat: THREE.Material }[]> = {
+  body: [],
+  armL: [],
+  armR: [],
+}
+if (!NO_SPLIT)
+  wrap.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh) return
+    const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrixWorld)
+    const mats = Array.isArray(m.material) ? m.material : [m.material]
+    const groups = g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }]
+    for (const grp of groups) {
+      const buckets = { body: [] as number[], armL: [] as number[], armR: [] as number[] }
+      const pos = g.attributes.position
+      for (let t = grp.start; t < grp.start + grp.count; t += 3) {
+        const cx = (pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3
+        const cy = (pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3
+        // only the T-posed arms: wide and up at shoulder height (not a flared coat hem)
+        const side = cy < ARM_MIN_Y || cy > ARM_MAX_Y ? 'body' : cx > SHOULDER ? 'armR' : cx < -SHOULDER ? 'armL' : 'body'
+        buckets[side].push(t)
       }
-      parts[key].push({ geo: out, mat: mats[grp.materialIndex ?? 0] })
+      for (const key of ['body', 'armL', 'armR'] as const) {
+        const tris = buckets[key]
+        if (!tris.length) continue
+        const out = new THREE.BufferGeometry()
+        for (const name of Object.keys(g.attributes)) {
+          if (name === 'skinIndex' || name === 'skinWeight') continue
+          const attr = g.attributes[name] as THREE.BufferAttribute
+          const arr = new Float32Array(tris.length * 3 * attr.itemSize)
+          tris.forEach((t, i) => {
+            for (let v = 0; v < 3; v++)
+              for (let k = 0; k < attr.itemSize; k++) arr[(i * 3 + v) * attr.itemSize + k] = attr.getComponent(t + v, k)
+          })
+          out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize))
+        }
+        parts[key].push({ geo: out, mat: mats[grp.materialIndex ?? 0] })
+      }
     }
-  }
-})
+  })
 let rig = new THREE.Group()
 rig.name = 'brawler'
 for (const key of NO_SPLIT ? [] : (['body', 'armL', 'armR'] as const)) {

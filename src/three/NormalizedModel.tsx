@@ -5,6 +5,25 @@ import * as THREE from 'three'
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { rigPose, type Pose, type PoseRef } from './pose'
 
+/**
+ * The converter marks every texture for sharp, blocky magnification (right for the DS games' tiny pixel
+ * textures) and leaves out the smaller copies (mipmaps) used further away. Seen close up, lines in bigger
+ * textures then show as stairs; seen from afar, a big texture sparkles. Textures of 64 px and up are
+ * smoothed both ways; smaller ones (eye and mouth cells) stay sharp close up, but get mipmaps too.
+ */
+function smooth(mat: THREE.MeshStandardMaterial) {
+  for (const t of [mat.map, mat.emissiveMap]) {
+    if (!t || t.userData.smoothed) continue
+    t.userData.smoothed = true
+    const img = t.image as { width?: number; height?: number } | undefined
+    if (Math.min(img?.width ?? 0, img?.height ?? 0) >= 64) t.magFilter = THREE.LinearFilter
+    t.minFilter = THREE.LinearMipmapLinearFilter
+    t.generateMipmaps = true
+    t.anisotropy = 4
+    t.needsUpdate = true
+  }
+}
+
 /** Clip-name patterns tried for each pose, in order. */
 const POSE_CLIPS: Record<Pose['kind'], RegExp> = {
   lunge: /attack|bite|strike|punch|claw/i,
@@ -55,6 +74,7 @@ export function NormalizedModel({
       if (m.isMesh) {
         o.castShadow = true
         o.receiveShadow = true
+        for (const mat of Array.isArray(m.material) ? m.material : [m.material]) smooth(mat as THREE.MeshStandardMaterial)
         if (tint) {
           const tintOne = (mat: THREE.Material) => {
             const c = mat.clone() as THREE.MeshStandardMaterial
@@ -111,6 +131,8 @@ export function NormalizedModel({
   })
 
   const fit = useMemo(() => {
+    // bones placed first, so a skinned mesh is measured where it is drawn
+    scene.updateMatrixWorld(true)
     const box = new THREE.Box3().setFromObject(scene)
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())

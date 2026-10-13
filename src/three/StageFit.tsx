@@ -126,7 +126,9 @@ function sweep(root: THREE.Object3D): { points: THREE.Vector3[]; sweep: Sweep } 
     const pos = m.isMesh ? m.geometry.attributes.position : undefined
     if (!pos) return
     for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld)
+      // where the vertex is drawn: a skinned mesh's raw positions can be in another frame (quantized files
+      // keep the scale in the skin), so it is measured after skinning
+      m.getVertexPosition(i, v).applyMatrix4(m.matrixWorld)
       ys.push(v.y)
       rs.push(Math.hypot(v.x, v.z))
     }
