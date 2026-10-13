@@ -341,6 +341,34 @@ if (q.get('ink')) {
     if (m.geometry.index) base.setIndex(m.geometry.index.clone())
     // welded, so the hull has no cracks along texture seams
     const g = mergeVertices(base, 1e-5)
+    // inkThin=<0..1>: no hull over a vertex whose faces point every which way (the normals summed, as a
+    // share of their total area, below this), as on the paper-thin wing membranes a generator makes:
+    // pushed out there the hull pokes through the other side in dark specks
+    const thin = Number(q.get('inkThin') ?? 0)
+    const keep = (() => {
+      if (!thin) return null
+      const p = g.attributes.position
+      const ix = g.index!
+      const sum = new Float32Array(p.count * 3)
+      const area = new Float32Array(p.count)
+      const a = new THREE.Vector3()
+      const b = new THREE.Vector3()
+      const c = new THREE.Vector3()
+      for (let i = 0; i < ix.count; i += 3) {
+        const [i0, i1, i2] = [ix.getX(i), ix.getX(i + 1), ix.getX(i + 2)]
+        a.fromBufferAttribute(p, i0)
+        b.fromBufferAttribute(p, i1).sub(a)
+        c.fromBufferAttribute(p, i2).sub(a)
+        const n = b.cross(c)
+        for (const v of [i0, i1, i2]) {
+          sum[v * 3] += n.x
+          sum[v * 3 + 1] += n.y
+          sum[v * 3 + 2] += n.z
+          area[v] += n.length()
+        }
+      }
+      return (v: number) => Math.hypot(sum[v * 3], sum[v * 3 + 1], sum[v * 3 + 2]) >= thin * area[v]
+    })()
     g.computeVertexNormals()
     const local = width / new THREE.Vector3().setFromMatrixScale(m.matrixWorld).x
     const pos = g.attributes.position
@@ -352,6 +380,13 @@ if (q.get('ink')) {
       const t = idx.getX(i + 1)
       idx.setX(i + 1, idx.getX(i + 2))
       idx.setX(i + 2, t)
+    }
+    if (keep) {
+      const kept: number[] = []
+      for (let i = 0; i < idx.count; i += 3)
+        if (keep(idx.getX(i)) && keep(idx.getX(i + 1)) && keep(idx.getX(i + 2)))
+          kept.push(idx.getX(i), idx.getX(i + 1), idx.getX(i + 2))
+      g.setIndex(kept)
     }
     g.deleteAttribute('normal')
     const hull = new THREE.Mesh(g, ink)
