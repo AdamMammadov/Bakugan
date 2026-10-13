@@ -1,7 +1,7 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { PageNav } from '../components/PageNav'
 import { centreInStrip } from '../components/strip'
@@ -13,6 +13,7 @@ import { BallModel, MonsterModel, preloadModels } from '../three/BakuganModels'
 import { LiftDrag } from '../three/LiftDrag'
 import { BlobShadow } from '../three/BlobShadow'
 import { env, type Move, type Pose } from '../three/pose'
+import { StageFit, type Stage, type Sweep } from '../three/StageFit'
 import * as THREE from 'three'
 
 type Shelf = 'mine' | 'all'
@@ -32,6 +33,13 @@ export function BakuganShowroom() {
   const closed = useRef(false)
   // the move being shown off (played on the model's joints and its whole body)
   const pose = useRef<Pose | null>(null)
+  // the eye button hides everything but the Bakugan, which then fills the screen
+  const [bare, setBare] = useState(false)
+  // the free space between the panels, where the Bakugan is framed
+  const root = useRef<HTMLDivElement>(null)
+  const gap = useRef<HTMLDivElement>(null)
+  const model = useRef<THREE.Group>(null)
+  const [stage, setStage] = useState<Stage | null>(null)
 
   const list = useMemo(
     () =>
@@ -62,6 +70,21 @@ export function BakuganShowroom() {
   const setForm = (f: number) => bakugan && setSel({ id: bakugan.id, form: f })
   const reached = bakugan ? ownedForm(profile, bakugan.id) : -1
   const owned = bakugan ? profile?.collection.find((o) => o.id === bakugan.id) : undefined
+  // the floor under the Bakugan, sized to it once it is measured; a flyer's floor is put just under it, so the
+  // two fit the stage together without the floor sinking into the text below
+  const [floor, setFloor] = useState({ y: 0, radius: 1.9 })
+  const flies = view === 'monster' && !!bakugan && !!formModels({ bakugan, form })?.fly
+  const onMeasure = useCallback(
+    (s: Sweep) => {
+      const next = {
+        y: flies ? Math.max(0, s.low - 0.08 * (s.high - s.low)) : 0,
+        radius: Math.min(2.4, Math.max(0.45, s.radius * (view === 'ball' ? 1.6 : 0.7))),
+      }
+      setFloor(next)
+      return next
+    },
+    [view, flies],
+  )
 
   const pick = useCallback(
     (i: number) => {
@@ -81,6 +104,7 @@ export function BakuganShowroom() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') pick(index - 1)
       if (e.key === 'ArrowRight') pick(index + 1)
+      if (e.key === 'Escape') setBare(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -91,29 +115,47 @@ export function BakuganShowroom() {
   const hasModel =
     bakugan &&
     (view === 'ball' ? (bakugan.evolutions[form]?.models?.ball ?? bakugan.models?.ball) : formModels({ bakugan, form })?.monster)
-  // flyers hover, so the camera looks a little higher at them
-  const lookAt = view === 'ball' ? 0.6 : bakugan && formModels({ bakugan, form })?.fly ? 2.3 : 1.4
+  const showing = !!bakugan && !!evo
+  useLayoutEffect(() => {
+    const measure = () => {
+      const r = root.current?.getBoundingClientRect()
+      const g = gap.current?.getBoundingClientRect()
+      if (!r) return
+      const next: Stage =
+        bare || !g
+          ? { x: r.width * 0.03, y: r.height * 0.04, w: r.width * 0.94, h: r.height * 0.86 }
+          : { x: g.left - r.left, y: g.top - r.top, w: g.width, h: g.height }
+      setStage((s) => (s && s.x === next.x && s.y === next.y && s.w === next.w && s.h === next.h ? s : next))
+    }
+    measure()
+    const watch = new ResizeObserver(measure)
+    if (root.current) watch.observe(root.current)
+    if (gap.current) watch.observe(gap.current)
+    return () => watch.disconnect()
+  }, [bare, showing])
 
   return (
     <motion.div
+      ref={root}
       className="absolute inset-0 overflow-hidden"
       style={{ background: `radial-gradient(circle at 55% 50%, ${el.color}38, #05060a 65%)` }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      {/* looking a little down at the floor's middle; StageFit then moves in and up to the Bakugan, keeping the angle */}
       {bakugan && (
-        <Canvas camera={{ position: [0, 2.1, 6], fov: 40 }} dpr={[1, 2]}>
+        <Canvas camera={{ position: [0, 0.7, 6], fov: 24 }} dpr={[1, 2]}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 6, 4]} intensity={2.2} />
           <pointLight position={[-3, 2.5, -2]} intensity={20} color={el.glow} />
           <pointLight position={[0, 2, 5]} intensity={6} color="#ffffff" />
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[1.9, 64]} />
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, floor.y, 0]}>
+            <circleGeometry args={[floor.radius, 64]} />
             <meshStandardMaterial color="#101118" emissive={el.color} emissiveIntensity={0.15} />
           </mesh>
           <Suspense fallback={null}>
-            <group key={`${bakugan.id}-${form}-${view}`}>
+            <group key={`${bakugan.id}-${form}-${view}`} ref={model}>
               {view === 'monster' ? (
                 <group scale={0.78 / Math.max(1, (formModels({ bakugan, form })?.scale ?? 1) * (1 + form * 0.12))}>
                   <MoveBody pose={pose}>
@@ -127,21 +169,28 @@ export function BakuganShowroom() {
               )}
             </group>
           </Suspense>
-          <BlobShadow size={view === 'monster' ? 3.6 : 1.4} />
-          <OrbitControls
-            makeDefault
-            target={[0, lookAt, 0]}
-            enablePan={false}
-            minDistance={1.6}
-            maxDistance={9}
-            autoRotate
-            autoRotateSpeed={1.2}
+          <group position={[0, floor.y, 0]}>
+            <BlobShadow size={floor.radius * (view === 'monster' ? 1.9 : 1.45)} />
+          </group>
+          <OrbitControls makeDefault enablePan={false} autoRotate autoRotateSpeed={1.2} />
+          <LiftDrag max={6} />
+          {/* a ball is shown at about half the stage's height, a brawl form as big as fits */}
+          <StageFit
+            target={model}
+            stage={stage}
+            fitKey={`${bakugan.id}-${form}-${view}`}
+            fill={view === 'ball' ? 0.5 : 0.97}
+            onMeasure={onMeasure}
           />
-          <LiftDrag max={6} base={lookAt} resetKey={`${bakugan?.id}-${form}`} />
         </Canvas>
       )}
 
-      <div className="pointer-events-none absolute inset-0 flex flex-col px-12 pt-8 pb-20">
+      <motion.div
+        className="pointer-events-none absolute inset-0 flex flex-col px-12 pt-8 pb-20"
+        animate={{ opacity: bare ? 0 : 1 }}
+        transition={{ duration: 0.3 }}
+        inert={bare}
+      >
         <div className="pointer-events-auto">
           <PageNav current="showroom" />
         </div>
@@ -191,130 +240,135 @@ export function BakuganShowroom() {
         )}
 
         {bakugan && evo && (
-          <div className="mt-6 flex min-h-0 flex-1 justify-between gap-8">
-            <AnimatePresence mode="wait">
-              <motion.section
-                key={bakugan.id}
-                className="pointer-events-auto w-[28rem] max-w-[36vw] overflow-y-auto pr-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <div className="flex items-center gap-2">
-                  <img src={el.icon} alt="" className="h-7 w-7" />
-                  <span className="font-display text-xs tracking-[0.4em]" style={{ color: el.color }}>
-                    {el.name.toUpperCase()} · {bakugan.series.toUpperCase()}
-                  </span>
-                </div>
-                <h1 className="font-display mt-2 text-5xl font-black tracking-wide">{evo.name}</h1>
-                <p className="mt-1 text-white/55">Brawler: {bakugan.brawler}</p>
-                <p className="mt-3 text-sm">
-                  {reached >= 0 ? (
-                    <span className="rounded bg-emerald-400/15 px-2 py-1 text-emerald-300">✓ IN YOUR COLLECTION</span>
-                  ) : (
-                    <span className="rounded bg-white/10 px-2 py-1 text-white/70">🔒 {unlockHint(profile, bakugan)}</span>
-                  )}
-                </p>
-                <p className="mt-4 leading-relaxed text-white/80">{bakugan.description}</p>
-
-                <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                  <Stat label="G-POWER" value={`${evo.gPower}G`} color={el.color} />
-                  <Stat label="ON A GATE" value={`${evo.gPower + bakugan.brawlG - bakugan.baseG}G`} color={el.color} />
-                  <Stat
-                    label="CARDS"
-                    value={owned ? `${cardCount(owned)}/${bakugan.abilities.length}` : `${bakugan.abilities.length}`}
-                    color={el.color}
-                  />
-                </div>
-
-                {owned && (
-                  <p className="mt-3 text-xs text-white/50">
-                    {owned.xp.toLocaleString('en')} Bakugan XP · {owned.wins} wins · {owned.battles} battles · {owned.kos} KOs
+          <div className="mt-6 flex min-h-0 flex-1 gap-6">
+            {/* a fixed slot, so the gap beside it keeps its size while one Bakugan's details give way to the next */}
+            <div className="flex min-h-0 w-[28rem] max-w-[30vw] shrink-0">
+              <AnimatePresence mode="wait">
+                <motion.section
+                  key={bakugan.id}
+                  className="pointer-events-auto w-full overflow-y-auto pr-2"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <img src={el.icon} alt="" className="h-7 w-7" />
+                    <span className="font-display text-xs tracking-[0.4em]" style={{ color: el.color }}>
+                      {el.name.toUpperCase()} · {bakugan.series.toUpperCase()}
+                    </span>
+                  </div>
+                  <h1 className="font-display mt-2 text-5xl font-black tracking-wide">{evo.name}</h1>
+                  <p className="mt-1 text-white/55">Brawler: {bakugan.brawler}</p>
+                  <p className="mt-3 text-sm">
+                    {reached >= 0 ? (
+                      <span className="rounded bg-emerald-400/15 px-2 py-1 text-emerald-300">✓ IN YOUR COLLECTION</span>
+                    ) : (
+                      <span className="rounded bg-white/10 px-2 py-1 text-white/70">🔒 {unlockHint(profile, bakugan)}</span>
+                    )}
                   </p>
-                )}
+                  <p className="mt-4 leading-relaxed text-white/80">{bakugan.description}</p>
 
-                <p className="font-display mt-6 text-[10px] tracking-[0.4em] text-white/40">EVOLUTIONS</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {bakugan.evolutions.map((e, i) => {
-                    const have = i <= reached
-                    return (
-                      <button
-                        key={`${e.name}-${e.series}`}
-                        onClick={() => {
-                          playSfx('tick')
-                          setForm(i)
-                        }}
-                        title={
-                          have
-                            ? 'Reached'
-                            : i === reached + 1 && owned
-                              ? `Evolves at ${EVOLVE_XP[reached]?.toLocaleString('en')} Bakugan XP`
-                              : 'Not reached yet'
-                        }
-                        className={`rounded border px-3 py-1.5 text-left text-xs transition ${
-                          i === form ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white'
-                        }`}
-                        style={{ borderColor: i === form ? el.color : 'rgba(255,255,255,0.12)' }}
-                      >
-                        <span className="font-display font-bold">
-                          {have ? '' : '🔒 '}
-                          {e.name}
-                        </span>
-                        <span className="block text-[10px] text-white/40">
-                          {e.series} · {e.gPower}G
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+                  <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                    <Stat label="G-POWER" value={`${evo.gPower}G`} color={el.color} />
+                    <Stat label="ON A GATE" value={`${evo.gPower + bakugan.brawlG - bakugan.baseG}G`} color={el.color} />
+                    <Stat
+                      label="CARDS"
+                      value={owned ? `${cardCount(owned)}/${bakugan.abilities.length}` : `${bakugan.abilities.length}`}
+                      color={el.color}
+                    />
+                  </div>
 
-                <div className="mt-6 flex gap-2">
-                  {(['monster', 'ball'] as const).map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setView(v)}
-                      className={`font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] ${
-                        view === v ? 'border-white bg-white/10' : 'border-white/25 text-white/60 hover:bg-white/10'
-                      }`}
-                    >
-                      {v === 'monster' ? 'BRAWL FORM' : 'BALL FORM'}
-                    </button>
-                  ))}
-                  {reached >= 0 && (
-                    <button
-                      onClick={() => {
-                        chooseElement(bakugan.element)
-                        openBakugan(bakugan.id)
-                      }}
-                      className="font-display ml-auto rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
-                      style={{ borderColor: el.color }}
-                    >
-                      TAKE TO THE FIELD →
-                    </button>
+                  {owned && (
+                    <p className="mt-3 text-xs text-white/50">
+                      {owned.xp.toLocaleString('en')} Bakugan XP · {owned.wins} wins · {owned.battles} battles · {owned.kos} KOs
+                    </p>
                   )}
-                </div>
-                {view === 'monster' && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {MOVES.map(([move, label]) => (
+
+                  <p className="font-display mt-6 text-[10px] tracking-[0.4em] text-white/40">EVOLUTIONS</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {bakugan.evolutions.map((e, i) => {
+                      const have = i <= reached
+                      return (
+                        <button
+                          key={`${e.name}-${e.series}`}
+                          onClick={() => {
+                            playSfx('tick')
+                            setForm(i)
+                          }}
+                          title={
+                            have
+                              ? 'Reached'
+                              : i === reached + 1 && owned
+                                ? `Evolves at ${EVOLVE_XP[reached]?.toLocaleString('en')} Bakugan XP`
+                                : 'Not reached yet'
+                          }
+                          className={`rounded border px-3 py-1.5 text-left text-xs transition ${
+                            i === form ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white'
+                          }`}
+                          style={{ borderColor: i === form ? el.color : 'rgba(255,255,255,0.12)' }}
+                        >
+                          <span className="font-display font-bold">
+                            {have ? '' : '🔒 '}
+                            {e.name}
+                          </span>
+                          <span className="block text-[10px] text-white/40">
+                            {e.series} · {e.gPower}G
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className="mt-6 flex gap-2">
+                    {(['monster', 'ball'] as const).map((v) => (
                       <button
-                        key={move}
-                        onClick={() => {
-                          playSfx('tick')
-                          pose.current = { kind: move === 'roar' || move === 'guard' ? 'cast' : 'lunge', move, start: null }
-                        }}
-                        className="font-display rounded border border-white/20 px-2.5 py-1 text-[9px] tracking-[0.25em] text-white/70 hover:bg-white/10 hover:text-white"
+                        key={v}
+                        onClick={() => setView(v)}
+                        className={`font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] ${
+                          view === v ? 'border-white bg-white/10' : 'border-white/25 text-white/60 hover:bg-white/10'
+                        }`}
                       >
-                        {label}
+                        {v === 'monster' ? 'BRAWL FORM' : 'BALL FORM'}
                       </button>
                     ))}
+                    {reached >= 0 && (
+                      <button
+                        onClick={() => {
+                          chooseElement(bakugan.element)
+                          openBakugan(bakugan.id)
+                        }}
+                        className="font-display ml-auto rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
+                        style={{ borderColor: el.color }}
+                      >
+                        TAKE TO THE FIELD →
+                      </button>
+                    )}
                   </div>
-                )}
-                {!hasModel && <p className="mt-3 text-xs text-white/40">3D model coming soon. Shown as a stand-in figure.</p>}
-              </motion.section>
-            </AnimatePresence>
+                  {view === 'monster' && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {MOVES.map(([move, label]) => (
+                        <button
+                          key={move}
+                          onClick={() => {
+                            playSfx('tick')
+                            pose.current = { kind: move === 'roar' || move === 'guard' ? 'cast' : 'lunge', move, start: null }
+                          }}
+                          className="font-display rounded border border-white/20 px-2.5 py-1 text-[9px] tracking-[0.25em] text-white/70 hover:bg-white/10 hover:text-white"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {!hasModel && <p className="mt-3 text-xs text-white/40">3D model coming soon. Shown as a stand-in figure.</p>}
+                </motion.section>
+              </AnimatePresence>
+            </div>
+
+            <div ref={gap} className="min-w-0 flex-1" />
 
             {/* ability cards */}
-            <section className="pointer-events-auto w-72 overflow-y-auto">
+            <section className="pointer-events-auto w-72 max-w-[22vw] shrink-0 overflow-y-auto">
               <p className="font-display text-[10px] tracking-[0.4em] text-white/40">ABILITY CARDS</p>
               <ul className="mt-2 space-y-2">
                 {bakugan.abilities.map((a, i) => {
@@ -373,7 +427,28 @@ export function BakuganShowroom() {
             <ArrowButton label="▶" onClick={() => pick(index + 1)} />
           </div>
         )}
-      </div>
+      </motion.div>
+
+      {bakugan && (
+        <button
+          onClick={() => {
+            playSfx('tick')
+            setBare((b) => !b)
+          }}
+          aria-label={bare ? 'Show the info' : 'Hide the info'}
+          title={bare ? 'Bring the info back (Esc)' : 'Hide everything but the Bakugan'}
+          className={`font-display absolute bottom-5 left-5 flex h-9 items-center gap-2 rounded-full border bg-black/50 px-4 text-xs tracking-[0.3em] backdrop-blur transition hover:text-white ${
+            bare ? 'border-white/60 text-white' : 'border-white/15 text-white/60'
+          }`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden>
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+            <circle cx="12" cy="12" r="3" />
+            {bare && <path d="M3 3l18 18" />}
+          </svg>
+          {bare ? 'SHOW INFO' : 'HIDE INFO'}
+        </button>
+      )}
     </motion.div>
   )
 }

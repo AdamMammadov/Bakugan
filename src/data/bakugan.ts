@@ -85,9 +85,9 @@ export interface Bakugan {
     /** Winged Bakugan hover above the ground instead of standing on it. */
     fly?: boolean
     /**
-     * How much the showroom may grow this Bakugan if it is slim (default 1.3, so slim ones keep up
-     * with bulky ones); lower for a tall one whose top would reach the page's buttons, below 1 to
-     * shrink one whose wings would reach the side panels.
+     * How much the inventory's try-on preview may grow this Bakugan if it is slim (default 1.3, so slim
+     * ones keep up with bulky ones); lower for a tall one whose top would leave the preview, below 1 to
+     * shrink one whose wings would. (The showroom frames every Bakugan to its stage by itself.)
      */
     fill?: number
     /** How big this Bakugan stands next to the others (1 = normal). */
