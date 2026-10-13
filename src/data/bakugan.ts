@@ -648,6 +648,9 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // flyer with both wings spread; inked and rigged
   altair: { monster: 'models/altair/monster.glb', fly: true, scale: 0.85 },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
+  // made with TRELLIS.2 from an anime picture (a tail blade it left floating removed); the orange spots on the
+  // armour it lost painted back after the picture, the nose horn and eyes repainted, inked and rigged
+  helios: { monster: 'models/helios/monster.glb', fly: true, length: 1.6, fill: 0.66 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
 const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.name === 'Magma Wilda')

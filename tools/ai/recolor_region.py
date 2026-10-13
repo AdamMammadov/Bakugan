@@ -1,5 +1,5 @@
-# recolor_region.py model.glb tex_in tex_out "<python test on x,y,z>" R G B [gold|red]
-# Recolours the gold-ish (or red) texels of the triangles whose centre passes the test (model coords)
+# recolor_region.py model.glb tex_in tex_out "<python test on x,y,z>" R G B [gold|red|orange]
+# Recolours the gold-ish (or red, or dull orange-brown) texels of the triangles whose centre passes the test (model coords)
 # to the given base colour, keeping their light and shade.
 import sys
 import numpy as np, trimesh
@@ -14,7 +14,11 @@ fuv = UV[F].mean(1)
 col = tex[((1 - fuv[:, 1]) * (TH - 1)).astype(int).clip(0, TH - 1), (fuv[:, 0] * (TW - 1)).astype(int).clip(0, TW - 1)]
 r, g, b = col.T
 mode = sys.argv[8] if len(sys.argv) > 8 else 'gold'
-gold = ((r > 140) & (g > 110) & (b < 130) & (r - b > 45)) if mode == 'gold' else ((r > 120) & (r - g > 60) & (r - b > 60))
+gold = {
+    'gold': (r > 140) & (g > 110) & (b < 130) & (r - b > 45),
+    'red': (r > 120) & (r - g > 60) & (r - b > 60),
+    'orange': (r > 110) & (r - b > 35) & (r - g < 70),
+}[mode]
 sel = np.where(gold & np.array([test(*p) for p in c]))[0]
 mask = np.zeros((TH, TW), bool)
 for t in sel:
@@ -29,7 +33,7 @@ for t in sel:
     m = (l0 >= -0.1) & (l1 >= -0.1) & (1 - l0 - l1 >= -0.1)
     mask[vmin:vmax, umin:umax] |= m
 T = tex[mask]
-warm = np.clip(((T[:, 0] - T[:, 2]) - 15) / 30, 0, 1) if mode == 'gold' else np.clip(((T[:, 0] - T[:, 1]) - 40) / 30, 0, 1)  # only the target colour, not texels nearby
+warm = np.clip(((T[:, 0] - T[:, 2]) - 15) / 30, 0, 1) if mode != 'red' else np.clip(((T[:, 0] - T[:, 1]) - 40) / 30, 0, 1)  # only the target colour, not texels nearby
 lum = T.mean(1)
 ref = np.median(lum[warm > 0.5]) if (warm > 0.5).any() else lum.mean()
 new = base[None, :] * np.clip(lum / ref, 0.2, 1.6)[:, None] ** 1.3
