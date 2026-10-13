@@ -651,6 +651,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // made with TRELLIS.2 from an anime picture (a tail blade it left floating removed); the orange spots on the
   // armour it lost painted back after the picture, the nose horn and eyes repainted, inked and rigged
   helios: { monster: 'models/helios/monster.glb', fly: true, length: 1.6, fill: 0.66 },
+  // ripped from Bakugan Battle Brawlers (Xbox 360); its T-posed arms bent down, skinned and inked
+  vladitor: { monster: 'models/vladitor/monster.glb', scale: 1.1 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
 const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.name === 'Magma Wilda')
