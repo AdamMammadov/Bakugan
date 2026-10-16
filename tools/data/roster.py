@@ -2,14 +2,20 @@
 few more added since: Preyas Diablo and Trox).
 
 Facts (brawler, evolutions, story) come from the series as summarised on Wikipedia's
-"List of Bakugan" and "List of Bakugan Battle Brawlers characters"; ability cards come from
-the BakuProject card database (public/data/cards.json). Each Bakugan gets its own character
-cards first, then normal ability cards of its attribute, up to CARDS cards.
+"List of Bakugan" and "List of Bakugan Battle Brawlers characters". Each Bakugan's ability cards
+are its own: first its character cards from the BakuProject card database (public/data/cards.json),
+then the abilities it uses in the anime and the video games, base form first, then its evolutions
+(tools/data/anime_abilities.json, from each Bakugan's page on the Bakugan Wiki,
+https://bakugan.fandom.com). Only a Bakugan with too few of those gets normal ability cards of its
+attribute, the ones the fewest other Bakugan have. The original six get theirs here too
+(ORIGINAL_ABILITIES); their other facts are in src/data/bakugan.ts.
 
 Usage: python3 tools/data/roster.py
 """
 import json
 import re
+from collections import Counter
+from difflib import SequenceMatcher
 
 CARDS = 7
 
@@ -25,7 +31,8 @@ ROSTER = [
     ('helios', 'Helios', 'pyrus', 'Spectra Phantom', 470,
      [('Cyborg Helios', 'New Vestroia', 570), ('Helios MK2', 'New Vestroia', 650)],
      'Spectra\'s Guardian: a ruthless dragon covered in poison-tipped thorns that fires rapid cannonball blasts of fire. Rebuilt as a cyborg, he can repair himself in battle.'),
-    # Rubanoid takes Robotallion's old Pyrus place once its model is in
+    ('rubanoid', 'Rubanoid', 'pyrus', 'Sid Arkale', 470, [],
+     'Sid Arkale\'s Guardian, a dragon coated in rubies under crimson armour. It sends out waves of red energy and cuts with blades as hard as gemstone, and later fought for Ren Krawler and Linus Claude.'),
     ('scorpion', 'Scorpion', 'pyrus', 'Wild Bakugan', 320, [],
      'A burning scorpion Bakugan whose stinger tail strikes from unexpected angles.'),
     # ---- Aquos
@@ -114,18 +121,88 @@ NEW_VESTROIA = {'Spectra Phantom', 'Mylene Farrow', 'Gus Grav', 'Mira Fermin', '
                 'Volt Luster', 'Lync Volan', 'Professor Clay'}
 
 # Bakugan from a later series than the brawler sets above show
-SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet', 'pegatrix': 'Battle Planet'}
-# added after launch: they take their filler cards from their own slots, so adding them does not
-# reshuffle the cards of the Bakugan already in players' collections
-ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix']
+SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet', 'pegatrix': 'Battle Planet',
+          'rubanoid': 'Gundalian Invaders'}
+# added after launch: they pick their filler cards after everyone else, so adding one does not
+# change the cards of the Bakugan already in players' collections
+ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix', 'rubanoid']
+# the original six (src/data/bakugan.ts) and how many cards each has
+ORIGINAL = [('dragonoid', 'Dragonoid', 'pyrus', 8), ('preyas', 'Preyas', 'aquos', 7), ('gorem', 'Gorem', 'subterra', 7),
+            ('skyress', 'Skyress', 'ventus', 7), ('tigrerra', 'Tigrerra', 'haos', 7), ('hydranoid', 'Hydranoid', 'darkus', 7)]
 # a Bakugan that shares a few character cards with another one (Diablo is a side of Preyas II)
 CARD_ALIASES = {'preyas-diablo': ('Preyas', 2)}
 
 ELEMENT_EFFECT = {'pyrus': 'fireball', 'aquos': 'waterJet', 'subterra': 'quake', 'ventus': 'tornado', 'haos': 'lightBeam', 'darkus': 'shadowOrb'}
+# a second look for some attributes' attacks, taken in turn
+ELEMENT_EFFECT_2 = {'pyrus': 'flameWave', 'aquos': 'waterSphere'}
+# the most one card may do, so no single card decides a battle
+CAP = {'boost': 250, 'weaken': 200, 'drain': 200}
+# G values in the anime run about twice the card game's
+ANIME_G = 0.5
+WIKI = json.load(open('tools/data/anime_abilities.json'))
+# one card under two names (card database / wiki)
+SAME_AS = {'Green Nobility - Soar Violent Winds': 'Green Nobility - Violent Wind'}
 
 
 def slug(s):
     return re.sub(r'[^a-z0-9]+', '-', s.lower()).strip('-')
+
+
+def effect(kind, element, n):
+    if kind == 'boost':
+        return 'aura'
+    if kind == 'shield':
+        return 'shieldDome'
+    return ELEMENT_EFFECT_2[element] if n % 2 and element in ELEMENT_EFFECT_2 else ELEMENT_EFFECT[element]
+
+
+def anime_ability(a, who, element):
+    """Battle effect of an anime or video game ability, from its wiki text."""
+    t, name = a['text'], a['name']
+    first = lambda: re.split(r'(?<=\.)\s', t)[0] if t else ''
+    num = lambda pat: [int(x) for x in re.findall(pat, t, re.I)]
+    add, sub, tr = num(r'(?:adds|gains) (\d+) ?G'), num(r'(?:subtracts|loses) (\d+) ?G'), num(r'transfers (\d+)')
+    g = lambda n, kind: max(25, min(CAP[kind], round(n * ANIME_G / 25) * 25))
+    if tr or (add and sub):
+        kind = 'drain'
+        amount = g(tr[0] if tr else (add[0] + sub[0]) / 2, kind)
+        text = f'Transfers {amount} G from the opponent to {who}.'
+    elif sub:
+        kind, amount = 'weaken', g(sub[0], 'weaken')
+        text = f'Subtracts {amount} G from the opponent.'
+    elif add:
+        kind, amount = 'boost', g(add[0], 'boost')
+        text = f'Adds {amount} G to {who}.'
+    elif re.search(r'power (level )?to 0|base (power )?level|base power', t, re.I):
+        kind, amount = 'weaken', CAP['weaken']
+        text = 'Brings the opponent\'s G-Power down: subtracts ' + str(amount) + ' G.'
+    elif re.search(r'nullif|prevent|block|reflect|immune|shield|protect|cancel|negat|deflect|absorb|recover|stagger', t, re.I) or (
+            not t and re.search(r'shield|barrier|guard|defen|armou?r|mist|haze|reflect|wall', name, re.I)):
+        kind, amount = 'shield', 0
+        text = first() or f'{who} raises a shield against the opponent\'s next move.'
+    else:
+        # no G value stated: what the move does, by its name and story (amount picked for balance)
+        both = name + ' ' + t
+        if re.search(r'mirage|mist\b|haze|petrif|stone|withstand|dodge|evade|invisib', both, re.I):
+            kind, amount = 'shield', 0
+        elif re.search(r'revitali|recover|restore|\bcharge|\bpower(s|ed)? up|\broar|howl|uproar|spirit|bigger', both, re.I):
+            kind, amount = 'boost', 100
+        elif re.search(r'draw|drain|absorb|siphon|copy|copies', both, re.I):
+            kind, amount = 'drain', 100
+        elif re.search(r'blind|bind|wrap|lasso|root|trap|freeze|stun|stops? time|gravity|move', both, re.I):
+            kind, amount = 'weaken', 100
+        else:
+            kind = 'attack'
+            amount = 150 if re.search(r'powerful|massive|devastating|explosive|brutal|barrage|volley|crash|burst', both, re.I) else 100
+        text = first() or {
+            'shield': f'{who} raises a shield against the opponent\'s next move.',
+            'boost': f'{who} powers up: adds {amount} G.',
+            'drain': f'Transfers {amount} G from the opponent to {who}.',
+            'weaken': f'Holds the opponent down: subtracts {amount} G.',
+            'attack': f'One of {who}\'s signature attacks.',
+        }[kind]
+        return {'id': slug(name), 'name': name, 'type': kind, 'amount': amount, 'effect': '', 'description': text, 'estimated': True}
+    return {'id': slug(name), 'name': name, 'type': kind, 'amount': amount, 'effect': '', 'description': text}
 
 
 def ability(card, element):
@@ -142,13 +219,84 @@ def ability(card, element):
     elif re.search(r'negat|nullif|cancel|block', t, re.I):
         kind, amount = 'shield', 0
     # keep single cards within the game's balance (a few real cards are worth +400 G)
-    amount = min(amount, {'boost': 250, 'weaken': 200, 'drain': 200}.get(kind, amount))
-    effect = 'aura' if kind == 'boost' else 'shieldDome' if kind == 'shield' else ELEMENT_EFFECT[element]
-    out = {'id': slug(card['name']), 'name': card['name'], 'type': kind, 'amount': amount, 'effect': effect,
+    amount = min(amount, CAP.get(kind, amount))
+    out = {'id': slug(card['name']), 'name': card['name'], 'type': kind, 'amount': amount, 'effect': '',
            'description': t.replace('\n', ' ')}
     if kind == 'attack':
         out['estimated'] = True
     return out
+
+
+PREFIX = re.compile(r'^(Pyrus|Aquos|Subterra|Ventus|Haos|Darkus)\s+')
+
+
+def own_cards(cards, bid, name, element):
+    """The Bakugan's own character cards: this attribute's variant first, then its generic ones."""
+    alias, alias_max = CARD_ALIASES.get(bid, (None, CARDS))
+    bases = {name, name.replace('Fourtress', 'Fortress')} | ({alias} if alias else set())
+    own = [c for c in cards if c['type'] == 'character' and c['user'] and PREFIX.sub('', c['user']) in bases]
+    own.sort(key=lambda c: (0 if c['user'].lower().startswith(element) else 1 if c['user'] in bases else 2, c['name']))
+    own = [c for c in own if not PREFIX.match(c['user']) or c['user'].lower().startswith(element)]
+    return own[:alias_max]
+
+
+def anime(bid, who, element):
+    """The Bakugan's anime and video game abilities, base form first, then its evolutions."""
+    out = []
+    for key in [bid] + sorted(k for k in WIKI if k.startswith(bid + '~')):
+        for a in WIKI.get(key, {}).get('abilities', []):
+            out.append((anime_ability(a, who, element), a.get('standard', False)))
+    return out
+
+
+def key(name):
+    """A card name to compare: lower case, letters only, without a bracketed second name."""
+    return re.sub(r'[^a-z]', '', re.sub(r'\(.*?\)', '', name.lower()))
+
+
+def same(a, b):
+    """Two spellings of one card (Aqua / Aquos Javelin, Flare Binder / Blinder)."""
+    a, b = SAME_AS.get(a, a), SAME_AS.get(b, b)
+    if key(a) == key(b):
+        return True
+    return len(a.split()) == len(b.split()) and SequenceMatcher(None, key(a), key(b)).ratio() >= 0.85
+
+
+def deck(cards, attr_cards, used, bid, name, element, count):
+    """Picks the Bakugan's cards. `used` counts every card name already given to a Bakugan."""
+    picked = []
+    taken = lambda n: any(same(n, p['name']) for p in picked)
+
+    def take(ab):
+        if len(picked) < count and not taken(ab['name']):
+            picked.append(ab)
+
+    mine = anime(bid, name, element)
+    for c in own_cards(cards, bid, name, element):
+        ab = ability(c, element)
+        # a card whose text states no G value: the anime's version of it says what it does
+        told = next((a for a, _ in mine if same(a['name'], ab['name']) and not a.get('estimated')), None)
+        take({**told, 'id': ab['id'], 'name': ab['name']} if ab.get('estimated') and told else ab)
+    special = [ab for ab, standard in mine if not standard]
+    # its own abilities, those no other Bakugan has first; a few attacks and shields among them at most,
+    # so the deck keeps a mix of G effects
+    limit = {'attack': 2, 'shield': 2}
+    for rounds in range(2):
+        for ab in sorted(special, key=lambda ab: used[key(ab['name'])] > 0):
+            kinds = sum(1 for p in picked if p['type'] == ab['type'])
+            if rounds or kinds < limit.get(ab['type'], count):
+                take(ab)
+    # then its attribute's standard abilities that it uses in the anime and the attribute's other cards,
+    # those the fewest Bakugan have first
+    pool = attr_cards[element]
+    rest = [(used[key(ab['name'])], 0, i, ab) for i, (ab, standard) in enumerate(mine) if standard]
+    rest += [(used[key(c['name'])], 1, i, ability(c, element)) for i, c in enumerate(pool)]
+    for *_, ab in sorted(rest, key=lambda r: r[:3]):
+        take(ab)
+    for i, ab in enumerate(picked):
+        ab['effect'] = effect(ab['type'], element, i)
+        used[key(ab['name'])] += 1
+    return picked
 
 
 def main():
@@ -157,50 +305,38 @@ def main():
     for c in cards:
         if c['type'] == 'ability' and len(c['attributes']) == 1:
             attr_cards.setdefault(c['attributes'][0], []).append(c)
-    gates = {re.sub(r'^(Pyrus|Aquos|Subterra|Ventus|Haos|Darkus)\s+', '', c['name']) for c in cards if c['type'] == 'character-gate'}
+    gates = {PREFIX.sub('', c['name']) for c in cards if c['type'] == 'character-gate'}
+
+    # the original six first, then the launch roster, then the later additions in the order they came
+    used = Counter()
+    original = {bid: deck(cards, attr_cards, used, bid, name, element, n) for bid, name, element, n in ORIGINAL}
+    order = [r for r in ROSTER if r[0] not in ADDED] + sorted((r for r in ROSTER if r[0] in ADDED), key=lambda r: ADDED.index(r[0]))
+    decks = {r[0]: deck(cards, attr_cards, used, r[0], r[1], r[2], CARDS) for r in order}
 
     out = []
-    launch = [r for r in ROSTER if r[0] not in ADDED]
     for bid, name, element, brawler, g, evos, desc in ROSTER:
-        i = launch.index(next(r for r in launch if r[0] == bid)) if bid not in ADDED else len(launch) + ADDED.index(bid)
-        alias, alias_max = CARD_ALIASES.get(bid, (None, 5))
-        bases = {name, name.replace('Fourtress', 'Fortress')} | ({alias} if alias else set())
-        own = [c for c in cards if c['type'] == 'character' and c['user']
-               and re.sub(r'^(Pyrus|Aquos|Subterra|Ventus|Haos|Darkus)\s+', '', c['user']) in bases]
-        # this attribute's variant first, then the generic cards of the Bakugan
-        own.sort(key=lambda c: (0 if c['user'].lower().startswith(element) else 1 if c['user'] in bases else 2, c['name']))
-        own = [c for c in own if not re.match(r'^(Pyrus|Aquos|Subterra|Ventus|Haos|Darkus)\s', c['user']) or c['user'].lower().startswith(element)]
-        picked, seen = [], set()
-        for c in own:
-            if c['name'] not in seen and len(picked) < alias_max:
-                picked.append(c)
-                seen.add(c['name'])
-        pool = attr_cards[element]
-        k = i * 3  # rotate so Bakugan of one attribute get different filler cards
-        while len(picked) < CARDS:
-            c = pool[k % len(pool)]
-            k += 1
-            if c['name'] not in seen:
-                picked.append(c)
-                seen.add(c['name'])
         series = SERIES.get(bid) or ('New Vestroia' if brawler in NEW_VESTROIA else 'Battle Brawlers')
         evolutions = [{'name': name, 'series': series, 'gPower': g}] + [{'name': n, 'series': s, 'gPower': p} for n, s, p in evos]
         out.append({
             'id': bid, 'name': name, 'element': element, 'brawler': brawler,
             'series': series,
             'baseG': g, 'brawlG': g + 100, 'description': desc,
-            'abilities': [ability(c, element) for c in picked],
+            'abilities': decks[bid],
             'evolutions': evolutions,
             **({'characterGate': True} if name in gates or name.replace('Fourtress', 'Fortress') in gates else {}),
         })
 
-    ts = ['import type { Bakugan } from \'./bakugan\'', '',
+    ts = ['import type { Ability, Bakugan } from \'./bakugan\'', '',
           '/**', ' * The launch roster beyond the original six: 6 more Bakugan per attribute, plus later additions.',
           ' * Generated by tools/data/roster.py — edit the script, not this file.', ' */',
-          'export const ROSTER: Bakugan[] = ' + json.dumps(out, indent=2, ensure_ascii=False), '']
+          'export const ROSTER: Bakugan[] = ' + json.dumps(out, indent=2, ensure_ascii=False), '',
+          '/** The original six Bakugan\'s ability cards (their other facts are in bakugan.ts). */',
+          'export const ORIGINAL_ABILITIES: Record<string, Ability[]> = ' + json.dumps(original, indent=2, ensure_ascii=False), '']
     open('src/data/roster.ts', 'w').write('\n'.join(ts))
-    for b in out:
-        print(f"{b['element']:9s} {b['name']:15s} {b['baseG']}G cards={len(b['abilities'])} evo={len(b['evolutions'])} gate={b.get('characterGate', False)} own={[a['name'] for a in b['abilities'][:2]]}")
+    shared = sorted(((n, k) for n, k in used.items() if k > 1), key=lambda x: -x[1])
+    print(f'{len(used)} different cards, {len(shared)} on more than one Bakugan:', shared)
+    for bid, ab in list(original.items()) + list(decks.items()):
+        print(f"{bid:14s}", ', '.join(f"{a['name']} ({a['type']} {a['amount']})" for a in ab))
 
 
 main()

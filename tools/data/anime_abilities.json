@@ -1,0 +1,2029 @@
+{
+ "altair": {
+  "page": "Altair",
+  "abilities": [
+   {
+    "name": "Spinal Saucer",
+    "text": "Adds 200 Gs to Altair."
+   },
+   {
+    "name": "Mega Shield",
+    "text": "Adds 200 Gs to Altair."
+   },
+   {
+    "name": "Thunder Fire",
+    "text": "Transfers 200 Gs from the opponent to Altair."
+   },
+   {
+    "name": "Thunder Booster",
+    "text": "Transfers 300 Gs from the opponent to Altair."
+   },
+   {
+    "name": "Shock Cannon",
+    "text": "Adds 500 Gs to Altair."
+   },
+   {
+    "name": "Wind Storm",
+    "text": "Altair fires a barrage of energy from his wings and mouth."
+   },
+   {
+    "name": "Squall Fang",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Zephyr Wind",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Air Blast",
+    "text": "Altair fires explosive energy from his head."
+   }
+  ]
+ },
+ "baliton": {
+  "page": "Baliton",
+  "abilities": [
+   {
+    "name": "Apollon Head",
+    "text": "Adds 200 Gs to Baliton."
+   },
+   {
+    "name": "Clay Roller",
+    "text": "Transfers 200 Gs from the opponent to Baliton."
+   },
+   {
+    "name": "Heavy Assail",
+    "text": "Adds 300 Gs to Baliton."
+   }
+  ]
+ },
+ "brontes": {
+  "page": "Brontes",
+  "abilities": [
+   {
+    "name": "Drain Beam",
+    "text": "A brutal attack that continues to damage the opponent even after it hits."
+   },
+   {
+    "name": "Mirage Strike",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Wall of Light",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Invisible Terror",
+    "text": "Brontes becomes invisible, making him impossible to target."
+   }
+  ]
+ },
+ "brontes~1": {
+  "page": "Alto Brontes",
+  "abilities": [
+   {
+    "name": "Wizard Proxy",
+    "text": "Transfers 300 Gs from the opponent to a Bakugan on your team."
+   },
+   {
+    "name": "Astrosphere",
+    "text": "Transfers 400 Gs from the opponent to Alto Brontes."
+   },
+   {
+    "name": "Black Gates",
+    "text": "Nullifies the opponent's Gate Card."
+   },
+   {
+    "name": "Shining Nightmare",
+    "text": "Adds 400 Gs to Alto Brontes."
+   },
+   {
+    "name": "Sprite Glow",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Magic Dice",
+    "text": "Rolls a dice; its effect depends on the number."
+   },
+   {
+    "name": "Trance Rapture Illusion",
+    "text": "Subtracts 300 Gs from the opponent."
+   }
+  ]
+ },
+ "cycloid": {
+  "page": "Cycloid",
+  "abilities": [
+   {
+    "name": "Right Giganti",
+    "text": "Adds 100 Gs to Cycloid."
+   },
+   {
+    "name": "Left Giganti",
+    "text": "Nullifies the opponent's Gate Card."
+   },
+   {
+    "name": "Stare Down",
+    "text": "Subtracts 50 Gs from every opponent Bakugan in the Stare Down perimeter. It also allows Cycloid to see hidden Bakugan (for example Bakugan has hidden underground)."
+   },
+   {
+    "name": "Grand Slide",
+    "text": "Moves the opponent's Gate Card to anywhere on the field and allows Cycloid to attack if there is a Bakugan on the card.",
+    "standard": true
+   },
+   {
+    "name": "Copycat",
+    "text": "Copies an ability that the opponent used or is using.",
+    "standard": true
+   },
+   {
+    "name": "Boom Hammer",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Gigantic Hammer",
+    "text": "Transfers 200 Gs from the opponent to Cycloid."
+   },
+   {
+    "name": "Skeet Punch",
+    "text": "Adds 400 Gs to Cycloid."
+   },
+   {
+    "name": "Rocky Punch",
+    "text": "Subtracts 200 Gs from each opponent."
+   },
+   {
+    "name": "Stealth Swing",
+    "text": "Reflects the opponent's ability."
+   }
+  ]
+ },
+ "dragonoid": {
+  "page": "Dragonoid (Generation 1)",
+  "abilities": [
+   {
+    "name": "Boosted Dragon",
+    "text": "Adds 100 Gs to Dragonoid for the rest of the game."
+   },
+   {
+    "name": "Fire Wall",
+    "text": "Subtracts 50 Gs from the opponent.",
+    "standard": true
+   },
+   {
+    "name": "Fire Tornado",
+    "text": "Adds 100 Gs to Drago and subtracts 100 Gs from each opponent.",
+    "standard": true
+   },
+   {
+    "name": "Rapid Fire",
+    "text": "Adds another Bakugan to the battle if there are 2 or more Pyrus Bakugan on the field.",
+    "standard": true
+   },
+   {
+    "name": "Boosted Ultima",
+    "text": "Adds 200 Gs to Dragonoid and subtracts 100 Gs from the opponent."
+   },
+   {
+    "name": "Melt Flare",
+    "text": "Adds 100 Gs to Dragonoid."
+   }
+  ]
+ },
+ "dragonoid~1": {
+  "page": "dragonoid~1",
+  "abilities": [
+   {
+    "name": "Ultimate Dragon",
+    "text": "Adds 200 Gs to Ultimate Dragonoid for the rest of the game and nullifies the opponent's Gate Card. It also allows him to attack anywhere on the field."
+   },
+   {
+    "name": "Boosted Ultima",
+    "text": "Adds 200 Gs to Ultimate Dragonoid and subtracts 100 Gs from the opponent."
+   },
+   {
+    "name": "Dragonic Ogre",
+    "text": ""
+   },
+   {
+    "name": "Fire Wall",
+    "text": "Subtracts 50 Gs from the opponent.",
+    "standard": true
+   },
+   {
+    "name": "Fire Tornado",
+    "text": "Adds 100 Gs to Ultimate Dragonoid and subtracts 100 Gs from each opponent.",
+    "standard": true
+   },
+   {
+    "name": "Fire Judge",
+    "text": "Adds 100 Gs to Ultimate Dragonoid.",
+    "standard": true
+   },
+   {
+    "name": "Exceed",
+    "text": "Adds 200 Gs to Ultimate Dragonoid for the rest of the game and allows him to attack anywhere in the field."
+   }
+  ]
+ },
+ "dragonoid~2": {
+  "page": "dragonoid~2",
+  "abilities": [
+   {
+    "name": "Burning Dragon",
+    "text": "Adds 200 Gs to Neo Dragonoid."
+   },
+   {
+    "name": "Burning Tornado",
+    "text": "Adds 200 Gs to Neo Dragonoid and subtracts 200 Gs from the opponent."
+   },
+   {
+    "name": "Fire Tornado",
+    "text": "Subtracts 100 Gs from each opponent and adds 100 Gs to Neo Dragonoid.",
+    "standard": true
+   },
+   {
+    "name": "Fire Shield",
+    "text": "Subtracts 200 Gs from the opponent."
+   },
+   {
+    "name": "Burst Shield",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Tornado Barrier",
+    "text": "Nullifies the opponent's ability and subtracts 100 Gs from the opponent."
+   },
+   {
+    "name": "Strike Dragon",
+    "text": "Subtracts 400 Gs from the opponent and adds 400 Gs to Neo Dragonoid. (Perfect Core)"
+   },
+   {
+    "name": "Dragon Contender",
+    "text": "One Bakugan your opponent controls has their G-Power reset to its base level. Then, if Neo Dragonoid has less than 400 G Power: Its G-Power becomes 400. Also, Neo Dragonoid gains 600 Gs. (Perfect Core)"
+   },
+   {
+    "name": "Maximum Dragon",
+    "text": "Subtracts 500 Gs from the opponent and adds 500 Gs to Neo Dragonoid. (Perfect Core)"
+   },
+   {
+    "name": "Pyrus Slayer",
+    "text": "Subtracts 100 Gs from the opponent and adds 300 Gs to Neo Dragonoid."
+   },
+   {
+    "name": "Dragon Clash",
+    "text": "Subtracts 400 Gs from the opponent and adds 400 Gs to Neo Dragonoid. (Perfect Core)"
+   },
+   {
+    "name": "Dragon Fire",
+    "text": "Shoots a massive fireball."
+   },
+   {
+    "name": "Dragon Rush",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Dragon Shield",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Fire Spirit",
+    "text": "Makes all shots bigger for a short period of time."
+   }
+  ]
+ },
+ "dynamo": {
+  "page": "Dynamo",
+  "abilities": [
+   {
+    "name": "Gillian Cords",
+    "text": "Adds 200 Gs to Dynamo."
+   },
+   {
+    "name": "Sub Dimension",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Vector Phalanx",
+    "text": "Adds 400 Gs to Dynamo and Boriates each. (Battle Arm Boriates only)"
+   }
+  ]
+ },
+ "elfin": {
+  "page": "Elfin",
+  "abilities": [
+   {
+    "name": "Wing Mercury",
+    "text": "Adds 200 Gs to Elfin."
+   },
+   {
+    "name": "Twin-Back",
+    "text": "Any G-Power taken from Elfin is returned and doubled."
+   },
+   {
+    "name": "Moon Rainbow",
+    "text": "Transfers 200 Gs from the opponent to Elfin."
+   },
+   {
+    "name": "Delta Marine Snow",
+    "text": "Nullifies and blocks the opponent's abilities for a short time."
+   },
+   {
+    "name": "Subterra Reaction",
+    "text": "Changes the opponent's attribute to Subterra."
+   },
+   {
+    "name": "Shooting Stardust",
+    "text": "Transfers 200 Gs from the opponent to Elfin."
+   },
+   {
+    "name": "Blue Shield",
+    "text": "Adds 200 Gs to Elfin."
+   },
+   {
+    "name": "Jamming Out",
+    "text": "Reflects the opponent's ability."
+   },
+   {
+    "name": "Rain Torrent",
+    "text": "Elfin fires an explosive energy ball."
+   },
+   {
+    "name": "Water Wall",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Water Singularity",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Water Pillar",
+    "text": "Summons a violent plump of water at an opponent's feet."
+   }
+  ]
+ },
+ "elfin~1": {
+  "page": "Minx Elfin",
+  "abilities": [
+   {
+    "name": "Chatty Clatter",
+    "text": "Adds 300 Gs to Minx Elfin."
+   },
+   {
+    "name": "Ding Dong Ditch",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Ripple Trap",
+    "text": "Nullifies and blocks the opponent's abilities from activating for a short time."
+   },
+   {
+    "name": "Hyper Bubble Shield",
+    "text": "Transfers 400 Gs from each opponent to each of your Bakugan."
+   },
+   {
+    "name": "Super Moonbow",
+    "text": "Transfers 300 Gs from the opponent to Minx Elfin."
+   },
+   {
+    "name": "Sky Hearty",
+    "text": "Reflects the opponent's ability."
+   },
+   {
+    "name": "Wing Harrier",
+    "text": "Adds 400 Gs to Minx Elfin."
+   },
+   {
+    "name": "Mega Blue Shield",
+    "text": ""
+   }
+  ]
+ },
+ "elico": {
+  "page": "Elico",
+  "abilities": [
+   {
+    "name": "Gaia Loose",
+    "text": ""
+   },
+   {
+    "name": "Arculus",
+    "text": ""
+   },
+   {
+    "name": "Mythran Judge",
+    "text": ""
+   },
+   {
+    "name": "Trick World",
+    "text": ""
+   },
+   {
+    "name": "Screw Blow",
+    "text": ""
+   },
+   {
+    "name": "Flash Freeze",
+    "text": ""
+   },
+   {
+    "name": "Scramble Zwei",
+    "text": ""
+   },
+   {
+    "name": "Venom Claw",
+    "text": "A brutal attack that continues to damage the opponent even after it hits."
+   },
+   {
+    "name": "Razor Ice",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Crystal Shield",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Water Vortex",
+    "text": "Fires balls of water in three different directions."
+   }
+  ]
+ },
+ "elico~1": {
+  "page": "Blast Elico",
+  "abilities": [
+   {
+    "name": "Hydro Typhoon",
+    "text": "Transfers 300 Gs from the opponent to Blast Elico."
+   },
+   {
+    "name": "Forcement Power",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Reflection Jacket",
+    "text": ""
+   },
+   {
+    "name": "Subterra Force Alive",
+    "text": "Nullifies the opponent's Gate Card and doubles the power level of each Subterra Bakugan on your team."
+   },
+   {
+    "name": "Gaia Divide",
+    "text": "Subtracts 500 Gs from the opponent."
+   },
+   {
+    "name": "Land Blow",
+    "text": "Transfers 300 Gs from the opponent to Blast Elico."
+   },
+   {
+    "name": "Gaia Booster",
+    "text": "Transfers 300 Gs from the opponent to Blast Elico."
+   }
+  ]
+ },
+ "falconeer": {
+  "page": "Falconeer",
+  "abilities": [
+   {
+    "name": "Frame Fire",
+    "text": "Adds 100 Gs to Falconeer."
+   },
+   {
+    "name": "Jump Over",
+    "text": "Allows Falconeer to move to a different Gate Card and possibly nullifies the opponent's Gate Card or prevents it from opening."
+   }
+  ]
+ },
+ "fear-ripper": {
+  "page": "Fear Ripper",
+  "abilities": [
+   {
+    "name": "Slash Zero",
+    "text": "Adds 80 Gs to Fear Ripper."
+   }
+  ]
+ },
+ "fourtress": {
+  "page": "Fourtress",
+  "abilities": [
+   {
+    "name": "Face of Grief",
+    "text": "Prevents the opponent from activating abilities."
+   },
+   {
+    "name": "Face of Rage",
+    "text": "Transfers 50 Gs from the opponent to Fourtress."
+   },
+   {
+    "name": "Face of Joy",
+    "text": ""
+   },
+   {
+    "name": "Phase Drive",
+    "text": "Adds 200 Gs to Fourtress."
+   },
+   {
+    "name": "Phase Glare",
+    "text": "Transfers 300 Gs from the opponent to Fourtress."
+   },
+   {
+    "name": "Phase Breaker",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Thunder Sky - Thousand Swords Rain",
+    "text": "Subtracts 200 Gs from the opponent. (Can only be used after Phase Glare)"
+   }
+  ]
+ },
+ "gorem": {
+  "page": "Gorem",
+  "abilities": [
+   {
+    "name": "Mega Impact",
+    "text": "Adds 50 Gs to Gorem and subtracts 100 Gs from the opponent."
+   },
+   {
+    "name": "Copycat",
+    "text": "Copies an ability that the opponent used or is using.",
+    "standard": true
+   },
+   {
+    "name": "Magma Prominence",
+    "text": "Changes the Gate Card's attribute to Subterra.",
+    "standard": true
+   },
+   {
+    "name": "Gate Building",
+    "text": "The user may set another Gate Card down during the battle."
+   }
+  ]
+ },
+ "hades": {
+  "page": "Hades",
+  "abilities": [
+   {
+    "name": "Photon Tail",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Phaser Trident",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Saurer Cannon",
+    "text": "Adds 900 Gs to Hades and drains all energy from its power reserve, incapacitating it for a significant amount of time after use."
+   },
+   {
+    "name": "Full Burst",
+    "text": "Adds 1000 Gs to Hades and drains all energy from its power reserve, incapacitating it for a significant amount of time after use."
+   },
+   {
+    "name": "Chaos Leap Sting",
+    "text": "Subtracts 200 Gs from the opponent and adds 100 Gs to Hades."
+   },
+   {
+    "name": "Destroy Vanish",
+    "text": "Reduces opponent's power to 0."
+   },
+   {
+    "name": "Death Trident",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Catastrophe",
+    "text": "Hades fires stun missiles at his opponent."
+   },
+   {
+    "name": "Dark Volley",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Black Sheath",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Dark Blaze",
+    "text": "All of Hades' shots become larger and more powerful for a short period of time."
+   }
+  ]
+ },
+ "harpus": {
+  "page": "Harpus",
+  "abilities": [
+   {
+    "name": "Feather Storm",
+    "text": "Adds 100 Gs to Harpus."
+   },
+   {
+    "name": "Feather Edge",
+    "text": ""
+   }
+  ]
+ },
+ "helios": {
+  "page": "Viper Helios",
+  "abilities": [
+   {
+    "name": "General Quasar",
+    "text": "Adds 200 Gs to Viper Helios."
+   },
+   {
+    "name": "Void Stream",
+    "text": "Subtracts 400 Gs from the opponent."
+   },
+   {
+    "name": "Burst Core",
+    "text": "Makes Viper Helios immune to Ability Card effects."
+   },
+   {
+    "name": "Nova Spiral",
+    "text": "Makes Viper Helios immune to Ability Card effects."
+   },
+   {
+    "name": "Nova Defenser",
+    "text": "Up to twice this round, it nullifies the opponent's ability."
+   },
+   {
+    "name": "Maximum Quasar",
+    "text": "Adds 300 Gs to Viper Helios."
+   },
+   {
+    "name": "Melt Stream",
+    "text": ""
+   },
+   {
+    "name": "Omega",
+    "text": "Adds 200 Gs to Viper Helios."
+   }
+  ]
+ },
+ "helios~1": {
+  "page": "Cyborg Helios",
+  "abilities": [
+   {
+    "name": "Defuse Quasar",
+    "text": "Brings the opponent's Power Level back to its Base Level and adds 300 Gs to Cyborg Helios."
+   },
+   {
+    "name": "FARBAS",
+    "text": "Recovers all damage dealt to Cyborg Helios. If Cyborg Helios's G-Power is lower than that of the opponent, Cyborg Helios gains G-Power equal to the difference."
+   },
+   {
+    "name": "Explosion Lambda",
+    "text": "Makes Cyborg Helios immune to the opponent's abilities and adds 500 Gs to Cyborg Helios."
+   },
+   {
+    "name": "Chaos Shock Cannon",
+    "text": "Subtracts 200 Gs from the opponent."
+   },
+   {
+    "name": "General Quasar",
+    "text": "Adds 200 Gs to Cyborg Helios."
+   },
+   {
+    "name": "Beam Wall",
+    "text": "Helios lets forth a massive laser attack."
+   },
+   {
+    "name": "Ultimate Fury",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Heat Shield",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Field of Flame",
+    "text": "Helios fires a wall of lasers."
+   }
+  ]
+ },
+ "helios~2": {
+  "page": "Helios MK2",
+  "abilities": [
+   {
+    "name": "Defuse Quasar",
+    "text": "Brings your opponent's Power Level back to its Base Level and adds 300 Gs to Helios MK2."
+   },
+   {
+    "name": "Chaos Power Cannon",
+    "text": "Subtracts 400 Gs from the opponent."
+   },
+   {
+    "name": "Chaos Boost Cannon",
+    "text": ""
+   },
+   {
+    "name": "Dragon Pincer",
+    "text": "Dragon Pounce and Dragon Pulse, Japanese Version: Dragon Claw): Adds 600 Gs to Helios MK2."
+   },
+   {
+    "name": "Blackout Cannon",
+    "text": "Subtracts 400 Gs from each opponent and adds 400 Gs to Helios MK2."
+   },
+   {
+    "name": "FARBAS EM",
+    "text": "Recovers all damage dealt to Helios MK2. If Helios MK2's G-Power is lower than that of the opponent, Helios MK2 gains G-Power equal to his opponent's Power Level equal to the differences."
+   },
+   {
+    "name": "Ragnarok Cannon",
+    "text": "Transfers 600 from the opponent and to Helios MK2."
+   },
+   {
+    "name": "Chaos Hyper Cannon",
+    "text": "Nullifies the opponent's Gate Card and transfers 600 Gs from the opponent to Helios MK2."
+   },
+   {
+    "name": "Precipice Shield",
+    "text": "Nullifies the opponent's ability and transfers 200 Gs to Helios MK2. It also adds 200 Gs to all Bakugan you or your allies control."
+   },
+   {
+    "name": "Hyper Electric Cannon",
+    "text": ""
+   },
+   {
+    "name": "Pulsing Twister",
+    "text": "Subtracts 500 Gs from the opponent."
+   },
+   {
+    "name": "Discharger",
+    "text": "Transfers 300 Gs from the opponent to Helios MK2."
+   },
+   {
+    "name": "FARBAS RX",
+    "text": "Recovers all damage dealt to Helios MK2, nullifies the opponent's Gate Card, and nullifies all the opponent's new abilities for a limited time."
+   },
+   {
+    "name": "Exceed Charger",
+    "text": "If Helios MK2 has lower G-Power, he gains G-Power equal to the difference."
+   },
+   {
+    "name": "FARBAS D2",
+    "text": "Recovers all damage dealt to Helios MK2 and makes him immune to all those abilities for a limited time."
+   }
+  ]
+ },
+ "hexados": {
+  "page": "Hexados",
+  "abilities": [
+   {
+    "name": "Ray Drill",
+    "text": "Adds 200 Gs to Hexados."
+   },
+   {
+    "name": "Land Twist",
+    "text": "Subtracts 200 Gs from the opponent."
+   },
+   {
+    "name": "Eraser",
+    "text": "Nullifies the opponent's ability."
+   }
+  ]
+ },
+ "howlkor": {
+  "page": "Howlkor",
+  "abilities": [
+   {
+    "name": "Umbral Slash",
+    "text": ""
+   },
+   {
+    "name": "Prismatic Bolt",
+    "text": ""
+   },
+   {
+    "name": "Sonic Shield",
+    "text": ""
+   },
+   {
+    "name": "Ghost Shadow",
+    "text": ""
+   },
+   {
+    "name": "Darkus Howl",
+    "text": ""
+   },
+   {
+    "name": "Shadow Dogs",
+    "text": ""
+   },
+   {
+    "name": "Prismatic Shield",
+    "text": ""
+   },
+   {
+    "name": "Night Lightning",
+    "text": ""
+   },
+   {
+    "name": "Blast of Thunder",
+    "text": ""
+   },
+   {
+    "name": "Platinum Thunder",
+    "text": ""
+   },
+   {
+    "name": "Thunder",
+    "text": ""
+   },
+   {
+    "name": "Creeping Haze",
+    "text": ""
+   },
+   {
+    "name": "Barbed Thrash",
+    "text": ""
+   },
+   {
+    "name": "Dark Ambush",
+    "text": ""
+   }
+  ]
+ },
+ "hydorous": {
+  "page": "Hydorous",
+  "abilities": [
+   {
+    "name": "Aquos Hurricane",
+    "text": "Hydorous spins forming a water like tornado, inflicting damage to anyone nearby."
+   },
+   {
+    "name": "Claw Cutter",
+    "text": "Hydorous cuts his opponent using his claws, it is seen to be used more than once is some episodes"
+   },
+   {
+    "name": "Hurricane Slash",
+    "text": ""
+   },
+   {
+    "name": "Aquos Blast",
+    "text": ""
+   },
+   {
+    "name": "Mysterious Mist",
+    "text": "Hydorous forms a mist in his surroundings, giving him a better oppotunity to strike at his opponent."
+   },
+   {
+    "name": "Hydro Barrage",
+    "text": ""
+   },
+   {
+    "name": "Hydro Blast",
+    "text": ""
+   },
+   {
+    "name": "Brain Geyser",
+    "text": ""
+   },
+   {
+    "name": "Aquos Smash",
+    "text": ""
+   },
+   {
+    "name": "Hydro Burst",
+    "text": ""
+   },
+   {
+    "name": "Tidal Surge",
+    "text": ""
+   },
+   {
+    "name": "Lumo Blast",
+    "text": ""
+   },
+   {
+    "name": "Splatter Attack",
+    "text": ""
+   },
+   {
+    "name": "Rapid Tide",
+    "text": ""
+   }
+  ]
+ },
+ "hydranoid": {
+  "page": "Hydranoid (Generation 1)",
+  "abilities": [
+   {
+    "name": "Chaos of Darkness",
+    "text": "Hydranoid can now attack every Bakugan on the field."
+   },
+   {
+    "name": "Auragano Revenge",
+    "text": "Subtracts 100 Gs from each opponent and adds 100 Gs to Hydranoid. It also adds 100 Gs to other Bakugan that you control.",
+    "standard": true
+   },
+   {
+    "name": "Merge Shield",
+    "text": "If the opponent Bakugan has gained G Power: Hydranoid gains G Power equal to the amount gained."
+   },
+   {
+    "name": "Gravity Chamber",
+    "text": "Moves all opponents on the battlefield to Hydranoid's card and whoever's power level is lower than his, is defeated."
+   },
+   {
+    "name": "Darkus Gravity",
+    "text": "Adds another Darkus Bakugan to the battle.",
+    "standard": true
+   },
+   {
+    "name": "Destruction Buster",
+    "text": "Adds 100 Gs to Hydranoid. Negate the effect of an active Gate Card Hydranoid is on"
+   },
+   {
+    "name": "Chaos of the Darkness",
+    "text": "Adds 200 Gs to Hydranoid."
+   }
+  ]
+ },
+ "hydranoid~1": {
+  "page": "hydranoid~1",
+  "abilities": [
+   {
+    "name": "Death Trident",
+    "text": "One Bakugan your opponent controls loses 300 Gs, also, Alpha Hydranoid can attack anywhere on the field."
+   },
+   {
+    "name": "Destroy Vanish",
+    "text": "Gradually reduce one Bakugan your opponent controls' G Power to 0"
+   },
+   {
+    "name": "Chaos Leap Sting",
+    "text": "One Bakugan your opponent controls loses 200 Gs, also Alpha Hydranoid gains 100 Gs"
+   },
+   {
+    "name": "Blinding Splice",
+    "text": "All Bakugan you control gain 100 Gs, also all Bakugan your opponent controls lose 100 Gs.",
+    "standard": true
+   },
+   {
+    "name": "Indigo Nightmare",
+    "text": "Alpha Hydranoid gains 300 Gs."
+   },
+   {
+    "name": "Final Demolition",
+    "text": "Adds 100 Gs to Alpha Hydranoid."
+   }
+  ]
+ },
+ "hylash": {
+  "page": "Hylash",
+  "abilities": [
+   {
+    "name": "Thunder Power - Glimmering Slash",
+    "text": "Adds 200 Gs to Hylash."
+   },
+   {
+    "name": "Claw Thunder Position - Kagenui",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Thunder Strike Open",
+    "text": "Transfers 200 Gs from the opponent to Hylash."
+   }
+  ]
+ },
+ "ingram": {
+  "page": "Ingram",
+  "abilities": [
+   {
+    "name": "Wind Power - Soaring Strike Shot",
+    "text": "Transfers 200 Gs from the opponent to Ingram."
+   },
+   {
+    "name": "Continuous Dance - Phoenix Position",
+    "text": "Subtracts 300 Gs from the opponent. Or if there are multiple opponents on the field, it is divided."
+   },
+   {
+    "name": "Shadow Echo",
+    "text": "Subtracts 200 Gs from each opponent."
+   },
+   {
+    "name": "Shadow Split",
+    "text": "Subtracts 100 Gs from the opponent and adds 200 Gs to Ingram."
+   },
+   {
+    "name": "Armored Victory",
+    "text": "Nullifies the opponent's ability and adds 200 Gs to Ingram."
+   },
+   {
+    "name": "Thunderbolt Torrential Wave",
+    "text": "Adds 200 Gs to Ingram and every Ventus Bakugan that you control and combines their power levels."
+   },
+   {
+    "name": "Armored Megadome",
+    "text": "Adds 200 Gs to Ingram."
+   },
+   {
+    "name": "Double Fangs - Jade Wind Shot",
+    "text": "Adds 200 Gs to Ingram and every Ventus Bakugan that you control."
+   },
+   {
+    "name": "Cyclone Storm",
+    "text": ""
+   },
+   {
+    "name": "Raging Tempest",
+    "text": ""
+   },
+   {
+    "name": "Wind Blast",
+    "text": ""
+   },
+   {
+    "name": "Tornado Vortex",
+    "text": ""
+   }
+  ]
+ },
+ "ingram~1": {
+  "page": "Master Ingram",
+  "abilities": [
+   {
+    "name": "Wind Power Extreme",
+    "text": "Transfers 300 Gs from the opponent to Master Ingram."
+   },
+   {
+    "name": "Wind Echo",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Wind Split",
+    "text": "Transfers 200 Gs from the opponent to Master Ingram."
+   },
+   {
+    "name": "Armored Intense Mode",
+    "text": "Nullifies the opponent's ability and adds 200 Gs to Master Ingram."
+   },
+   {
+    "name": "Heavy Demon - Moonlight Slash",
+    "text": "Nullifies the opponent's ability and subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Wind Power - Glimmering Shadow Slash",
+    "text": "Transfers 300 Gs from the opponent to Master Ingram."
+   },
+   {
+    "name": "Twin Fangs - Phantom Comet Storm",
+    "text": "Adds 400 Gs to Master Ingram and any other Ventus Bakugan."
+   },
+   {
+    "name": "Eight-span Crow",
+    "text": "Adds 200 Gs to Master Ingram and any other Ventus Bakugan."
+   },
+   {
+    "name": "Kazami Style - Ninja Torpedo Slash",
+    "text": "Adds 200 Gs to Master Ingram and any other Ventus Bakugan."
+   },
+   {
+    "name": "Wind Power - Light Intense Impact",
+    "text": "Subtracts 400 Gs from the opponent."
+   },
+   {
+    "name": "Twin Fangs - Great Divine Wing",
+    "text": "Subtracts 300 Gs from each opponent and adds 300 Gs to Master Ingram and any other Ventus Bakugan."
+   },
+   {
+    "name": "Shadow Wing",
+    "text": "Creates a Ventus Shadow Wing Bakugan for Master Ingram's Brawler. (This ability is permanent and lasts even outside of battle)"
+   },
+   {
+    "name": "Wind Spiral",
+    "text": "Sends forth a torrent of energy shots."
+   },
+   {
+    "name": "Typhoon Explosion",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Blade Tornado",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Needle Storm",
+    "text": "Ingram charges at an opponent and causes a massive explosion."
+   }
+  ]
+ },
+ "juggernoid": {
+  "page": "Juggernoid",
+  "abilities": [
+   {
+    "name": "Water Refrain",
+    "text": "Nullifies and blocks the opponent's abilities from activating for a short time.",
+    "standard": true
+   },
+   {
+    "name": "Depth Tornado",
+    "text": "Adds 100 Gs to Juggernoid."
+   },
+   {
+    "name": "Dive Mirage",
+    "text": "Allows Juggernoid to move to another Gate Card, making the Gate Card it goes on nullified.",
+    "standard": true
+   },
+   {
+    "name": "Lightning Shield",
+    "text": "Nullifies the opponent's Gate Card.",
+    "standard": true
+   },
+   {
+    "name": "Super Shard",
+    "text": ""
+   },
+   {
+    "name": "Water Slap",
+    "text": ""
+   }
+  ]
+ },
+ "laserman": {
+  "page": "Laserman",
+  "abilities": [
+   {
+    "name": "Spiced Slayer",
+    "text": "Adds 100 Gs to Laserman and subtracts 100 Gs from each opponent.",
+    "standard": true
+   },
+   {
+    "name": "Leap Sting",
+    "text": "Allows Laserman to attack a Bakugan on an adjacent Gate Card. (Laserman Returns to its owner afterwards)"
+   }
+  ]
+ },
+ "leonidas": {
+  "page": "Leonidas (Generation 1)",
+  "abilities": [
+   {
+    "name": "Alpha Blaster",
+    "text": "Adds 200 Gs to Leonidas."
+   }
+  ]
+ },
+ "leonidas~1": {
+  "page": "Omega Leonidas",
+  "abilities": [
+   {
+    "name": "Omega Eraser",
+    "text": "Has a different effect depending on the game version:"
+   }
+  ]
+ },
+ "manion": {
+  "page": "Manion",
+  "abilities": [
+   {
+    "name": "Amun-Re",
+    "text": "Adds 100 Gs to Manion."
+   },
+   {
+    "name": "Earth Power",
+    "text": "Adds 50 Gs to Manion.",
+    "standard": true
+   },
+   {
+    "name": "Copycat",
+    "text": "Manion can copy any ability used by his opponent before.",
+    "standard": true
+   }
+  ]
+ },
+ "monarus": {
+  "page": "Monarus",
+  "abilities": [
+   {
+    "name": "Scarlet Twister",
+    "text": "Monarus can move another Bakugan to any Gate Card it wants, but if it does so to save an ally from being defeated, it will be eliminated in their place.",
+    "standard": true
+   },
+   {
+    "name": "Air Battle",
+    "text": "Monarus can fly beyond Gate Cards and nullifies the Gate Cards that it lands on."
+   },
+   {
+    "name": "Blow Away",
+    "text": "Moves the opponent to another Gate Card.",
+    "standard": true
+   },
+   {
+    "name": "Backdraft",
+    "text": "Removes Monarus or the opponent's Bakugan from the current brawl.",
+    "standard": true
+   }
+  ]
+ },
+ "nemus": {
+  "page": "Nemus",
+  "abilities": [
+   {
+    "name": "Burning Light",
+    "text": "Nemus fires a thin, fast, and devastating beam of light."
+   },
+   {
+    "name": "White Flurry",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Light Shield",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Light Arrow",
+    "text": "Nemus fires a devastating laser attack."
+   }
+  ]
+ },
+ "nemus~1": {
+  "page": "Saint Nemus",
+  "abilities": [
+   {
+    "name": "Borehole Reflection",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Float Shield",
+    "text": "Prevents the opponent from activating abilities."
+   },
+   {
+    "name": "Darkus Sky",
+    "text": "Adds 200 Gs to Saint Nemus."
+   },
+   {
+    "name": "Night Stunworks",
+    "text": "Adds 300 Gs to Saint Nemus."
+   },
+   {
+    "name": "Elemental Roar",
+    "text": "Subtracts 200 Gs from the opponent."
+   },
+   {
+    "name": "Sparkly Arrow",
+    "text": "Transfers 400 Gs from the opponent to Saint Nemus."
+   },
+   {
+    "name": "Pyramid Shield",
+    "text": "Transfers 200 Gs from the opponent to Saint Nemus."
+   },
+   {
+    "name": "Bakugan Multiplier",
+    "text": "Transfers 300 Gs from the opponent to Saint Nemus."
+   },
+   {
+    "name": "Divine Light",
+    "text": "Revives any Bakugan (an ally or an opponent) that lost and returns it to its owner.",
+    "standard": true
+   },
+   {
+    "name": "Saint Sky High",
+    "text": "Increases all ally Bakugan G-power."
+   }
+  ]
+ },
+ "pegatrix": {
+  "page": "Pegatrix",
+  "abilities": [
+   {
+    "name": "Wing Cutter",
+    "text": ""
+   },
+   {
+    "name": "Revitalize",
+    "text": ""
+   },
+   {
+    "name": "Energy Draw",
+    "text": ""
+   },
+   {
+    "name": "Haos Laser",
+    "text": ""
+   },
+   {
+    "name": "Serrated Wings",
+    "text": ""
+   },
+   {
+    "name": "Blinding Throbe",
+    "text": ""
+   },
+   {
+    "name": "Prismatic Blast",
+    "text": ""
+   },
+   {
+    "name": "Double Trouble",
+    "text": ""
+   },
+   {
+    "name": "Luma Sphere",
+    "text": ""
+   },
+   {
+    "name": "Shimmering Shockwave",
+    "text": ""
+   },
+   {
+    "name": "Light Lasso",
+    "text": ""
+   }
+  ]
+ },
+ "percival": {
+  "page": "Percival",
+  "abilities": [
+   {
+    "name": "Darkus Driver",
+    "text": "Adds 200 Gs to Percival."
+   },
+   {
+    "name": "Tri-Gunner",
+    "text": "Adds 300 Gs to Percival."
+   },
+   {
+    "name": "Night Explorer",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Misty Shadow",
+    "text": "Brings the opponent power level back to their base level."
+   },
+   {
+    "name": "Black Maiden",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Darkus Thunder",
+    "text": "Subtracts 200 Gs from the opponent and adds 300 Gs to Percival."
+   },
+   {
+    "name": "Battle Marionette",
+    "text": "Allows you to call an opponent's Bakugan into battle."
+   },
+   {
+    "name": "Zorch Thunder",
+    "text": "Percival fires searing bolts of electricity from his hands."
+   },
+   {
+    "name": "Black Night",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Dark Barrier",
+    "text": "Generates a shield to absorb shots."
+   },
+   {
+    "name": "Nightmare Charge",
+    "text": "Percival barrels into an enemy headfirst."
+   }
+  ]
+ },
+ "percival~1": {
+  "page": "Knight Percival",
+  "abilities": [
+   {
+    "name": "Black Out",
+    "text": "Nullifies all the opponent's abilities."
+   },
+   {
+    "name": "Stray Thunder",
+    "text": "Adds 300 Gs to Knight Percival."
+   },
+   {
+    "name": "Thunder Sword",
+    "text": "Adds 300 Gs to Knight Percival."
+   },
+   {
+    "name": "Bind Shield",
+    "text": "Transfers 300 Gs from the opponent to Knight Percival."
+   },
+   {
+    "name": "Geor Gunner",
+    "text": "Adds 500 Gs to Knight Percival."
+   },
+   {
+    "name": "Vermilion",
+    "text": "Subtracts 200 Gs from the opponent."
+   },
+   {
+    "name": "Deadly Karbia",
+    "text": "Transfers 200 Gs from the opponent to Knight Percival."
+   }
+  ]
+ },
+ "percival~2": {
+  "page": "Midnight Percival",
+  "abilities": []
+ },
+ "piercian": {
+  "page": "Piercian",
+  "abilities": [
+   {
+    "name": "Haos Bunker",
+    "text": "Transfers 200 Gs from each opponent's Bakugan to your Bakugan."
+   },
+   {
+    "name": "Tank Bunker",
+    "text": "Transfers 200 Gs from the opponent to Piercian."
+   },
+   {
+    "name": "Soliton Defender",
+    "text": "Nullifies the opponent's ability or halves the effect of the opponent's ability that was just activated."
+   },
+   {
+    "name": "Explode",
+    "text": "Subtracts 200 Gs from the opponent."
+   },
+   {
+    "name": "Eternal Cocoon",
+    "text": "Protects any Bakugan and cancels all attacks targeting that Bakugan."
+   }
+  ]
+ },
+ "premo-vulcan": {
+  "page": "Premo Vulcan",
+  "abilities": [
+   {
+    "name": "Viblow",
+    "text": "Transfers 200 Gs from opponent to Premo Vulcan."
+   },
+   {
+    "name": "Heavy Aegis",
+    "text": "Nullifies the opponent's ability and adds 200 Gs to Premo Vulcan."
+   },
+   {
+    "name": "Titan Knuckle",
+    "text": "Transfers 200 Gs from opponent to Premo Vulcan."
+   },
+   {
+    "name": "Pyrus Durance",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Screw Impact",
+    "text": "Transfers 200 Gs from opponent to Premo Vulcan."
+   },
+   {
+    "name": "Rocket Punch",
+    "text": "Vulcan fires his hands at his opponent."
+   },
+   {
+    "name": "Mega Quake",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Clay Barrier",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Iron Skin",
+    "text": "Vulcan no longer staggers from combo breaks or attacks."
+   }
+  ]
+ },
+ "premo-vulcan~1": {
+  "page": "Rex Vulcan",
+  "abilities": [
+   {
+    "name": "Hammer Knuckle",
+    "text": "Transfers 300 Gs from the opponent to Rex Vulcan."
+   },
+   {
+    "name": "Mega Viblow",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Hyper Impact",
+    "text": "Transfers 500 Gs from the opponent to Rex Vulcan."
+   },
+   {
+    "name": "Hyper Aegis",
+    "text": "Nullifies all of the opponent's active abilities and transfers 500 Gs from the opponent to Rex Vulcan."
+   },
+   {
+    "name": "Drill Booster",
+    "text": "Adds 400 Gs to Rex Vulcan."
+   }
+  ]
+ },
+ "preyas-diablo": {
+  "page": "Angelo/Diablo Preyas",
+  "abilities": [
+   {
+    "name": "Water Refrain",
+    "text": "Nullifies and blocks the opponent's abilities from activating for a short time.",
+    "standard": true
+   },
+   {
+    "name": "Special Stealth",
+    "text": "Adds 200 Gs to Angelo/Diablo Preyas."
+   }
+  ]
+ },
+ "preyas": {
+  "page": "Preyas",
+  "abilities": [
+   {
+    "name": "Blue Stealth",
+    "text": "Transfers 50 Gs from the opponent Bakugan to Preyas and prevents the opponent from opening their Gate Card."
+   },
+   {
+    "name": "Water Refrain",
+    "text": "Nullifies and blocks the opponent's abilities from activating for a short time.",
+    "standard": true
+   },
+   {
+    "name": "Dive Mirage",
+    "text": "Moves Preyas to any different Gate Card and prevents the Gate Card from being opened.",
+    "standard": true
+   },
+   {
+    "name": "Aquos Bubble",
+    "text": ""
+   },
+   {
+    "name": "Aquos Guardian",
+    "text": ""
+   },
+   {
+    "name": "Blue Squall",
+    "text": "Subtracts 200 Gs from each opponent."
+   },
+   {
+    "name": "Side Formation",
+    "text": "Nullifies the opponent's ability and prevents the opponent's Gate Card from opening."
+   },
+   {
+    "name": "Slumping Rocket",
+    "text": "Adds 300 Gs to Preyas."
+   },
+   {
+    "name": "Whirl Kick",
+    "text": "Transfers 200 Gs from the opponent to Preyas."
+   },
+   {
+    "name": "Wave Shield",
+    "text": "Nullifies the opponent's ability."
+   }
+  ]
+ },
+ "ravenoid": {
+  "page": "Ravenoid",
+  "abilities": [
+   {
+    "name": "Shadow Scratch",
+    "text": "Subtracts 50 Gs from the opponent and prevents the activation/nullifies the opponent's Attribute Gate Card."
+   },
+   {
+    "name": "Tornado Pandemonium",
+    "text": "Subtracts 100 Gs from the opponent."
+   },
+   {
+    "name": "Blow Away",
+    "text": "Moves the opponent to another Gate Card.",
+    "standard": true
+   },
+   {
+    "name": "Spark Out",
+    "text": "Nullifies the opponent's Gate Card and adds 50 Gs to Ravenoid."
+   },
+   {
+    "name": "Storm Breaker",
+    "text": "Nullifies the opponent's Gate Card."
+   }
+  ]
+ },
+ "reaper": {
+  "page": "Reaper",
+  "abilities": [
+   {
+    "name": "Dimension Four",
+    "text": "Nullifies the opponent's Attribute Gate Card (unable to nullify Character or Command Cards)."
+   },
+   {
+    "name": "Double Dimension",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Reaper of the Chaos",
+    "text": "Adds 200 Gs to Reaper."
+   }
+  ]
+ },
+ "robotallion": {
+  "page": "Robotallion",
+  "abilities": [
+   {
+    "name": "Robotallion Enforcement",
+    "text": "Adds 50 Gs to Robotallion for the rest of the game."
+   },
+   {
+    "name": "Ability Counter",
+    "text": "Nullifies the opponent's ability.",
+    "standard": true
+   }
+  ]
+ },
+ "rubanoid": {
+  "page": "Rubanoid",
+  "abilities": [
+   {
+    "name": "Corundum Tusk",
+    "text": "Adds 300 Gs to Rubanoid."
+   },
+   {
+    "name": "Jewel Deeper",
+    "text": "Adds 400 Gs to Rubanoid."
+   },
+   {
+    "name": "Mirage Field",
+    "text": "Nullifies the opponent's ability and prevents them from activating new ones, but Battle Gear can still be played."
+   },
+   {
+    "name": "Crimson Defense",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Scarlet Plate",
+    "text": "Transfers 300 Gs from the opponent to Rubanoid."
+   },
+   {
+    "name": "Red Deeper",
+    "text": "Subtracts 400 Gs from the opponent."
+   }
+  ]
+ },
+ "saurus": {
+  "page": "Saurus",
+  "abilities": [
+   {
+    "name": "Saurus Glow",
+    "text": "Adds 50 Gs to Saurus."
+   },
+   {
+    "name": "Power Charge",
+    "text": "Adds 100 Gs to Saurus and allows him to attack from any part of a field.",
+    "standard": true
+   },
+   {
+    "name": "Shade Ability",
+    "text": "Nullify all ability card effects and power level changes on an opponent's Bakugan.",
+    "standard": true
+   }
+  ]
+ },
+ "scorpion": {
+  "page": "Scorpion",
+  "abilities": [
+   {
+    "name": "Reflection Boost",
+    "text": "Reflects the opponent's ability and subtracts 100 Gs from the opponent."
+   },
+   {
+    "name": "Satellite Impact",
+    "text": "Reflects the opponent's ability. If reflecting an ally's ability, it targets all the opponent's Bakugan on the field."
+   },
+   {
+    "name": "Satellite Boost",
+    "text": "Adds 100 Gs to Scorpion."
+   },
+   {
+    "name": "Max Reflector",
+    "text": "Reflects the opponent's ability twice the power and targets all the opponent's Bakugan on the field."
+   }
+  ]
+ },
+ "siege": {
+  "page": "Siege",
+  "abilities": [
+   {
+    "name": "Tsunami Wave",
+    "text": "If you have three Aquos Bakugan on the field, with one of them being Siege, every Bakugan on the field (including yours) besides Siege automatically loses."
+   },
+   {
+    "name": "Aquos Javelin",
+    "text": "Switches Gate Card with the one next to it."
+   },
+   {
+    "name": "Water Refrain",
+    "text": "Nullifies and blocks the opponent's abilities from activating for a short time.",
+    "standard": true
+   },
+   {
+    "name": "Dive Mirage",
+    "text": "Moves Siege to another Gate Card, making the Gate Card it goes on nullified.",
+    "standard": true
+   },
+   {
+    "name": "Fire Sword",
+    "text": "Adds 100 Gs to Siege."
+   }
+  ]
+ },
+ "sirenoid": {
+  "page": "Sirenoid",
+  "abilities": [
+   {
+    "name": "Anthemusa",
+    "text": "Brings all opponents to Sirenoid's Gate Card."
+   },
+   {
+    "name": "Forcing Wave",
+    "text": "Adds 100 Gs to Sirenoid."
+   },
+   {
+    "name": "Dive Mirage",
+    "text": "Moves Sirenoid to any different Gate Card and prevents it from opening.",
+    "standard": true
+   },
+   {
+    "name": "Devora Anthemusa",
+    "text": "Nullifies all of the opponent's abilities and adds 300 Gs to Sirenoid."
+   },
+   {
+    "name": "Vital Neptune",
+    "text": "Nullifies the opponent's ability and adds 200 Gs to Sirenoid."
+   },
+   {
+    "name": "Ripple Shield",
+    "text": "Subtracts 400 Gs from the opponent."
+   },
+   {
+    "name": "Forcement Wave",
+    "text": "Adds 200 Gs to Sirenoid."
+   }
+  ]
+ },
+ "skyress": {
+  "page": "Skyress",
+  "abilities": [
+   {
+    "name": "Green Nobility - Soar Violent Winds",
+    "text": "Adds 100 Gs to Skyress."
+   },
+   {
+    "name": "Winds of Fury",
+    "text": "If there are 3 Ventus Bakugan on the field, subtract 50 Gs from the opponent for each additional Ventus Bakugan on the side of the player and defeats all Bakugan on the field if their G- Power is lower than the user's.",
+    "standard": true
+   },
+   {
+    "name": "Fire Storm",
+    "text": "Adds 200 Gs to Skyress."
+   }
+  ]
+ },
+ "tentaclear": {
+  "page": "Tentaclear",
+  "abilities": [
+   {
+    "name": "Flare Binder",
+    "text": "Prevents the opponent from opening their Gate Card or activating an Ability Card."
+   },
+   {
+    "name": "Mega Flare Binder",
+    "text": ""
+   },
+   {
+    "name": "Solar Ray",
+    "text": "Adds 100 Gs to Tentaclear."
+   },
+   {
+    "name": "Haos Stasis",
+    "text": "If Tentaclear and two other Haos Bakugan are on the field, adds 100 Gs to Tentaclear for the rest of the game and allows the player to reuse any of their Ability Cards.",
+    "standard": true
+   },
+   {
+    "name": "Haos Freeze Attack",
+    "text": "Nullifies all of the opponent's abilities, stops time and allows you to add more Bakugan to the field.",
+    "standard": true
+   },
+   {
+    "name": "Ability Counter",
+    "text": "Nullifies the opponent's ability.",
+    "standard": true
+   },
+   {
+    "name": "Gamma Ray",
+    "text": "Nullifies the opponent's ability."
+   },
+   {
+    "name": "Flare Blinder (Flare Binder)",
+    "text": ""
+   }
+  ]
+ },
+ "tigrerra": {
+  "page": "Tigrerra",
+  "abilities": [
+   {
+    "name": "Crystal Fang",
+    "text": ""
+   },
+   {
+    "name": "Cut in Saber",
+    "text": "Adds Tigrerra into a battle."
+   },
+   {
+    "name": "Cut in Slayer",
+    "text": "Automatically defeats all of the user's Bakugan on the field and transfers all of their current G-Power to a Bakugan of their choosing on the field."
+   },
+   {
+    "name": "Pure Light",
+    "text": "Restores any defeated Bakugan no matter which side it's on and sends it to the user's deck."
+   },
+   {
+    "name": "Haos Freeze",
+    "text": "Stops time in the brawl allows any Bakugan to be added to the battle.",
+    "standard": true
+   },
+   {
+    "name": "Lightning Tornado",
+    "text": "Adds 100 Gs to Tigrerra and subtracts 100 Gs from each opponent.",
+    "standard": true
+   }
+  ]
+ },
+ "trox": {
+  "page": "Trox (Generation 2)",
+  "abilities": [
+   {
+    "name": "Sonic Uproar",
+    "text": "Trox Fires a Ring-Like Wind Attack on Opponents"
+   },
+   {
+    "name": "Ventus Mirage",
+    "text": "Trox creates multiple mirages of himself, if any mirage is hit by an attack it will vanish"
+   },
+   {
+    "name": "Petrification",
+    "text": "The top of Trox's head becomes stone use to withstand attacks"
+   },
+   {
+    "name": "Rock Riser",
+    "text": "Trox slams his feet on the ground making rock pillars come out of the ground and hit the opponent"
+   },
+   {
+    "name": "Crystal Rock Riser",
+    "text": "The same as Rock Riser with the rock pillars being made out of crystals"
+   },
+   {
+    "name": "Crystal Quake",
+    "text": ""
+   },
+   {
+    "name": "Wild Strike",
+    "text": ""
+   },
+   {
+    "name": "Ventus Body Slam",
+    "text": ""
+   },
+   {
+    "name": "Roaring Thunder",
+    "text": ""
+   },
+   {
+    "name": "Root Wrap",
+    "text": ""
+   },
+   {
+    "name": "Sonic Draft",
+    "text": ""
+   },
+   {
+    "name": "Twist Chaos",
+    "text": ""
+   },
+   {
+    "name": "Boulder Crash",
+    "text": ""
+   },
+   {
+    "name": "Wind Lash",
+    "text": ""
+   },
+   {
+    "name": "Thrust Devil",
+    "text": ""
+   }
+  ]
+ },
+ "vladitor": {
+  "page": "Vladitor",
+  "abilities": [
+   {
+    "name": "Dark Sphere Impact",
+    "text": "Adds 200 Gs to Vladitor."
+   }
+  ]
+ },
+ "vladitor~1": {
+  "page": "Battle Ax Vladitor",
+  "abilities": [
+   {
+    "name": "Thousand Destroyer",
+    "text": "Has a different effect depending on the game version:"
+   }
+  ]
+ },
+ "wilda": {
+  "page": "Wilda",
+  "abilities": [
+   {
+    "name": "Earth Cannon",
+    "text": "Wilda fires cannonballs out of his shoulders."
+   },
+   {
+    "name": "Earthquake",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Obsidian Shield",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Earthen Armor",
+    "text": "Wilda no longer staggers from combo breaks or attacks."
+   }
+  ]
+ },
+ "wilda~1": {
+  "page": "Magma Wilda",
+  "abilities": [
+   {
+    "name": "Atlas Shield",
+    "text": "Adds 300 Gs to Magma Wilda."
+   },
+   {
+    "name": "Land Twister",
+    "text": "Blocks the opponent from moving and nullifies their last ability. Acts similar to quicksand hole"
+   },
+   {
+    "name": "Gallows Punch",
+    "text": "Subtracts 300 Gs from the opponent."
+   },
+   {
+    "name": "Big Rock",
+    "text": "Adds 400 Gs to Magma Wilda."
+   },
+   {
+    "name": "Volcanic Smoke",
+    "text": "Returns the opponent' Gs back to base power level and adds 200 Gs to Magma Wilda."
+   },
+   {
+    "name": "Land Minder",
+    "text": "Adds 300 Gs to Magma Wilda and your other Bakugan."
+   },
+   {
+    "name": "Ares Ball",
+    "text": "Adds 400 Gs to Magma Wilda."
+   },
+   {
+    "name": "Chest Burn",
+    "text": "Nullifies the opponent's ability and transfers 400 Gs from the opponent to Magma Wilda."
+   },
+   {
+    "name": "Earth Seeker",
+    "text": "Subtracts 200 Gs from the opponent and returns Magma Wilda's Gs to its base level if it is lower."
+   },
+   {
+    "name": "Hyper Earth Ball",
+    "text": "Transfers 500 Gs from the opponent to Magma Wilda."
+   },
+   {
+    "name": "Magma Cannon",
+    "text": "Magma Wilda lets forth with multiple volleys of cannonballs."
+   },
+   {
+    "name": "High Impact",
+    "text": "Triggers a powerful combo attack."
+   },
+   {
+    "name": "Steel Mutation",
+    "text": "Generates a shield to deflect shots."
+   },
+   {
+    "name": "Earthen Fortress",
+    "text": "Magma Wilda no longer staggers from combo breaks or attacks."
+   }
+  ]
+ },
+ "wired": {
+  "page": "Wired",
+  "abilities": [
+   {
+    "name": "Hybrid Cannon",
+    "text": "Adds 100 Gs to Wired."
+   },
+   {
+    "name": "Shower Harpoon",
+    "text": "Adds 200 Gs to Wired."
+   },
+   {
+    "name": "Aura Cannon",
+    "text": "Transfers 200 Gs from the opponent to Wired."
+   }
+  ]
+ }
+}

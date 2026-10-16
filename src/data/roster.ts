@@ -1,4 +1,4 @@
-import type { Bakugan } from './bakugan'
+import type { Ability, Bakugan } from './bakugan'
 
 /**
  * The launch roster beyond the original six: 6 more Bakugan per attribute, plus later additions.
@@ -24,6 +24,22 @@ export const ROSTER: Bakugan[] = [
         "description": "Saurus gains +50 G's for the rest of the game. (Stackable)"
       },
       {
+        "id": "power-charge",
+        "name": "Power Charge",
+        "type": "boost",
+        "amount": 50,
+        "effect": "aura",
+        "description": "Adds 50 G to Saurus."
+      },
+      {
+        "id": "shade-ability",
+        "name": "Shade Ability",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullify all ability card effects and power level changes on an opponent's Bakugan."
+      },
+      {
         "id": "backfire",
         "name": "Backfire",
         "type": "shield",
@@ -44,7 +60,7 @@ export const ROSTER: Bakugan[] = [
         "name": "Fire Tornado",
         "type": "drain",
         "amount": 100,
-        "effect": "fireball",
+        "effect": "flameWave",
         "description": "Transfer 100 G's from an opponent's Bakugan to your Pyrus Bakugan in battle."
       },
       {
@@ -54,22 +70,6 @@ export const ROSTER: Bakugan[] = [
         "amount": 50,
         "effect": "fireball",
         "description": "An opponent's Bakugan loses -50 G's."
-      },
-      {
-        "id": "heat-wave",
-        "name": "Heat Wave",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +50 G's for the rest of the game. (Stackable)"
-      },
-      {
-        "id": "power-charge",
-        "name": "Power Charge",
-        "type": "boost",
-        "amount": 100,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +100 G's and moves to a Gate Card with an opponent's Bakugan on it."
       }
     ],
     "evolutions": [
@@ -100,12 +100,12 @@ export const ROSTER: Bakugan[] = [
         "description": "Pyrus Falconeer gains +100 G's."
       },
       {
-        "id": "fire-wall",
-        "name": "Fire Wall",
-        "type": "weaken",
-        "amount": 50,
-        "effect": "fireball",
-        "description": "An opponent's Bakugan loses -50 G's."
+        "id": "jump-over",
+        "name": "Jump Over",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Allows Falconeer to move to a different Gate Card and possibly nullifies the opponent's Gate Card or prevents it from opening."
       },
       {
         "id": "heat-wave",
@@ -116,19 +116,11 @@ export const ROSTER: Bakugan[] = [
         "description": "Your Pyrus Bakugan gains +50 G's for the rest of the game. (Stackable)"
       },
       {
-        "id": "power-charge",
-        "name": "Power Charge",
-        "type": "boost",
-        "amount": 100,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +100 G's and moves to a Gate Card with an opponent's Bakugan on it."
-      },
-      {
         "id": "pyrus-burst",
         "name": "Pyrus Burst",
         "type": "attack",
         "amount": 100,
-        "effect": "fireball",
+        "effect": "flameWave",
         "description": "Your Pyrus Bakugan attacks an opponent's Bakugan adjacent to it. If the attack fails, your Pyrus Bakugan is defeated.",
         "estimated": true
       },
@@ -145,9 +137,17 @@ export const ROSTER: Bakugan[] = [
         "name": "Rapid Fire",
         "type": "attack",
         "amount": 100,
-        "effect": "fireball",
+        "effect": "flameWave",
         "description": "Add an additional Pyrus Bakugan into battle. If the Bakugan is a teammate's, it can be any attribute.",
         "estimated": true
+      },
+      {
+        "id": "ring-of-flames",
+        "name": "Ring Of Flames",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Your Pyrus Bakugan gains +150 G's, and loses -100 G's at the start of each of your turns."
       }
     ],
     "evolutions": [
@@ -182,7 +182,7 @@ export const ROSTER: Bakugan[] = [
         "name": "Crossfire",
         "type": "weaken",
         "amount": 25,
-        "effect": "fireball",
+        "effect": "flameWave",
         "description": "An opponent's Bakugan loses -25 G's for each Special Ability Card in your used pile."
       },
       {
@@ -210,21 +210,20 @@ export const ROSTER: Bakugan[] = [
         "description": "Transfer 50 G's from your opponent's Bakugan to Fourtress."
       },
       {
-        "id": "pyrus-burst",
-        "name": "Pyrus Burst",
-        "type": "attack",
+        "id": "phase-drive",
+        "name": "Phase Drive",
+        "type": "boost",
         "amount": 100,
-        "effect": "fireball",
-        "description": "Your Pyrus Bakugan attacks an opponent's Bakugan adjacent to it. If the attack fails, your Pyrus Bakugan is defeated.",
-        "estimated": true
+        "effect": "aura",
+        "description": "Adds 100 G to Fourtress."
       },
       {
-        "id": "raging-inferno",
-        "name": "Raging Inferno",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Each of your Pyrus Bakugan on the field gains +50 G's."
+        "id": "phase-glare",
+        "name": "Phase Glare",
+        "type": "drain",
+        "amount": 150,
+        "effect": "fireball",
+        "description": "Transfers 150 G from the opponent to Fourtress."
       }
     ],
     "evolutions": [
@@ -263,44 +262,45 @@ export const ROSTER: Bakugan[] = [
         "description": "Helios gains +50 G's and attacks an opponent's Bakugan."
       },
       {
-        "id": "ring-of-flames",
-        "name": "Ring Of Flames",
-        "type": "boost",
-        "amount": 150,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +150 G's, and loses -100 G's at the start of each of your turns."
+        "id": "void-stream",
+        "name": "Void Stream",
+        "type": "weaken",
+        "amount": 200,
+        "effect": "fireball",
+        "description": "Subtracts 200 G from the opponent."
       },
       {
-        "id": "backfire",
-        "name": "Backfire",
+        "id": "burst-core",
+        "name": "Burst Core",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "Nullify the Gate Card your Pyrus Bakugan is battling on."
+        "description": "Makes Viper Helios immune to Ability Card effects."
       },
       {
-        "id": "fire-judge",
-        "name": "Fire Judge",
+        "id": "nova-spiral",
+        "name": "Nova Spiral",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Makes Viper Helios immune to Ability Card effects."
+      },
+      {
+        "id": "melt-stream",
+        "name": "Melt Stream",
+        "type": "attack",
+        "amount": 100,
+        "effect": "flameWave",
+        "description": "One of Helios's signature attacks.",
+        "estimated": true
+      },
+      {
+        "id": "omega",
+        "name": "Omega",
         "type": "boost",
         "amount": 100,
         "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +100 G's."
-      },
-      {
-        "id": "fire-tornado",
-        "name": "Fire Tornado",
-        "type": "drain",
-        "amount": 100,
-        "effect": "fireball",
-        "description": "Transfer 100 G's from an opponent's Bakugan to your Pyrus Bakugan in battle."
-      },
-      {
-        "id": "fire-wall",
-        "name": "Fire Wall",
-        "type": "weaken",
-        "amount": 50,
-        "effect": "fireball",
-        "description": "An opponent's Bakugan loses -50 G's."
+        "description": "Adds 100 G to Helios."
       }
     ],
     "evolutions": [
@@ -318,6 +318,81 @@ export const ROSTER: Bakugan[] = [
         "name": "Helios MK2",
         "series": "New Vestroia",
         "gPower": 650
+      }
+    ]
+  },
+  {
+    "id": "rubanoid",
+    "name": "Rubanoid",
+    "element": "pyrus",
+    "brawler": "Sid Arkale",
+    "series": "Gundalian Invaders",
+    "baseG": 470,
+    "brawlG": 570,
+    "description": "Sid Arkale's Guardian, a dragon coated in rubies under crimson armour. It sends out waves of red energy and cuts with blades as hard as gemstone, and later fought for Ren Krawler and Linus Claude.",
+    "abilities": [
+      {
+        "id": "corundum-tusk",
+        "name": "Corundum Tusk",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Adds 150 G to Rubanoid."
+      },
+      {
+        "id": "jewel-deeper",
+        "name": "Jewel Deeper",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "Adds 200 G to Rubanoid."
+      },
+      {
+        "id": "mirage-field",
+        "name": "Mirage Field",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability and prevents them from activating new ones, but Battle Gear can still be played."
+      },
+      {
+        "id": "crimson-defense",
+        "name": "Crimson Defense",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability."
+      },
+      {
+        "id": "scarlet-plate",
+        "name": "Scarlet Plate",
+        "type": "drain",
+        "amount": 150,
+        "effect": "fireball",
+        "description": "Transfers 150 G from the opponent to Rubanoid."
+      },
+      {
+        "id": "red-deeper",
+        "name": "Red Deeper",
+        "type": "weaken",
+        "amount": 200,
+        "effect": "flameWave",
+        "description": "Subtracts 200 G from the opponent."
+      },
+      {
+        "id": "fire-wall",
+        "name": "Fire Wall",
+        "type": "weaken",
+        "amount": 50,
+        "effect": "fireball",
+        "description": "An opponent's Bakugan loses -50 G's."
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Rubanoid",
+        "series": "Gundalian Invaders",
+        "gPower": 470
       }
     ]
   },
@@ -342,53 +417,50 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "reflection-boost",
         "name": "Reflection Boost",
-        "type": "attack",
-        "amount": 100,
-        "effect": "fireball",
-        "description": "Redirect an attack at an opponent's Bakugan with +100 G's added to its power level.",
-        "estimated": true
+        "type": "weaken",
+        "amount": 50,
+        "effect": "flameWave",
+        "description": "Subtracts 50 G from the opponent."
       },
       {
-        "id": "power-charge",
-        "name": "Power Charge",
-        "type": "boost",
-        "amount": 100,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +100 G's and moves to a Gate Card with an opponent's Bakugan on it."
+        "id": "satellite-impact",
+        "name": "Satellite Impact",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Reflects the opponent's ability."
       },
       {
-        "id": "pyrus-burst",
-        "name": "Pyrus Burst",
-        "type": "attack",
-        "amount": 100,
-        "effect": "fireball",
-        "description": "Your Pyrus Bakugan attacks an opponent's Bakugan adjacent to it. If the attack fails, your Pyrus Bakugan is defeated.",
-        "estimated": true
-      },
-      {
-        "id": "raging-inferno",
-        "name": "Raging Inferno",
+        "id": "satellite-boost",
+        "name": "Satellite Boost",
         "type": "boost",
         "amount": 50,
         "effect": "aura",
-        "description": "Each of your Pyrus Bakugan on the field gains +50 G's."
+        "description": "Adds 50 G to Scorpion."
       },
       {
-        "id": "rapid-fire",
-        "name": "Rapid Fire",
-        "type": "attack",
+        "id": "backfire",
+        "name": "Backfire",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullify the Gate Card your Pyrus Bakugan is battling on."
+      },
+      {
+        "id": "fire-judge",
+        "name": "Fire Judge",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Your Pyrus Bakugan gains +100 G's."
+      },
+      {
+        "id": "fire-tornado",
+        "name": "Fire Tornado",
+        "type": "drain",
         "amount": 100,
         "effect": "fireball",
-        "description": "Add an additional Pyrus Bakugan into battle. If the Bakugan is a teammate's, it can be any attribute.",
-        "estimated": true
-      },
-      {
-        "id": "ring-of-flames",
-        "name": "Ring Of Flames",
-        "type": "boost",
-        "amount": 150,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +150 G's, and loses -100 G's at the start of each of your turns."
+        "description": "Transfer 100 G's from an opponent's Bakugan to your Pyrus Bakugan in battle."
       }
     ],
     "evolutions": [
@@ -427,37 +499,36 @@ export const ROSTER: Bakugan[] = [
         "description": "Sirenoid gains +100 G's."
       },
       {
-        "id": "water-refrain",
-        "name": "Water Refrain",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "All previous Ability Cards used in this chain are negated."
-      },
-      {
-        "id": "water-slap",
-        "name": "Water Slap",
-        "type": "weaken",
-        "amount": 50,
-        "effect": "waterJet",
-        "description": "Your opponent's Bakugan loses -50 G's."
-      },
-      {
-        "id": "aquos-cyclone",
-        "name": "Aquos Cyclone",
+        "id": "devora-anthemusa",
+        "name": "Devora Anthemusa",
         "type": "boost",
-        "amount": 125,
+        "amount": 150,
         "effect": "aura",
-        "description": "Your Aquos Bakugan gains +125 G's on your second turn after this Ability Card's activation."
+        "description": "Adds 150 G to Sirenoid."
       },
       {
-        "id": "blue-sky",
-        "name": "Blue Sky",
-        "type": "attack",
+        "id": "vital-neptune",
+        "name": "Vital Neptune",
+        "type": "boost",
         "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Sirenoid."
+      },
+      {
+        "id": "ripple-shield",
+        "name": "Ripple Shield",
+        "type": "weaken",
+        "amount": 200,
         "effect": "waterJet",
-        "description": "At the start of each of your turns, draw an extra Ability Card as long as your Aquos Bakugan is on the field. (Non-Stackable)",
-        "estimated": true
+        "description": "Subtracts 200 G from the opponent."
+      },
+      {
+        "id": "forcement-wave",
+        "name": "Forcement Wave",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Sirenoid."
       },
       {
         "id": "dive-mirage",
@@ -465,7 +536,7 @@ export const ROSTER: Bakugan[] = [
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "Move your Aquos Bakugan to another Gate Card that was an opponent's; it is nullified."
+        "description": "Moves Sirenoid to any different Gate Card and prevents it from opening."
       }
     ],
     "evolutions": [
@@ -504,46 +575,45 @@ export const ROSTER: Bakugan[] = [
         "description": "Negate an Ability Card that would lower Elfin's power level, and have Elfin gain an equal amount of G's instead."
       },
       {
-        "id": "blue-sky",
-        "name": "Blue Sky",
-        "type": "attack",
+        "id": "wing-mercury",
+        "name": "Wing Mercury",
+        "type": "boost",
         "amount": 100,
-        "effect": "waterJet",
-        "description": "At the start of each of your turns, draw an extra Ability Card as long as your Aquos Bakugan is on the field. (Non-Stackable)",
-        "estimated": true
+        "effect": "aura",
+        "description": "Adds 100 G to Elfin."
       },
       {
-        "id": "dive-mirage",
-        "name": "Dive Mirage",
+        "id": "moon-rainbow",
+        "name": "Moon Rainbow",
+        "type": "drain",
+        "amount": 100,
+        "effect": "waterSphere",
+        "description": "Transfers 100 G from the opponent to Elfin."
+      },
+      {
+        "id": "delta-marine-snow",
+        "name": "Delta Marine Snow",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "Move your Aquos Bakugan to another Gate Card that was an opponent's; it is nullified."
+        "description": "Nullifies and blocks the opponent's abilities for a short time."
       },
       {
-        "id": "freezing-wave",
-        "name": "Freezing Wave",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +50 G's for each continuous and delayed effect it has."
-      },
-      {
-        "id": "holograph-divide",
-        "name": "Holograph Divide",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +50 G's at the start of each of your turns."
-      },
-      {
-        "id": "maelstrom",
-        "name": "Maelstrom",
+        "id": "subterra-reaction",
+        "name": "Subterra Reaction",
         "type": "attack",
         "amount": 100,
-        "effect": "waterJet",
-        "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
+        "effect": "waterSphere",
+        "description": "Changes the opponent's attribute to Subterra.",
         "estimated": true
+      },
+      {
+        "id": "shooting-stardust",
+        "name": "Shooting Stardust",
+        "type": "drain",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "Transfers 100 G from the opponent to Elfin."
       }
     ],
     "evolutions": [
@@ -582,52 +652,51 @@ export const ROSTER: Bakugan[] = [
         "name": "Trick World",
         "type": "attack",
         "amount": 100,
-        "effect": "waterJet",
+        "effect": "waterSphere",
         "description": "All Bakugan on the field randomly switch places.",
         "estimated": true
       },
       {
-        "id": "holograph-divide",
-        "name": "Holograph Divide",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +50 G's at the start of each of your turns."
-      },
-      {
-        "id": "maelstrom",
-        "name": "Maelstrom",
+        "id": "gaia-loose",
+        "name": "Gaia Loose",
         "type": "attack",
         "amount": 100,
         "effect": "waterJet",
-        "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
+        "description": "One of Elico's signature attacks.",
         "estimated": true
       },
       {
-        "id": "tides-of-fate",
-        "name": "Tides Of Fate",
-        "type": "attack",
+        "id": "flash-freeze",
+        "name": "Flash Freeze",
+        "type": "weaken",
         "amount": 100,
-        "effect": "waterJet",
-        "description": "Choose an Ability Card from your deck and place it on top.",
+        "effect": "waterSphere",
+        "description": "Holds the opponent down: subtracts 100 G.",
         "estimated": true
       },
       {
-        "id": "tsunami-wave",
-        "name": "Tsunami Wave",
-        "type": "attack",
-        "amount": 100,
-        "effect": "waterJet",
-        "description": "If you control Aquos Siege and 2 other Aquos Bakugan, all Bakugan on the field besides Aquos Siege are defeated.",
-        "estimated": true
-      },
-      {
-        "id": "water-refrain",
-        "name": "Water Refrain",
+        "id": "crystal-shield",
+        "name": "Crystal Shield",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "All previous Ability Cards used in this chain are negated."
+        "description": "Generates a shield to deflect shots."
+      },
+      {
+        "id": "hydro-typhoon",
+        "name": "Hydro Typhoon",
+        "type": "drain",
+        "amount": 150,
+        "effect": "waterSphere",
+        "description": "Transfers 150 G from the opponent to Elico."
+      },
+      {
+        "id": "forcement-power",
+        "name": "Forcement Power",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability."
       }
     ],
     "evolutions": [
@@ -662,12 +731,47 @@ export const ROSTER: Bakugan[] = [
         "description": "Transfers 50 G's from the opponent's Bakugan to Preyas and nullifies the Gate Card he's standing on."
       },
       {
+        "id": "special-stealth",
+        "name": "Special Stealth",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Preyas Diablo."
+      },
+      {
         "id": "water-refrain",
         "name": "Water Refrain",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "All previous Ability Cards used in this chain are negated."
+        "description": "Nullifies and blocks the opponent's abilities from activating for a short time."
+      },
+      {
+        "id": "maelstrom",
+        "name": "Maelstrom",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterSphere",
+        "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
+        "estimated": true
+      },
+      {
+        "id": "tides-of-fate",
+        "name": "Tides Of Fate",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "Choose an Ability Card from your deck and place it on top.",
+        "estimated": true
+      },
+      {
+        "id": "tsunami-wave",
+        "name": "Tsunami Wave",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterSphere",
+        "description": "If you control Aquos Siege and 2 other Aquos Bakugan, all Bakugan on the field besides Aquos Siege are defeated.",
+        "estimated": true
       },
       {
         "id": "water-slap",
@@ -676,39 +780,6 @@ export const ROSTER: Bakugan[] = [
         "amount": 50,
         "effect": "waterJet",
         "description": "Your opponent's Bakugan loses -50 G's."
-      },
-      {
-        "id": "aquos-cyclone",
-        "name": "Aquos Cyclone",
-        "type": "boost",
-        "amount": 125,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +125 G's on your second turn after this Ability Card's activation."
-      },
-      {
-        "id": "blue-sky",
-        "name": "Blue Sky",
-        "type": "attack",
-        "amount": 100,
-        "effect": "waterJet",
-        "description": "At the start of each of your turns, draw an extra Ability Card as long as your Aquos Bakugan is on the field. (Non-Stackable)",
-        "estimated": true
-      },
-      {
-        "id": "dive-mirage",
-        "name": "Dive Mirage",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Move your Aquos Bakugan to another Gate Card that was an opponent's; it is nullified."
-      },
-      {
-        "id": "freezing-wave",
-        "name": "Freezing Wave",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +50 G's for each continuous and delayed effect it has."
       }
     ],
     "evolutions": [
@@ -735,63 +806,67 @@ export const ROSTER: Bakugan[] = [
     "description": "The prince of the seas: a fast, agile and ruthless lion-like Bakugan from the new generation, Shun Kazami's Guardian in Battle Planet. His all-out aggression is the opposite of Shun's calm, and the two complete each other.",
     "abilities": [
       {
-        "id": "holograph-divide",
-        "name": "Holograph Divide",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +50 G's at the start of each of your turns."
-      },
-      {
-        "id": "maelstrom",
-        "name": "Maelstrom",
+        "id": "aquos-hurricane",
+        "name": "Aquos Hurricane",
         "type": "attack",
         "amount": 100,
         "effect": "waterJet",
-        "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
+        "description": "Hydorous spins forming a water like tornado, inflicting damage to anyone nearby.",
         "estimated": true
       },
       {
-        "id": "tides-of-fate",
-        "name": "Tides Of Fate",
+        "id": "claw-cutter",
+        "name": "Claw Cutter",
         "type": "attack",
         "amount": 100,
-        "effect": "waterJet",
-        "description": "Choose an Ability Card from your deck and place it on top.",
+        "effect": "waterSphere",
+        "description": "Hydorous cuts his opponent using his claws, it is seen to be used more than once is some episodes",
         "estimated": true
       },
       {
-        "id": "tsunami-wave",
-        "name": "Tsunami Wave",
-        "type": "attack",
-        "amount": 100,
-        "effect": "waterJet",
-        "description": "If you control Aquos Siege and 2 other Aquos Bakugan, all Bakugan on the field besides Aquos Siege are defeated.",
-        "estimated": true
-      },
-      {
-        "id": "water-refrain",
-        "name": "Water Refrain",
+        "id": "mysterious-mist",
+        "name": "Mysterious Mist",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "All previous Ability Cards used in this chain are negated."
+        "description": "Hydorous forms a mist in his surroundings, giving him a better oppotunity to strike at his opponent.",
+        "estimated": true
       },
       {
-        "id": "water-slap",
-        "name": "Water Slap",
-        "type": "weaken",
-        "amount": 50,
+        "id": "hurricane-slash",
+        "name": "Hurricane Slash",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterSphere",
+        "description": "One of Hydorous's signature attacks.",
+        "estimated": true
+      },
+      {
+        "id": "aquos-blast",
+        "name": "Aquos Blast",
+        "type": "attack",
+        "amount": 100,
         "effect": "waterJet",
-        "description": "Your opponent's Bakugan loses -50 G's."
+        "description": "One of Hydorous's signature attacks.",
+        "estimated": true
       },
       {
-        "id": "aquos-cyclone",
-        "name": "Aquos Cyclone",
-        "type": "boost",
-        "amount": 125,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +125 G's on your second turn after this Ability Card's activation."
+        "id": "hydro-barrage",
+        "name": "Hydro Barrage",
+        "type": "attack",
+        "amount": 150,
+        "effect": "waterSphere",
+        "description": "One of Hydorous's signature attacks.",
+        "estimated": true
+      },
+      {
+        "id": "hydro-blast",
+        "name": "Hydro Blast",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "One of Hydorous's signature attacks.",
+        "estimated": true
       }
     ],
     "evolutions": [
@@ -825,16 +900,16 @@ export const ROSTER: Bakugan[] = [
         "name": "Super Shard",
         "type": "drain",
         "amount": 50,
-        "effect": "waterJet",
+        "effect": "waterSphere",
         "description": "Transfer 50 G's from any opponent's Bakugan to Juggernoid."
       },
       {
-        "id": "tsunami-wave",
-        "name": "Tsunami Wave",
+        "id": "water-slap",
+        "name": "Water Slap",
         "type": "attack",
         "amount": 100,
         "effect": "waterJet",
-        "description": "If you control Aquos Siege and 2 other Aquos Bakugan, all Bakugan on the field besides Aquos Siege are defeated.",
+        "description": "One of Juggernoid's signature attacks.",
         "estimated": true
       },
       {
@@ -843,15 +918,15 @@ export const ROSTER: Bakugan[] = [
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "All previous Ability Cards used in this chain are negated."
+        "description": "Nullifies and blocks the opponent's abilities from activating for a short time."
       },
       {
-        "id": "water-slap",
-        "name": "Water Slap",
-        "type": "weaken",
-        "amount": 50,
-        "effect": "waterJet",
-        "description": "Your opponent's Bakugan loses -50 G's."
+        "id": "lightning-shield",
+        "name": "Lightning Shield",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's Gate Card."
       },
       {
         "id": "aquos-cyclone",
@@ -900,29 +975,21 @@ export const ROSTER: Bakugan[] = [
         "estimated": true
       },
       {
-        "id": "aquos-cyclone",
-        "name": "Aquos Cyclone",
-        "type": "boost",
-        "amount": 125,
-        "effect": "aura",
-        "description": "Your Aquos Bakugan gains +125 G's on your second turn after this Ability Card's activation."
-      },
-      {
-        "id": "blue-sky",
-        "name": "Blue Sky",
+        "id": "tsunami-wave",
+        "name": "Tsunami Wave",
         "type": "attack",
         "amount": 100,
-        "effect": "waterJet",
-        "description": "At the start of each of your turns, draw an extra Ability Card as long as your Aquos Bakugan is on the field. (Non-Stackable)",
+        "effect": "waterSphere",
+        "description": "If you have three Aquos Bakugan on the field, with one of them being Siege, every Bakugan on the field (including yours) besides Siege automatically loses.",
         "estimated": true
       },
       {
-        "id": "dive-mirage",
-        "name": "Dive Mirage",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Move your Aquos Bakugan to another Gate Card that was an opponent's; it is nullified."
+        "id": "fire-sword",
+        "name": "Fire Sword",
+        "type": "boost",
+        "amount": 50,
+        "effect": "aura",
+        "description": "Adds 50 G to Siege."
       },
       {
         "id": "freezing-wave",
@@ -945,8 +1012,17 @@ export const ROSTER: Bakugan[] = [
         "name": "Maelstrom",
         "type": "attack",
         "amount": 100,
-        "effect": "waterJet",
+        "effect": "waterSphere",
         "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
+        "estimated": true
+      },
+      {
+        "id": "tides-of-fate",
+        "name": "Tides Of Fate",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "Choose an Ability Card from your deck and place it on top.",
         "estimated": true
       }
     ],
@@ -978,6 +1054,14 @@ export const ROSTER: Bakugan[] = [
         "description": "Robotallion gains +50 G's for the rest of the game. (Stackable)"
       },
       {
+        "id": "ability-counter",
+        "name": "Ability Counter",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability."
+      },
+      {
         "id": "aquos-cyclone",
         "name": "Aquos Cyclone",
         "type": "boost",
@@ -990,7 +1074,7 @@ export const ROSTER: Bakugan[] = [
         "name": "Blue Sky",
         "type": "attack",
         "amount": 100,
-        "effect": "waterJet",
+        "effect": "waterSphere",
         "description": "At the start of each of your turns, draw an extra Ability Card as long as your Aquos Bakugan is on the field. (Non-Stackable)",
         "estimated": true
       },
@@ -1017,15 +1101,6 @@ export const ROSTER: Bakugan[] = [
         "amount": 50,
         "effect": "aura",
         "description": "Your Aquos Bakugan gains +50 G's at the start of each of your turns."
-      },
-      {
-        "id": "maelstrom",
-        "name": "Maelstrom",
-        "type": "attack",
-        "amount": 100,
-        "effect": "waterJet",
-        "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
-        "estimated": true
       }
     ],
     "evolutions": [
@@ -1048,57 +1123,12 @@ export const ROSTER: Bakugan[] = [
     "description": "A mysterious sphinx with a lion's body, huge wings and golden armour over its head, back and forearms. It soars on its great wingspan and strikes from above with four pairs of razor claws. Klaus kept a Subterra Manion in his collection.",
     "abilities": [
       {
-        "id": "copycat",
-        "name": "Copycat",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Copy any power level changes from your opponent's last Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "desert-hole",
-        "name": "Desert Hole",
+        "id": "amun-re",
+        "name": "Amun-Re",
         "type": "boost",
-        "amount": 75,
+        "amount": 50,
         "effect": "aura",
-        "description": "If you have more Gate Cards on the field than your opponent, your Subterra Bakugan gains +75 G's for each more."
-      },
-      {
-        "id": "earth-power",
-        "name": "Earth Power",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Increase your Subterra Bakugan's power level by +50 G's.",
-        "estimated": true
-      },
-      {
-        "id": "floodgate",
-        "name": "Floodgate",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Set a Gate Card from your deck.",
-        "estimated": true
-      },
-      {
-        "id": "gate-building",
-        "name": "Gate Building",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Draw and set a Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "gatekeeper",
-        "name": "Gatekeeper",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Send an Attribute Gate Card from your deck to your used pile, and have your Subterra Bakugan gain G's equal to its increase.",
-        "estimated": true
+        "description": "Adds 50 G to Manion."
       },
       {
         "id": "grand-slide",
@@ -1108,6 +1138,50 @@ export const ROSTER: Bakugan[] = [
         "effect": "quake",
         "description": "Move an opponent's Gate Card next to the Gate Card your Subterra Bakugan is on, then your Subterra Bakugan moves to it.",
         "estimated": true
+      },
+      {
+        "id": "magma-prominence",
+        "name": "Magma Prominence",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Change the Attribute Gate Card your Subterra Bakugan is standing on to a Subterra Attribute Gate Card.",
+        "estimated": true
+      },
+      {
+        "id": "sand-trap",
+        "name": "Sand Trap",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Your Subterra Bakugan attacks an opponent's Bakugan adjacent to it.",
+        "estimated": true
+      },
+      {
+        "id": "saturn-balloon",
+        "name": "Saturn Balloon",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "While your Subterra Bakugan is on the field, each time a Gate Card is activated, you draw an Ability Card. (Non-Stackable)",
+        "estimated": true
+      },
+      {
+        "id": "spirit-canyon",
+        "name": "Spirit Canyon",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Copy any power level gains from an opponent's Gate Card to your Bakugan.",
+        "estimated": true
+      },
+      {
+        "id": "terra-crunch",
+        "name": "Terra Crunch",
+        "type": "boost",
+        "amount": 20,
+        "effect": "aura",
+        "description": "Your Subterra Bakugan gains +20 G's for each Gate Card on the field. (+15 G's in Team Battles)"
       }
     ],
     "evolutions": [
@@ -1147,46 +1221,42 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "stare-down",
         "name": "Stare Down",
-        "type": "attack",
-        "amount": 100,
+        "type": "weaken",
+        "amount": 25,
         "effect": "quake",
-        "description": "All adjacent enemy Bakugan lose -50 G's.",
-        "estimated": true
+        "description": "Subtracts 25 G from the opponent."
       },
       {
-        "id": "copycat",
-        "name": "Copycat",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Copy any power level changes from your opponent's last Ability Card.",
-        "estimated": true
+        "id": "boom-hammer",
+        "name": "Boom Hammer",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability."
       },
       {
-        "id": "desert-hole",
-        "name": "Desert Hole",
+        "id": "gigantic-hammer",
+        "name": "Gigantic Hammer",
+        "type": "drain",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Transfers 100 G from the opponent to Cycloid."
+      },
+      {
+        "id": "skeet-punch",
+        "name": "Skeet Punch",
         "type": "boost",
-        "amount": 75,
+        "amount": 200,
         "effect": "aura",
-        "description": "If you have more Gate Cards on the field than your opponent, your Subterra Bakugan gains +75 G's for each more."
+        "description": "Adds 200 G to Cycloid."
       },
       {
-        "id": "earth-power",
-        "name": "Earth Power",
-        "type": "attack",
+        "id": "rocky-punch",
+        "name": "Rocky Punch",
+        "type": "weaken",
         "amount": 100,
         "effect": "quake",
-        "description": "Increase your Subterra Bakugan's power level by +50 G's.",
-        "estimated": true
-      },
-      {
-        "id": "floodgate",
-        "name": "Floodgate",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Set a Gate Card from your deck.",
-        "estimated": true
+        "description": "Subtracts 100 G from the opponent."
       }
     ],
     "evolutions": [
@@ -1235,40 +1305,36 @@ export const ROSTER: Bakugan[] = [
         "estimated": true
       },
       {
-        "id": "floodgate",
-        "name": "Floodgate",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Set a Gate Card from your deck.",
-        "estimated": true
+        "id": "obsidian-shield",
+        "name": "Obsidian Shield",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Generates a shield to deflect shots."
       },
       {
-        "id": "gate-building",
-        "name": "Gate Building",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Draw and set a Gate Card.",
-        "estimated": true
+        "id": "earthen-armor",
+        "name": "Earthen Armor",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Wilda no longer staggers from combo breaks or attacks."
       },
       {
-        "id": "gatekeeper",
-        "name": "Gatekeeper",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Send an Attribute Gate Card from your deck to your used pile, and have your Subterra Bakugan gain G's equal to its increase.",
-        "estimated": true
+        "id": "atlas-shield",
+        "name": "Atlas Shield",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Adds 150 G to Wilda."
       },
       {
-        "id": "grand-slide",
-        "name": "Grand Slide",
-        "type": "attack",
-        "amount": 100,
+        "id": "gallows-punch",
+        "name": "Gallows Punch",
+        "type": "weaken",
+        "amount": 150,
         "effect": "quake",
-        "description": "Move an opponent's Gate Card next to the Gate Card your Subterra Bakugan is on, then your Subterra Bakugan moves to it.",
-        "estimated": true
+        "description": "Subtracts 150 G from the opponent."
       }
     ],
     "evolutions": [
@@ -1298,11 +1364,10 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "heavy-aegis",
         "name": "Heavy Aegis",
-        "type": "attack",
+        "type": "boost",
         "amount": 100,
-        "effect": "quake",
-        "description": "No enemy Bakugan adjacent to Subterra Premo Vulcan can move from their current Gate Card.",
-        "estimated": true
+        "effect": "aura",
+        "description": "Adds 100 G to Premo Vulcan."
       },
       {
         "id": "titan-knuckle",
@@ -1313,48 +1378,45 @@ export const ROSTER: Bakugan[] = [
         "description": "An opponent's Bakugan loses -150 G's."
       },
       {
-        "id": "grand-slide",
-        "name": "Grand Slide",
+        "id": "viblow",
+        "name": "Viblow",
+        "type": "drain",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Transfers 100 G from the opponent to Premo Vulcan."
+      },
+      {
+        "id": "pyrus-durance",
+        "name": "Pyrus Durance",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability."
+      },
+      {
+        "id": "screw-impact",
+        "name": "Screw Impact",
+        "type": "drain",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Transfers 100 G from the opponent to Premo Vulcan."
+      },
+      {
+        "id": "rocket-punch",
+        "name": "Rocket Punch",
         "type": "attack",
         "amount": 100,
         "effect": "quake",
-        "description": "Move an opponent's Gate Card next to the Gate Card your Subterra Bakugan is on, then your Subterra Bakugan moves to it.",
+        "description": "Vulcan fires his hands at his opponent.",
         "estimated": true
       },
       {
-        "id": "magma-prominence",
-        "name": "Magma Prominence",
+        "id": "mega-quake",
+        "name": "Mega Quake",
         "type": "attack",
-        "amount": 100,
+        "amount": 150,
         "effect": "quake",
-        "description": "Change the Attribute Gate Card your Subterra Bakugan is standing on to a Subterra Attribute Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "sand-trap",
-        "name": "Sand Trap",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Your Subterra Bakugan attacks an opponent's Bakugan adjacent to it.",
-        "estimated": true
-      },
-      {
-        "id": "saturn-balloon",
-        "name": "Saturn Balloon",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "While your Subterra Bakugan is on the field, each time a Gate Card is activated, you draw an Ability Card. (Non-Stackable)",
-        "estimated": true
-      },
-      {
-        "id": "spirit-canyon",
-        "name": "Spirit Canyon",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Copy any power level gains from an opponent's Gate Card to your Bakugan.",
+        "description": "Triggers a powerful combo attack.",
         "estimated": true
       }
     ],
@@ -1384,19 +1446,52 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "clay-roller",
         "name": "Clay Roller",
-        "type": "attack",
+        "type": "drain",
         "amount": 100,
         "effect": "quake",
-        "description": "Move any Gate Card on the field to an empty slot and throw Subterra Baliton onto it. (Subterra Baliton does not need to be on the field)",
-        "estimated": true
+        "description": "Transfers 100 G from the opponent to Baliton."
       },
       {
         "id": "apollon-head",
         "name": "Apollon Head",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Baliton."
+      },
+      {
+        "id": "heavy-assail",
+        "name": "Heavy Assail",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Adds 150 G to Baliton."
+      },
+      {
+        "id": "gatekeeper",
+        "name": "Gatekeeper",
         "type": "attack",
         "amount": 100,
         "effect": "quake",
-        "description": "Baliton moves to another Gate Card in its row and attacks any opponent's Bakugan between it and its original Gate Card.",
+        "description": "Send an Attribute Gate Card from your deck to your used pile, and have your Subterra Bakugan gain G's equal to its increase.",
+        "estimated": true
+      },
+      {
+        "id": "grand-slide",
+        "name": "Grand Slide",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Move an opponent's Gate Card next to the Gate Card your Subterra Bakugan is on, then your Subterra Bakugan moves to it.",
+        "estimated": true
+      },
+      {
+        "id": "sand-trap",
+        "name": "Sand Trap",
+        "type": "attack",
+        "amount": 100,
+        "effect": "quake",
+        "description": "Your Subterra Bakugan attacks an opponent's Bakugan adjacent to it.",
         "estimated": true
       },
       {
@@ -1407,6 +1502,49 @@ export const ROSTER: Bakugan[] = [
         "effect": "quake",
         "description": "While your Subterra Bakugan is on the field, each time a Gate Card is activated, you draw an Ability Card. (Non-Stackable)",
         "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Baliton",
+        "series": "New Vestroia",
+        "gPower": 340
+      }
+    ]
+  },
+  {
+    "id": "dynamo",
+    "name": "Dynamo",
+    "element": "subterra",
+    "brawler": "Professor Clay",
+    "series": "New Vestroia",
+    "baseG": 340,
+    "brawlG": 440,
+    "description": "One of Professor Clay's Mechanical Bakugan, built for the Vexos — engines roar inside its armoured frame.",
+    "abilities": [
+      {
+        "id": "sub-dimension",
+        "name": "Sub Dimension",
+        "type": "weaken",
+        "amount": 150,
+        "effect": "quake",
+        "description": "Subtracts 150 G from the opponent."
+      },
+      {
+        "id": "gillian-cords",
+        "name": "Gillian Cords",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Dynamo."
+      },
+      {
+        "id": "vector-phalanx",
+        "name": "Vector Phalanx",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "Adds 200 G to Dynamo."
       },
       {
         "id": "spirit-canyon",
@@ -1445,56 +1583,45 @@ export const ROSTER: Bakugan[] = [
     ],
     "evolutions": [
       {
-        "name": "Baliton",
+        "name": "Dynamo",
         "series": "New Vestroia",
         "gPower": 340
       }
     ]
   },
   {
-    "id": "dynamo",
-    "name": "Dynamo",
+    "id": "hexados",
+    "name": "Hexados",
     "element": "subterra",
-    "brawler": "Professor Clay",
+    "brawler": "Gus Grav",
     "series": "New Vestroia",
-    "baseG": 340,
-    "brawlG": 440,
-    "description": "One of Professor Clay's Mechanical Bakugan, built for the Vexos — engines roar inside its armoured frame.",
+    "baseG": 360,
+    "brawlG": 460,
+    "description": "Gus's Trap Bakugan, a fierce support fighter that strikes alongside Premo Vulcan.",
     "abilities": [
       {
-        "id": "sub-dimension",
-        "name": "Sub Dimension",
-        "type": "attack",
+        "id": "land-twist",
+        "name": "Land Twist",
+        "type": "weaken",
         "amount": 100,
         "effect": "quake",
-        "description": "Target any unactivated Gate Card on the field; it becomes yours.",
-        "estimated": true
+        "description": "Subtracts 100 G from the opponent."
       },
       {
-        "id": "gillian-cords",
-        "name": "Gillian Cords",
-        "type": "attack",
-        "amount": 100,
+        "id": "ray-drill",
+        "name": "Ray Drill",
+        "type": "weaken",
+        "amount": 50,
         "effect": "quake",
-        "description": "Add an Ability Card from your deck to your hand.",
-        "estimated": true
+        "description": "An opponent's Bakugan loses -50 G's, and -50 G's more during each of its owner's turns."
       },
       {
-        "id": "copycat",
-        "name": "Copycat",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Copy any power level changes from your opponent's last Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "desert-hole",
-        "name": "Desert Hole",
-        "type": "boost",
-        "amount": 75,
-        "effect": "aura",
-        "description": "If you have more Gate Cards on the field than your opponent, your Subterra Bakugan gains +75 G's for each more."
+        "id": "eraser",
+        "name": "Eraser",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability."
       },
       {
         "id": "earth-power",
@@ -1522,60 +1649,6 @@ export const ROSTER: Bakugan[] = [
         "effect": "quake",
         "description": "Draw and set a Gate Card.",
         "estimated": true
-      }
-    ],
-    "evolutions": [
-      {
-        "name": "Dynamo",
-        "series": "New Vestroia",
-        "gPower": 340
-      }
-    ]
-  },
-  {
-    "id": "hexados",
-    "name": "Hexados",
-    "element": "subterra",
-    "brawler": "Gus Grav",
-    "series": "New Vestroia",
-    "baseG": 360,
-    "brawlG": 460,
-    "description": "Gus's Trap Bakugan, a fierce support fighter that strikes alongside Premo Vulcan.",
-    "abilities": [
-      {
-        "id": "land-twist",
-        "name": "Land Twist",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Swap any 2 adjacent Gate Cards on the field.",
-        "estimated": true
-      },
-      {
-        "id": "ray-drill",
-        "name": "Ray Drill",
-        "type": "weaken",
-        "amount": 50,
-        "effect": "quake",
-        "description": "An opponent's Bakugan loses -50 G's, and -50 G's more during each of its owner's turns."
-      },
-      {
-        "id": "floodgate",
-        "name": "Floodgate",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Set a Gate Card from your deck.",
-        "estimated": true
-      },
-      {
-        "id": "gate-building",
-        "name": "Gate Building",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Draw and set a Gate Card.",
-        "estimated": true
       },
       {
         "id": "gatekeeper",
@@ -1584,24 +1657,6 @@ export const ROSTER: Bakugan[] = [
         "amount": 100,
         "effect": "quake",
         "description": "Send an Attribute Gate Card from your deck to your used pile, and have your Subterra Bakugan gain G's equal to its increase.",
-        "estimated": true
-      },
-      {
-        "id": "grand-slide",
-        "name": "Grand Slide",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Move an opponent's Gate Card next to the Gate Card your Subterra Bakugan is on, then your Subterra Bakugan moves to it.",
-        "estimated": true
-      },
-      {
-        "id": "magma-prominence",
-        "name": "Magma Prominence",
-        "type": "attack",
-        "amount": 100,
-        "effect": "quake",
-        "description": "Change the Attribute Gate Card your Subterra Bakugan is standing on to a Subterra Attribute Gate Card.",
         "estimated": true
       }
     ],
@@ -1634,55 +1689,50 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "shadow-split",
         "name": "Shadow Split",
-        "type": "attack",
-        "amount": 100,
+        "type": "drain",
+        "amount": 75,
         "effect": "tornado",
-        "description": "Create a clone of Ingram with 100 G's on an adjacent gate card. If Ingram leaves the field, the clone does as well.",
-        "estimated": true
+        "description": "Transfers 75 G from the opponent to Ingram."
       },
       {
-        "id": "scarlet-twister",
-        "name": "Scarlet Twister",
-        "type": "attack",
-        "amount": 100,
+        "id": "continuous-dance-phoenix-position",
+        "name": "Continuous Dance - Phoenix Position",
+        "type": "weaken",
+        "amount": 150,
         "effect": "tornado",
-        "description": "Move a Bakugan to another Gate Card. If the Bakugan was in battle, your Ventus Bakugan is defeated, and the other Bakugan is returned to its owner instead.",
-        "estimated": true
+        "description": "Subtracts 150 G from the opponent."
       },
       {
-        "id": "second-wind",
-        "name": "Second Wind",
-        "type": "attack",
+        "id": "shadow-echo",
+        "name": "Shadow Echo",
+        "type": "weaken",
         "amount": 100,
         "effect": "tornado",
-        "description": "Swap a Ventus Bakugan you control on the field with 1 from your hand.",
-        "estimated": true
+        "description": "Subtracts 100 G from the opponent."
       },
       {
-        "id": "shadow-aggressor",
-        "name": "Shadow Aggressor",
-        "type": "attack",
+        "id": "armored-victory",
+        "name": "Armored Victory",
+        "type": "boost",
         "amount": 100,
-        "effect": "tornado",
-        "description": "If your Ventus Bakugan has any status effects, they are immediately cleared, and you draw 1 Ventus Ability Card.",
-        "estimated": true
+        "effect": "aura",
+        "description": "Adds 100 G to Ingram."
       },
       {
-        "id": "storm-breaker",
-        "name": "Storm Breaker",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Nullify the Gate Card your Ventus Bakugan is battling on."
-      },
-      {
-        "id": "updraft",
-        "name": "Updraft",
-        "type": "attack",
+        "id": "thunderbolt-torrential-wave",
+        "name": "Thunderbolt Torrential Wave",
+        "type": "boost",
         "amount": 100,
-        "effect": "tornado",
-        "description": "Return an empty Gate Card on the field to its owner's hand.",
-        "estimated": true
+        "effect": "aura",
+        "description": "Adds 100 G to Ingram."
+      },
+      {
+        "id": "armored-megadome",
+        "name": "Armored Megadome",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Ingram."
       }
     ],
     "evolutions": [
@@ -1725,47 +1775,48 @@ export const ROSTER: Bakugan[] = [
         "description": "Harpus gains +100 G's."
       },
       {
+        "id": "gale-force",
+        "name": "Gale Force",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Throw 2 Ventus Bakugan onto an opponent's empty closed Gate Card.",
+        "estimated": true
+      },
+      {
+        "id": "scarlet-twister",
+        "name": "Scarlet Twister",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Move a Bakugan to another Gate Card. If the Bakugan was in battle, your Ventus Bakugan is defeated, and the other Bakugan is returned to its owner instead.",
+        "estimated": true
+      },
+      {
+        "id": "second-wind",
+        "name": "Second Wind",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Swap a Ventus Bakugan you control on the field with 1 from your hand.",
+        "estimated": true
+      },
+      {
+        "id": "shadow-aggressor",
+        "name": "Shadow Aggressor",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "If your Ventus Bakugan has any status effects, they are immediately cleared, and you draw 1 Ventus Ability Card.",
+        "estimated": true
+      },
+      {
         "id": "storm-breaker",
         "name": "Storm Breaker",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
         "description": "Nullify the Gate Card your Ventus Bakugan is battling on."
-      },
-      {
-        "id": "updraft",
-        "name": "Updraft",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Return an empty Gate Card on the field to its owner's hand.",
-        "estimated": true
-      },
-      {
-        "id": "ventus-triple-chain-winds-of-fury",
-        "name": "Ventus Triple Chain - Winds Of Fury",
-        "type": "weaken",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "If you control 3 Ventus Bakugan on the field, each of your opponent's Bakugan adjacent to your Ventus Bakugan loses -100 G's, then it attacks each of them."
-      },
-      {
-        "id": "air-battle",
-        "name": "Air Battle",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move your Ventus Bakugan to a Gate Card with an opponent's Bakugan present and prevent it from opening.",
-        "estimated": true
-      },
-      {
-        "id": "backdraft",
-        "name": "Backdraft",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Return a Bakugan back to its owner.",
-        "estimated": true
       }
     ],
     "evolutions": [
@@ -1804,47 +1855,45 @@ export const ROSTER: Bakugan[] = [
         "description": "Altair gains +400 G's, and is defeated on your next turn."
       },
       {
-        "id": "air-battle",
-        "name": "Air Battle",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move your Ventus Bakugan to a Gate Card with an opponent's Bakugan present and prevent it from opening.",
-        "estimated": true
-      },
-      {
-        "id": "backdraft",
-        "name": "Backdraft",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Return a Bakugan back to its owner.",
-        "estimated": true
-      },
-      {
-        "id": "blow-away",
-        "name": "Blow Away",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move an opponent's Bakugan to another Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "blower-plexus",
-        "name": "Blower Plexus",
+        "id": "mega-shield",
+        "name": "Mega Shield",
         "type": "boost",
-        "amount": 50,
+        "amount": 100,
         "effect": "aura",
-        "description": "1 of your Ventus Bakugan gains +50 G's each time it moves. (Non-Stackable)"
+        "description": "Adds 100 G to Altair."
       },
       {
-        "id": "gale-force",
-        "name": "Gale Force",
-        "type": "attack",
+        "id": "thunder-fire",
+        "name": "Thunder Fire",
+        "type": "drain",
         "amount": 100,
         "effect": "tornado",
-        "description": "Throw 2 Ventus Bakugan onto an opponent's empty closed Gate Card.",
+        "description": "Transfers 100 G from the opponent to Altair."
+      },
+      {
+        "id": "thunder-booster",
+        "name": "Thunder Booster",
+        "type": "drain",
+        "amount": 150,
+        "effect": "tornado",
+        "description": "Transfers 150 G from the opponent to Altair."
+      },
+      {
+        "id": "wind-storm",
+        "name": "Wind Storm",
+        "type": "attack",
+        "amount": 150,
+        "effect": "tornado",
+        "description": "Altair fires a barrage of energy from his wings and mouth.",
+        "estimated": true
+      },
+      {
+        "id": "squall-fang",
+        "name": "Squall Fang",
+        "type": "attack",
+        "amount": 150,
+        "effect": "tornado",
+        "description": "Triggers a powerful combo attack.",
         "estimated": true
       }
     ],
@@ -1883,47 +1932,45 @@ export const ROSTER: Bakugan[] = [
         "description": "Nullify the Attribute Gate Card Ravenoid is standing on, and an opponent's Bakugan loses -50 G's."
       },
       {
-        "id": "blower-plexus",
-        "name": "Blower Plexus",
+        "id": "spark-out",
+        "name": "Spark Out",
         "type": "boost",
-        "amount": 50,
+        "amount": 25,
         "effect": "aura",
-        "description": "1 of your Ventus Bakugan gains +50 G's each time it moves. (Non-Stackable)"
+        "description": "Adds 25 G to Ravenoid."
       },
       {
-        "id": "gale-force",
-        "name": "Gale Force",
+        "id": "storm-breaker",
+        "name": "Storm Breaker",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's Gate Card."
+      },
+      {
+        "id": "updraft",
+        "name": "Updraft",
         "type": "attack",
         "amount": 100,
         "effect": "tornado",
-        "description": "Throw 2 Ventus Bakugan onto an opponent's empty closed Gate Card.",
+        "description": "Return an empty Gate Card on the field to its owner's hand.",
         "estimated": true
       },
       {
-        "id": "jump-over",
-        "name": "Jump Over",
-        "type": "attack",
+        "id": "ventus-triple-chain-winds-of-fury",
+        "name": "Ventus Triple Chain - Winds Of Fury",
+        "type": "weaken",
         "amount": 100,
         "effect": "tornado",
-        "description": "Move your Ventus Bakugan to an adjacent Gate Card.",
-        "estimated": true
+        "description": "If you control 3 Ventus Bakugan on the field, each of your opponent's Bakugan adjacent to your Ventus Bakugan loses -100 G's, then it attacks each of them."
       },
       {
-        "id": "scarlet-twister",
-        "name": "Scarlet Twister",
-        "type": "attack",
+        "id": "blow-away",
+        "name": "Blow Away",
+        "type": "weaken",
         "amount": 100,
         "effect": "tornado",
-        "description": "Move a Bakugan to another Gate Card. If the Bakugan was in battle, your Ventus Bakugan is defeated, and the other Bakugan is returned to its owner instead.",
-        "estimated": true
-      },
-      {
-        "id": "second-wind",
-        "name": "Second Wind",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Swap a Ventus Bakugan you control on the field with 1 from your hand.",
+        "description": "Moves the opponent to another Gate Card.",
         "estimated": true
       }
     ],
@@ -1949,63 +1996,60 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "thunder-power-glimmering-slash",
         "name": "Thunder Power - Glimmering Slash",
-        "type": "attack",
+        "type": "boost",
         "amount": 100,
-        "effect": "tornado",
-        "description": "Ventus Hylash moves to an allied adjacent Bakugan's Gate Card. If there is an opponent's Bakugan on the Gate Card, Ventus Hylash can attack it.",
-        "estimated": true
+        "effect": "aura",
+        "description": "Adds 100 G to Hylash."
       },
       {
         "id": "claw-thunder-position-kagenui",
         "name": "Claw Thunder Position - Kagenui",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "An opponent's Bakugan can no longer be moved.",
-        "estimated": true
-      },
-      {
-        "id": "scarlet-twister",
-        "name": "Scarlet Twister",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move a Bakugan to another Gate Card. If the Bakugan was in battle, your Ventus Bakugan is defeated, and the other Bakugan is returned to its owner instead.",
-        "estimated": true
-      },
-      {
-        "id": "second-wind",
-        "name": "Second Wind",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Swap a Ventus Bakugan you control on the field with 1 from your hand.",
-        "estimated": true
-      },
-      {
-        "id": "shadow-aggressor",
-        "name": "Shadow Aggressor",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "If your Ventus Bakugan has any status effects, they are immediately cleared, and you draw 1 Ventus Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "storm-breaker",
-        "name": "Storm Breaker",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "Nullify the Gate Card your Ventus Bakugan is battling on."
+        "description": "Nullifies the opponent's ability."
       },
       {
-        "id": "updraft",
-        "name": "Updraft",
+        "id": "thunder-strike-open",
+        "name": "Thunder Strike Open",
+        "type": "drain",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Transfers 100 G from the opponent to Hylash."
+      },
+      {
+        "id": "air-battle",
+        "name": "Air Battle",
         "type": "attack",
         "amount": 100,
         "effect": "tornado",
-        "description": "Return an empty Gate Card on the field to its owner's hand.",
+        "description": "Move your Ventus Bakugan to a Gate Card with an opponent's Bakugan present and prevent it from opening.",
+        "estimated": true
+      },
+      {
+        "id": "backdraft",
+        "name": "Backdraft",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Return a Bakugan back to its owner.",
+        "estimated": true
+      },
+      {
+        "id": "blower-plexus",
+        "name": "Blower Plexus",
+        "type": "boost",
+        "amount": 50,
+        "effect": "aura",
+        "description": "1 of your Ventus Bakugan gains +50 G's each time it moves. (Non-Stackable)"
+      },
+      {
+        "id": "gale-force",
+        "name": "Gale Force",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Throw 2 Ventus Bakugan onto an opponent's empty closed Gate Card.",
         "estimated": true
       }
     ],
@@ -2028,65 +2072,67 @@ export const ROSTER: Bakugan[] = [
     "description": "A tyrannosaurus-like Bakugan from the new generation of brawlers: unbelievably strong and fiercely loyal to Wynton Styles, who brawls with him as his main partner.",
     "abilities": [
       {
-        "id": "blower-plexus",
-        "name": "Blower Plexus",
+        "id": "sonic-uproar",
+        "name": "Sonic Uproar",
         "type": "boost",
-        "amount": 50,
+        "amount": 100,
         "effect": "aura",
-        "description": "1 of your Ventus Bakugan gains +50 G's each time it moves. (Non-Stackable)"
-      },
-      {
-        "id": "gale-force",
-        "name": "Gale Force",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Throw 2 Ventus Bakugan onto an opponent's empty closed Gate Card.",
+        "description": "Trox Fires a Ring-Like Wind Attack on Opponents",
         "estimated": true
       },
       {
-        "id": "jump-over",
-        "name": "Jump Over",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move your Ventus Bakugan to an adjacent Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "scarlet-twister",
-        "name": "Scarlet Twister",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move a Bakugan to another Gate Card. If the Bakugan was in battle, your Ventus Bakugan is defeated, and the other Bakugan is returned to its owner instead.",
-        "estimated": true
-      },
-      {
-        "id": "second-wind",
-        "name": "Second Wind",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Swap a Ventus Bakugan you control on the field with 1 from your hand.",
-        "estimated": true
-      },
-      {
-        "id": "shadow-aggressor",
-        "name": "Shadow Aggressor",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "If your Ventus Bakugan has any status effects, they are immediately cleared, and you draw 1 Ventus Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "storm-breaker",
-        "name": "Storm Breaker",
+        "id": "ventus-mirage",
+        "name": "Ventus Mirage",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "Nullify the Gate Card your Ventus Bakugan is battling on."
+        "description": "Trox creates multiple mirages of himself, if any mirage is hit by an attack it will vanish",
+        "estimated": true
+      },
+      {
+        "id": "petrification",
+        "name": "Petrification",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "The top of Trox's head becomes stone use to withstand attacks",
+        "estimated": true
+      },
+      {
+        "id": "rock-riser",
+        "name": "Rock Riser",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Trox slams his feet on the ground making rock pillars come out of the ground and hit the opponent",
+        "estimated": true
+      },
+      {
+        "id": "crystal-rock-riser",
+        "name": "Crystal Rock Riser",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "The same as Rock Riser with the rock pillars being made out of crystals",
+        "estimated": true
+      },
+      {
+        "id": "roaring-thunder",
+        "name": "Roaring Thunder",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Trox powers up: adds 100 G.",
+        "estimated": true
+      },
+      {
+        "id": "root-wrap",
+        "name": "Root Wrap",
+        "type": "weaken",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Holds the opponent down: subtracts 100 G.",
+        "estimated": true
       }
     ],
     "evolutions": [
@@ -2108,12 +2154,48 @@ export const ROSTER: Bakugan[] = [
     "description": "A fairy-like Bakugan riding the wind on butterfly wings — small, quick and hard to pin down.",
     "abilities": [
       {
-        "id": "storm-breaker",
-        "name": "Storm Breaker",
+        "id": "air-battle",
+        "name": "Air Battle",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "Nullify the Gate Card your Ventus Bakugan is battling on."
+        "description": "Monarus can fly beyond Gate Cards and nullifies the Gate Cards that it lands on."
+      },
+      {
+        "id": "scarlet-twister",
+        "name": "Scarlet Twister",
+        "type": "weaken",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Monarus can move another Bakugan to any Gate Card it wants, but if it does so to save an ally from being defeated, it will be eliminated in their place.",
+        "estimated": true
+      },
+      {
+        "id": "jump-over",
+        "name": "Jump Over",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Move your Ventus Bakugan to an adjacent Gate Card.",
+        "estimated": true
+      },
+      {
+        "id": "second-wind",
+        "name": "Second Wind",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "Swap a Ventus Bakugan you control on the field with 1 from your hand.",
+        "estimated": true
+      },
+      {
+        "id": "shadow-aggressor",
+        "name": "Shadow Aggressor",
+        "type": "attack",
+        "amount": 100,
+        "effect": "tornado",
+        "description": "If your Ventus Bakugan has any status effects, they are immediately cleared, and you draw 1 Ventus Ability Card.",
+        "estimated": true
       },
       {
         "id": "updraft",
@@ -2131,41 +2213,6 @@ export const ROSTER: Bakugan[] = [
         "amount": 100,
         "effect": "tornado",
         "description": "If you control 3 Ventus Bakugan on the field, each of your opponent's Bakugan adjacent to your Ventus Bakugan loses -100 G's, then it attacks each of them."
-      },
-      {
-        "id": "air-battle",
-        "name": "Air Battle",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move your Ventus Bakugan to a Gate Card with an opponent's Bakugan present and prevent it from opening.",
-        "estimated": true
-      },
-      {
-        "id": "backdraft",
-        "name": "Backdraft",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Return a Bakugan back to its owner.",
-        "estimated": true
-      },
-      {
-        "id": "blow-away",
-        "name": "Blow Away",
-        "type": "attack",
-        "amount": 100,
-        "effect": "tornado",
-        "description": "Move an opponent's Bakugan to another Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "blower-plexus",
-        "name": "Blower Plexus",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "1 of your Ventus Bakugan gains +50 G's each time it moves. (Non-Stackable)"
       }
     ],
     "evolutions": [
@@ -2188,64 +2235,67 @@ export const ROSTER: Bakugan[] = [
     "description": "A winged unicorn-Pegasus from the new generation, Lia Venegas's partner in Battle Planet: strong-willed and powerful in battle, yet always finding the beauty in the world around her.",
     "abilities": [
       {
-        "id": "recovery",
-        "name": "Recovery",
+        "id": "wing-cutter",
+        "name": "Wing Cutter",
         "type": "attack",
         "amount": 100,
         "effect": "lightBeam",
-        "description": "Add 3 Ability Cards from an ally's used pile to their deck, besides copies of this Ability Card.",
+        "description": "One of Pegatrix's signature attacks.",
         "estimated": true
       },
       {
-        "id": "shade-ability",
-        "name": "Shade Ability",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Negate all Ability Card effects and power level changes on an opponent's Bakugan."
-      },
-      {
-        "id": "venomous-beast-torrent-attack",
-        "name": "Venomous Beast Torrent Attack",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "Your Haos Griffon is defeated and replaced with another 1 of your currently defeated Haos Bakugan.",
-        "estimated": true
-      },
-      {
-        "id": "ability-counter",
-        "name": "Ability Counter",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Negate an opponent's Ability Card in battle, or that targets your Haos Bakugan."
-      },
-      {
-        "id": "divine-blessing",
-        "name": "Divine Blessing",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "Each player draws an Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "double-down",
-        "name": "Double Down",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "The next time an allied Bakugan gains G's from an Ability Card, the increase is doubled. (Non-Stackable) (Can only be activated outside of battle)",
-        "estimated": true
-      },
-      {
-        "id": "enhancement",
-        "name": "Enhancement",
+        "id": "revitalize",
+        "name": "Revitalize",
         "type": "boost",
-        "amount": 75,
+        "amount": 100,
         "effect": "aura",
-        "description": "An allied Bakugan gains +75 G's."
+        "description": "Pegatrix powers up: adds 100 G.",
+        "estimated": true
+      },
+      {
+        "id": "energy-draw",
+        "name": "Energy Draw",
+        "type": "drain",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Transfers 100 G from the opponent to Pegatrix.",
+        "estimated": true
+      },
+      {
+        "id": "haos-laser",
+        "name": "Haos Laser",
+        "type": "attack",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "One of Pegatrix's signature attacks.",
+        "estimated": true
+      },
+      {
+        "id": "blinding-throbe",
+        "name": "Blinding Throbe",
+        "type": "weaken",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Holds the opponent down: subtracts 100 G.",
+        "estimated": true
+      },
+      {
+        "id": "light-lasso",
+        "name": "Light Lasso",
+        "type": "weaken",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Holds the opponent down: subtracts 100 G.",
+        "estimated": true
+      },
+      {
+        "id": "serrated-wings",
+        "name": "Serrated Wings",
+        "type": "attack",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "One of Pegatrix's signature attacks.",
+        "estimated": true
       }
     ],
     "evolutions": [
@@ -2269,11 +2319,10 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "flare-blinder",
         "name": "Flare Blinder",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "If you control a Haos Tentaclear in battle, the opponent cannot activate any Ability Cards or Gate Cards while the battle is ongoing.",
-        "estimated": true
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Prevents the opponent from opening their Gate Card or activating an Ability Card."
       },
       {
         "id": "mega-flare-blinder",
@@ -2300,21 +2349,20 @@ export const ROSTER: Bakugan[] = [
         "description": "Your Tentaclear gains +100 G's in battle."
       },
       {
-        "id": "ability-counter",
-        "name": "Ability Counter",
+        "id": "haos-stasis",
+        "name": "Haos Stasis",
+        "type": "boost",
+        "amount": 50,
+        "effect": "aura",
+        "description": "Adds 50 G to Tentaclear."
+      },
+      {
+        "id": "haos-freeze-attack",
+        "name": "Haos Freeze Attack",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "Negate an opponent's Ability Card in battle, or that targets your Haos Bakugan."
-      },
-      {
-        "id": "divine-blessing",
-        "name": "Divine Blessing",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "Each player draws an Ability Card.",
-        "estimated": true
+        "description": "Nullifies all of the opponent's abilities, stops time and allows you to add more Bakugan to the field."
       },
       {
         "id": "double-down",
@@ -2363,47 +2411,45 @@ export const ROSTER: Bakugan[] = [
         "estimated": true
       },
       {
-        "id": "enhancement",
-        "name": "Enhancement",
-        "type": "boost",
-        "amount": 75,
-        "effect": "aura",
-        "description": "An allied Bakugan gains +75 G's."
-      },
-      {
-        "id": "guiding-light",
-        "name": "Guiding Light",
+        "id": "burning-light",
+        "name": "Burning Light",
         "type": "attack",
-        "amount": 100,
+        "amount": 150,
         "effect": "lightBeam",
-        "description": "Throw a Haos Bakugan onto any Gate Card, but its power level becomes 50 G's.",
+        "description": "Nemus fires a thin, fast, and devastating beam of light.",
         "estimated": true
       },
       {
-        "id": "haos-freeze",
-        "name": "Haos Freeze",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "Immediately add an additional Haos Bakugan into battle. If the Bakugan is a teammate's, it can be any attribute.",
-        "estimated": true
+        "id": "light-shield",
+        "name": "Light Shield",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Generates a shield to deflect shots."
       },
       {
-        "id": "haos-surge",
-        "name": "Haos Surge",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "An allied Bakugan's power level becomes half of the strongest Bakugan your opponent controls.",
-        "estimated": true
+        "id": "borehole-reflection",
+        "name": "Borehole Reflection",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability."
       },
       {
-        "id": "haos-triple-chain-haos-stasis",
-        "name": "Haos Triple Chain - Haos Stasis",
+        "id": "darkus-sky",
+        "name": "Darkus Sky",
         "type": "boost",
         "amount": 100,
         "effect": "aura",
-        "description": "If there are 3 Haos Bakugan on your field, your Haos Bakugan gains +100 G's, and you draw 2 cards. Any teammates each draw 1 card."
+        "description": "Adds 100 G to Nemus."
+      },
+      {
+        "id": "night-stunworks",
+        "name": "Night Stunworks",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Adds 150 G to Nemus."
       }
     ],
     "evolutions": [
@@ -2447,46 +2493,46 @@ export const ROSTER: Bakugan[] = [
         "description": "Brontes gains +50 G's and can use Darkus Ability Cards. If Brontes was Darkus, it gains +150 G's instead."
       },
       {
-        "id": "haos-surge",
-        "name": "Haos Surge",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "An allied Bakugan's power level becomes half of the strongest Bakugan your opponent controls.",
-        "estimated": true
-      },
-      {
-        "id": "haos-triple-chain-haos-stasis",
-        "name": "Haos Triple Chain - Haos Stasis",
-        "type": "boost",
-        "amount": 100,
-        "effect": "aura",
-        "description": "If there are 3 Haos Bakugan on your field, your Haos Bakugan gains +100 G's, and you draw 2 cards. Any teammates each draw 1 card."
-      },
-      {
-        "id": "helping-hand",
-        "name": "Helping Hand",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "An allied player draws an Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "lightning-shield",
-        "name": "Lightning Shield",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "The Gate Card your Haos Bakugan is standing on is nullified."
-      },
-      {
-        "id": "lightning-tornado",
-        "name": "Lightning Tornado",
+        "id": "drain-beam",
+        "name": "Drain Beam",
         "type": "drain",
         "amount": 100,
         "effect": "lightBeam",
-        "description": "Transfer 100 G's from your opponent's Bakugan to your Haos Bakugan."
+        "description": "A brutal attack that continues to damage the opponent even after it hits.",
+        "estimated": true
+      },
+      {
+        "id": "mirage-strike",
+        "name": "Mirage Strike",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Triggers a powerful combo attack.",
+        "estimated": true
+      },
+      {
+        "id": "wall-of-light",
+        "name": "Wall of Light",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Generates a shield to deflect shots."
+      },
+      {
+        "id": "wizard-proxy",
+        "name": "Wizard Proxy",
+        "type": "drain",
+        "amount": 150,
+        "effect": "lightBeam",
+        "description": "Transfers 150 G from the opponent to Brontes."
+      },
+      {
+        "id": "astrosphere",
+        "name": "Astrosphere",
+        "type": "drain",
+        "amount": 200,
+        "effect": "lightBeam",
+        "description": "Transfers 200 G from the opponent to Brontes."
       }
     ],
     "evolutions": [
@@ -2522,54 +2568,54 @@ export const ROSTER: Bakugan[] = [
         "estimated": true
       },
       {
-        "id": "lightning-shield",
-        "name": "Lightning Shield",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "The Gate Card your Haos Bakugan is standing on is nullified."
-      },
-      {
-        "id": "lightning-tornado",
-        "name": "Lightning Tornado",
+        "id": "spiced-slayer",
+        "name": "Spiced Slayer",
         "type": "drain",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "Transfer 100 G's from your opponent's Bakugan to your Haos Bakugan."
-      },
-      {
-        "id": "one-for-all",
-        "name": "One For All",
-        "type": "boost",
         "amount": 50,
+        "effect": "lightBeam",
+        "description": "Transfers 50 G from the opponent to Laserman."
+      },
+      {
+        "id": "enhancement",
+        "name": "Enhancement",
+        "type": "boost",
+        "amount": 75,
         "effect": "aura",
-        "description": "All allied Bakugan have their G's added together, and then split between each other. If each Bakugan you control is Haos, they gain +50 G's."
+        "description": "An allied Bakugan gains +75 G's."
       },
       {
-        "id": "positivity-down",
-        "name": "Positivity Down",
+        "id": "guiding-light",
+        "name": "Guiding Light",
         "type": "attack",
         "amount": 100,
         "effect": "lightBeam",
-        "description": "Further boosts gained from Ability Cards on an opponent's Bakugan in battle with your Haos Bakugan are halved.",
+        "description": "Throw a Haos Bakugan onto any Gate Card, but its power level becomes 50 G's.",
         "estimated": true
       },
       {
-        "id": "pure-light",
-        "name": "Pure Light",
+        "id": "haos-surge",
+        "name": "Haos Surge",
         "type": "attack",
         "amount": 100,
         "effect": "lightBeam",
-        "description": "After winning a battle, revive a defeated Bakugan and give it to an ally with fewer than 3 Bakugan in their deck.",
+        "description": "An allied Bakugan's power level becomes half of the strongest Bakugan your opponent controls.",
         "estimated": true
       },
       {
-        "id": "rapid-haos",
-        "name": "Rapid Haos",
+        "id": "haos-triple-chain-haos-stasis",
+        "name": "Haos Triple Chain - Haos Stasis",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "If there are 3 Haos Bakugan on your field, your Haos Bakugan gains +100 G's, and you draw 2 cards. Any teammates each draw 1 card."
+      },
+      {
+        "id": "helping-hand",
+        "name": "Helping Hand",
         "type": "attack",
         "amount": 100,
         "effect": "lightBeam",
-        "description": "Add an additional Haos Bakugan into battle. If the Bakugan is a teammate's, it can be any attribute.",
+        "description": "An allied player draws an Ability Card.",
         "estimated": true
       }
     ],
@@ -2595,11 +2641,10 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "haos-bunker",
         "name": "Haos Bunker",
-        "type": "attack",
+        "type": "drain",
         "amount": 100,
         "effect": "lightBeam",
-        "description": "An allied Bakugan becomes immune to an opponent’s attacks for the rest of the game.",
-        "estimated": true
+        "description": "Transfers 100 G from the opponent to Piercian."
       },
       {
         "id": "tank-bunker",
@@ -2610,6 +2655,38 @@ export const ROSTER: Bakugan[] = [
         "description": "Negate an Ability Card that would lower an allied Bakugan's power level."
       },
       {
+        "id": "soliton-defender",
+        "name": "Soliton Defender",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Nullifies the opponent's ability or halves the effect of the opponent's ability that was just activated."
+      },
+      {
+        "id": "explode",
+        "name": "Explode",
+        "type": "weaken",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Subtracts 100 G from the opponent."
+      },
+      {
+        "id": "eternal-cocoon",
+        "name": "Eternal Cocoon",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Protects any Bakugan and cancels all attacks targeting that Bakugan."
+      },
+      {
+        "id": "one-for-all",
+        "name": "One For All",
+        "type": "boost",
+        "amount": 50,
+        "effect": "aura",
+        "description": "All allied Bakugan have their G's added together, and then split between each other. If each Bakugan you control is Haos, they gain +50 G's."
+      },
+      {
         "id": "positivity-down",
         "name": "Positivity Down",
         "type": "attack",
@@ -2617,41 +2694,6 @@ export const ROSTER: Bakugan[] = [
         "effect": "lightBeam",
         "description": "Further boosts gained from Ability Cards on an opponent's Bakugan in battle with your Haos Bakugan are halved.",
         "estimated": true
-      },
-      {
-        "id": "pure-light",
-        "name": "Pure Light",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "After winning a battle, revive a defeated Bakugan and give it to an ally with fewer than 3 Bakugan in their deck.",
-        "estimated": true
-      },
-      {
-        "id": "rapid-haos",
-        "name": "Rapid Haos",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "Add an additional Haos Bakugan into battle. If the Bakugan is a teammate's, it can be any attribute.",
-        "estimated": true
-      },
-      {
-        "id": "recovery",
-        "name": "Recovery",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "Add 3 Ability Cards from an ally's used pile to their deck, besides copies of this Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "shade-ability",
-        "name": "Shade Ability",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Negate all Ability Card effects and power level changes on an opponent's Bakugan."
       }
     ],
     "evolutions": [
@@ -2681,6 +2723,31 @@ export const ROSTER: Bakugan[] = [
         "description": "Nullify any Gate Card on the field."
       },
       {
+        "id": "hybrid-cannon",
+        "name": "Hybrid Cannon",
+        "type": "boost",
+        "amount": 50,
+        "effect": "aura",
+        "description": "Adds 50 G to Wired."
+      },
+      {
+        "id": "shower-harpoon",
+        "name": "Shower Harpoon",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Wired."
+      },
+      {
+        "id": "rapid-haos",
+        "name": "Rapid Haos",
+        "type": "attack",
+        "amount": 100,
+        "effect": "lightBeam",
+        "description": "Add an additional Haos Bakugan into battle. If the Bakugan is a teammate's, it can be any attribute.",
+        "estimated": true
+      },
+      {
         "id": "recovery",
         "name": "Recovery",
         "type": "attack",
@@ -2688,14 +2755,6 @@ export const ROSTER: Bakugan[] = [
         "effect": "lightBeam",
         "description": "Add 3 Ability Cards from an ally's used pile to their deck, besides copies of this Ability Card.",
         "estimated": true
-      },
-      {
-        "id": "shade-ability",
-        "name": "Shade Ability",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Negate all Ability Card effects and power level changes on an opponent's Bakugan."
       },
       {
         "id": "venomous-beast-torrent-attack",
@@ -2707,29 +2766,12 @@ export const ROSTER: Bakugan[] = [
         "estimated": true
       },
       {
-        "id": "ability-counter",
-        "name": "Ability Counter",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Negate an opponent's Ability Card in battle, or that targets your Haos Bakugan."
-      },
-      {
         "id": "divine-blessing",
         "name": "Divine Blessing",
         "type": "attack",
         "amount": 100,
         "effect": "lightBeam",
         "description": "Each player draws an Ability Card.",
-        "estimated": true
-      },
-      {
-        "id": "double-down",
-        "name": "Double Down",
-        "type": "attack",
-        "amount": 100,
-        "effect": "lightBeam",
-        "description": "The next time an allied Bakugan gains G's from an Ability Card, the increase is doubled. (Non-Stackable) (Can only be activated outside of battle)",
         "estimated": true
       }
     ],
@@ -2768,6 +2810,32 @@ export const ROSTER: Bakugan[] = [
         "description": "Negate an opponent's Ability Card in battle, or that targets Reaper."
       },
       {
+        "id": "reaper-of-the-chaos",
+        "name": "Reaper of the Chaos",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Adds 100 G to Reaper."
+      },
+      {
+        "id": "all-for-one",
+        "name": "All For One",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "All allied Bakugan have half their G's transferred to 1 of your Darkus Bakugan.",
+        "estimated": true
+      },
+      {
+        "id": "black-is-darkness",
+        "name": "Black Is Darkness",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "Bring all adjacent enemy Bakugan to your Darkus Bakugan's Gate Card.",
+        "estimated": true
+      },
+      {
         "id": "call-of-the-void",
         "name": "Call Of The Void",
         "type": "boost",
@@ -2782,33 +2850,6 @@ export const ROSTER: Bakugan[] = [
         "amount": 0,
         "effect": "shieldDome",
         "description": "Negate an opponent's Ability Card in battle, or that targets your Darkus Bakugan."
-      },
-      {
-        "id": "darkus-gravity",
-        "name": "Darkus Gravity",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "Move a Darkus Bakugan to an adjacent Darkus Bakugan's Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "destroy-force-down",
-        "name": "Destroy Force Down",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "Each Bakugan on the field unowned by you loses -25 G's. (-15 G's in Team Battles)",
-        "estimated": true
-      },
-      {
-        "id": "doom-companion",
-        "name": "Doom Companion",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "All Bakugan on your Darkus Bakugan's Gate Card are removed from play for the rest of the game.",
-        "estimated": true
       }
     ],
     "evolutions": [
@@ -2847,46 +2888,45 @@ export const ROSTER: Bakugan[] = [
         "description": "If your opponent has 3 Bakugan on 1 Gate Card, they each lose -150 G's."
       },
       {
-        "id": "destroy-force-down",
-        "name": "Destroy Force Down",
-        "type": "attack",
-        "amount": 100,
+        "id": "night-explorer",
+        "name": "Night Explorer",
+        "type": "weaken",
+        "amount": 150,
         "effect": "shadowOrb",
-        "description": "Each Bakugan on the field unowned by you loses -25 G's. (-15 G's in Team Battles)",
-        "estimated": true
+        "description": "Subtracts 150 G from the opponent."
       },
       {
-        "id": "doom-companion",
-        "name": "Doom Companion",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "All Bakugan on your Darkus Bakugan's Gate Card are removed from play for the rest of the game.",
-        "estimated": true
-      },
-      {
-        "id": "eye-for-an-eye",
-        "name": "Eye For An Eye",
+        "id": "misty-shadow",
+        "name": "Misty Shadow",
         "type": "weaken",
         "amount": 200,
         "effect": "shadowOrb",
-        "description": "Both 1 of your Darkus Bakugan and an opponent's Bakugan lose -200 G's."
+        "description": "Brings the opponent's G-Power down: subtracts 200 G."
       },
       {
-        "id": "grand-down",
-        "name": "Grand Down",
+        "id": "black-maiden",
+        "name": "Black Maiden",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
-        "description": "The Gate Card your Darkus Bakugan is standing on is nullified."
+        "description": "Nullifies the opponent's ability."
       },
       {
-        "id": "oregano-revenge",
-        "name": "Oregano Revenge",
-        "type": "weaken",
+        "id": "darkus-thunder",
+        "name": "Darkus Thunder",
+        "type": "drain",
+        "amount": 125,
+        "effect": "shadowOrb",
+        "description": "Transfers 125 G from the opponent to Percival."
+      },
+      {
+        "id": "battle-marionette",
+        "name": "Battle Marionette",
+        "type": "attack",
         "amount": 100,
         "effect": "shadowOrb",
-        "description": "Each of your opponent's Bakugan in battle loses -100 G's, and up to the same number of yours in battle gain +100 G's."
+        "description": "Allows you to call an opponent's Bakugan into battle.",
+        "estimated": true
       }
     ],
     "evolutions": [
@@ -2921,61 +2961,59 @@ export const ROSTER: Bakugan[] = [
       {
         "id": "chaos-leap-sting",
         "name": "Chaos Leap Sting",
-        "type": "attack",
-        "amount": 100,
+        "type": "drain",
+        "amount": 75,
         "effect": "shadowOrb",
-        "description": "Darkus Hades attacks an opponent's Bakugan that isn't adjacent to it.",
-        "estimated": true
+        "description": "Transfers 75 G from the opponent to Hades."
       },
       {
         "id": "full-burst",
         "name": "Full Burst",
-        "type": "attack",
-        "amount": 100,
+        "type": "boost",
+        "amount": 250,
+        "effect": "aura",
+        "description": "Adds 250 G to Hades."
+      },
+      {
+        "id": "photon-tail",
+        "name": "Photon Tail",
+        "type": "weaken",
+        "amount": 150,
         "effect": "shadowOrb",
-        "description": "Hades' power level is doubled, and becomes 0 G’s on your next turn.",
-        "estimated": true
+        "description": "Subtracts 150 G from the opponent."
       },
       {
-        "id": "grand-down",
-        "name": "Grand Down",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "The Gate Card your Darkus Bakugan is standing on is nullified."
+        "id": "phaser-trident",
+        "name": "Phaser Trident",
+        "type": "weaken",
+        "amount": 150,
+        "effect": "shadowOrb",
+        "description": "Subtracts 150 G from the opponent."
       },
       {
-        "id": "oregano-revenge",
-        "name": "Oregano Revenge",
+        "id": "saurer-cannon",
+        "name": "Saurer Cannon",
+        "type": "boost",
+        "amount": 250,
+        "effect": "aura",
+        "description": "Adds 250 G to Hades."
+      },
+      {
+        "id": "catastrophe",
+        "name": "Catastrophe",
         "type": "weaken",
         "amount": 100,
         "effect": "shadowOrb",
-        "description": "Each of your opponent's Bakugan in battle loses -100 G's, and up to the same number of yours in battle gain +100 G's."
-      },
-      {
-        "id": "spiced-assault",
-        "name": "Spiced Assault",
-        "type": "boost",
-        "amount": 30,
-        "effect": "aura",
-        "description": "Send any number of Ability Cards from your deck to your used pile; your Darkus Bakugan gains +30 G's for each sent."
-      },
-      {
-        "id": "all-for-one",
-        "name": "All For One",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "All allied Bakugan have half their G's transferred to 1 of your Darkus Bakugan.",
+        "description": "Hades fires stun missiles at his opponent.",
         "estimated": true
       },
       {
-        "id": "black-is-darkness",
-        "name": "Black Is Darkness",
+        "id": "dark-volley",
+        "name": "Dark Volley",
         "type": "attack",
-        "amount": 100,
+        "amount": 150,
         "effect": "shadowOrb",
-        "description": "Bring all adjacent enemy Bakugan to your Darkus Bakugan's Gate Card.",
+        "description": "Triggers a powerful combo attack.",
         "estimated": true
       }
     ],
@@ -3006,40 +3044,6 @@ export const ROSTER: Bakugan[] = [
         "description": "Fear Ripper gains +80 G's for the rest of the game. (Non-Stackable)"
       },
       {
-        "id": "all-for-one",
-        "name": "All For One",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "All allied Bakugan have half their G's transferred to 1 of your Darkus Bakugan.",
-        "estimated": true
-      },
-      {
-        "id": "black-is-darkness",
-        "name": "Black Is Darkness",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "Bring all adjacent enemy Bakugan to your Darkus Bakugan's Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "call-of-the-void",
-        "name": "Call Of The Void",
-        "type": "boost",
-        "amount": 200,
-        "effect": "aura",
-        "description": "If your deck is empty, your Darkus Bakugan gains +200 G's."
-      },
-      {
-        "id": "dark-eye-superior",
-        "name": "Dark Eye Superior",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "Negate an opponent's Ability Card in battle, or that targets your Darkus Bakugan."
-      },
-      {
         "id": "darkus-gravity",
         "name": "Darkus Gravity",
         "type": "attack",
@@ -3056,6 +3060,39 @@ export const ROSTER: Bakugan[] = [
         "effect": "shadowOrb",
         "description": "Each Bakugan on the field unowned by you loses -25 G's. (-15 G's in Team Battles)",
         "estimated": true
+      },
+      {
+        "id": "doom-companion",
+        "name": "Doom Companion",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "All Bakugan on your Darkus Bakugan's Gate Card are removed from play for the rest of the game.",
+        "estimated": true
+      },
+      {
+        "id": "eye-for-an-eye",
+        "name": "Eye For An Eye",
+        "type": "weaken",
+        "amount": 200,
+        "effect": "shadowOrb",
+        "description": "Both 1 of your Darkus Bakugan and an opponent's Bakugan lose -200 G's."
+      },
+      {
+        "id": "grand-down",
+        "name": "Grand Down",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "The Gate Card your Darkus Bakugan is standing on is nullified."
+      },
+      {
+        "id": "oregano-revenge",
+        "name": "Oregano Revenge",
+        "type": "weaken",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "Each of your opponent's Bakugan in battle loses -100 G's, and up to the same number of yours in battle gain +100 G's."
       }
     ],
     "evolutions": [
@@ -3086,12 +3123,177 @@ export const ROSTER: Bakugan[] = [
         "description": "Leonidas gains +200 G's."
       },
       {
+        "id": "omega-eraser",
+        "name": "Omega Eraser",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "Has a different effect depending on the game version:",
+        "estimated": true
+      },
+      {
+        "id": "spiced-assault",
+        "name": "Spiced Assault",
+        "type": "boost",
+        "amount": 30,
+        "effect": "aura",
+        "description": "Send any number of Ability Cards from your deck to your used pile; your Darkus Bakugan gains +30 G's for each sent."
+      },
+      {
+        "id": "all-for-one",
+        "name": "All For One",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "All allied Bakugan have half their G's transferred to 1 of your Darkus Bakugan.",
+        "estimated": true
+      },
+      {
+        "id": "black-is-darkness",
+        "name": "Black Is Darkness",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "Bring all adjacent enemy Bakugan to your Darkus Bakugan's Gate Card.",
+        "estimated": true
+      },
+      {
+        "id": "call-of-the-void",
+        "name": "Call Of The Void",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "If your deck is empty, your Darkus Bakugan gains +200 G's."
+      },
+      {
         "id": "dark-eye-superior",
         "name": "Dark Eye Superior",
         "type": "shield",
         "amount": 0,
         "effect": "shieldDome",
         "description": "Negate an opponent's Ability Card in battle, or that targets your Darkus Bakugan."
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Leonidas",
+        "series": "Battle Brawlers",
+        "gPower": 480
+      },
+      {
+        "name": "Omega Leonidas",
+        "series": "Video game",
+        "gPower": 580
+      }
+    ],
+    "characterGate": true
+  },
+  {
+    "id": "howlkor",
+    "name": "Howlkor",
+    "element": "darkus",
+    "brawler": "Lightning",
+    "series": "Battle Planet",
+    "baseG": 400,
+    "brawlG": 500,
+    "description": "A giant three-headed, Cerberus-like hound from the new generation and the Guardian of Lightning. Howlkor is so set on winning that he often scares his own brawler.",
+    "abilities": [
+      {
+        "id": "umbral-slash",
+        "name": "Umbral Slash",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "One of Howlkor's signature attacks.",
+        "estimated": true
+      },
+      {
+        "id": "prismatic-bolt",
+        "name": "Prismatic Bolt",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "One of Howlkor's signature attacks.",
+        "estimated": true
+      },
+      {
+        "id": "sonic-shield",
+        "name": "Sonic Shield",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Howlkor raises a shield against the opponent's next move."
+      },
+      {
+        "id": "darkus-howl",
+        "name": "Darkus Howl",
+        "type": "boost",
+        "amount": 100,
+        "effect": "aura",
+        "description": "Howlkor powers up: adds 100 G.",
+        "estimated": true
+      },
+      {
+        "id": "prismatic-shield",
+        "name": "Prismatic Shield",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Howlkor raises a shield against the opponent's next move."
+      },
+      {
+        "id": "ghost-shadow",
+        "name": "Ghost Shadow",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "One of Howlkor's signature attacks.",
+        "estimated": true
+      },
+      {
+        "id": "shadow-dogs",
+        "name": "Shadow Dogs",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "One of Howlkor's signature attacks.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Howlkor",
+        "series": "Battle Planet",
+        "gPower": 400
+      }
+    ]
+  },
+  {
+    "id": "vladitor",
+    "name": "Vladitor",
+    "element": "darkus",
+    "brawler": "Video game villain",
+    "series": "Battle Brawlers",
+    "baseG": 490,
+    "brawlG": 590,
+    "description": "The final foe of the first Bakugan video game, a towering Darkus warlord. As Battle Ax Vladitor his power is immense.",
+    "abilities": [
+      {
+        "id": "dark-sphere-impact",
+        "name": "Dark Sphere Impact",
+        "type": "weaken",
+        "amount": 200,
+        "effect": "shadowOrb",
+        "description": "An opponent's Bakugan loses -200 G's."
+      },
+      {
+        "id": "thousand-destroyer",
+        "name": "Thousand Destroyer",
+        "type": "attack",
+        "amount": 100,
+        "effect": "shadowOrb",
+        "description": "Has a different effect depending on the game version:",
+        "estimated": true
       },
       {
         "id": "darkus-gravity",
@@ -3139,166 +3341,6 @@ export const ROSTER: Bakugan[] = [
     ],
     "evolutions": [
       {
-        "name": "Leonidas",
-        "series": "Battle Brawlers",
-        "gPower": 480
-      },
-      {
-        "name": "Omega Leonidas",
-        "series": "Video game",
-        "gPower": 580
-      }
-    ],
-    "characterGate": true
-  },
-  {
-    "id": "howlkor",
-    "name": "Howlkor",
-    "element": "darkus",
-    "brawler": "Lightning",
-    "series": "Battle Planet",
-    "baseG": 400,
-    "brawlG": 500,
-    "description": "A giant three-headed, Cerberus-like hound from the new generation and the Guardian of Lightning. Howlkor is so set on winning that he often scares his own brawler.",
-    "abilities": [
-      {
-        "id": "eye-for-an-eye",
-        "name": "Eye For An Eye",
-        "type": "weaken",
-        "amount": 200,
-        "effect": "shadowOrb",
-        "description": "Both 1 of your Darkus Bakugan and an opponent's Bakugan lose -200 G's."
-      },
-      {
-        "id": "grand-down",
-        "name": "Grand Down",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "The Gate Card your Darkus Bakugan is standing on is nullified."
-      },
-      {
-        "id": "oregano-revenge",
-        "name": "Oregano Revenge",
-        "type": "weaken",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "Each of your opponent's Bakugan in battle loses -100 G's, and up to the same number of yours in battle gain +100 G's."
-      },
-      {
-        "id": "spiced-assault",
-        "name": "Spiced Assault",
-        "type": "boost",
-        "amount": 30,
-        "effect": "aura",
-        "description": "Send any number of Ability Cards from your deck to your used pile; your Darkus Bakugan gains +30 G's for each sent."
-      },
-      {
-        "id": "all-for-one",
-        "name": "All For One",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "All allied Bakugan have half their G's transferred to 1 of your Darkus Bakugan.",
-        "estimated": true
-      },
-      {
-        "id": "black-is-darkness",
-        "name": "Black Is Darkness",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "Bring all adjacent enemy Bakugan to your Darkus Bakugan's Gate Card.",
-        "estimated": true
-      },
-      {
-        "id": "call-of-the-void",
-        "name": "Call Of The Void",
-        "type": "boost",
-        "amount": 200,
-        "effect": "aura",
-        "description": "If your deck is empty, your Darkus Bakugan gains +200 G's."
-      }
-    ],
-    "evolutions": [
-      {
-        "name": "Howlkor",
-        "series": "Battle Planet",
-        "gPower": 400
-      }
-    ]
-  },
-  {
-    "id": "vladitor",
-    "name": "Vladitor",
-    "element": "darkus",
-    "brawler": "Video game villain",
-    "series": "Battle Brawlers",
-    "baseG": 490,
-    "brawlG": 590,
-    "description": "The final foe of the first Bakugan video game, a towering Darkus warlord. As Battle Ax Vladitor his power is immense.",
-    "abilities": [
-      {
-        "id": "dark-sphere-impact",
-        "name": "Dark Sphere Impact",
-        "type": "weaken",
-        "amount": 200,
-        "effect": "shadowOrb",
-        "description": "An opponent's Bakugan loses -200 G's."
-      },
-      {
-        "id": "doom-companion",
-        "name": "Doom Companion",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "All Bakugan on your Darkus Bakugan's Gate Card are removed from play for the rest of the game.",
-        "estimated": true
-      },
-      {
-        "id": "eye-for-an-eye",
-        "name": "Eye For An Eye",
-        "type": "weaken",
-        "amount": 200,
-        "effect": "shadowOrb",
-        "description": "Both 1 of your Darkus Bakugan and an opponent's Bakugan lose -200 G's."
-      },
-      {
-        "id": "grand-down",
-        "name": "Grand Down",
-        "type": "shield",
-        "amount": 0,
-        "effect": "shieldDome",
-        "description": "The Gate Card your Darkus Bakugan is standing on is nullified."
-      },
-      {
-        "id": "oregano-revenge",
-        "name": "Oregano Revenge",
-        "type": "weaken",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "Each of your opponent's Bakugan in battle loses -100 G's, and up to the same number of yours in battle gain +100 G's."
-      },
-      {
-        "id": "spiced-assault",
-        "name": "Spiced Assault",
-        "type": "boost",
-        "amount": 30,
-        "effect": "aura",
-        "description": "Send any number of Ability Cards from your deck to your used pile; your Darkus Bakugan gains +30 G's for each sent."
-      },
-      {
-        "id": "all-for-one",
-        "name": "All For One",
-        "type": "attack",
-        "amount": 100,
-        "effect": "shadowOrb",
-        "description": "All allied Bakugan have half their G's transferred to 1 of your Darkus Bakugan.",
-        "estimated": true
-      }
-    ],
-    "evolutions": [
-      {
         "name": "Vladitor",
         "series": "Battle Brawlers",
         "gPower": 490
@@ -3312,3 +3354,380 @@ export const ROSTER: Bakugan[] = [
     "characterGate": true
   }
 ]
+
+/** The original six Bakugan's ability cards (their other facts are in bakugan.ts). */
+export const ORIGINAL_ABILITIES: Record<string, Ability[]> = {
+  "dragonoid": [
+    {
+      "id": "boosted-dragon",
+      "name": "Boosted Dragon",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Dragonoid gains +100 G's for the rest of the game. (Non-Stackable)"
+    },
+    {
+      "id": "melt-flare",
+      "name": "Melt Flare",
+      "type": "boost",
+      "amount": 120,
+      "effect": "aura",
+      "description": "If Boosted Dragon is activated, Dragonoid gains +120 G's."
+    },
+    {
+      "id": "boosted-ultima",
+      "name": "Boosted Ultima",
+      "type": "drain",
+      "amount": 75,
+      "effect": "fireball",
+      "description": "Transfers 75 G from the opponent to Dragonoid."
+    },
+    {
+      "id": "ultimate-dragon",
+      "name": "Ultimate Dragon",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Adds 100 G to Dragonoid."
+    },
+    {
+      "id": "dragonic-ogre",
+      "name": "Dragonic Ogre",
+      "type": "attack",
+      "amount": 100,
+      "effect": "fireball",
+      "description": "One of Dragonoid's signature attacks.",
+      "estimated": true
+    },
+    {
+      "id": "exceed",
+      "name": "Exceed",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Adds 100 G to Dragonoid."
+    },
+    {
+      "id": "burning-dragon",
+      "name": "Burning Dragon",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Adds 100 G to Dragonoid."
+    },
+    {
+      "id": "burning-tornado",
+      "name": "Burning Tornado",
+      "type": "drain",
+      "amount": 100,
+      "effect": "flameWave",
+      "description": "Transfers 100 G from the opponent to Dragonoid."
+    }
+  ],
+  "preyas": [
+    {
+      "id": "blue-stealth",
+      "name": "Blue Stealth",
+      "type": "drain",
+      "amount": 50,
+      "effect": "waterJet",
+      "description": "Transfers 50 G's from the opponent's Bakugan to Preyas and nullifies the Gate Card he's standing on."
+    },
+    {
+      "id": "aquos-bubble",
+      "name": "Aquos Bubble",
+      "type": "attack",
+      "amount": 100,
+      "effect": "waterSphere",
+      "description": "One of Preyas's signature attacks.",
+      "estimated": true
+    },
+    {
+      "id": "aquos-guardian",
+      "name": "Aquos Guardian",
+      "type": "shield",
+      "amount": 0,
+      "effect": "shieldDome",
+      "description": "Preyas raises a shield against the opponent's next move."
+    },
+    {
+      "id": "blue-squall",
+      "name": "Blue Squall",
+      "type": "weaken",
+      "amount": 100,
+      "effect": "waterSphere",
+      "description": "Subtracts 100 G from the opponent."
+    },
+    {
+      "id": "side-formation",
+      "name": "Side Formation",
+      "type": "shield",
+      "amount": 0,
+      "effect": "shieldDome",
+      "description": "Nullifies the opponent's ability and prevents the opponent's Gate Card from opening."
+    },
+    {
+      "id": "slumping-rocket",
+      "name": "Slumping Rocket",
+      "type": "boost",
+      "amount": 150,
+      "effect": "aura",
+      "description": "Adds 150 G to Preyas."
+    },
+    {
+      "id": "whirl-kick",
+      "name": "Whirl Kick",
+      "type": "drain",
+      "amount": 100,
+      "effect": "waterJet",
+      "description": "Transfers 100 G from the opponent to Preyas."
+    }
+  ],
+  "gorem": [
+    {
+      "id": "mega-impact",
+      "name": "Mega Impact",
+      "type": "weaken",
+      "amount": 100,
+      "effect": "quake",
+      "description": "Gorem gains +50 G's, and an opponent's Bakugan in battle loses -100 G's."
+    },
+    {
+      "id": "gate-building",
+      "name": "Gate Building",
+      "type": "attack",
+      "amount": 100,
+      "effect": "quake",
+      "description": "The user may set another Gate Card down during the battle.",
+      "estimated": true
+    },
+    {
+      "id": "copycat",
+      "name": "Copycat",
+      "type": "drain",
+      "amount": 100,
+      "effect": "quake",
+      "description": "Copies an ability that the opponent used or is using.",
+      "estimated": true
+    },
+    {
+      "id": "magma-prominence",
+      "name": "Magma Prominence",
+      "type": "attack",
+      "amount": 100,
+      "effect": "quake",
+      "description": "Changes the Gate Card's attribute to Subterra.",
+      "estimated": true
+    },
+    {
+      "id": "desert-hole",
+      "name": "Desert Hole",
+      "type": "boost",
+      "amount": 75,
+      "effect": "aura",
+      "description": "If you have more Gate Cards on the field than your opponent, your Subterra Bakugan gains +75 G's for each more."
+    },
+    {
+      "id": "earth-power",
+      "name": "Earth Power",
+      "type": "attack",
+      "amount": 100,
+      "effect": "quake",
+      "description": "Increase your Subterra Bakugan's power level by +50 G's.",
+      "estimated": true
+    },
+    {
+      "id": "floodgate",
+      "name": "Floodgate",
+      "type": "attack",
+      "amount": 100,
+      "effect": "quake",
+      "description": "Set a Gate Card from your deck.",
+      "estimated": true
+    }
+  ],
+  "skyress": [
+    {
+      "id": "green-nobility-violent-wind",
+      "name": "Green Nobility - Violent Wind",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Skyress gains +100 G's."
+    },
+    {
+      "id": "fire-storm",
+      "name": "Fire Storm",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Adds 100 G to Skyress."
+    },
+    {
+      "id": "winds-of-fury",
+      "name": "Winds of Fury",
+      "type": "attack",
+      "amount": 100,
+      "effect": "tornado",
+      "description": "If there are 3 Ventus Bakugan on the field, subtract 50 Gs from the opponent for each additional Ventus Bakugan on the side of the player and defeats all Bakugan on the field if their G- Power is lower than the user's.",
+      "estimated": true
+    },
+    {
+      "id": "air-battle",
+      "name": "Air Battle",
+      "type": "attack",
+      "amount": 100,
+      "effect": "tornado",
+      "description": "Move your Ventus Bakugan to a Gate Card with an opponent's Bakugan present and prevent it from opening.",
+      "estimated": true
+    },
+    {
+      "id": "backdraft",
+      "name": "Backdraft",
+      "type": "attack",
+      "amount": 100,
+      "effect": "tornado",
+      "description": "Return a Bakugan back to its owner.",
+      "estimated": true
+    },
+    {
+      "id": "blow-away",
+      "name": "Blow Away",
+      "type": "attack",
+      "amount": 100,
+      "effect": "tornado",
+      "description": "Move an opponent's Bakugan to another Gate Card.",
+      "estimated": true
+    },
+    {
+      "id": "blower-plexus",
+      "name": "Blower Plexus",
+      "type": "boost",
+      "amount": 50,
+      "effect": "aura",
+      "description": "1 of your Ventus Bakugan gains +50 G's each time it moves. (Non-Stackable)"
+    }
+  ],
+  "tigrerra": [
+    {
+      "id": "cut-in-slayer",
+      "name": "Cut In Slayer",
+      "type": "attack",
+      "amount": 100,
+      "effect": "lightBeam",
+      "description": "All Bakugan on your side are defeated except for 1, and their G's are added to the remaining Bakugan.",
+      "estimated": true
+    },
+    {
+      "id": "crystal-fang",
+      "name": "Crystal Fang",
+      "type": "boost",
+      "amount": 80,
+      "effect": "aura",
+      "description": "Tigrerra gains +80 G's."
+    },
+    {
+      "id": "pure-light",
+      "name": "Pure Light",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Restores any defeated Bakugan no matter which side it's on and sends it to the user's deck.",
+      "estimated": true
+    },
+    {
+      "id": "haos-freeze",
+      "name": "Haos Freeze",
+      "type": "weaken",
+      "amount": 100,
+      "effect": "lightBeam",
+      "description": "Stops time in the brawl allows any Bakugan to be added to the battle.",
+      "estimated": true
+    },
+    {
+      "id": "lightning-tornado",
+      "name": "Lightning Tornado",
+      "type": "drain",
+      "amount": 50,
+      "effect": "lightBeam",
+      "description": "Transfers 50 G from the opponent to Tigrerra."
+    },
+    {
+      "id": "ability-counter",
+      "name": "Ability Counter",
+      "type": "shield",
+      "amount": 0,
+      "effect": "shieldDome",
+      "description": "Negate an opponent's Ability Card in battle, or that targets your Haos Bakugan."
+    },
+    {
+      "id": "divine-blessing",
+      "name": "Divine Blessing",
+      "type": "attack",
+      "amount": 100,
+      "effect": "lightBeam",
+      "description": "Each player draws an Ability Card.",
+      "estimated": true
+    }
+  ],
+  "hydranoid": [
+    {
+      "id": "gravity-chamber",
+      "name": "Gravity Chamber",
+      "type": "attack",
+      "amount": 100,
+      "effect": "shadowOrb",
+      "description": "All adjacent Bakugan are moved to Hydranoid's Gate Card, and any weaker ones are immediately defeated.",
+      "estimated": true
+    },
+    {
+      "id": "merge-shield",
+      "name": "Merge Shield",
+      "type": "attack",
+      "amount": 100,
+      "effect": "shadowOrb",
+      "description": "Hydranoid copies all G's gained by an opponent's Bakugan in this battle.",
+      "estimated": true
+    },
+    {
+      "id": "destruction-buster",
+      "name": "Destruction Buster",
+      "type": "boost",
+      "amount": 50,
+      "effect": "aura",
+      "description": "Adds 50 G to Hydranoid."
+    },
+    {
+      "id": "chaos-of-the-darkness",
+      "name": "Chaos of the Darkness",
+      "type": "boost",
+      "amount": 100,
+      "effect": "aura",
+      "description": "Adds 100 G to Hydranoid."
+    },
+    {
+      "id": "death-trident",
+      "name": "Death Trident",
+      "type": "weaken",
+      "amount": 150,
+      "effect": "shadowOrb",
+      "description": "Subtracts 150 G from the opponent."
+    },
+    {
+      "id": "destroy-vanish",
+      "name": "Destroy Vanish",
+      "type": "weaken",
+      "amount": 200,
+      "effect": "shadowOrb",
+      "description": "Brings the opponent's G-Power down: subtracts 200 G."
+    },
+    {
+      "id": "chaos-leap-sting",
+      "name": "Chaos Leap Sting",
+      "type": "drain",
+      "amount": 75,
+      "effect": "shadowOrb",
+      "description": "Transfers 75 G from the opponent to Hydranoid."
+    }
+  ]
+}
