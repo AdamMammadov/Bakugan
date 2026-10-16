@@ -653,7 +653,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   helios: { monster: 'models/helios/monster.glb', fly: true, length: 1.6, fill: 0.66 },
   // ripped from Bakugan Battle Brawlers (Xbox 360); its T-posed arms bent down, skinned and inked
   vladitor: { monster: 'models/vladitor/monster.glb', scale: 1.1 },
-  // made with TRELLIS.2 from a picture (sent by the player), toned down towards the art's browns, skinned and inked
+  // made with TRELLIS.2 from a picture (sent by the player), recoloured to the art's browns and near-black armour,
+  // its eye visor repainted; skinned and inked
   'premo-vulcan': { monster: 'models/premo-vulcan/monster.glb', scale: 1.1 },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]

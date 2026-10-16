@@ -78,6 +78,9 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
         shadow-camera-top={45}
         shadow-camera-bottom={-45}
         shadow-camera-far={120}
+        // pushes the shadow test off each surface, so smooth curved armour does not shade itself in fine rings
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.06}
       />
       {fighters.map((f, i) => (
         <pointLight

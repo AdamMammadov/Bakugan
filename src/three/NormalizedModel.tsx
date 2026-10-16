@@ -72,8 +72,13 @@ export function NormalizedModel({
     copy.traverse((o) => {
       const m = o as THREE.Mesh
       if (m.isMesh) {
-        o.castShadow = true
-        o.receiveShadow = true
+        // the ink outline (an unlit shell round the model) must not cast a shadow: it wraps the model, so its
+        // shadow would fall over all of it and darken it in the arena, where shadows are on
+        const unlit = (Array.isArray(m.material) ? m.material : [m.material]).every(
+          (x) => (x as THREE.MeshBasicMaterial).isMeshBasicMaterial,
+        )
+        o.castShadow = !unlit
+        o.receiveShadow = !unlit
         for (const mat of Array.isArray(m.material) ? m.material : [m.material]) smooth(mat as THREE.MeshStandardMaterial)
         if (tint) {
           const tintOne = (mat: THREE.Material) => {
