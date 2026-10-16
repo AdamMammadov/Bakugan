@@ -654,8 +654,12 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // ripped from Bakugan Battle Brawlers (Xbox 360); its T-posed arms bent down, skinned and inked
   vladitor: { monster: 'models/vladitor/monster.glb', scale: 1.1 },
   // made with TRELLIS.2 from a picture (sent by the player), recoloured to the art's browns and near-black armour,
-  // its eye visor repainted; skinned and inked
+  // its eye visor repainted; skinned and inked (inkThin keeps the outline from specking through its bumpy surface)
   'premo-vulcan': { monster: 'models/premo-vulcan/monster.glb', scale: 1.1 },
+  // ripped from Bakugan Battle Brawlers (Xbox 360) in the game's own Pyrus colours; skinned and inked
+  falconeer: { monster: 'models/falconeer/monster.glb', fly: true, length: 1.6 },
+  // ripped from Bakugan Battle Brawlers (Xbox 360) in the game's own Aquos colours; skinned and inked
+  robotallion: { monster: 'models/robotallion/monster.glb' },
 }
 for (const b of ROSTER) if (ROSTER_MODELS[b.id]) b.models = ROSTER_MODELS[b.id]
 const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.name === 'Magma Wilda')

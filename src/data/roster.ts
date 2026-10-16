@@ -322,83 +322,6 @@ export const ROSTER: Bakugan[] = [
     ]
   },
   {
-    "id": "robotallion",
-    "name": "Robotallion",
-    "element": "pyrus",
-    "brawler": "Kenta",
-    "series": "Battle Brawlers",
-    "baseG": 330,
-    "brawlG": 430,
-    "description": "A humanoid robot Bakugan and the Guardian of the twin brawler Kenta. Sturdy and relentless, it grinds opponents down with heavy blows.",
-    "abilities": [
-      {
-        "id": "robotallion-enforcement",
-        "name": "Robotallion Enforcement",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Robotallion gains +50 G's for the rest of the game. (Stackable)"
-      },
-      {
-        "id": "fire-tornado",
-        "name": "Fire Tornado",
-        "type": "drain",
-        "amount": 100,
-        "effect": "fireball",
-        "description": "Transfer 100 G's from an opponent's Bakugan to your Pyrus Bakugan in battle."
-      },
-      {
-        "id": "fire-wall",
-        "name": "Fire Wall",
-        "type": "weaken",
-        "amount": 50,
-        "effect": "fireball",
-        "description": "An opponent's Bakugan loses -50 G's."
-      },
-      {
-        "id": "heat-wave",
-        "name": "Heat Wave",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +50 G's for the rest of the game. (Stackable)"
-      },
-      {
-        "id": "power-charge",
-        "name": "Power Charge",
-        "type": "boost",
-        "amount": 100,
-        "effect": "aura",
-        "description": "Your Pyrus Bakugan gains +100 G's and moves to a Gate Card with an opponent's Bakugan on it."
-      },
-      {
-        "id": "pyrus-burst",
-        "name": "Pyrus Burst",
-        "type": "attack",
-        "amount": 100,
-        "effect": "fireball",
-        "description": "Your Pyrus Bakugan attacks an opponent's Bakugan adjacent to it. If the attack fails, your Pyrus Bakugan is defeated.",
-        "estimated": true
-      },
-      {
-        "id": "raging-inferno",
-        "name": "Raging Inferno",
-        "type": "boost",
-        "amount": 50,
-        "effect": "aura",
-        "description": "Each of your Pyrus Bakugan on the field gains +50 G's."
-      }
-    ],
-    "evolutions": [
-      {
-        "name": "Robotallion",
-        "series": "Battle Brawlers",
-        "gPower": 330
-      }
-    ],
-    "characterGate": true
-  },
-  {
     "id": "scorpion",
     "name": "Scorpion",
     "element": "pyrus",
@@ -1037,30 +960,47 @@ export const ROSTER: Bakugan[] = [
     "characterGate": true
   },
   {
-    "id": "tripod-epsilon",
-    "name": "Tripod Epsilon",
+    "id": "robotallion",
+    "name": "Robotallion",
     "element": "aquos",
-    "brawler": "Marucho Marukura",
+    "brawler": "Kenta",
     "series": "Battle Brawlers",
     "baseG": 330,
     "brawlG": 430,
-    "description": "A three-legged Trap Bakugan that Marucho deploys to support his Guardian, pinning opponents in place.",
+    "description": "A humanoid robot Bakugan and the Guardian of the twin brawler Kenta. Sturdy and relentless, it grinds opponents down with heavy blows.",
     "abilities": [
       {
-        "id": "clear-snail",
-        "name": "Clear Snail",
+        "id": "robotallion-enforcement",
+        "name": "Robotallion Enforcement",
         "type": "boost",
         "amount": 50,
         "effect": "aura",
-        "description": "Change an allied Bakugan to any attribute and have it gain +50 G's."
+        "description": "Robotallion gains +50 G's for the rest of the game. (Stackable)"
       },
       {
-        "id": "diamond-snail",
-        "name": "Diamond Snail",
+        "id": "aquos-cyclone",
+        "name": "Aquos Cyclone",
         "type": "boost",
-        "amount": 150,
+        "amount": 125,
         "effect": "aura",
-        "description": "A Bakugan that isn't its original attribute gains +150 G's."
+        "description": "Your Aquos Bakugan gains +125 G's on your second turn after this Ability Card's activation."
+      },
+      {
+        "id": "blue-sky",
+        "name": "Blue Sky",
+        "type": "attack",
+        "amount": 100,
+        "effect": "waterJet",
+        "description": "At the start of each of your turns, draw an extra Ability Card as long as your Aquos Bakugan is on the field. (Non-Stackable)",
+        "estimated": true
+      },
+      {
+        "id": "dive-mirage",
+        "name": "Dive Mirage",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Move your Aquos Bakugan to another Gate Card that was an opponent's; it is nullified."
       },
       {
         "id": "freezing-wave",
@@ -1086,33 +1026,16 @@ export const ROSTER: Bakugan[] = [
         "effect": "waterJet",
         "description": "Choose an Ability Card from your deck; in 2 of your turns, it is added to your hand.",
         "estimated": true
-      },
-      {
-        "id": "tides-of-fate",
-        "name": "Tides Of Fate",
-        "type": "attack",
-        "amount": 100,
-        "effect": "waterJet",
-        "description": "Choose an Ability Card from your deck and place it on top.",
-        "estimated": true
-      },
-      {
-        "id": "tsunami-wave",
-        "name": "Tsunami Wave",
-        "type": "attack",
-        "amount": 100,
-        "effect": "waterJet",
-        "description": "If you control Aquos Siege and 2 other Aquos Bakugan, all Bakugan on the field besides Aquos Siege are defeated.",
-        "estimated": true
       }
     ],
     "evolutions": [
       {
-        "name": "Tripod Epsilon",
+        "name": "Robotallion",
         "series": "Battle Brawlers",
         "gPower": 330
       }
-    ]
+    ],
+    "characterGate": true
   },
   {
     "id": "manion",

@@ -628,12 +628,28 @@ export const useProfiles = create<ProfilesState>()(
     }),
     {
       name: 'bakugan-profiles',
-      version: 3,
+      version: 4,
       // v3 (new economy and rules): every earlier test profile is cleared so everyone starts from zero
-      migrate: (state, version) =>
-        version < 3 ? { profiles: [], activeId: null } : (state as { profiles: Profile[]; activeId: string | null }),
+      // v4: Tripod Epsilon left the roster; Robotallion (now Aquos) took its place, so it takes its owners too
+      migrate: (state, version) => {
+        if (version < 3) return { profiles: [], activeId: null }
+        const s = state as { profiles: Profile[]; activeId: string | null }
+        return version < 4 ? { ...s, profiles: s.profiles.map((p) => renameBakugan(p, 'tripod-epsilon', 'robotallion')) } : s
+      },
     },
   ),
 )
+
+/**
+ * Moves a profile from a Bakugan that left the roster to the one that replaced it, owned and on the team.
+ * Owning both keeps the one further along.
+ */
+function renameBakugan(p: Profile, from: string, to: string): Profile {
+  const moved = p.collection.map((o) => (o.id === from ? { ...o, id: to } : o))
+  const pick = moved.filter((o) => o.id === to).sort((a, b) => b.form - a.form || b.xp - a.xp)[0]
+  const collection = moved.filter((o) => o.id !== to || o === pick)
+  const team = [...new Set(p.team.map((id) => (id === from ? to : id)))]
+  return { ...p, collection, team }
+}
 
 export const useActiveProfile = () => useProfiles((s) => s.profiles.find((p) => p.id === s.activeId) ?? null)

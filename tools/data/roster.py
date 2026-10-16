@@ -25,8 +25,7 @@ ROSTER = [
     ('helios', 'Helios', 'pyrus', 'Spectra Phantom', 470,
      [('Cyborg Helios', 'New Vestroia', 570), ('Helios MK2', 'New Vestroia', 650)],
      'Spectra\'s Guardian: a ruthless dragon covered in poison-tipped thorns that fires rapid cannonball blasts of fire. Rebuilt as a cyborg, he can repair himself in battle.'),
-    ('robotallion', 'Robotallion', 'pyrus', 'Kenta', 330, [],
-     'A humanoid robot Bakugan and the Guardian of the twin brawler Kenta. Sturdy and relentless, it grinds opponents down with heavy blows.'),
+    # Rubanoid takes Robotallion's old Pyrus place once its model is in
     ('scorpion', 'Scorpion', 'pyrus', 'Wild Bakugan', 320, [],
      'A burning scorpion Bakugan whose stinger tail strikes from unexpected angles.'),
     # ---- Aquos
@@ -44,8 +43,9 @@ ROSTER = [
      'A turtle-like Bakugan whose shell shrugs off almost any attack. Christopher\'s steady Guardian.'),
     ('siege', 'Siege', 'aquos', 'Jenny', 350, [],
      'A knight-like Bakugan whose weapon changes with its attribute — as an Aquos Bakugan it wields a trident. Guardian of the idol brawler Jenny.'),
-    ('tripod-epsilon', 'Tripod Epsilon', 'aquos', 'Marucho Marukura', 330, [],
-     'A three-legged Trap Bakugan that Marucho deploys to support his Guardian, pinning opponents in place.'),
+    # Robotallion as an Aquos Bakugan (the Xbox 360 game's Aquos colours), in Tripod Epsilon's place
+    ('robotallion', 'Robotallion', 'aquos', 'Kenta', 330, [],
+     'A humanoid robot Bakugan and the Guardian of the twin brawler Kenta. Sturdy and relentless, it grinds opponents down with heavy blows.'),
     # ---- Subterra
     ('manion', 'Manion', 'subterra', 'Klaus von Hertzon', 380, [],
      'A mysterious sphinx with a lion\'s body, huge wings and golden armour over its head, back and forearms. It soars on its great wingspan and strikes from above with four pairs of razor claws. Klaus kept a Subterra Manion in his collection.'),
