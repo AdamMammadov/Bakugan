@@ -150,7 +150,7 @@ export const BAKUGAN: Bakugan[] = [
         gPower: 450,
         models: { monster: 'models/dragonoid/delta.glb', scale: 1.25 },
       },
-      // Ultimate and Neo have no models of their own yet: Delta's, recoloured
+      // Ultimate has no model of its own yet: Delta's, recoloured
       {
         name: 'Ultimate Dragonoid',
         series: 'Battle Brawlers',
@@ -161,7 +161,9 @@ export const BAKUGAN: Bakugan[] = [
         name: 'Neo Dragonoid',
         series: 'New Vestroia',
         gPower: 500,
-        models: { monster: 'models/dragonoid/delta.glb', scale: 1.3, tint: { color: '#e0401c', glow: '#fff0a0' } },
+        // made with TRELLIS.2 from an anime picture (sent by the player), cut into parts by where they lie (the tail
+        // curls round in front of the legs), skinned and inked
+        models: { monster: 'models/dragonoid/neo.glb', scale: 1.15 },
       },
     ],
   },
@@ -306,7 +308,7 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // armour it lost painted back after the picture, the nose horn and eyes repainted, inked and rigged
   helios: { monster: 'models/helios/monster.glb', fly: true, length: 1.6, fill: 0.66 },
   // ripped from Bakugan Battle Brawlers (Xbox 360); its T-posed arms bent down, skinned and inked
-  vladitor: { monster: 'models/vladitor/monster.glb', scale: 1.1 },
+  vladitor: { ball: 'models/vladitor/ball.glb', monster: 'models/vladitor/monster.glb', scale: 1.1 },
   // made with TRELLIS.2 from a picture (sent by the player), recoloured to the art's browns and near-black armour,
   // its eye visor repainted; skinned and inked (inkThin keeps the outline from specking through its bumpy surface)
   'premo-vulcan': { monster: 'models/premo-vulcan/monster.glb', scale: 1.1 },
@@ -364,6 +366,10 @@ const battleAx = ROSTER.find((b) => b.id === 'vladitor')?.evolutions.find((e) =>
 // The axe reaches above its head, so it is drawn a little larger to keep the body as big as Vladitor's
 if (battleAx)
   battleAx.models = { monster: 'models/vladitor/battle-ax.glb', ball: 'models/vladitor/battle-ax-ball.glb', scale: 1.25 }
+const minx = ROSTER.find((b) => b.id === 'elfin')?.evolutions.find((e) => e.name === 'Minx Elfin')
+// made with TRELLIS.2 from an anime picture (sent by the player), loose specks dropped, skinned and inked; it keeps
+// Elfin's ball. Caught mid-leap, so it stands on its toes rather than hovering (floating put its head off the screen)
+if (minx) minx.models = { ...ROSTER_MODELS.elfin, monster: 'models/elfin/minx.glb', fly: false, scale: 1 }
 const phantom = ROSTER.find((b) => b.id === 'dharak')?.evolutions.find((e) => e.name === 'Phantom Dharak')
 // made with TRELLIS.2 from an AI picture after the anime (sent by the owner), its wing markings brightened, cut into
 // parts by where they lie (the arms reach in front of the wings) and skinned; its ball is an unused model from
