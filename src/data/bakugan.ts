@@ -145,7 +145,7 @@ export const BAKUGAN: Bakugan[] = [
       monster: 'models/dragonoid/monster.glb',
       fly: true,
       scale: 1.35,
-      stage: 1.35,
+      stage: 1.5,
     },
     description: 'A proud dragon Bakugan and Dan’s partner, destined to evolve into the Perfect Core guardian.',
     abilities: ORIGINAL_ABILITIES.dragonoid,

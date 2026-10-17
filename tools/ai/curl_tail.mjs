@@ -6,7 +6,7 @@
 // bend towards the tip (a spiral); `down` curls it under instead of over (a chameleon's tail); `subdivide` splits
 // the tail's triangles into four that many times first, so a tail with few rings along it still bends smoothly.
 // Needs @gltf-transform/core and /extensions (npm i them in a folder and run this from there).
-// Used for: Hydranoid, Dual Hydranoid, Delta Dragonoid {"start":0.1,"angle":400,"power":2.2,"subdivide":2};
+// Used for: Delta Dragonoid {"start":0.1,"angle":400,"power":2.2,"subdivide":2};
 // Trox, Titanium Trox {"start":0.3,"angle":170,"power":1.4};
 // Preyas {"start":0.1,"angle":330,"power":2,"down":true,"subdivide":3}
 import { NodeIO } from '@gltf-transform/core'

@@ -107,7 +107,7 @@ export const formatPrice = (p: Price) => ('bp' in p ? `${p.bp.toLocaleString('en
 // ---------------------------------------------------------------- Season Pass price
 
 const DAY = 86_400_000
-export const PASS_PRICE_USD = 7.49
+export const PASS_PRICE_USD = 9.99
 /** Unannounced: in the last week of a season the pass is 40% off. */
 export const LAST_WEEK_DISCOUNT = 0.4
 

@@ -189,7 +189,7 @@ export function BakuganShowroom() {
       )}
 
       <motion.div
-        className="pointer-events-none absolute inset-0 flex flex-col px-5 pt-8 pb-20"
+        className="pointer-events-none absolute inset-0 flex flex-col px-5 pt-8 pb-16"
         animate={{ opacity: bare ? 0 : 1 }}
         transition={{ duration: 0.3 }}
         inert={bare}
@@ -407,11 +407,21 @@ export function BakuganShowroom() {
         <p className="mt-4 text-center text-xs tracking-[0.3em] text-white/35">
           DRAG TO TURN · RIGHT-DRAG UP / DOWN · SCROLL TO ZOOM · ← → TO SWITCH
         </p>
-        {/* Bakugan strip */}
+        {/* Bakugan strip, on the bottom row between the eye button and the sound buttons */}
         {list.length > 0 && (
-          <div className="pointer-events-auto mt-3 flex items-center gap-3">
+          <div className="pointer-events-auto absolute right-[16.5rem] bottom-4 left-[12rem] flex items-center gap-3">
             <ArrowButton label="◀" onClick={() => pick(index - 1)} />
-            <div ref={strip} className="flex flex-1 gap-2 overflow-x-auto py-1">
+            <div
+              ref={strip}
+              // the wheel scrolls the strip sideways
+              onWheel={(e) => {
+                if (strip.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) strip.current.scrollLeft += e.deltaY
+              }}
+              className="flex flex-1 gap-2 overflow-x-auto py-1"
+              style={{
+                maskImage: 'linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%)',
+              }}
+            >
               {list.map((b, i) => {
                 const have = ownedForm(profile, b.id) >= 0
                 const c = ELEMENT_BY_ID[b.element].color

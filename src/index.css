@@ -24,10 +24,8 @@ body,
   background-size: 48px 48px;
 }
 
-/* Scrollable side panel: thin scrollbar and soft fade at the edges. */
+/* Scrollable side panel: soft fade at the edges. */
 .scroll-panel {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
   mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
   padding-block: 12px;
 }
@@ -63,8 +61,12 @@ body,
   color: rgba(255, 255, 255, 0.85);
 }
 @keyframes brawler-call {
-  from { transform: scale(1.5); }
-  to { transform: scale(1); }
+  from {
+    transform: scale(1.5);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 /* Legendary avatar frames turn slowly */
@@ -96,5 +98,13 @@ body,
   scrollbar-width: none;
 }
 .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* no scrollbars anywhere: they break up the design; the wheel, touch and keys still scroll */
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
   display: none;
 }
