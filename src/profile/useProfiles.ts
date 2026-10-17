@@ -425,15 +425,15 @@ export const useProfiles = create<ProfilesState>()(
             collection: p.collection.map((o) => (o.id === bakuganId && canEvolve(o) ? { ...o, form: o.form + 1 } : o)),
           })),
         ),
-      grantOwnerBakugan: () =>
+      grantOwnerBakugan: () => {
+        const lacks = (p: Profile) => OWNER_ONLY.filter((id) => !p.collection.some((o) => o.id === id))
+        // nothing to give: no change at all, so watching the store for new profiles cannot loop
+        if (!get().profiles.some((p) => lacks(p).length)) return
+        const gift = (id: string) => ({ ...own(id), bonusCards: bakuganById(id).abilities.length })
         set((s) => ({
-          profiles: s.profiles.map((p) => {
-            const missing = OWNER_ONLY.filter((id) => !p.collection.some((o) => o.id === id))
-            if (!missing.length) return p
-            const gift = (id: string) => ({ ...own(id), bonusCards: bakuganById(id).abilities.length })
-            return { ...p, collection: [...p.collection, ...missing.map(gift)] }
-          }),
-        })),
+          profiles: s.profiles.map((p) => (lacks(p).length ? { ...p, collection: [...p.collection, ...lacks(p).map(gift)] } : p)),
+        }))
+      },
       acquire: (bakuganId, how) => {
         const p = get().profiles.find((x) => x.id === get().activeId)
         if (!p || !isReleased(bakuganId) || p.collection.some((o) => o.id === bakuganId)) return false

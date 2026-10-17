@@ -90,8 +90,16 @@ export interface Bakugan {
      * shrink one whose wings would. (The showroom frames every Bakugan to its stage by itself.)
      */
     fill?: number
-    /** How big this Bakugan stands next to the others (1 = normal). */
+    /**
+     * How big this Bakugan stands next to the others (1 = normal). A giant (well above 1.4) makes the arena's
+     * view pull back so it fits, and the others look small beside it.
+     */
     scale?: number
+    /**
+     * How much bigger than its stage the showroom shows this Bakugan (default 1: it always fits). A giant can
+     * reach past the stage's edges, behind the panels.
+     */
+    stage?: number
     /**
      * How long or wide the model may be, in heights (default 2, flyers 1.25). Long or wide-winged
      * Bakugan are shrunk to fit this, so raise it for those that would otherwise look small.
@@ -312,7 +320,7 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   baliton: { monster: 'models/baliton/monster.glb', scale: 0.85 },
   // the game owner's own Bakugan: made with TRELLIS.2 from an AI picture after the anime (sent by the owner); the
   // glowing wing markings brightened to the picture's green; skinned and inked (inkThin for the thin wings)
-  dharak: { monster: 'models/dharak/monster.glb', fly: true },
+  dharak: { monster: 'models/dharak/monster.glb', fly: true, scale: 2.3, length: 1.7, stage: 1.6 },
   // made with TRELLIS.2 from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },

@@ -182,7 +182,7 @@ export function BakuganShowroom() {
             target={model}
             stage={stage}
             fitKey={`${bakugan.id}-${form}-${view}`}
-            fill={view === 'ball' ? 0.5 : 0.97}
+            fill={view === 'ball' ? 0.5 : 0.97 * (formModels({ bakugan, form })?.stage ?? 1)}
             onMeasure={onMeasure}
           />
         </Canvas>

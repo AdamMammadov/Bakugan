@@ -16,8 +16,11 @@ try {
 // an address with ?dev= switches the owner's view and reloads without it
 void readDevSwitch().then((reloading) => {
   if (reloading) return
-  // the owner's own browser: its profiles get the owner's Bakugan
-  if (devView()) useProfiles.getState().grantOwnerBakugan()
+  // the owner's own browser: its profiles, those made later included, get the owner's Bakugan
+  if (devView()) {
+    useProfiles.getState().grantOwnerBakugan()
+    useProfiles.subscribe(() => useProfiles.getState().grantOwnerBakugan())
+  }
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />

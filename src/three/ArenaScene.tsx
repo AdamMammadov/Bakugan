@@ -1,11 +1,11 @@
 import { OrbitControls, Sparkles } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { asset } from '../asset'
 import type { BattleEvent, SideIndex } from '../battle/engine'
-import type { Entrant } from '../data/bakugan'
+import { formModels, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { LiftDrag } from './LiftDrag'
@@ -56,8 +56,21 @@ export interface BrawlerInfo {
 
 const sideX = (side: SideIndex) => (side === 0 ? -FIGHTER_X : FIGHTER_X)
 
+/** Bakugan up to this size (evolution growth times models.scale) fit the usual view; a bigger one makes it pull back. */
+const GIANT = 1.4
+const sizeOf = (e: Entrant) => (1 + e.form * 0.12) * (formModels(e)?.scale ?? 1)
+/**
+ * How far the view pulls back for the fighters: 1 for the usual sizes; with a giant on the field, as far as fits a
+ * Bakugan of size 1.15 in the usual view (a giant hovers high and spreads its wings above the others' heads).
+ */
+const pullFor = (fighters: Entrant[]) => {
+  const biggest = Math.max(...fighters.map(sizeOf))
+  return biggest > GIANT ? biggest / 1.15 : 1
+}
+
 export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers }: Props) {
   const gateElement = gate ? ELEMENT_BY_ID[gate] : null
+  const pull = pullFor(fighters)
   const blockFlash = useMemo<[number, number]>(
     () => (event?.event.blocked ? (event.event.target === 0 ? [event.key, 0] : [0, event.key]) : [0, 0]),
     [event],
@@ -66,18 +79,19 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 70, 160]} />
+      <fog attach="fog" args={['#05060a', 70 * pull, 160 * pull]} />
       <ambientLight intensity={0.4} />
       <directionalLight
-        position={[12, 40, 24]}
+        // a giant on the field: the light and its shadow area move out with the view
+        position={[12 * pull, 40 * pull, 24 * pull]}
         intensity={2.4}
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-45}
-        shadow-camera-right={45}
-        shadow-camera-top={45}
-        shadow-camera-bottom={-45}
-        shadow-camera-far={120}
+        shadow-camera-left={-45 * pull}
+        shadow-camera-right={45 * pull}
+        shadow-camera-top={45 * pull}
+        shadow-camera-bottom={-45 * pull}
+        shadow-camera-far={120 * pull}
         // pushes the shadow test off each surface, so smooth curved armour does not shade itself in fine rings
         shadow-bias={-0.0004}
         shadow-normalBias={0.06}
@@ -150,10 +164,11 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
         target={[0, 8.5, 0]}
         enablePan={false}
         minDistance={8}
-        maxDistance={120}
+        maxDistance={120 * pull}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
       <LiftDrag max={30} />
+      <PullBack k={pull} />
       <EffectComposer>
         <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
         <Vignette offset={0.25} darkness={0.75} />
@@ -292,6 +307,33 @@ function Fighter({
       </group>
     </group>
   )
+}
+
+/**
+ * Moves the view out (or back in) to `k` times its usual distance, easing over a moment: the camera and the point
+ * it looks at scale together about the field's middle, so the framing stays the same, only wider. The player's own
+ * turning and zooming are kept.
+ */
+function PullBack({ k }: { k: number }) {
+  const camera = useThree((s) => s.camera)
+  const controls = useThree((s) => s.controls) as unknown as { target: THREE.Vector3; update: () => void } | null
+  const now = useRef(1)
+  const move = useRef<{ from: number; t: number } | null>(null)
+  useEffect(() => {
+    move.current = { from: now.current, t: 0 }
+  }, [k])
+  useFrame((_, dt) => {
+    const m = move.current
+    if (!m || !controls) return
+    m.t = Math.min(1, m.t + dt / 0.8)
+    const next = m.from + (k - m.from) * THREE.MathUtils.smoothstep(m.t, 0, 1)
+    camera.position.multiplyScalar(next / now.current)
+    controls.target.multiplyScalar(next / now.current)
+    controls.update()
+    now.current = next
+    if (m.t >= 1) move.current = null
+  })
+  return null
 }
 
 /** Light pillar that plays once when the fighters appear. */
