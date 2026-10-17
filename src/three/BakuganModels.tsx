@@ -2,7 +2,8 @@ import { Sparkles, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useRef, type ComponentType, type RefObject } from 'react'
 import * as THREE from 'three'
-import { BAKUGAN, formModels, type Bakugan, type Entrant } from '../data/bakugan'
+import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
+import { viewable } from '../season/release'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { asset } from '../asset'
 import { BakuganBall } from './BakuganBall'
@@ -138,7 +139,7 @@ export function BallModel({
 
 /** Downloads every Bakugan model in the background, so pages show them without a wait. */
 export function preloadAllModels() {
-  for (const b of BAKUGAN) preloadModels(b)
+  for (const b of viewable()) preloadModels(b)
 }
 
 /** Starts downloading a Bakugan's models ahead of time so the brawl doesn't stall on them. */

@@ -1,4 +1,5 @@
-import { BAKUGAN, formBrawlG, formOf, type Ability, type Bakugan, type Entrant } from '../data/bakugan'
+import { formBrawlG, formOf, type Ability, type Bakugan, type Entrant } from '../data/bakugan'
+import { released } from '../season/release'
 import type { GateCard } from '../data/gates'
 
 /**
@@ -361,10 +362,10 @@ export function chooseAction(state: BattleState, level: AiLevel = AI_EASY, rng: 
 /** A random team of different Bakugan. */
 export function randomTeam(size = TEAM_SIZE, exclude: string[] = [], rng: () => number = Math.random): Entrant[] {
   const pool = shuffle(
-    BAKUGAN.filter((b) => !exclude.includes(b.id)),
+    released().filter((b) => !exclude.includes(b.id)),
     rng,
   )
-  const picks = (pool.length >= size ? pool : shuffle(BAKUGAN, rng)).slice(0, size)
+  const picks = (pool.length >= size ? pool : shuffle(released(), rng)).slice(0, size)
   return picks.map((bakugan) => ({ bakugan, form: Math.floor(rng() * Math.min(2, bakugan.evolutions.length)) }))
 }
 
@@ -376,8 +377,8 @@ export function randomTeam(size = TEAM_SIZE, exclude: string[] = [], rng: () => 
  */
 export function matchedOpponent(player: Entrant[], rng: () => number = Math.random, edge = 0): Entrant[] {
   const mine = new Set(player.map((e) => e.bakugan.id))
-  const others = BAKUGAN.filter((b) => !mine.has(b.id))
-  const pool = shuffle(others.length >= player.length ? others : BAKUGAN, rng)
+  const others = released().filter((b) => !mine.has(b.id))
+  const pool = shuffle(others.length >= player.length ? others : released(), rng)
   return player.map((slot, i): Entrant => {
     const bakugan = pool[i % pool.length]
     const form = Math.min(slot.form, bakugan.evolutions.length - 1)

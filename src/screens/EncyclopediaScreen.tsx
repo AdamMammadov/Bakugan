@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { BakuganInfo } from '../components/BakuganInfo'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
-import { BAKUGAN, type Bakugan } from '../data/bakugan'
+import { type Bakugan } from '../data/bakugan'
+import { viewable } from '../season/release'
 import { CARD_TYPES, cardBakugan, loadCards, type CardType, type DbCard } from '../data/cardDb'
 import { CORRELATIONS, DIAGONAL, ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { BP, EVOLVE_XP, ownsBakugan, PRICES, RATING, TIERS, unlockHint, useActiveProfile, XP } from '../profile/useProfiles'
@@ -346,44 +347,46 @@ function BakuganTab({ cards, onCards }: { cards: DbCard[]; onCards: (name: strin
 
       <h2 className="font-display mt-6 text-xs tracking-[0.5em] text-white/40">PLAYABLE IN 3D</h2>
       <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
-        {BAKUGAN.filter((b) => !element || b.element === element).map((b) => {
-          const el = ELEMENT_BY_ID[b.element]
-          return (
-            <div key={b.id} className="rounded-xl border bg-black/40 p-5" style={{ borderColor: `${el.color}55` }}>
-              <div className="flex items-center gap-4">
-                <img src={el.icon} alt="" className="h-14 w-14" style={{ filter: `drop-shadow(0 0 12px ${el.glow})` }} />
-                <div>
-                  <p className="font-display text-2xl font-bold">{b.name}</p>
-                  <p className="text-sm text-white/50">
-                    {el.name} · {b.brawler} · {b.baseG}G
-                  </p>
+        {viewable()
+          .filter((b) => !element || b.element === element)
+          .map((b) => {
+            const el = ELEMENT_BY_ID[b.element]
+            return (
+              <div key={b.id} className="rounded-xl border bg-black/40 p-5" style={{ borderColor: `${el.color}55` }}>
+                <div className="flex items-center gap-4">
+                  <img src={el.icon} alt="" className="h-14 w-14" style={{ filter: `drop-shadow(0 0 12px ${el.glow})` }} />
+                  <div>
+                    <p className="font-display text-2xl font-bold">{b.name}</p>
+                    <p className="text-sm text-white/50">
+                      {el.name} · {b.brawler} · {b.baseG}G
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-3 line-clamp-3 text-sm text-white/70">{b.description}</p>
+                <p className="mt-2 text-xs text-white/45">Evolutions: {b.evolutions.map((e) => e.name).join(' → ')}</p>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => setInfo(b)}
+                    className="font-display flex-1 border border-white/30 py-1.5 text-xs tracking-widest hover:bg-white/10"
+                  >
+                    FULL PROFILE
+                  </button>
+                  <button
+                    disabled={!ownsBakugan(profile, b.id)}
+                    title={ownsBakugan(profile, b.id) ? undefined : unlockHint(profile, b)}
+                    onClick={() => {
+                      chooseElement(b.element)
+                      openBakugan(b.id)
+                    }}
+                    className="font-display flex-1 border py-1.5 text-xs tracking-widest hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                    style={{ borderColor: el.color }}
+                  >
+                    {ownsBakugan(profile, b.id) ? 'VIEW IN 3D' : '🔒 LOCKED'}
+                  </button>
                 </div>
               </div>
-              <p className="mt-3 line-clamp-3 text-sm text-white/70">{b.description}</p>
-              <p className="mt-2 text-xs text-white/45">Evolutions: {b.evolutions.map((e) => e.name).join(' → ')}</p>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => setInfo(b)}
-                  className="font-display flex-1 border border-white/30 py-1.5 text-xs tracking-widest hover:bg-white/10"
-                >
-                  FULL PROFILE
-                </button>
-                <button
-                  disabled={!ownsBakugan(profile, b.id)}
-                  title={ownsBakugan(profile, b.id) ? undefined : unlockHint(profile, b)}
-                  onClick={() => {
-                    chooseElement(b.element)
-                    openBakugan(b.id)
-                  }}
-                  className="font-display flex-1 border py-1.5 text-xs tracking-widest hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-                  style={{ borderColor: el.color }}
-                >
-                  {ownsBakugan(profile, b.id) ? 'VIEW IN 3D' : '🔒 LOCKED'}
-                </button>
-              </div>
-            </div>
-          )
-        })}
+            )
+          })}
       </div>
 
       <h2 className="font-display mt-10 text-xs tracking-[0.5em] text-white/40">
@@ -468,7 +471,8 @@ function AttributesTab({ cards }: { cards: DbCard[] }) {
             </div>
             <p className="mt-3 text-sm text-white/50">
               Bakugan:{' '}
-              {BAKUGAN.filter((b) => b.element === e.id)
+              {viewable()
+                .filter((b) => b.element === e.id)
                 .map((b) => b.name)
                 .join(', ') || '—'}
             </p>

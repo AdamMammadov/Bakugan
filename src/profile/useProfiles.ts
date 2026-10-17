@@ -4,6 +4,7 @@ import { BAKUGAN, type Bakugan, type Entrant } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
 import type { Avatar } from './avatar'
 import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
+import { isReleased, LAUNCH } from '../season/release'
 import { cosmeticsOnSale, PACKS } from '../shop/shop'
 import {
   challengeRequirement,
@@ -188,14 +189,15 @@ export const nextCardXp = (owned: OwnedBakugan) => {
 
 /** Season Bakugan of the running season are earned on the Season page, not bought. */
 export const inShop = (bakuganId: string) => {
+  if (!isReleased(bakuganId)) return false
   const s = seasonOfBakugan(bakuganId)
   return !s || s.season < currentSeason().id
 }
 
 /** The Bakugan a new player of this attribute starts with. */
 export const starterFor = (element: ElementId) =>
-  // the weakest Bakugan of the attribute: the rest are earned or bought
-  BAKUGAN.filter((b) => b.element === element).reduce((a, b) => (b.baseG < a.baseG ? b : a)).id
+  // the weakest launch Bakugan of the attribute: the rest are earned or bought
+  BAKUGAN.filter((b) => b.element === element && LAUNCH.includes(b.id)).reduce((a, b) => (b.baseG < a.baseG ? b : a)).id
 
 /** Guests (no profile) only get each attribute's starter. */
 export const ownsBakugan = (p: Profile | null, id: string) =>
@@ -207,6 +209,7 @@ export const ownedForm = (p: Profile | null, id: string) =>
 
 /** How a player gets a Bakugan they do not own yet. */
 export function unlockHint(p: Profile | null, b: Bakugan): string {
+  if (!isReleased(b.id)) return 'Not out yet: only you can see it'
   if (!p) return 'Create a profile to collect it'
   const s = seasonOfBakugan(b.id)
   const now = currentSeason().id
@@ -422,7 +425,7 @@ export const useProfiles = create<ProfilesState>()(
         ),
       acquire: (bakuganId, how) => {
         const p = get().profiles.find((x) => x.id === get().activeId)
-        if (!p || p.collection.some((o) => o.id === bakuganId)) return false
+        if (!p || !isReleased(bakuganId) || p.collection.some((o) => o.id === bakuganId)) return false
         const price = priceOf(p, bakuganById(bakuganId))
         if (how === 'bp' ? p.bp < price.bp : p.xp < price.xp) return false
         set((s) =>

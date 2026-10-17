@@ -4,6 +4,7 @@ import { playSfx } from '../audio/sfx'
 import { aiForTier, matchedOpponent, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
+import { isReleased, released } from '../season/release'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
 import { GateChip } from '../components/GateChip'
@@ -24,7 +25,7 @@ import { useGame } from '../store/useGame'
 /** Fills a team up to `size` with Bakugan not already in it. */
 function fillTeam(start: Entrant[], size = TEAM_SIZE): Entrant[] {
   const team = start.slice(0, size)
-  for (const bakugan of BAKUGAN) {
+  for (const bakugan of released()) {
     if (team.length >= size) break
     if (!team.some((e) => e.bakugan.id === bakugan.id)) team.push({ bakugan, form: 0 })
   }
@@ -294,7 +295,7 @@ function TeamCard({
         <>
           <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">SLOT {slot + 1} · BAKUGAN</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {BAKUGAN.filter((b) => !owned || ownedOf(b.id)).map((b) => (
+            {BAKUGAN.filter((b) => (owned ? ownedOf(b.id) : isReleased(b.id))).map((b) => (
               <button
                 key={b.id}
                 title={b.name}

@@ -299,6 +299,9 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // ripped from Bakugan Battle Brawlers (Xbox 360) with the game's Pyrus textures (the rip's material points at
   // its Subterra ones); skinned and inked, with its ball from the same game
   saurus: { ball: 'models/saurus/ball.glb', monster: 'models/saurus/monster.glb' },
+  // ripped from Bakugan Battle Brawlers (Xbox 360) in the game's Ventus colours; skinned and inked (inkThin keeps the
+  // outline from specking through its paper-thin wings), with its ball from the same game
+  monarus: { ball: 'models/monarus/ball.glb', monster: 'models/monarus/monster.glb', fly: true, scale: 0.75 },
   // made with TRELLIS.2 from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },

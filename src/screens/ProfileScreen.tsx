@@ -7,6 +7,7 @@ import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { clanOf, useClans } from '../profile/useClans'
 import { abilityLabel, BAKUGAN, formBrawlG, type Bakugan } from '../data/bakugan'
+import { released } from '../season/release'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
 import {
@@ -236,7 +237,7 @@ function Collection({ profile }: { profile: Profile }) {
     <section className="mt-10">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
-          BAKUGAN COLLECTION · {profile.collection.length}/{BAKUGAN.length}
+          BAKUGAN COLLECTION · {profile.collection.length}/{released().length}
         </h2>
         <button
           onClick={() => openPage('shop')}

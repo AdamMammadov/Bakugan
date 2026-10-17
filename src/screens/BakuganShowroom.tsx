@@ -8,6 +8,7 @@ import { centreInStrip } from '../components/strip'
 import { abilityLabel, BAKUGAN, formModels } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { cardCount, EVOLVE_XP, ownedForm, unlockHint, useActiveProfile } from '../profile/useProfiles'
+import { viewable } from '../season/release'
 import { useGame } from '../store/useGame'
 import { BallModel, MonsterModel, preloadModels } from '../three/BakuganModels'
 import { LiftDrag } from '../three/LiftDrag'
@@ -43,17 +44,19 @@ export function BakuganShowroom() {
 
   const list = useMemo(
     () =>
-      BAKUGAN.filter(
-        (b) =>
-          (!element || b.element === element) &&
-          (shelf === 'all' || ownedForm(profile, b.id) >= 0) &&
-          // a search looks through every name, evolutions included
-          (!search.trim() ||
-            [b.name, ...b.evolutions.map((e) => e.name)].some((n) => n.toLowerCase().includes(search.trim().toLowerCase()))),
-      ).sort(
-        (a, b) =>
-          ELEMENTS.findIndex((e) => e.id === a.element) - ELEMENTS.findIndex((e) => e.id === b.element) || a.baseG - b.baseG,
-      ),
+      (shelf === 'all' ? viewable() : BAKUGAN)
+        .filter(
+          (b) =>
+            (!element || b.element === element) &&
+            (shelf === 'all' || ownedForm(profile, b.id) >= 0) &&
+            // a search looks through every name, evolutions included
+            (!search.trim() ||
+              [b.name, ...b.evolutions.map((e) => e.name)].some((n) => n.toLowerCase().includes(search.trim().toLowerCase()))),
+        )
+        .sort(
+          (a, b) =>
+            ELEMENTS.findIndex((e) => e.id === a.element) - ELEMENTS.findIndex((e) => e.id === b.element) || a.baseG - b.baseG,
+        ),
     [shelf, element, profile, search],
   )
   const index = Math.max(
@@ -205,7 +208,7 @@ export function BakuganShowroom() {
                 shelf === s ? 'border-white bg-white/10 text-white' : 'border-white/15 text-white/50 hover:text-white'
               }`}
             >
-              {s === 'mine' ? `MY BAKUGAN · ${profile ? profile.collection.length : 0}` : `ALL IN GAME · ${BAKUGAN.length}`}
+              {s === 'mine' ? `MY BAKUGAN · ${profile ? profile.collection.length : 0}` : `ALL IN GAME · ${viewable().length}`}
             </button>
           ))}
           <input
