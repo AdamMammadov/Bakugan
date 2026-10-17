@@ -139,7 +139,14 @@ export const BAKUGAN: Bakugan[] = [
     series: 'Battle Brawlers',
     baseG: 340,
     brawlG: 440,
-    models: { ball: 'models/dragonoid/neo-ball.glb', monster: 'models/dragonoid/monster.glb', fly: true, scale: 1.15 },
+    // its wings are much bigger than its body, so it is drawn larger and may reach past the showroom's stage
+    models: {
+      ball: 'models/dragonoid/neo-ball.glb',
+      monster: 'models/dragonoid/monster.glb',
+      fly: true,
+      scale: 1.35,
+      stage: 1.35,
+    },
     description: 'A proud dragon Bakugan and Dan’s partner, destined to evolve into the Perfect Core guardian.',
     abilities: ORIGINAL_ABILITIES.dragonoid,
     evolutions: [
@@ -162,7 +169,8 @@ export const BAKUGAN: Bakugan[] = [
         series: 'New Vestroia',
         gPower: 500,
         // made with TRELLIS.2 from an anime picture (sent by the player), cut into parts by where they lie (the tail
-        // curls round in front of the legs), skinned and inked
+        // curls round in front of the legs) and skinned, its loose spikes and ribs riding with the spot they sit on;
+        // left without an ink outline, which broke up into dark blotches over the ribs
         models: { monster: 'models/dragonoid/neo.glb', scale: 1.15 },
       },
     ],
@@ -369,7 +377,8 @@ const battleAx = ROSTER.find((b) => b.id === 'vladitor')?.evolutions.find((e) =>
 if (battleAx)
   battleAx.models = { monster: 'models/vladitor/battle-ax.glb', ball: 'models/vladitor/battle-ax-ball.glb', scale: 1.25 }
 const minx = ROSTER.find((b) => b.id === 'elfin')?.evolutions.find((e) => e.name === 'Minx Elfin')
-// made with TRELLIS.2 from an anime picture (sent by the player), loose specks dropped, skinned and inked; it keeps
+// made with TRELLIS.2 from an anime picture (sent by the player), the bits floating loose round it dropped, skinned
+// (small pieces riding with the spot they sit on) and left without an ink outline, which broke up over it; it keeps
 // Elfin's ball. Caught mid-leap, so it stands on its toes rather than hovering (floating put its head off the screen)
 if (minx) minx.models = { ...ROSTER_MODELS.elfin, monster: 'models/elfin/minx.glb', fly: false, scale: 1 }
 const phantom = ROSTER.find((b) => b.id === 'dharak')?.evolutions.find((e) => e.name === 'Phantom Dharak')

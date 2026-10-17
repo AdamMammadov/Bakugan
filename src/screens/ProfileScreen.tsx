@@ -29,6 +29,7 @@ import {
 import { SKINS, skinFits } from '../season/season'
 import { useGame } from '../store/useGame'
 import { RewardIcon } from '../components/RewardIcon'
+import { BrawlerProfileModal, FriendsList } from './BrawlerProfile'
 
 export function ProfileScreen() {
   const profile = useActiveProfile()
@@ -37,6 +38,7 @@ export function ProfileScreen() {
   const remove = useProfiles((s) => s.remove)
   const editProfile = useGame((s) => s.editProfile)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [friendId, setFriendId] = useState<string | null>(null)
 
   return (
     <motion.div
@@ -85,6 +87,9 @@ export function ProfileScreen() {
         <>
           <Header profile={profile} onEdit={() => editProfile(profile.id)} onDelete={() => setConfirmDelete(true)} />
           <Stats profile={profile} />
+          <div className="mt-8">
+            <FriendsList onOpen={setFriendId} />
+          </div>
           <Team profile={profile} />
           <Collection profile={profile} />
           <Locker profile={profile} />
@@ -127,6 +132,7 @@ export function ProfileScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+      <BrawlerProfileModal id={friendId} onClose={() => setFriendId(null)} />
     </motion.div>
   )
 }

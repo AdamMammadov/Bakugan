@@ -426,7 +426,8 @@ if (q.get('ink')) {
 // rig=<name>: cut a one-piece monster into the named pivot nodes the game animates (rigs.json)
 // skin=<radius>: skin the parts instead of cutting them off: one mesh, a bone per part at its pivot, every
 // vertex of a part on its bone and the body round it (within radius, model units) bending partly with it, so
-// joints stretch instead of opening cracks as the parts turn
+// joints stretch instead of opening cracks as the parts turn; stick=<triangles> makes loose bits smaller than
+// that ride along with the spot they sit on
 if (q.get('rig')) {
   type Part = {
     name: string
@@ -676,6 +677,78 @@ if (q.get('rig')) {
         id,
         pull.map(([b, a]) => [b, a / kept]),
       )
+    }
+    // stick=<triangles>: loose bits smaller than that (spikes, chips, scales a generator left as their own
+    // pieces) move wholly like the spot of the model they sit on, so a turning part never pulls them off
+    const stick = Number(q.get('stick') ?? 0)
+    if (stick > 0) {
+      // pieces: vertex positions joined by the triangles between them
+      const up = new Map<string, string>()
+      const find = (a: string): string => {
+        let r = a
+        while (up.get(r) !== r) r = up.get(r)!
+        up.set(a, r)
+        return r
+      }
+      for (const id of touches.keys()) up.set(id, id)
+      const size = new Map<string, number>()
+      for (const { g } of owned) {
+        const pos = g.attributes.position as THREE.BufferAttribute
+        for (let t = 0; t < pos.count; t += 3) {
+          const [a, b, c] = [find(key(pos, t)), find(key(pos, t + 1)), find(key(pos, t + 2))]
+          up.set(b, a)
+          up.set(c, a)
+        }
+      }
+      for (const { g } of owned) {
+        const pos = g.attributes.position as THREE.BufferAttribute
+        for (let t = 0; t < pos.count; t += 3) {
+          const r = find(key(pos, t))
+          size.set(r, (size.get(r) ?? 0) + 1)
+        }
+      }
+      // the big pieces' vertices in a grid, to find the spot each small piece sits on
+      const big = (id: string) => (size.get(find(id)) ?? 0) >= stick
+      const step = radius
+      const grid = new Map<string, string[]>()
+      for (const id of touches.keys()) {
+        if (!big(id)) continue
+        const [x, y, z] = id.split(',').map(Number)
+        const c = `${Math.floor(x / step)},${Math.floor(y / step)},${Math.floor(z / step)}`
+        if (!grid.has(c)) grid.set(c, [])
+        grid.get(c)!.push(id)
+      }
+      const closest = (x: number, y: number, z: number) => {
+        let best: [number, string | null] = [Infinity, null]
+        const [cx, cy, cz] = [Math.floor(x / step), Math.floor(y / step), Math.floor(z / step)]
+        for (let ring = 1; ring <= 4 && !best[1]; ring++)
+          for (let i = -ring; i <= ring; i++)
+            for (let j = -ring; j <= ring; j++)
+              for (let l = -ring; l <= ring; l++)
+                for (const id of grid.get(`${cx + i},${cy + j},${cz + l}`) ?? []) {
+                  const [a, b, c] = id.split(',').map(Number)
+                  const d = Math.hypot(a - x, b - y, c - z)
+                  if (d < best[0]) best = [d, id]
+                }
+        return best
+      }
+      // for each small piece, the big-piece vertex nearest to any of its own
+      const base = new Map<string, [number, string | null]>()
+      for (const id of touches.keys()) {
+        if (big(id)) continue
+        const [x, y, z] = id.split(',').map(Number)
+        const found = closest(x, y, z)
+        const r = find(id)
+        if (found[0] < (base.get(r)?.[0] ?? Infinity)) base.set(r, found)
+      }
+      let moved = 0
+      for (const id of touches.keys()) {
+        const to = base.get(find(id))?.[1]
+        if (!to || big(id)) continue
+        weights.set(id, weights.get(to)!)
+        moved++
+      }
+      console.log(`stick: ${base.size} small pieces (${moved} vertex positions) follow the spot they sit on`)
     }
     // one skinned mesh per source mesh and material, the dropped pieces left out
     const pieces = new Map<THREE.BufferGeometry, Map<THREE.Material, number[]>>()

@@ -5,7 +5,8 @@ import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import type { Avatar as AvatarValue } from '../profile/avatar'
-import { BOT_CLANS, BOTS } from '../profile/bots'
+import { BOTS } from '../profile/bots'
+import { TIER_COLORS } from '../profile/brawlers'
 import { clanOf, useClans } from '../profile/useClans'
 import { rankScore, tierOf, TIERS, useProfiles } from '../profile/useProfiles'
 
@@ -57,7 +58,7 @@ export function RankingsScreen() {
       xp: b.xp,
       wins: b.wins,
       losses: b.losses,
-      clan: b.clan,
+      clan: clanOf(clans, b.id)?.tag ?? null,
       cpu: true,
     })),
   ].sort((a, b) => b.score - a.score)
@@ -70,12 +71,9 @@ export function RankingsScreen() {
       element: c.element,
       members: c.members.length,
       score: c.members.reduce((n, m) => n + (rows.find((r) => r.id === m)?.score ?? 0), 0),
-      cpu: false,
+      // CPU clans are in the clan store too, with their bots as members
+      cpu: !!c.cpu,
     })),
-    ...BOT_CLANS.map((c) => {
-      const members = rows.filter((r) => r.cpu && r.clan === c.tag)
-      return { id: c.tag, tag: c.tag, name: c.name, element: c.element, members: members.length, score: members.reduce((n, r) => n + r.score, 0), cpu: true }
-    }),
   ].sort((a, b) => b.score - a.score)
 
   return (
@@ -135,7 +133,11 @@ export function RankingsScreen() {
               const tier = tierOf(r.score)
               const me = r.id === activeId
               return (
-                <tr key={r.id} className={me ? 'bg-white/15' : 'bg-black/40'} style={me ? { outline: `2px solid ${el.color}` } : undefined}>
+                <tr
+                  key={r.id}
+                  className={me ? 'bg-white/15' : 'bg-black/40'}
+                  style={me ? { outline: `2px solid ${el.color}` } : undefined}
+                >
                   <td className="font-display rounded-l-lg px-3 py-2 text-lg font-black text-white/70">{i + 1}</td>
                   <td>
                     <div className="flex items-center gap-3">
@@ -147,7 +149,11 @@ export function RankingsScreen() {
                       </span>
                       {r.title && <span className="text-xs text-amber-200/80">✦ {r.title}</span>}
                       {r.cpu && <span className="rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>}
-                      {me && <span className="rounded px-1.5 text-[10px] tracking-widest" style={{ background: el.color }}>YOU</span>}
+                      {me && (
+                        <span className="rounded px-1.5 text-[10px] tracking-widest" style={{ background: el.color }}>
+                          YOU
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="font-display text-sm font-bold" style={{ color: TIER_COLORS[tier.index] }}>
@@ -176,7 +182,10 @@ export function RankingsScreen() {
                   [{c.tag}]
                 </span>
                 <span className="flex-1 font-semibold">
-                  {c.name} {c.cpu && <span className="ml-1 rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>}
+                  {c.name}{' '}
+                  {c.cpu && (
+                    <span className="ml-1 rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>
+                  )}
                 </span>
                 <span className="text-sm text-white/50">{c.members} members</span>
                 <span className="font-display w-28 text-right font-bold">{c.score.toLocaleString('en')}</span>
@@ -188,5 +197,3 @@ export function RankingsScreen() {
     </motion.div>
   )
 }
-
-const TIER_COLORS = ['#9aa3b5', '#7ec8e3', '#3ee07a', '#f5c518', '#ff7a2f', '#e040fb']

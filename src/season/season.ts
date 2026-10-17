@@ -377,4 +377,4 @@ export function challengeRequirement(ownElement: boolean) {
 }
 
 /** Shop price of a pass Bakugan once its season is over. */
-export const PASS_BAKUGAN_PRICE = 30000
+export const PASS_BAKUGAN_PRICE = 22000

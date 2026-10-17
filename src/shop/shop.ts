@@ -10,6 +10,9 @@ import { ACCESSORIES, dayKey, FRAMES, OUTFITS, SKINS, type CosmeticSource, type 
  */
 
 export type Price = { bp: number } | { usd: number }
+
+/** BP price of one Card Key (also what a Card Key in the pass is worth). */
+const CARD_KEY_BP = 3500
 export type CosmeticKind = 'skin' | 'outfit' | 'frame' | 'acc'
 
 export interface ShopItem {
@@ -26,29 +29,29 @@ export interface ShopItem {
 }
 
 const COSMETIC_PRICES: Record<CosmeticKind, Record<Rarity, Price>> = {
-  skin: { common: { bp: 4000 }, rare: { bp: 12000 }, epic: { usd: 3.99 }, legendary: { usd: 5.99 } },
-  outfit: { common: { bp: 3000 }, rare: { bp: 9000 }, epic: { usd: 2.99 }, legendary: { usd: 4.99 } },
-  frame: { common: { bp: 3000 }, rare: { bp: 9000 }, epic: { usd: 2.99 }, legendary: { usd: 4.99 } },
-  acc: { common: { bp: 3000 }, rare: { bp: 9000 }, epic: { usd: 2.99 }, legendary: { usd: 4.99 } },
+  skin: { common: { bp: 3000 }, rare: { bp: 9000 }, epic: { usd: 2.99 }, legendary: { usd: 4.49 } },
+  outfit: { common: { bp: 2200 }, rare: { bp: 6500 }, epic: { usd: 1.99 }, legendary: { usd: 3.49 } },
+  frame: { common: { bp: 2200 }, rare: { bp: 6500 }, epic: { usd: 1.99 }, legendary: { usd: 3.49 } },
+  acc: { common: { bp: 2200 }, rare: { bp: 6500 }, epic: { usd: 1.99 }, legendary: { usd: 3.49 } },
 }
 
 export const PACKS: ShopItem[] = [
-  { key: 'boost:5', kind: 'boost', amount: 5, name: '5 XP Boosts', rarity: 'common', price: { bp: 2500 } },
-  { key: 'boost:15', kind: 'boost', amount: 15, name: '15 XP Boosts', rarity: 'rare', price: { usd: 1.99 } },
-  { key: 'boost:40', kind: 'boost', amount: 40, name: '40 XP Boosts', rarity: 'epic', price: { usd: 3.99 } },
-  { key: 'key:1', kind: 'cardKey', amount: 1, name: 'Card Key', rarity: 'rare', price: { bp: 5000 } },
+  { key: 'boost:5', kind: 'boost', amount: 5, name: '5 XP Boosts', rarity: 'common', price: { bp: 1800 } },
+  { key: 'boost:15', kind: 'boost', amount: 15, name: '15 XP Boosts', rarity: 'rare', price: { usd: 1.49 } },
+  { key: 'boost:40', kind: 'boost', amount: 40, name: '40 XP Boosts', rarity: 'epic', price: { usd: 2.99 } },
+  { key: 'key:1', kind: 'cardKey', amount: 1, name: 'Card Key', rarity: 'rare', price: { bp: CARD_KEY_BP } },
 ]
 
 /**
- * Battle Points for money. A win pays 100 BP, so the smallest pack is about 25 wins; bigger packs
- * give more BP per dollar. A Bakugan of another attribute (15,000 BP) costs about $5 this way,
- * and a past season's pass Bakugan (30,000 BP) about $10, so the Season Pass stays the better buy.
+ * Battle Points for money. A win pays 100 BP, so the smallest pack is about 33 wins; bigger packs
+ * give more BP per dollar. A Bakugan of another attribute (11,000 BP) costs about $4 this way,
+ * and a past season's pass Bakugan (22,000 BP) about $5.50, so the Season Pass stays the better buy.
  */
 export const BP_PACKS: ShopItem[] = [
-  { key: 'bp:2500', kind: 'bp', amount: 2500, name: '2,500 BP', rarity: 'common', price: { usd: 0.99 } },
-  { key: 'bp:14000', kind: 'bp', amount: 14000, name: '14,000 BP', rarity: 'rare', price: { usd: 4.99 } },
-  { key: 'bp:30000', kind: 'bp', amount: 30000, name: '30,000 BP', rarity: 'epic', price: { usd: 9.99 } },
-  { key: 'bp:65000', kind: 'bp', amount: 65000, name: '65,000 BP', rarity: 'legendary', price: { usd: 19.99 } },
+  { key: 'bp:3300', kind: 'bp', amount: 3300, name: '3,300 BP', rarity: 'common', price: { usd: 0.99 } },
+  { key: 'bp:14000', kind: 'bp', amount: 14000, name: '14,000 BP', rarity: 'rare', price: { usd: 3.99 } },
+  { key: 'bp:30000', kind: 'bp', amount: 30000, name: '30,000 BP', rarity: 'epic', price: { usd: 7.49 } },
+  { key: 'bp:65000', kind: 'bp', amount: 65000, name: '65,000 BP', rarity: 'legendary', price: { usd: 14.99 } },
 ]
 
 const cosmetic = (
@@ -104,7 +107,7 @@ export const formatPrice = (p: Price) => ('bp' in p ? `${p.bp.toLocaleString('en
 // ---------------------------------------------------------------- Season Pass price
 
 const DAY = 86_400_000
-export const PASS_PRICE_USD = 9.99
+export const PASS_PRICE_USD = 7.49
 /** Unannounced: in the last week of a season the pass is 40% off. */
 export const LAST_WEEK_DISCOUNT = 0.4
 
@@ -117,9 +120,8 @@ export function passPrice(now = Date.now()) {
 // ---------------------------------------------------------------- what pass rewards are worth
 
 /** A pass Bakugan is never sold for money; this is only its value when weighing the pass. */
-const PASS_BAKUGAN_USD = 6.99
-const BOOST_USD = 1.99 / 15
-const CARD_KEY_BP = 5000
+const PASS_BAKUGAN_USD = 5.49
+const BOOST_USD = 1.49 / 15
 
 export interface Worth {
   usd: number

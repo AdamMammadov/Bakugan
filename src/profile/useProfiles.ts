@@ -46,12 +46,12 @@ export const RATING = { win: 25, loss: 15 }
 
 export const PRICES = {
   /** BP for a Bakugan of the player's own attribute. */
-  ownElement: 5500,
+  ownElement: 4000,
   /** BP for a Bakugan of another attribute. */
-  otherElement: 15000,
+  otherElement: 11000,
   /** Alternative: total player XP that unlocks the Bakugan for free. */
-  ownElementXp: 20000,
-  otherElementXp: 40000,
+  ownElementXp: 15000,
+  otherElementXp: 30000,
 }
 
 export const TIERS = [
@@ -133,6 +133,14 @@ export interface Profile {
   seasonHistory?: { season: number; level: number; tier: string; score: number }[]
   /** Shown once after a season ends. */
   seasonNotice?: { ended: number; title: string; level: number } | null
+  /** Friends (profile or bot ids). A CPU brawler accepts a few seconds after the request: until `since` it is pending. */
+  friends?: Friend[]
+}
+
+export interface Friend {
+  id: string
+  /** When the request was accepted (in the future while it is still pending). */
+  since: number
 }
 
 export interface BattleReport {
@@ -365,6 +373,11 @@ function grant(p: Profile, r: Reward, seasonId: number): Profile | null {
 
 export const hasCosmetic = (p: Profile | null, key: string) => !!p?.cosmetics?.owned.includes(key)
 
+export function friendStatus(p: Profile | null, id: string, now = Date.now()): 'none' | 'pending' | 'friend' {
+  const f = p?.friends?.find((x) => x.id === id)
+  return !f ? 'none' : f.since <= now ? 'friend' : 'pending'
+}
+
 // ---------------------------------------------------------------- store
 
 interface ProfilesState {
@@ -399,6 +412,9 @@ interface ProfilesState {
   /** Wears an owned outfit colour or accessory on the drawn (custom) avatar. */
   wearOnAvatar: (part: 'outfit' | 'accessory', value: string) => void
   setSkin: (bakuganId: string, skin: string | undefined) => void
+  /** Sends a friend request: a CPU brawler accepts after a few seconds, another player on this device right away. */
+  addFriend: (id: string) => void
+  removeFriend: (id: string) => void
 }
 
 const patchActive = (s: ProfilesState, fn: (p: Profile) => Profile) => ({
@@ -430,7 +446,9 @@ export const useProfiles = create<ProfilesState>()(
       update: (id, input) => set((s) => ({ profiles: s.profiles.map((p) => (p.id === id ? { ...p, ...input } : p)) })),
       remove: (id) =>
         set((s) => ({
-          profiles: s.profiles.filter((p) => p.id !== id),
+          profiles: s.profiles
+            .filter((p) => p.id !== id)
+            .map((p) => (p.friends?.some((f) => f.id === id) ? { ...p, friends: p.friends.filter((f) => f.id !== id) } : p)),
           activeId: s.activeId === id ? null : s.activeId,
         })),
       select: (activeId) => set({ activeId }),
@@ -656,13 +674,35 @@ export const useProfiles = create<ProfilesState>()(
               : { ...p, collection: p.collection.map((o) => (o.id === bakuganId ? { ...o, skin } : o)) },
           ),
         ),
+      addFriend: (id) =>
+        set((s) => {
+          const me = s.activeId
+          if (!me || id === me) return {}
+          const local = s.profiles.some((p) => p.id === id)
+          const now = Date.now()
+          const since = local ? now : now + 2500 + Math.floor(Math.random() * 3500)
+          const add = (p: Profile, other: string) =>
+            p.friends?.some((f) => f.id === other) ? p : { ...p, friends: [...(p.friends ?? []), { id: other, since }] }
+          // players on this device become friends both ways
+          return { profiles: s.profiles.map((p) => (p.id === me ? add(p, id) : local && p.id === id ? add(p, me) : p)) }
+        }),
+      removeFriend: (id) =>
+        set((s) => {
+          const drop = (p: Profile, other: string) => ({ ...p, friends: (p.friends ?? []).filter((f) => f.id !== other) })
+          return {
+            profiles: s.profiles.map((p) =>
+              p.id === s.activeId ? drop(p, id) : p.id === id && s.activeId ? drop(p, s.activeId) : p,
+            ),
+          }
+        }),
     }),
     {
       name: 'bakugan-profiles',
-      version: 5,
+      version: 6,
       // v3 (new economy and rules): every earlier test profile is cleared so everyone starts from zero
       // v4: Tripod Epsilon left the roster; Robotallion (now Aquos) took its place, so it takes its owners too
       // v5: an evolution with cards of its own unlocks them with XP from when it was reached
+      // v6: friends list (empty for existing profiles)
       migrate: (state, version) => {
         if (version < 3) return { profiles: [], activeId: null }
         let s = state as { profiles: Profile[]; activeId: string | null }
@@ -679,6 +719,7 @@ export const useProfiles = create<ProfilesState>()(
               ),
             })),
           }
+        if (version < 6) s = { ...s, profiles: s.profiles.map((p) => ({ ...p, friends: p.friends ?? [] })) }
         return s
       },
     },

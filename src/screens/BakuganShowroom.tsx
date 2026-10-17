@@ -189,7 +189,7 @@ export function BakuganShowroom() {
       )}
 
       <motion.div
-        className="pointer-events-none absolute inset-0 flex flex-col px-12 pt-8 pb-20"
+        className="pointer-events-none absolute inset-0 flex flex-col px-5 pt-8 pb-20"
         animate={{ opacity: bare ? 0 : 1 }}
         transition={{ duration: 0.3 }}
         inert={bare}
@@ -245,129 +245,131 @@ export function BakuganShowroom() {
         {bakugan && evo && (
           <div className="mt-6 flex min-h-0 flex-1 gap-6">
             {/* a fixed slot, so the gap beside it keeps its size while one Bakugan's details give way to the next */}
-            <div className="flex min-h-0 w-[28rem] max-w-[30vw] shrink-0">
+            <div className="flex min-h-0 w-[26rem] max-w-[28vw] shrink-0">
               <AnimatePresence mode="wait">
                 <motion.section
                   key={bakugan.id}
-                  className="pointer-events-auto w-full overflow-y-auto pr-2"
+                  className="pointer-events-auto flex min-h-0 w-full"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                 >
-                  <div className="flex items-center gap-2">
-                    <img src={el.icon} alt="" className="h-7 w-7" />
-                    <span className="font-display text-xs tracking-[0.4em]" style={{ color: el.color }}>
-                      {el.name.toUpperCase()} · {bakugan.series.toUpperCase()}
-                    </span>
-                  </div>
-                  <h1 className="font-display mt-2 text-5xl font-black tracking-wide">{evo.name}</h1>
-                  <p className="mt-1 text-white/55">Brawler: {bakugan.brawler}</p>
-                  <p className="mt-3 text-sm">
-                    {reached >= 0 ? (
-                      <span className="rounded bg-emerald-400/15 px-2 py-1 text-emerald-300">✓ IN YOUR COLLECTION</span>
-                    ) : (
-                      <span className="rounded bg-white/10 px-2 py-1 text-white/70">🔒 {unlockHint(profile, bakugan)}</span>
-                    )}
-                  </p>
-                  <p className="mt-4 leading-relaxed text-white/80">{bakugan.description}</p>
-
-                  <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                    <Stat label="G-POWER" value={`${evo.gPower}G`} color={el.color} />
-                    <Stat label="ON A GATE" value={`${evo.gPower + bakugan.brawlG - bakugan.baseG}G`} color={el.color} />
-                    <Stat
-                      label="CARDS"
-                      value={
-                        owned
-                          ? `${cardCount(owned)}/${abilitiesOf(bakugan, form).length}`
-                          : `${abilitiesOf(bakugan, form).length}`
-                      }
-                      color={el.color}
-                    />
-                  </div>
-
-                  {owned && (
-                    <p className="mt-3 text-xs text-white/50">
-                      {owned.xp.toLocaleString('en')} Bakugan XP · {owned.wins} wins · {owned.battles} battles · {owned.kos} KOs
+                  <ScrollPanel>
+                    <div className="flex items-center gap-2">
+                      <img src={el.icon} alt="" className="h-7 w-7" />
+                      <span className="font-display text-xs tracking-[0.4em]" style={{ color: el.color }}>
+                        {el.name.toUpperCase()} · {bakugan.series.toUpperCase()}
+                      </span>
+                    </div>
+                    <h1 className="font-display mt-2 text-5xl font-black tracking-wide">{evo.name}</h1>
+                    <p className="mt-1 text-white/55">Brawler: {bakugan.brawler}</p>
+                    <p className="mt-3 text-sm">
+                      {reached >= 0 ? (
+                        <span className="rounded bg-emerald-400/15 px-2 py-1 text-emerald-300">✓ IN YOUR COLLECTION</span>
+                      ) : (
+                        <span className="rounded bg-white/10 px-2 py-1 text-white/70">🔒 {unlockHint(profile, bakugan)}</span>
+                      )}
                     </p>
-                  )}
+                    <p className="mt-4 leading-relaxed text-white/80">{bakugan.description}</p>
 
-                  <p className="font-display mt-6 text-[10px] tracking-[0.4em] text-white/40">EVOLUTIONS</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {bakugan.evolutions.map((e, i) => {
-                      const have = i <= reached
-                      return (
-                        <button
-                          key={`${e.name}-${e.series}`}
-                          onClick={() => {
-                            playSfx('tick')
-                            setForm(i)
-                          }}
-                          title={
-                            have
-                              ? 'Reached'
-                              : i === reached + 1 && owned
-                                ? `Evolves at ${EVOLVE_XP[reached]?.toLocaleString('en')} Bakugan XP`
-                                : 'Not reached yet'
-                          }
-                          className={`rounded border px-3 py-1.5 text-left text-xs transition ${
-                            i === form ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white'
-                          }`}
-                          style={{ borderColor: i === form ? el.color : 'rgba(255,255,255,0.12)' }}
-                        >
-                          <span className="font-display font-bold">
-                            {have ? '' : '🔒 '}
-                            {e.name}
-                          </span>
-                          <span className="block text-[10px] text-white/40">
-                            {e.series} · {e.gPower}G
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
+                    <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                      <Stat label="G-POWER" value={`${evo.gPower}G`} color={el.color} />
+                      <Stat label="ON A GATE" value={`${evo.gPower + bakugan.brawlG - bakugan.baseG}G`} color={el.color} />
+                      <Stat
+                        label="CARDS"
+                        value={
+                          owned
+                            ? `${cardCount(owned)}/${abilitiesOf(bakugan, form).length}`
+                            : `${abilitiesOf(bakugan, form).length}`
+                        }
+                        color={el.color}
+                      />
+                    </div>
 
-                  <div className="mt-6 flex gap-2">
-                    {(['monster', 'ball'] as const).map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setView(v)}
-                        className={`font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] ${
-                          view === v ? 'border-white bg-white/10' : 'border-white/25 text-white/60 hover:bg-white/10'
-                        }`}
-                      >
-                        {v === 'monster' ? 'BRAWL FORM' : 'BALL FORM'}
-                      </button>
-                    ))}
-                    {reached >= 0 && (
-                      <button
-                        onClick={() => {
-                          chooseElement(bakugan.element)
-                          openBakugan(bakugan.id)
-                        }}
-                        className="font-display ml-auto rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
-                        style={{ borderColor: el.color }}
-                      >
-                        TAKE TO THE FIELD →
-                      </button>
+                    {owned && (
+                      <p className="mt-3 text-xs text-white/50">
+                        {owned.xp.toLocaleString('en')} Bakugan XP · {owned.wins} wins · {owned.battles} battles · {owned.kos} KOs
+                      </p>
                     )}
-                  </div>
-                  {view === 'monster' && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {MOVES.map(([move, label]) => (
+
+                    <p className="font-display mt-6 text-[10px] tracking-[0.4em] text-white/40">EVOLUTIONS</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {bakugan.evolutions.map((e, i) => {
+                        const have = i <= reached
+                        return (
+                          <button
+                            key={`${e.name}-${e.series}`}
+                            onClick={() => {
+                              playSfx('tick')
+                              setForm(i)
+                            }}
+                            title={
+                              have
+                                ? 'Reached'
+                                : i === reached + 1 && owned
+                                  ? `Evolves at ${EVOLVE_XP[reached]?.toLocaleString('en')} Bakugan XP`
+                                  : 'Not reached yet'
+                            }
+                            className={`rounded border px-3 py-1.5 text-left text-xs transition ${
+                              i === form ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white'
+                            }`}
+                            style={{ borderColor: i === form ? el.color : 'rgba(255,255,255,0.12)' }}
+                          >
+                            <span className="font-display font-bold">
+                              {have ? '' : '🔒 '}
+                              {e.name}
+                            </span>
+                            <span className="block text-[10px] text-white/40">
+                              {e.series} · {e.gPower}G
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    <div className="mt-6 flex gap-2">
+                      {(['monster', 'ball'] as const).map((v) => (
                         <button
-                          key={move}
-                          onClick={() => {
-                            playSfx('tick')
-                            pose.current = { kind: move === 'roar' || move === 'guard' ? 'cast' : 'lunge', move, start: null }
-                          }}
-                          className="font-display rounded border border-white/20 px-2.5 py-1 text-[9px] tracking-[0.25em] text-white/70 hover:bg-white/10 hover:text-white"
+                          key={v}
+                          onClick={() => setView(v)}
+                          className={`font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] ${
+                            view === v ? 'border-white bg-white/10' : 'border-white/25 text-white/60 hover:bg-white/10'
+                          }`}
                         >
-                          {label}
+                          {v === 'monster' ? 'BRAWL FORM' : 'BALL FORM'}
                         </button>
                       ))}
+                      {reached >= 0 && (
+                        <button
+                          onClick={() => {
+                            chooseElement(bakugan.element)
+                            openBakugan(bakugan.id)
+                          }}
+                          className="font-display ml-auto rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
+                          style={{ borderColor: el.color }}
+                        >
+                          TAKE TO THE FIELD →
+                        </button>
+                      )}
                     </div>
-                  )}
-                  {!hasModel && <p className="mt-3 text-xs text-white/40">3D model coming soon. Shown as a stand-in figure.</p>}
+                    {view === 'monster' && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {MOVES.map(([move, label]) => (
+                          <button
+                            key={move}
+                            onClick={() => {
+                              playSfx('tick')
+                              pose.current = { kind: move === 'roar' || move === 'guard' ? 'cast' : 'lunge', move, start: null }
+                            }}
+                            className="font-display rounded border border-white/20 px-2.5 py-1 text-[9px] tracking-[0.25em] text-white/70 hover:bg-white/10 hover:text-white"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {!hasModel && <p className="mt-3 text-xs text-white/40">3D model coming soon. Shown as a stand-in figure.</p>}
+                  </ScrollPanel>
                 </motion.section>
               </AnimatePresence>
             </div>
@@ -375,27 +377,29 @@ export function BakuganShowroom() {
             <div ref={gap} className="min-w-0 flex-1" />
 
             {/* ability cards */}
-            <section className="pointer-events-auto w-72 max-w-[22vw] shrink-0 overflow-y-auto">
-              <p className="font-display text-[10px] tracking-[0.4em] text-white/40">ABILITY CARDS</p>
-              <ul className="mt-2 space-y-2">
-                {abilitiesOf(bakugan, form).map((a, i) => {
-                  const unlocked = owned ? i < cardCount(owned) : false
-                  return (
-                    <li key={a.id} className="rounded border border-white/10 bg-black/40 px-3 py-2">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className={`font-display text-sm font-bold ${owned && !unlocked ? 'text-white/40' : ''}`}>
-                          {owned && !unlocked && '🔒 '}
-                          {a.name}
-                        </span>
-                        <span className="text-xs" style={{ color: el.color }}>
-                          {abilityLabel(a)}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs text-white/55">{a.description}</p>
-                    </li>
-                  )
-                })}
-              </ul>
+            <section className="pointer-events-auto flex min-h-0 w-72 max-w-[21vw] shrink-0">
+              <ScrollPanel>
+                <p className="font-display text-[10px] tracking-[0.4em] text-white/40">ABILITY CARDS</p>
+                <ul className="mt-2 space-y-2">
+                  {abilitiesOf(bakugan, form).map((a, i) => {
+                    const unlocked = owned ? i < cardCount(owned) : false
+                    return (
+                      <li key={a.id} className="rounded border border-white/10 bg-black/40 px-3 py-2">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className={`font-display text-sm font-bold ${owned && !unlocked ? 'text-white/40' : ''}`}>
+                            {owned && !unlocked && '🔒 '}
+                            {a.name}
+                          </span>
+                          <span className="text-xs" style={{ color: el.color }}>
+                            {abilityLabel(a)}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs text-white/55">{a.description}</p>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </ScrollPanel>
             </section>
           </div>
         )}
@@ -527,6 +531,80 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
       <p className="font-display mt-1 text-lg font-bold" style={{ color }}>
         {value}
       </p>
+    </div>
+  )
+}
+
+/**
+ * A side panel that scrolls without a scrollbar: the wheel and touch scroll it as usual, and the ▲ ▼ buttons,
+ * shown only while there is more that way, scroll it a step per click and on and on while held.
+ */
+function ScrollPanel({ children }: { children: React.ReactNode }) {
+  const box = useRef<HTMLDivElement>(null)
+  const [more, setMore] = useState({ up: false, down: false })
+  const check = useCallback(() => {
+    const el = box.current
+    if (!el) return
+    const next = { up: el.scrollTop > 2, down: el.scrollTop + el.clientHeight < el.scrollHeight - 2 }
+    setMore((m) => (m.up === next.up && m.down === next.down ? m : next))
+  }, [])
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    check()
+    const watch = new ResizeObserver(check)
+    watch.observe(el)
+    if (el.firstElementChild) watch.observe(el.firstElementChild)
+    return () => watch.disconnect()
+  }, [check])
+  const held = useRef({ timer: 0, frame: 0 })
+  const release = useCallback(() => {
+    clearTimeout(held.current.timer)
+    cancelAnimationFrame(held.current.frame)
+  }, [])
+  useEffect(() => release, [release])
+  const press = (dir: number) => {
+    const el = box.current
+    if (!el) return
+    release()
+    el.scrollBy({ top: dir * el.clientHeight * 0.5, behavior: 'smooth' })
+    held.current.timer = window.setTimeout(() => {
+      const step = () => {
+        el.scrollTop += dir * 9
+        held.current.frame = requestAnimationFrame(step)
+      }
+      step()
+    }, 400)
+  }
+  const arrow = (dir: number) => (
+    <button
+      aria-label={dir < 0 ? 'Scroll up' : 'Scroll down'}
+      onPointerDown={() => press(dir)}
+      onPointerUp={release}
+      onPointerLeave={release}
+      className={`absolute left-1/2 z-10 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full border border-white/25 bg-black/70 text-[10px] text-white/80 backdrop-blur transition hover:bg-white/15 hover:text-white ${
+        dir < 0 ? 'top-0' : 'bottom-0'
+      }`}
+    >
+      {dir < 0 ? '▲' : '▼'}
+    </button>
+  )
+  return (
+    <div className="relative min-h-0 w-full">
+      <div
+        ref={box}
+        onScroll={check}
+        className="no-scrollbar h-full overflow-y-auto"
+        style={{
+          maskImage: `linear-gradient(to bottom, ${more.up ? 'transparent 0, #000 28px' : '#000 0'}, ${
+            more.down ? '#000 calc(100% - 36px), transparent 100%' : '#000 100%'
+          })`,
+        }}
+      >
+        <div className={more.up || more.down ? 'pb-8' : ''}>{children}</div>
+      </div>
+      {more.up && arrow(-1)}
+      {more.down && arrow(1)}
     </div>
   )
 }
