@@ -5,8 +5,8 @@
 # in a frame carried along the line, then put in the same frame along the new line, through the `path`
 # points (a smooth curve, from inside the body out to the tip). `trim` (0..1) skips that much of the good
 # tail's root, so the copy is the thinner rest. Pieces lying wholly inside `remove` are dropped.
-# Alpha Hydranoid: {"tail":[[0.1,-0.26,-0.46],[0.36,0.37,-0.12]],"remove":[[0.17,-0.31,-0.39],[0.32,-0.11,0.0]],
-#   "trim":0.08,"path":[[0.1,-0.19,-0.07],[0.2,-0.2,-0.2],[0.32,-0.2,-0.33],[0.42,-0.23,-0.44],[0.47,-0.29,-0.39],[0.45,-0.32,-0.29]]}
+# Alpha Hydranoid: {"tail":[[0.1,-0.26,-0.46],[0.36,0.37,-0.12]],"remove":[[0.17,-0.35,-0.39],[0.32,-0.11,0.06]],
+#   "trim":0,"path":[[0.05,-0.16,-0.02],[0.17,-0.19,-0.17],[0.3,-0.2,-0.31],[0.41,-0.22,-0.42],[0.47,-0.27,-0.42],[0.47,-0.31,-0.33],[0.42,-0.32,-0.24]]}
 import sys, json
 import numpy as np, trimesh
 from scipy.interpolate import splprep, splev
