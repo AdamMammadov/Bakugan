@@ -353,6 +353,11 @@ const master = ROSTER.find((b) => b.id === 'ingram')?.evolutions.find((e) => e.n
 if (master) master.models = { ...ROSTER_MODELS.ingram, monster: 'models/ingram/master.glb', fly: false, fill: 1.12, scale: 0.95 }
 const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')
 if (knight) knight.models = { ball: 'models/percival/knight-ball.glb' }
+const omega = ROSTER.find((b) => b.id === 'leonidas')?.evolutions.find((e) => e.name === 'Omega Leonidas')
+// ripped from Bakugan Battle Brawlers (Xbox 360) with the game's Darkus textures (the rip's material points at its Haos
+// ones), skinned and inked, with its ball from the same game
+if (omega)
+  omega.models = { monster: 'models/leonidas/omega.glb', ball: 'models/leonidas/omega-ball.glb', scale: 1.15, length: 2.1 }
 const phantom = ROSTER.find((b) => b.id === 'dharak')?.evolutions.find((e) => e.name === 'Phantom Dharak')
 // made with TRELLIS.2 from an AI picture after the anime (sent by the owner), its wing markings brightened, cut into
 // parts by where they lie (the arms reach in front of the wings) and skinned; its ball is an unused model from

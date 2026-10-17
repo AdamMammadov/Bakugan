@@ -3125,5 +3125,87 @@
       "test": "mesh === 'leg_r'",
       "swing": 0.4
     }
+  ],
+  "omega-leonidas": [
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        150,
+        12
+      ],
+      "test": "y > 152 && Math.abs(x) < 26 && z > -12",
+      "swing": 0.5
+    },
+    {
+      "name": "wing_l",
+      "pivot": [
+        24,
+        145,
+        -14
+      ],
+      "test": "x > 22 && z < -8 && y > 45",
+      "swing": 0.5
+    },
+    {
+      "name": "wing_r",
+      "pivot": [
+        -24,
+        145,
+        -14
+      ],
+      "test": "x < -22 && z < -8 && y > 45",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        34,
+        135,
+        2
+      ],
+      "test": "x > 28 && z >= -8 && y > 58 && y < 152",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -34,
+        135,
+        2
+      ],
+      "test": "x < -28 && z >= -8 && y > 58 && y < 152",
+      "swing": 0.5
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0,
+        62,
+        -24
+      ],
+      "test": "z < -28 && y < 75 && Math.abs(x) < 26",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        20,
+        72,
+        0
+      ],
+      "test": "y < 62 && x > 0 && z > -28",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -20,
+        72,
+        0
+      ],
+      "test": "y < 62 && x <= 0 && z > -28",
+      "swing": 0.4
+    }
   ]
 }
