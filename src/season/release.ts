@@ -16,10 +16,17 @@ export const LAUNCH = [
 ]
 
 /**
+ * The game owner's own Bakugan: never released to players; the owner's browser (devView) shows them and gives
+ * them to its profiles with every card unlocked.
+ */
+export const OWNER_ONLY = ['dharak']
+
+/**
  * Whether players can see and get a Bakugan: the launch ones always, a season's from the day that season
  * begins. Bakugan not given a season yet stay hidden.
  */
 export const isReleased = (id: string, now = Date.now()) => {
+  if (OWNER_ONLY.includes(id)) return false
   if (LAUNCH.includes(id)) return true
   const s = seasonOfBakugan(id)
   return !!s && s.season <= currentSeason(now).id

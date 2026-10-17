@@ -375,6 +375,11 @@ export function randomTeam(size = TEAM_SIZE, exclude: string[] = [], rng: () => 
  * each opponent gets a G adjustment that puts it level with the player's Bakugan in that slot,
  * plus the bot's `edge` for the player's rank.
  */
+/** The highest G-Power on a Gate Card of any Bakugan players can get, at the given form (or its last). */
+function strongest(form: number) {
+  return Math.max(...released().map((bakugan) => formBrawlG({ bakugan, form: Math.min(form, bakugan.evolutions.length - 1) })))
+}
+
 export function matchedOpponent(player: Entrant[], rng: () => number = Math.random, edge = 0): Entrant[] {
   const mine = new Set(player.map((e) => e.bakugan.id))
   const others = released().filter((b) => !mine.has(b.id))
@@ -384,7 +389,8 @@ export function matchedOpponent(player: Entrant[], rng: () => number = Math.rand
     const form = Math.min(slot.form, bakugan.evolutions.length - 1)
     const cards = slot.cards?.length ?? slot.bakugan.abilities.length
     const entrant: Entrant = { bakugan, form, cards: bakugan.abilities.slice(0, cards).map((a) => a.id) }
-    const level = formBrawlG(slot) + (slot.bonusG ?? 0)
+    // levelled to the player's Bakugan, but never past the strongest one players can get (the owner's own stay ahead)
+    const level = Math.min(formBrawlG(slot) + (slot.bonusG ?? 0), strongest(slot.form))
     return { ...entrant, bonusG: level + Math.round(level * edge) - formBrawlG(entrant) }
   })
 }

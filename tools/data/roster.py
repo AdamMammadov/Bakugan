@@ -114,6 +114,8 @@ ROSTER = [
      'A giant three-headed, Cerberus-like hound from the new generation and the Guardian of Lightning. Howlkor is so set on winning that he often scares his own brawler.'),
     ('vladitor', 'Vladitor', 'darkus', 'Video game villain', 490, [('Battle Ax Vladitor', 'Video game', 600)],
      'The final foe of the first Bakugan video game, a towering Darkus warlord. As Battle Ax Vladitor his power is immense.'),
+    ('dharak', 'Dharak', 'darkus', 'Emperor Barodius', 800, [],
+     'Emperor Barodius\'s Guardian and the Darkus pair of the Twelve Orders of Gundalia, from the same ancient lineage as Drago. He blasts dark energy from his mouth, and few Bakugan have ever stood against him.'),
 ]
 
 # brawlers who appear from New Vestroia (season 2) on
@@ -122,10 +124,21 @@ NEW_VESTROIA = {'Spectra Phantom', 'Mylene Farrow', 'Gus Grav', 'Mira Fermin', '
 
 # Bakugan from a later series than the brawler sets above show
 SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet', 'pegatrix': 'Battle Planet',
-          'rubanoid': 'Gundalian Invaders'}
+          'rubanoid': 'Gundalian Invaders', 'dharak': 'Gundalian Invaders'}
 # added after launch: they pick their filler cards after everyone else, so adding one does not
 # change the cards of the Bakugan already in players' collections
-ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix', 'rubanoid']
+ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix', 'rubanoid', 'dharak']
+# the game owner's own Bakugan (src/season/release.ts OWNER_ONLY): its anime abilities (Bakugan Wiki), stronger
+# than any other Bakugan's cards; the wiki gives no G values, so they are the owner's choice
+OWNER_DECKS = {'dharak': [
+    ('Darkness Glow', 'boost', 400, 'Dharak glows with Darkus power: adds 400 G to Dharak.'),
+    ('Westwall Shield', 'shield', 0, 'The Darkness Wall: nullifies the opponent\'s next attack or ability.'),
+    ('Thunder Probe', 'weaken', 300, 'Dark lightning pins the opponent down: subtracts 300 G from the opponent.'),
+    ('Darkness Waver', 'attack', 300, 'A wave of dark energy blasted from Dharak\'s mouth.'),
+    ('High Skewed Waver', 'drain', 300, 'Transfers 300 G from the opponent to Dharak.'),
+    ('Evil Blast', 'attack', 400, 'The Evil Blow: Dharak\'s crushing blast of darkness.'),
+    ('Exodus Waver', 'attack', 500, 'Dharak\'s strongest wave, which few Bakugan have ever withstood.'),
+]}
 # the original six (src/data/bakugan.ts) and how many cards each has
 ORIGINAL = [('dragonoid', 'Dragonoid', 'pyrus', 8), ('preyas', 'Preyas', 'aquos', 7), ('gorem', 'Gorem', 'subterra', 7),
             ('skyress', 'Skyress', 'ventus', 7), ('tigrerra', 'Tigrerra', 'haos', 7), ('hydranoid', 'Hydranoid', 'darkus', 7)]
@@ -311,7 +324,10 @@ def main():
     used = Counter()
     original = {bid: deck(cards, attr_cards, used, bid, name, element, n) for bid, name, element, n in ORIGINAL}
     order = [r for r in ROSTER if r[0] not in ADDED] + sorted((r for r in ROSTER if r[0] in ADDED), key=lambda r: ADDED.index(r[0]))
-    decks = {r[0]: deck(cards, attr_cards, used, r[0], r[1], r[2], CARDS) for r in order}
+    decks = {r[0]: deck(cards, attr_cards, used, r[0], r[1], r[2], CARDS) for r in order if r[0] not in OWNER_DECKS}
+    for bid, owner in OWNER_DECKS.items():
+        decks[bid] = [{'id': slug(n), 'name': n, 'type': k, 'amount': a, 'effect': effect(k, 'darkus', i), 'description': d, 'estimated': True}
+                      for i, (n, k, a, d) in enumerate(owner)]
 
     out = []
     for bid, name, element, brawler, g, evos, desc in ROSTER:

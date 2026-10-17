@@ -4,7 +4,7 @@ import { BAKUGAN, type Bakugan, type Entrant } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
 import type { Avatar } from './avatar'
 import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
-import { isReleased, LAUNCH } from '../season/release'
+import { isReleased, LAUNCH, OWNER_ONLY } from '../season/release'
 import { cosmeticsOnSale, PACKS } from '../shop/shop'
 import {
   challengeRequirement,
@@ -361,6 +361,8 @@ interface ProfilesState {
   evolve: (bakuganId: string) => void
   /** Buys a Bakugan with BP, or claims it when the player's XP is high enough. */
   acquire: (bakuganId: string, how: 'bp' | 'xp') => boolean
+  /** Gives the game owner's own Bakugan, every card unlocked, to each profile in this browser that lacks them. */
+  grantOwnerBakugan: () => void
   /** Applies XP, BP, rating and stats for the active player; returns what was gained. */
   recordBattle: (report: BattleReport) => BattleReward | null
   /** Rolls the active player over into a new season when the old one has ended. */
@@ -423,6 +425,15 @@ export const useProfiles = create<ProfilesState>()(
             collection: p.collection.map((o) => (o.id === bakuganId && canEvolve(o) ? { ...o, form: o.form + 1 } : o)),
           })),
         ),
+      grantOwnerBakugan: () =>
+        set((s) => ({
+          profiles: s.profiles.map((p) => {
+            const missing = OWNER_ONLY.filter((id) => !p.collection.some((o) => o.id === id))
+            if (!missing.length) return p
+            const gift = (id: string) => ({ ...own(id), bonusCards: bakuganById(id).abilities.length })
+            return { ...p, collection: [...p.collection, ...missing.map(gift)] }
+          }),
+        })),
       acquire: (bakuganId, how) => {
         const p = get().profiles.find((x) => x.id === get().activeId)
         if (!p || !isReleased(bakuganId) || p.collection.some((o) => o.id === bakuganId)) return false

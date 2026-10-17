@@ -3352,6 +3352,88 @@ export const ROSTER: Bakugan[] = [
       }
     ],
     "characterGate": true
+  },
+  {
+    "id": "dharak",
+    "name": "Dharak",
+    "element": "darkus",
+    "brawler": "Emperor Barodius",
+    "series": "Gundalian Invaders",
+    "baseG": 800,
+    "brawlG": 900,
+    "description": "Emperor Barodius's Guardian and the Darkus pair of the Twelve Orders of Gundalia, from the same ancient lineage as Drago. He blasts dark energy from his mouth, and few Bakugan have ever stood against him.",
+    "abilities": [
+      {
+        "id": "darkness-glow",
+        "name": "Darkness Glow",
+        "type": "boost",
+        "amount": 400,
+        "effect": "aura",
+        "description": "Dharak glows with Darkus power: adds 400 G to Dharak.",
+        "estimated": true
+      },
+      {
+        "id": "westwall-shield",
+        "name": "Westwall Shield",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "The Darkness Wall: nullifies the opponent's next attack or ability.",
+        "estimated": true
+      },
+      {
+        "id": "thunder-probe",
+        "name": "Thunder Probe",
+        "type": "weaken",
+        "amount": 300,
+        "effect": "shadowOrb",
+        "description": "Dark lightning pins the opponent down: subtracts 300 G from the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "darkness-waver",
+        "name": "Darkness Waver",
+        "type": "attack",
+        "amount": 300,
+        "effect": "shadowOrb",
+        "description": "A wave of dark energy blasted from Dharak's mouth.",
+        "estimated": true
+      },
+      {
+        "id": "high-skewed-waver",
+        "name": "High Skewed Waver",
+        "type": "drain",
+        "amount": 300,
+        "effect": "shadowOrb",
+        "description": "Transfers 300 G from the opponent to Dharak.",
+        "estimated": true
+      },
+      {
+        "id": "evil-blast",
+        "name": "Evil Blast",
+        "type": "attack",
+        "amount": 400,
+        "effect": "shadowOrb",
+        "description": "The Evil Blow: Dharak's crushing blast of darkness.",
+        "estimated": true
+      },
+      {
+        "id": "exodus-waver",
+        "name": "Exodus Waver",
+        "type": "attack",
+        "amount": 500,
+        "effect": "shadowOrb",
+        "description": "Dharak's strongest wave, which few Bakugan have ever withstood.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Dharak",
+        "series": "Gundalian Invaders",
+        "gPower": 800
+      }
+    ]
   }
 ]
 

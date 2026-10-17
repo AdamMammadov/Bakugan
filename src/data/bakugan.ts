@@ -310,6 +310,9 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // made with TRELLIS.2 from an AI picture after two anime frames (sent by the player); a hole in its back capped,
   // the brown lifted and the leg armour turned bronze after the picture; skinned and inked
   baliton: { monster: 'models/baliton/monster.glb', scale: 0.85 },
+  // the game owner's own Bakugan: made with TRELLIS.2 from an AI picture after the anime (sent by the owner); the
+  // glowing wing markings brightened to the picture's green; skinned and inked (inkThin for the thin wings)
+  dharak: { monster: 'models/dharak/monster.glb', fly: true },
   // made with TRELLIS.2 from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
