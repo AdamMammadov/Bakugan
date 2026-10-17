@@ -2787,5 +2787,117 @@
       "test": "y < 48 && x <= 0 && x > -14",
       "swing": 0.4
     }
+  ],
+  "fear-ripper": [
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        116,
+        0
+      ],
+      "test": "y > 118 && Math.abs(x) < 14",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        26,
+        104,
+        0
+      ],
+      "test": "x > 28 && y > 15",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -26,
+        104,
+        0
+      ],
+      "test": "x < -28 && y > 15",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        12,
+        74,
+        0
+      ],
+      "test": "y < 70 && x > 0 && x <= 28",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -12,
+        74,
+        0
+      ],
+      "test": "y < 70 && x <= 0 && x >= -28",
+      "swing": 0.4
+    }
+  ],
+  "laserman": [
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        140,
+        0
+      ],
+      "test": "y > 140 && y < 170 && Math.abs(x) < 12 && z > -12",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        35,
+        124,
+        0
+      ],
+      "test": "x > 36 && y > 100",
+      "bake": [
+        -0.3,
+        0,
+        -1.2
+      ]
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -35,
+        124,
+        0
+      ],
+      "test": "x < -36 && y > 100",
+      "bake": [
+        -0.3,
+        0,
+        1.2
+      ]
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        16,
+        90,
+        0
+      ],
+      "test": "y < 86 && x > 0",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -16,
+        90,
+        0
+      ],
+      "test": "y < 86 && x <= 0",
+      "swing": 0.4
+    }
   ]
 }

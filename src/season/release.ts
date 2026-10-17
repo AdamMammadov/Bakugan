@@ -11,7 +11,7 @@ export const LAUNCH = [
   ...['robotallion', 'preyas', 'preyas-diablo', 'sirenoid'],
   ...['baliton', 'gorem', 'cycloid', 'manion'],
   ...['monarus', 'skyress', 'harpus', 'ravenoid'],
-  ...['wired', 'tigrerra', 'tentaclear', 'pegatrix'],
+  ...['tigrerra', 'tentaclear', 'pegatrix', 'laserman'],
   ...['fear-ripper', 'hydranoid', 'hades', 'howlkor'],
 ]
 
