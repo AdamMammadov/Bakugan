@@ -258,12 +258,14 @@ export const BAKUGAN: Bakugan[] = [
         gPower: 480,
         models: { monster: 'models/hydranoid/dual.glb', scale: 1.25 },
       },
-      // three-headed Alpha uses the closest model we have: the upright, many-headed Dual Hydranoid
       {
         name: 'Alpha Hydranoid',
         series: 'Battle Brawlers',
         gPower: 550,
-        models: { monster: 'models/hydranoid/dual.glb', scale: 1.25 },
+        // made with TRELLIS.2 from an AI redraw of the anime art (sent by the player); its third tail, which came out
+        // short and broken off, grown again from a copy of another (tools/ai/regrow_tail.py), its near-black colours
+        // matched to the picture, skinned and inked
+        models: { monster: 'models/hydranoid/alpha.glb', scale: 0.95 },
       },
     ],
   },
