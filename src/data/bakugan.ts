@@ -307,6 +307,9 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // ripped from Bakugan Battle Brawlers (Xbox 360) with the game's Haos textures (the rip's material points at its
   // Darkus ones); its T-posed arms bent down, skinned and inked, with its ball
   laserman: { ball: 'models/laserman/ball.glb', monster: 'models/laserman/monster.glb' },
+  // made with TRELLIS.2 from an AI picture after two anime frames (sent by the player); a hole in its back capped,
+  // the brown lifted and the leg armour turned bronze after the picture; skinned and inked
+  baliton: { monster: 'models/baliton/monster.glb', scale: 0.85 },
   // made with TRELLIS.2 from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
