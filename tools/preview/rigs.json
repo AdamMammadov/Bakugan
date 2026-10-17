@@ -2663,5 +2663,57 @@
       "test": "y < -0.06 && x <= -0.04",
       "swing": 0.4
     }
+  ],
+  "saurus": [
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        110,
+        6
+      ],
+      "test": "y > 100 && Math.abs(x) < 22 && z > 6",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        38,
+        108,
+        0
+      ],
+      "test": "x > 38 && y > 45",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -38,
+        108,
+        0
+      ],
+      "test": "x < -38 && y > 45",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        15,
+        55,
+        0
+      ],
+      "test": "y < 52 && x > 0",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -15,
+        55,
+        0
+      ],
+      "test": "y < 52 && x <= 0",
+      "swing": 0.4
+    }
   ]
 }
