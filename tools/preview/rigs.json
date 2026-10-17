@@ -3207,5 +3207,65 @@
       "test": "y < 62 && x <= 0 && z > -28",
       "swing": 0.4
     }
+  ],
+  "battle-ax-vladitor": [
+    {
+      "name": "head",
+      "pivot": [
+        0,
+        238,
+        0
+      ],
+      "test": "!mesh.endsWith('axe') && y > 238 && Math.abs(x) < 22 && z > -22",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        50,
+        222,
+        0
+      ],
+      "test": "!mesh.endsWith('axe') && x > 48 && y > 196 && !(x < 64 && z < -14 && y > 205)",
+      "bake": [
+        -0.5,
+        0,
+        -1.25
+      ]
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -50,
+        222,
+        0
+      ],
+      "test": "mesh.endsWith('axe') || (x < -48 && y > 196 && !(x > -64 && z < -14 && y > 205))",
+      "bake": [
+        -0.5,
+        0,
+        1.25
+      ]
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        20,
+        100,
+        0
+      ],
+      "test": "y < 100 && x > 0 && z > -28",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -20,
+        100,
+        0
+      ],
+      "test": "y < 100 && x <= 0 && z > -28",
+      "swing": 0.4
+    }
   ]
 }
