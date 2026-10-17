@@ -16,6 +16,7 @@ const PATTERN: Record<EffectPreset, Pattern> = {
   lightBeam: 'beams',
   shieldDome: 'sphere',
   aura: 'spiral',
+  chaosBeam: 'beams',
 }
 
 const COUNT = 900
@@ -52,7 +53,7 @@ export function AbilityEffect({ effect, color, glow }: { effect: EffectPreset; c
     const tmp = new THREE.Color()
     for (let i = 0; i < COUNT; i++) {
       tmp.copy(a).lerp(b, Math.random())
-      if (effect === 'shadowOrb' && Math.random() < 0.4) tmp.set('#000000')
+      if ((effect === 'shadowOrb' || effect === 'chaosBeam') && Math.random() < 0.4) tmp.set('#000000')
       colors.set([tmp.r, tmp.g, tmp.b], i * 3)
       seeds.set([Math.random(), Math.random(), Math.random(), Math.random()], i * 4)
     }

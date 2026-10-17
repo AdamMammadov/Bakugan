@@ -3497,7 +3497,7 @@ export const ROSTER: Bakugan[] = [
             "name": "Chaos Magnalia",
             "type": "finisher",
             "amount": 0,
-            "effect": "shadowOrb",
+            "effect": "chaosBeam",
             "description": "The blast that wiped out Dragonoid Colossus, Stoica's Lythirus and Gill's ship: defeats the opponent's Bakugan at once, whatever its G-Power, through any shield.",
             "estimated": true
           }

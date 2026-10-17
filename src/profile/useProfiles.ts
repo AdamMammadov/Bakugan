@@ -75,6 +75,11 @@ export interface OwnedBakugan {
   skin?: string
   /** Ability cards unlocked early with Card Keys. */
   bonusCards?: number
+  /**
+   * Bakugan XP when its current form's own cards began to unlock: an evolution with cards of its own starts again
+   * from the first few and unlocks the rest with the XP earned since.
+   */
+  cardsFrom?: number
 }
 
 interface ChallengeProgress {
@@ -176,7 +181,7 @@ export const canEvolve = (owned: OwnedBakugan) => {
 export const cardCount = (owned: OwnedBakugan) =>
   Math.min(
     abilitiesOf(bakuganById(owned.id), owned.form).length,
-    START_CARDS + (owned.bonusCards ?? 0) + Math.floor(owned.xp / CARD_XP),
+    START_CARDS + (owned.bonusCards ?? 0) + Math.floor(Math.max(0, owned.xp - (owned.cardsFrom ?? 0)) / CARD_XP),
   )
 
 export const unlockedCards = (owned: OwnedBakugan) => abilitiesOf(bakuganById(owned.id), owned.form).slice(0, cardCount(owned))
@@ -184,10 +189,14 @@ export const unlockedCards = (owned: OwnedBakugan) => abilitiesOf(bakuganById(ow
 /** XP at which ability card number `index` (0-based) unlocks. */
 export const cardUnlockXp = (index: number) => Math.max(0, index - START_CARDS + 1) * CARD_XP
 
+/** This Bakugan's XP at which its ability card number `index` (0-based) unlocks. */
+export const cardXpFor = (owned: OwnedBakugan, index: number) =>
+  (owned.cardsFrom ?? 0) + cardUnlockXp(index - (owned.bonusCards ?? 0))
+
 /** XP at which the next ability card unlocks, or null when all are unlocked. */
 export const nextCardXp = (owned: OwnedBakugan) => {
   const n = cardCount(owned)
-  return n >= abilitiesOf(bakuganById(owned.id), owned.form).length ? null : cardUnlockXp(n - (owned.bonusCards ?? 0))
+  return n >= abilitiesOf(bakuganById(owned.id), owned.form).length ? null : cardXpFor(owned, n)
 }
 
 /** Season Bakugan of the running season are earned on the Season page, not bought. */
@@ -259,6 +268,11 @@ export const teamEntrants = (p: Profile): Entrant[] =>
     }))
 
 const own = (id: string): OwnedBakugan => ({ id, form: 0, xp: 0, wins: 0, battles: 0, kos: 0 })
+/** The next form; one with cards of its own starts them again from the first few (early unlocks do not carry over). */
+const evolved = (o: OwnedBakugan): OwnedBakugan =>
+  bakuganById(o.id).evolutions[o.form + 1]?.abilities
+    ? { ...o, form: o.form + 1, cardsFrom: o.xp, bonusCards: 0 }
+    : { ...o, form: o.form + 1 }
 const roll = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1))
 
 // ---------------------------------------------------------------- season
@@ -425,7 +439,7 @@ export const useProfiles = create<ProfilesState>()(
         set((s) =>
           patchActive(s, (p) => ({
             ...p,
-            collection: p.collection.map((o) => (o.id === bakuganId && canEvolve(o) ? { ...o, form: o.form + 1 } : o)),
+            collection: p.collection.map((o) => (o.id === bakuganId && canEvolve(o) ? evolved(o) : o)),
           })),
         ),
       grantOwnerBakugan: () => {
@@ -645,13 +659,27 @@ export const useProfiles = create<ProfilesState>()(
     }),
     {
       name: 'bakugan-profiles',
-      version: 4,
+      version: 5,
       // v3 (new economy and rules): every earlier test profile is cleared so everyone starts from zero
       // v4: Tripod Epsilon left the roster; Robotallion (now Aquos) took its place, so it takes its owners too
+      // v5: an evolution with cards of its own unlocks them with XP from when it was reached
       migrate: (state, version) => {
         if (version < 3) return { profiles: [], activeId: null }
-        const s = state as { profiles: Profile[]; activeId: string | null }
-        return version < 4 ? { ...s, profiles: s.profiles.map((p) => renameBakugan(p, 'tripod-epsilon', 'robotallion')) } : s
+        let s = state as { profiles: Profile[]; activeId: string | null }
+        if (version < 4) s = { ...s, profiles: s.profiles.map((p) => renameBakugan(p, 'tripod-epsilon', 'robotallion')) }
+        if (version < 5)
+          s = {
+            ...s,
+            profiles: s.profiles.map((p) => ({
+              ...p,
+              collection: p.collection.map((o) =>
+                BAKUGAN.find((b) => b.id === o.id)?.evolutions[o.form]?.abilities && o.cardsFrom === undefined
+                  ? { ...o, cardsFrom: o.xp, bonusCards: 0 }
+                  : o,
+              ),
+            })),
+          }
+        return s
       },
     },
   ),

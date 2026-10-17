@@ -71,7 +71,9 @@ export function Projectile({
       const spread = (grounded ? 0.8 : 0.35) * (lag / 0.35 + 0.2)
       const ang = seeds[i * 3 + 1] * Math.PI * 2 + t.current * (preset === 'tornado' ? 18 : 4)
       positions[i * 3] = from.x + dir.x * kk + Math.cos(ang) * spread * 0.3
-      positions[i * 3 + 1] = (grounded ? 0.2 + seeds[i * 3 + 2] * 0.6 * (1 - lag / 0.35) : from.y + dir.y * kk + Math.sin(kk * Math.PI) * 0.6) + Math.sin(ang) * spread
+      positions[i * 3 + 1] =
+        (grounded ? 0.2 + seeds[i * 3 + 2] * 0.6 * (1 - lag / 0.35) : from.y + dir.y * kk + Math.sin(kk * Math.PI) * 0.6) +
+        Math.sin(ang) * spread
       positions[i * 3 + 2] = from.z + dir.z * kk + Math.sin(ang) * spread
     }
     if (trail.current) {
@@ -140,7 +142,14 @@ export function Impact({ at, color, delay = 0.75 }: { at: THREE.Vector3; color: 
     <group position={at}>
       <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
         <ringGeometry args={[0.8, 1, 48]} />
-        <meshBasicMaterial color={color} transparent blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} side={THREE.DoubleSide} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
       </mesh>
       <mesh ref={ball} visible={false}>
         <sphereGeometry args={[0.6, 24, 16]} />
@@ -183,8 +192,149 @@ export function ShieldDome({ color, active, flashKey }: { color: string; active:
       </mesh>
       <mesh>
         <icosahedronGeometry args={[2.15, 2]} />
-        <meshBasicMaterial color={color} wireframe transparent blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+        <meshBasicMaterial
+          color={color}
+          wireframe
+          transparent
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
       </mesh>
     </group>
+  )
+}
+
+/**
+ * Chaos Magnalia: a dark orb gathers at the user's mouth, a thick Darkus beam (black core, violet glow) crosses
+ * the field, and a pillar of darkness swallows the opponent where it lands. Hits at about `hitAt` seconds.
+ */
+export function ChaosBeam({
+  from,
+  to,
+  size = 1,
+  hitAt = 0.6,
+}: {
+  from: THREE.Vector3
+  to: THREE.Vector3
+  /** The user's size (a giant's beam and orb are thicker). */
+  size?: number
+  hitAt?: number
+}) {
+  const orb = useRef<THREE.Group>(null)
+  const beam = useRef<THREE.Group>(null)
+  const blast = useRef<THREE.Group>(null)
+  const pillar = useRef<THREE.Group>(null)
+  const light = useRef<THREE.PointLight>(null)
+  const t = useRef(0)
+  const { mid, length, turn } = useMemo(() => {
+    const d = to.clone().sub(from)
+    return {
+      mid: from.clone().add(to).multiplyScalar(0.5),
+      length: d.length(),
+      turn: new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize()),
+    }
+  }, [from, to])
+  const fade = (m: THREE.Object3D | null, o: number) =>
+    m?.traverse((c) => {
+      const mat = (c as THREE.Mesh).material as THREE.MeshBasicMaterial | undefined
+      if (mat) mat.opacity = o * (c.userData.o ?? 1)
+    })
+
+  useFrame(({ clock }, dt) => {
+    t.current += dt
+    const s = t.current
+    const charge = THREE.MathUtils.smoothstep(s, 0, hitAt * 0.7)
+    const reach = THREE.MathUtils.smoothstep(s, hitAt * 0.55, hitAt)
+    const out = 1 - THREE.MathUtils.smoothstep(s, hitAt + 1.1, hitAt + 1.6)
+    const wobble = 1 + Math.sin(clock.elapsedTime * 50) * 0.08
+    if (orb.current) {
+      orb.current.visible = s < hitAt + 1.6
+      orb.current.scale.setScalar(Math.max(0.001, (0.4 + charge * 2.2) * size * wobble * out))
+    }
+    if (beam.current) {
+      beam.current.visible = reach > 0 && out > 0
+      // grows from the user to the opponent, then thins away
+      beam.current.position.copy(from).addScaledVector(to.clone().sub(from), reach / 2)
+      beam.current.scale.set(size * wobble * out, Math.max(0.001, reach), size * wobble * out)
+    }
+    // the pillar of darkness lingers over the fallen opponent
+    const hit = THREE.MathUtils.clamp((s - hitAt) / 2.2, 0, 1)
+    if (blast.current) {
+      blast.current.visible = s >= hitAt && hit < 1
+      blast.current.scale.setScalar(0.5 + Math.min(1, hit * 2) * 9)
+      fade(blast.current, 1 - hit)
+    }
+    if (pillar.current) {
+      pillar.current.visible = s >= hitAt && hit < 1
+      pillar.current.scale.set(0.5 + Math.min(1, hit * 3) * 1.1, Math.min(1, hit * 6), 0.5 + Math.min(1, hit * 3) * 1.1)
+      fade(pillar.current, 1 - hit)
+    }
+    if (light.current) light.current.intensity = s >= hitAt ? (1 - hit) * 400 : charge * 60
+  })
+
+  const glow = { transparent: true, depthWrite: false, toneMapped: false } as const
+  return (
+    <>
+      <group ref={orb} position={from}>
+        <mesh>
+          <sphereGeometry args={[1, 24, 16]} />
+          <meshBasicMaterial color="#12001c" {...glow} opacity={0.95} />
+        </mesh>
+        <mesh scale={1.35}>
+          <sphereGeometry args={[1, 24, 16]} />
+          <meshBasicMaterial color="#a23cff" {...glow} opacity={0.6} blending={THREE.AdditiveBlending} />
+        </mesh>
+      </group>
+      <group ref={beam} quaternion={turn} position={mid} visible={false}>
+        {/* a unit-long beam along y, scaled to the distance travelled */}
+        <group scale={[1, length, 1]}>
+          <mesh position={[0, 0, 0]}>
+            <cylinderGeometry args={[1.5, 1.5, 1, 24, 1, true]} />
+            <meshBasicMaterial color="#12001c" {...glow} opacity={0.9} side={THREE.DoubleSide} />
+          </mesh>
+          <mesh>
+            <cylinderGeometry args={[2.4, 2.4, 1, 24, 1, true]} />
+            <meshBasicMaterial
+              color="#9b35ff"
+              {...glow}
+              opacity={0.55}
+              blending={THREE.AdditiveBlending}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <mesh>
+            <cylinderGeometry args={[0.45, 0.45, 1, 12, 1, true]} />
+            <meshBasicMaterial color="#e6c8ff" {...glow} opacity={0.9} blending={THREE.AdditiveBlending} />
+          </mesh>
+        </group>
+      </group>
+      <group ref={blast} position={to} visible={false}>
+        <mesh userData={{ o: 0.9 }}>
+          <sphereGeometry args={[1, 32, 20]} />
+          <meshBasicMaterial color="#12001c" {...glow} />
+        </mesh>
+        <mesh scale={1.25} userData={{ o: 0.7 }}>
+          <sphereGeometry args={[1, 32, 20]} />
+          <meshBasicMaterial color="#a23cff" {...glow} blending={THREE.AdditiveBlending} />
+        </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} scale={1.8} userData={{ o: 0.9 }}>
+          <ringGeometry args={[0.8, 1, 64]} />
+          <meshBasicMaterial color="#c77dff" {...glow} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+      {/* the pillar of darkness that swallows the opponent */}
+      <group ref={pillar} position={[to.x, 0, to.z]} visible={false}>
+        <mesh position={[0, 20, 0]} userData={{ o: 0.75 }}>
+          <cylinderGeometry args={[6, 8, 40, 32, 1, true]} />
+          <meshBasicMaterial color="#12001c" {...glow} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh position={[0, 20, 0]} userData={{ o: 0.5 }}>
+          <cylinderGeometry args={[7.5, 9.5, 40, 32, 1, true]} />
+          <meshBasicMaterial color="#8a2be2" {...glow} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+      <pointLight position={to} color="#a23cff" intensity={0} distance={60} ref={light} />
+    </>
   )
 }

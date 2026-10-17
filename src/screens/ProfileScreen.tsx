@@ -13,7 +13,7 @@ import { gateDeck } from '../data/gates'
 import {
   canEvolve,
   cardCount,
-  cardUnlockXp,
+  cardXpFor,
   nextCardXp,
   nextEvolveXp,
   rankScore,
@@ -492,7 +492,7 @@ function Cards({ profile }: { profile: Profile }) {
                         className="font-display text-[11px] font-bold tracking-wider"
                         style={{ color: locked ? '#888' : element.color }}
                       >
-                        {locked ? `🔒 UNLOCKS AT ${cardUnlockXp(i)} XP` : abilityLabel(a)}
+                        {locked ? `🔒 UNLOCKS AT ${cardXpFor(owned, i)} XP` : abilityLabel(a)}
                       </p>
                       <p className="font-display mt-0.5 text-sm font-bold">{a.name}</p>
                       <p className="mt-1 line-clamp-3 text-xs text-white/60">{a.description}</p>

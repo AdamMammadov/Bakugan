@@ -6,6 +6,8 @@ import {
   act,
   activeOf,
   canPlay,
+  chargeOf,
+  FINISHER_CHARGE,
   aiForTier,
   chooseAction,
   gateBonus,
@@ -34,6 +36,8 @@ const INTRO_MS = 2000
 const ENEMY_DELAY_MS = 700
 /** Time for a new Bakugan to rise onto the field. */
 const ENTRY_MS = 1400
+/** Extra time a finisher's beam and pillar of darkness hold the field before the battle goes on (or ends). */
+const FINISHER_HOLD_MS = 1600
 
 const TYPE_ICON: Record<Ability['type'], string> = {
   attack: '⚔',
@@ -215,7 +219,8 @@ export function ArenaScreen() {
           if (ev.actorG || ev.targetG) playSfx('gPower')
           setShown(next)
         })
-        later(ACTION_DURATION * 1000, () => {
+        const hold = action.kind === 'ability' && action.card.ability.type === 'finisher' ? FINISHER_HOLD_MS : 0
+        later(ACTION_DURATION * 1000 + hold, () => {
           if (ev.enters) {
             // the defeated Bakugan has fallen; the next one rises in its place
             setOnField(actives(next))
@@ -399,7 +404,15 @@ export function ArenaScreen() {
             <HandButton
               key={card.uid}
               disabled={!myTurn || !playable}
-              locked={!playable ? (owner.hp === 0 ? `${owner.name} is defeated` : `${owner.name} on the bench`) : undefined}
+              locked={
+                playable
+                  ? undefined
+                  : owner.hp === 0
+                    ? `${owner.name} is defeated`
+                    : activeOf(mySide).bakugan.id !== card.owner
+                      ? `${owner.name} on the bench`
+                      : `Charging: play ${FINISHER_CHARGE - chargeOf(mySide, card)} more card${FINISHER_CHARGE - chargeOf(mySide, card) === 1 ? '' : 's'}`
+              }
               onClick={() => run(battle, { kind: 'ability', card })}
               color={ownerElement.color}
               owner={owner.name}

@@ -160,7 +160,15 @@ export function gateBonus(state: BattleState, f: Fighter) {
 
 export const powerOf = (state: BattleState, f: Fighter) => f.g + gateBonus(state, f)
 
-export const canPlay = (side: Side, card: Card) => activeOf(side).bakugan.id === card.owner
+/** Other ability cards a Bakugan must play in a battle before its finisher (it gathers its power first). */
+export const FINISHER_CHARGE = 2
+
+/** How many of the cards a finisher waits for this card's owner has played so far in the battle. */
+export const chargeOf = (side: Side, card: Card) =>
+  side.used.filter((c) => c.owner === card.owner && c.ability.type !== 'finisher').length
+
+export const canPlay = (side: Side, card: Card) =>
+  activeOf(side).bakugan.id === card.owner && (card.ability.type !== 'finisher' || chargeOf(side, card) >= FINISHER_CHARGE)
 
 /** Damage scales with the attacker/defender G-Power ratio, clamped so nobody is untouchable. */
 function strike(power: number, attackerG: number, defenderG: number) {

@@ -38,6 +38,7 @@ const MOVES_BY_EFFECT: Record<Ability['effect'], Move[]> = {
   flameWave: ['roar', 'stomp'],
   waterSphere: ['stomp', 'breath'],
   shieldDome: ['guard'],
+  chaosBeam: ['breath'],
   aura: ['roar'],
 }
 

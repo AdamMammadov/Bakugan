@@ -9,7 +9,10 @@ import { ORIGINAL_ABILITIES, ROSTER } from './roster'
  * - drain:  steals G-Power (and some life) from the opponent
  * - shield: blocks the opponent's next attack or ability
  */
-/** `finisher`: defeats the opponent's Bakugan at once, whatever its G-Power, through any shield. */
+/**
+ * `finisher`: defeats the opponent's Bakugan at once, whatever its G-Power, through any shield; playable only once
+ * its Bakugan has gathered its power with other cards in the battle (engine FINISHER_CHARGE).
+ */
 export type AbilityType = 'attack' | 'boost' | 'weaken' | 'drain' | 'shield' | 'finisher'
 
 export type EffectPreset =
@@ -23,6 +26,8 @@ export type EffectPreset =
   | 'shadowOrb'
   | 'shieldDome'
   | 'aura'
+  /** Chaos Magnalia's Darkus beam and pillar of darkness. */
+  | 'chaosBeam'
 
 export interface Ability {
   id: string
@@ -401,6 +406,6 @@ export function battleEffect(a: Ability) {
     case 'shield':
       return `Raises a shield that blocks the opponent's next attack or ability.`
     case 'finisher':
-      return `Defeats the opponent's Bakugan at once, however high its G-Power, through any shield.`
+      return `After two other cards gather its power: defeats the opponent's Bakugan at once, however high its G-Power, through any shield.`
   }
 }

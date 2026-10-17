@@ -9,7 +9,7 @@ import { formModels, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { LiftDrag } from './LiftDrag'
-import { Impact, Projectile, ShieldDome } from './ArenaFx'
+import { ChaosBeam, Impact, Projectile, ShieldDome } from './ArenaFx'
 import { MonsterModel } from './BakuganModels'
 import { BlobShadow } from './BlobShadow'
 import { Brawler, type BrawlerGesture } from './Brawler'
@@ -361,7 +361,13 @@ function ActionFx({ event, fighters }: { event: BattleEvent; fighters: [Entrant,
   const type = action.kind === 'basic' ? 'attack' : action.card.ability.type
   const preset = action.kind === 'basic' ? 'fireball' : action.card.ability.effect
 
-  if (type === 'attack' || type === 'finisher') {
+  if (type === 'finisher') {
+    // a giant fires from its mouth, high above the field, with a beam to match its size
+    const big = Math.max(1, sizeOf(fighters[actor]))
+    const mouth = new THREE.Vector3(sideX(actor) * 0.6, CHEST_Y * (big > GIANT ? big * 1.5 : 1), 0)
+    return <ChaosBeam from={mouth} to={to} size={big} hitAt={IMPACT_AT - 0.1} />
+  }
+  if (type === 'attack') {
     return (
       <>
         <Projectile from={from} to={to} preset={preset} color={me.color} glow={me.glow} />

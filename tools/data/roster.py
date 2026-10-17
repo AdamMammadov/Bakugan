@@ -172,6 +172,8 @@ def slug(s):
 
 
 def effect(kind, element, n):
+    if kind == 'finisher':
+        return 'chaosBeam'
     if kind == 'boost':
         return 'aura'
     if kind == 'shield':
