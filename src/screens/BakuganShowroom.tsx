@@ -5,7 +5,7 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import { playSfx } from '../audio/sfx'
 import { PageNav } from '../components/PageNav'
 import { centreInStrip } from '../components/strip'
-import { abilityLabel, BAKUGAN, formModels } from '../data/bakugan'
+import { abilitiesOf, abilityLabel, BAKUGAN, formModels } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { cardCount, EVOLVE_XP, ownedForm, unlockHint, useActiveProfile } from '../profile/useProfiles'
 import { viewable } from '../season/release'
@@ -276,7 +276,11 @@ export function BakuganShowroom() {
                     <Stat label="ON A GATE" value={`${evo.gPower + bakugan.brawlG - bakugan.baseG}G`} color={el.color} />
                     <Stat
                       label="CARDS"
-                      value={owned ? `${cardCount(owned)}/${bakugan.abilities.length}` : `${bakugan.abilities.length}`}
+                      value={
+                        owned
+                          ? `${cardCount(owned)}/${abilitiesOf(bakugan, form).length}`
+                          : `${abilitiesOf(bakugan, form).length}`
+                      }
                       color={el.color}
                     />
                   </div>
@@ -374,7 +378,7 @@ export function BakuganShowroom() {
             <section className="pointer-events-auto w-72 max-w-[22vw] shrink-0 overflow-y-auto">
               <p className="font-display text-[10px] tracking-[0.4em] text-white/40">ABILITY CARDS</p>
               <ul className="mt-2 space-y-2">
-                {bakugan.abilities.map((a, i) => {
+                {abilitiesOf(bakugan, form).map((a, i) => {
                   const unlocked = owned ? i < cardCount(owned) : false
                   return (
                     <li key={a.id} className="rounded border border-white/10 bg-black/40 px-3 py-2">

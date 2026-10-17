@@ -6,7 +6,7 @@ import { GateChip } from '../components/GateChip'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { clanOf, useClans } from '../profile/useClans'
-import { abilityLabel, BAKUGAN, formBrawlG, type Bakugan } from '../data/bakugan'
+import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, type Bakugan } from '../data/bakugan'
 import { released } from '../season/release'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
@@ -372,7 +372,7 @@ function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: Owned
         </motion.button>
       )}
       <p className="mt-3 text-xs text-white/50">
-        Ability cards {cardCount(owned)}/{bakugan.abilities.length}
+        Ability cards {cardCount(owned)}/{abilitiesOf(bakugan, owned.form).length}
         {cardNext !== null && ` · next card at ${cardNext} XP`}
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -473,11 +473,11 @@ function Cards({ profile }: { profile: Profile }) {
               <p className="font-display text-sm font-bold" style={{ color: element.color }}>
                 {bakugan.name}{' '}
                 <span className="font-normal text-white/40">
-                  · {n}/{bakugan.abilities.length}
+                  · {n}/{abilitiesOf(bakugan, owned.form).length}
                 </span>
               </p>
               <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2">
-                {bakugan.abilities.map((a, i) => {
+                {abilitiesOf(bakugan, owned.form).map((a, i) => {
                   const locked = i >= n
                   return (
                     <div

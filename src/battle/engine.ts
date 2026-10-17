@@ -1,4 +1,4 @@
-import { formBrawlG, formOf, type Ability, type Bakugan, type Entrant } from '../data/bakugan'
+import { abilitiesOf, formBrawlG, formOf, type Ability, type Bakugan, type Entrant } from '../data/bakugan'
 import { released } from '../season/release'
 import type { GateCard } from '../data/gates'
 
@@ -105,7 +105,7 @@ function makeSide(team: Entrant[], gates: GateCard[], rng: () => number): Side {
   )
   const deck = shuffle(
     team.flatMap((e) =>
-      e.bakugan.abilities
+      abilitiesOf(e.bakugan, e.form)
         .filter((a) => !e.cards || e.cards.includes(a.id))
         .map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id })),
     ),
@@ -209,8 +209,10 @@ export function act(prev: BattleState, action: Action): { state: BattleState; ev
     }
     const hostile = action.kind === 'basic' || action.card.ability.type !== 'boost'
     const isShield = action.kind === 'ability' && action.card.ability.type === 'shield'
+    // a finisher goes through any shield
+    const isFinisher = action.kind === 'ability' && action.card.ability.type === 'finisher'
 
-    if (hostile && !isShield && foe.shield) {
+    if (hostile && !isShield && !isFinisher && foe.shield) {
       foe.shield = false
       event.blocked = true
       state.log.push(`${foe.name}'s shield blocks ${action.kind === 'basic' ? 'the attack' : action.card.ability.name}!`)
@@ -247,6 +249,11 @@ export function act(prev: BattleState, action: Action): { state: BattleState; ev
         case 'shield':
           me.shield = true
           state.log.push(`${me.name} uses ${a.name} and raises a shield.`)
+          break
+        case 'finisher':
+          foe.shield = false
+          event.damage = foe.hp
+          state.log.push(`${me.name} uses ${a.name}! ${foe.name} is wiped out.`)
           break
       }
     }
@@ -387,8 +394,14 @@ export function matchedOpponent(player: Entrant[], rng: () => number = Math.rand
   return player.map((slot, i): Entrant => {
     const bakugan = pool[i % pool.length]
     const form = Math.min(slot.form, bakugan.evolutions.length - 1)
-    const cards = slot.cards?.length ?? slot.bakugan.abilities.length
-    const entrant: Entrant = { bakugan, form, cards: bakugan.abilities.slice(0, cards).map((a) => a.id) }
+    const cards = slot.cards?.length ?? abilitiesOf(slot.bakugan, slot.form).length
+    const entrant: Entrant = {
+      bakugan,
+      form,
+      cards: abilitiesOf(bakugan, form)
+        .slice(0, cards)
+        .map((a) => a.id),
+    }
     // levelled to the player's Bakugan, but never past the strongest one players can get (the owner's own stay ahead)
     const level = Math.min(formBrawlG(slot) + (slot.bonusG ?? 0), strongest(slot.form))
     return { ...entrant, bonusG: level + Math.round(level * edge) - formBrawlG(entrant) }

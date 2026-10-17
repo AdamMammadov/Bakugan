@@ -9,7 +9,8 @@ import { ORIGINAL_ABILITIES, ROSTER } from './roster'
  * - drain:  steals G-Power (and some life) from the opponent
  * - shield: blocks the opponent's next attack or ability
  */
-export type AbilityType = 'attack' | 'boost' | 'weaken' | 'drain' | 'shield'
+/** `finisher`: defeats the opponent's Bakugan at once, whatever its G-Power, through any shield. */
+export type AbilityType = 'attack' | 'boost' | 'weaken' | 'drain' | 'shield' | 'finisher'
 
 export type EffectPreset =
   | 'fireball'
@@ -42,6 +43,8 @@ export interface Evolution {
   gPower: number
   /** Optional models for this form; falls back to the Bakugan's own models. */
   models?: Bakugan['models']
+  /** This form's own ability cards; the Bakugan's cards when omitted. */
+  abilities?: Ability[]
 }
 
 /** A Bakugan in one of its evolved forms (index into `evolutions`). */
@@ -60,6 +63,8 @@ export const formOf = (e: Entrant) => e.bakugan.evolutions[e.form] ?? e.bakugan.
 /** G-Power once the form stands on a Gate Card. */
 export const formBrawlG = (e: Entrant) => formOf(e).gPower + (e.bakugan.brawlG - e.bakugan.baseG)
 export const formModels = (e: Entrant) => formOf(e).models ?? e.bakugan.models
+/** The ability cards a Bakugan has in one of its forms (an evolution can bring cards of its own). */
+export const abilitiesOf = (bakugan: Bakugan, form = 0) => bakugan.evolutions[form]?.abilities ?? bakugan.abilities
 
 export interface Bakugan {
   id: string
@@ -343,6 +348,18 @@ const master = ROSTER.find((b) => b.id === 'ingram')?.evolutions.find((e) => e.n
 if (master) master.models = { ...ROSTER_MODELS.ingram, monster: 'models/ingram/master.glb', fly: false, fill: 1.12, scale: 0.95 }
 const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')
 if (knight) knight.models = { ball: 'models/percival/knight-ball.glb' }
+const phantom = ROSTER.find((b) => b.id === 'dharak')?.evolutions.find((e) => e.name === 'Phantom Dharak')
+// made with TRELLIS.2 from an AI picture after the anime (sent by the owner), its wing markings brightened, cut into
+// parts by where they lie (the arms reach in front of the wings) and skinned; its ball is an unused model from
+// Bakugan: Defenders of the Core (DS). A giant like Dharak, standing on its legs
+if (phantom)
+  phantom.models = {
+    monster: 'models/dharak/phantom.glb',
+    ball: 'models/dharak/phantom-ball.glb',
+    scale: 2.3,
+    length: 1.7,
+    stage: 1.25,
+  }
 
 BAKUGAN.push(...ROSTER)
 
@@ -361,11 +378,14 @@ export function abilityLabel(a: Ability) {
       return `STEAL ${a.amount}G`
     case 'shield':
       return 'BLOCK'
+    case 'finisher':
+      return 'KO'
   }
 }
 
 /** G-Power an ability adds to its user outside of battle (the Viewer's showcase). */
-export const abilitySelfBonus = (a: Ability) => (a.type === 'shield' || a.type === 'weaken' ? 0 : a.amount)
+export const abilitySelfBonus = (a: Ability) =>
+  a.type === 'shield' || a.type === 'weaken' || a.type === 'finisher' ? 0 : a.amount
 
 /** Plain-language summary of what an ability does in the arena. */
 export function battleEffect(a: Ability) {
@@ -380,5 +400,7 @@ export function battleEffect(a: Ability) {
       return `Steals ${a.amount}G from the opponent and drains some of their life into yours.`
     case 'shield':
       return `Raises a shield that blocks the opponent's next attack or ability.`
+    case 'finisher':
+      return `Defeats the opponent's Bakugan at once, however high its G-Power, through any shield.`
   }
 }

@@ -6,7 +6,7 @@ import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
-import { formModels } from '../data/bakugan'
+import { abilitiesOf, formModels } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { DEFAULT_PARTS, type Accessory } from '../profile/avatar'
 import {
@@ -422,9 +422,10 @@ function KeyTarget({ owned, keys }: { owned: OwnedBakugan; keys: number }) {
   const bakugan = bakuganById(owned.id)
   const element = ELEMENT_BY_ID[bakugan.element]
   const have = cardCount(owned)
-  const total = bakugan.abilities.length
+  const cards = abilitiesOf(bakugan, owned.form)
+  const total = cards.length
   const next = nextCardXp(owned)
-  const nextCard = bakugan.abilities[have]
+  const nextCard = cards[have]
   return (
     <div className="rounded-xl border bg-black/40 p-4" style={{ borderColor: `${element.color}55` }}>
       <div className="flex items-baseline justify-between">

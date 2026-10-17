@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { BAKUGAN, type Bakugan, type Entrant } from '../data/bakugan'
+import { abilitiesOf, BAKUGAN, type Bakugan, type Entrant } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
 import type { Avatar } from './avatar'
 import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
@@ -174,9 +174,12 @@ export const canEvolve = (owned: OwnedBakugan) => {
 
 /** Number of ability cards this Bakugan has unlocked. */
 export const cardCount = (owned: OwnedBakugan) =>
-  Math.min(bakuganById(owned.id).abilities.length, START_CARDS + (owned.bonusCards ?? 0) + Math.floor(owned.xp / CARD_XP))
+  Math.min(
+    abilitiesOf(bakuganById(owned.id), owned.form).length,
+    START_CARDS + (owned.bonusCards ?? 0) + Math.floor(owned.xp / CARD_XP),
+  )
 
-export const unlockedCards = (owned: OwnedBakugan) => bakuganById(owned.id).abilities.slice(0, cardCount(owned))
+export const unlockedCards = (owned: OwnedBakugan) => abilitiesOf(bakuganById(owned.id), owned.form).slice(0, cardCount(owned))
 
 /** XP at which ability card number `index` (0-based) unlocks. */
 export const cardUnlockXp = (index: number) => Math.max(0, index - START_CARDS + 1) * CARD_XP
@@ -184,7 +187,7 @@ export const cardUnlockXp = (index: number) => Math.max(0, index - START_CARDS +
 /** XP at which the next ability card unlocks, or null when all are unlocked. */
 export const nextCardXp = (owned: OwnedBakugan) => {
   const n = cardCount(owned)
-  return n >= bakuganById(owned.id).abilities.length ? null : cardUnlockXp(n - (owned.bonusCards ?? 0))
+  return n >= abilitiesOf(bakuganById(owned.id), owned.form).length ? null : cardUnlockXp(n - (owned.bonusCards ?? 0))
 }
 
 /** Season Bakugan of the running season are earned on the Season page, not bought. */
@@ -597,7 +600,7 @@ export const useProfiles = create<ProfilesState>()(
         set((s) =>
           patchActive(s, (p) => {
             const o = p.collection.find((x) => x.id === bakuganId)
-            if (!o || (p.cardKeys ?? 0) < 1 || cardCount(o) >= bakuganById(o.id).abilities.length) return p
+            if (!o || (p.cardKeys ?? 0) < 1 || cardCount(o) >= abilitiesOf(bakuganById(o.id), o.form).length) return p
             return {
               ...p,
               cardKeys: (p.cardKeys ?? 0) - 1,

@@ -3432,6 +3432,76 @@ export const ROSTER: Bakugan[] = [
         "name": "Dharak",
         "series": "Gundalian Invaders",
         "gPower": 800
+      },
+      {
+        "name": "Phantom Dharak",
+        "series": "Gundalian Invaders",
+        "gPower": 2800,
+        "abilities": [
+          {
+            "id": "darkness-shaker",
+            "name": "Darkness Shaker",
+            "type": "boost",
+            "amount": 800,
+            "effect": "aura",
+            "description": "The power that defeated Coredem: adds 800 G to Phantom Dharak.",
+            "estimated": true
+          },
+          {
+            "id": "tempest-shield",
+            "name": "Tempest Shield",
+            "type": "shield",
+            "amount": 0,
+            "effect": "shieldDome",
+            "description": "The storm wall that stopped five Bakugan's attacks at once: blocks the opponent's next attack or ability.",
+            "estimated": true
+          },
+          {
+            "id": "exodus-shaker",
+            "name": "Exodus Shaker",
+            "type": "weaken",
+            "amount": 600,
+            "effect": "shadowOrb",
+            "description": "The blast that defeated Raptorix: subtracts 600 G from the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "lavolta",
+            "name": "Lavolta",
+            "type": "drain",
+            "amount": 600,
+            "effect": "shadowOrb",
+            "description": "Ra Bolt, which defeated Akwimos: transfers 600 G from the opponent to Phantom Dharak.",
+            "estimated": true
+          },
+          {
+            "id": "photon-gladiator",
+            "name": "Photon Gladiator",
+            "type": "attack",
+            "amount": 500,
+            "effect": "shadowOrb",
+            "description": "The strike that defeated every Castle Knight, and Hawktor.",
+            "estimated": true
+          },
+          {
+            "id": "thunder-gladiator",
+            "name": "Thunder Gladiator",
+            "type": "attack",
+            "amount": 600,
+            "effect": "shadowOrb",
+            "description": "The strike that broke Neathia's Third Shield in one blow.",
+            "estimated": true
+          },
+          {
+            "id": "chaos-magnalia",
+            "name": "Chaos Magnalia",
+            "type": "finisher",
+            "amount": 0,
+            "effect": "shadowOrb",
+            "description": "The blast that wiped out Dragonoid Colossus, Stoica's Lythirus and Gill's ship: defeats the opponent's Bakugan at once, whatever its G-Power, through any shield.",
+            "estimated": true
+          }
+        ]
       }
     ]
   }

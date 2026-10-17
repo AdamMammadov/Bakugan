@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { GPowerCounter } from '../components/GPowerCounter'
-import { abilityLabel, abilitySelfBonus, BAKUGAN, type Ability } from '../data/bakugan'
+import { abilitiesOf, abilityLabel, abilitySelfBonus, BAKUGAN, type Ability } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { EVOLVE_XP, ownedForm, useActiveProfile } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
@@ -47,7 +47,8 @@ export function Viewer() {
   const evo = bakugan.evolutions[evolution]
   const baseG = evo.gPower
   const brawlG = baseG + (bakugan.brawlG - bakugan.baseG)
-  const abilityBoost = bakugan.abilities.filter((a) => used.includes(a.id)).reduce((sum, a) => sum + abilitySelfBonus(a), 0)
+  const cards = abilitiesOf(bakugan, evolution)
+  const abilityBoost = cards.filter((a) => used.includes(a.id)).reduce((sum, a) => sum + abilitySelfBonus(a), 0)
   const gPower = phase === 'monster' ? brawlG + abilityBoost : baseG
 
   const say = (text: string, sub?: string) => setShout({ text, sub, key: Date.now() })
@@ -180,10 +181,10 @@ export function Viewer() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
           >
-            <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">ABILITY CARDS ({bakugan.abilities.length})</p>
+            <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">ABILITY CARDS ({cards.length})</p>
             {/* scrolls on its own so the cards never cover the G-Power counter */}
             <div className="scroll-panel flex-1 space-y-3 overflow-y-auto pr-2">
-              {bakugan.abilities.map((a) => {
+              {cards.map((a) => {
                 const spent = used.includes(a.id)
                 return (
                   <button

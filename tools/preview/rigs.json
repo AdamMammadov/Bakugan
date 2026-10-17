@@ -3043,5 +3043,87 @@
       "test": "x < -0.06 && z <= 0.12 && z > -0.15 && y < -0.1",
       "swing": 0.4
     }
+  ],
+  "phantom-dharak": [
+    {
+      "name": "head",
+      "pivot": [
+        -0.01,
+        0.17,
+        0.17
+      ],
+      "test": "mesh === 'head'",
+      "swing": 0.5
+    },
+    {
+      "name": "wing_l",
+      "pivot": [
+        0.11,
+        0.14,
+        0.12
+      ],
+      "test": "mesh === 'wing_l'",
+      "swing": 0.5
+    },
+    {
+      "name": "wing_r",
+      "pivot": [
+        -0.13,
+        0.14,
+        0.12
+      ],
+      "test": "mesh === 'wing_r'",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        0.1,
+        0.11,
+        0.2
+      ],
+      "test": "mesh === 'arm_l'",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -0.12,
+        0.11,
+        0.2
+      ],
+      "test": "mesh === 'arm_r'",
+      "swing": 0.5
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        -0.01,
+        -0.08,
+        0.0
+      ],
+      "test": "mesh === 'tail'",
+      "swing": 0.5
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        0.06,
+        -0.09,
+        0.12
+      ],
+      "test": "mesh === 'leg_l'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -0.08,
+        -0.09,
+        0.12
+      ],
+      "test": "mesh === 'leg_r'",
+      "swing": 0.4
+    }
   ]
 }

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { aiForTier, matchedOpponent, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
-import { abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
+import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
 import { isReleased, released } from '../season/release'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
@@ -341,11 +341,11 @@ function TeamCard({
       )}
 
       <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">
-        ABILITY DECK ({team.reduce((n, e) => n + (e.cards?.length ?? e.bakugan.abilities.length), 0)} CARDS)
+        ABILITY DECK ({team.reduce((n, e) => n + (e.cards?.length ?? abilitiesOf(e.bakugan, e.form).length), 0)} CARDS)
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {team.flatMap((e) =>
-          e.bakugan.abilities
+          abilitiesOf(e.bakugan, e.form)
             .filter((a) => !e.cards || e.cards.includes(a.id))
             .map((a) => (
               <span

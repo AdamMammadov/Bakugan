@@ -206,7 +206,7 @@ function Fighter({
     const { actor, target, action, damage, blocked } = event.event
     if (action.kind === 'switch') return
     const ability = action.kind === 'ability' ? action.card.ability : null
-    const hostile = !ability || ability.type === 'attack' || ability.type === 'drain'
+    const hostile = !ability || ability.type === 'attack' || ability.type === 'drain' || ability.type === 'finisher'
     if (actor === side) {
       const move = moveFor(ability)
       anim.current = { kind: hostile ? 'lunge' : 'cast', move, start: null }
@@ -361,7 +361,7 @@ function ActionFx({ event, fighters }: { event: BattleEvent; fighters: [Entrant,
   const type = action.kind === 'basic' ? 'attack' : action.card.ability.type
   const preset = action.kind === 'basic' ? 'fireball' : action.card.ability.effect
 
-  if (type === 'attack') {
+  if (type === 'attack' || type === 'finisher') {
     return (
       <>
         <Projectile from={from} to={to} preset={preset} color={me.color} glow={me.glow} />

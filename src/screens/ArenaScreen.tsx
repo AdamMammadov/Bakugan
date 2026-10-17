@@ -41,6 +41,7 @@ const TYPE_ICON: Record<Ability['type'], string> = {
   weaken: '▼',
   drain: '⇄',
   shield: '◆',
+  finisher: '☠',
 }
 
 const toTeam = (members: TeamMember[]): Entrant[] =>

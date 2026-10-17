@@ -114,7 +114,7 @@ ROSTER = [
      'A giant three-headed, Cerberus-like hound from the new generation and the Guardian of Lightning. Howlkor is so set on winning that he often scares his own brawler.'),
     ('vladitor', 'Vladitor', 'darkus', 'Video game villain', 490, [('Battle Ax Vladitor', 'Video game', 600)],
      'The final foe of the first Bakugan video game, a towering Darkus warlord. As Battle Ax Vladitor his power is immense.'),
-    ('dharak', 'Dharak', 'darkus', 'Emperor Barodius', 800, [],
+    ('dharak', 'Dharak', 'darkus', 'Emperor Barodius', 800, [('Phantom Dharak', 'Gundalian Invaders', 2800)],
      'Emperor Barodius\'s Guardian and the Darkus pair of the Twelve Orders of Gundalia, from the same ancient lineage as Drago. He blasts dark energy from his mouth, and few Bakugan have ever stood against him.'),
 ]
 
@@ -138,6 +138,16 @@ OWNER_DECKS = {'dharak': [
     ('High Skewed Waver', 'drain', 300, 'Transfers 300 G from the opponent to Dharak.'),
     ('Evil Blast', 'attack', 400, 'The Evil Blow: Dharak\'s crushing blast of darkness.'),
     ('Exodus Waver', 'attack', 500, 'Dharak\'s strongest wave, which few Bakugan have ever withstood.'),
+],
+    # Phantom Dharak's own cards, after what each did in Gundalian Invaders (Final Strike to Destiny Revealed)
+    'dharak~1': [
+    ('Darkness Shaker', 'boost', 800, 'The power that defeated Coredem: adds 800 G to Phantom Dharak.'),
+    ('Tempest Shield', 'shield', 0, 'The storm wall that stopped five Bakugan\'s attacks at once: blocks the opponent\'s next attack or ability.'),
+    ('Exodus Shaker', 'weaken', 600, 'The blast that defeated Raptorix: subtracts 600 G from the opponent.'),
+    ('Lavolta', 'drain', 600, 'Ra Bolt, which defeated Akwimos: transfers 600 G from the opponent to Phantom Dharak.'),
+    ('Photon Gladiator', 'attack', 500, 'The strike that defeated every Castle Knight, and Hawktor.'),
+    ('Thunder Gladiator', 'attack', 600, 'The strike that broke Neathia\'s Third Shield in one blow.'),
+    ('Chaos Magnalia', 'finisher', 0, 'The blast that wiped out Dragonoid Colossus, Stoica\'s Lythirus and Gill\'s ship: defeats the opponent\'s Bakugan at once, whatever its G-Power, through any shield.'),
 ]}
 # the original six (src/data/bakugan.ts) and how many cards each has
 ORIGINAL = [('dragonoid', 'Dragonoid', 'pyrus', 8), ('preyas', 'Preyas', 'aquos', 7), ('gorem', 'Gorem', 'subterra', 7),
@@ -325,14 +335,20 @@ def main():
     original = {bid: deck(cards, attr_cards, used, bid, name, element, n) for bid, name, element, n in ORIGINAL}
     order = [r for r in ROSTER if r[0] not in ADDED] + sorted((r for r in ROSTER if r[0] in ADDED), key=lambda r: ADDED.index(r[0]))
     decks = {r[0]: deck(cards, attr_cards, used, r[0], r[1], r[2], CARDS) for r in order if r[0] not in OWNER_DECKS}
+    owner_card = lambda i, n, k, a, d: {'id': slug(n), 'name': n, 'type': k, 'amount': a, 'effect': effect(k, 'darkus', i),
+                                        'description': d, 'estimated': True}
     for bid, owner in OWNER_DECKS.items():
-        decks[bid] = [{'id': slug(n), 'name': n, 'type': k, 'amount': a, 'effect': effect(k, 'darkus', i), 'description': d, 'estimated': True}
-                      for i, (n, k, a, d) in enumerate(owner)]
+        if '~' not in bid:
+            decks[bid] = [owner_card(i, *c) for i, c in enumerate(owner)]
 
     out = []
     for bid, name, element, brawler, g, evos, desc in ROSTER:
         series = SERIES.get(bid) or ('New Vestroia' if brawler in NEW_VESTROIA else 'Battle Brawlers')
         evolutions = [{'name': name, 'series': series, 'gPower': g}] + [{'name': n, 'series': s, 'gPower': p} for n, s, p in evos]
+        # an evolution with cards of its own (OWNER_DECKS '<id>~<form>')
+        for form, evo in enumerate(evolutions):
+            if f'{bid}~{form}' in OWNER_DECKS:
+                evo['abilities'] = [owner_card(i, *c) for i, c in enumerate(OWNER_DECKS[f'{bid}~{form}'])]
         out.append({
             'id': bid, 'name': name, 'element': element, 'brawler': brawler,
             'series': series,
