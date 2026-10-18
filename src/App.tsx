@@ -24,22 +24,23 @@ const BakuganShowroom = lazy(() => import('./screens/BakuganShowroom').then((m) 
 const CharacterShowroom = lazy(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
 const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
 
-/** Which theme plays where: each part of the game has its own. */
+/** Which song plays where: every page has its own, and the arena picks one of the battle songs. */
 const TRACK_FOR: Partial<Record<Screen, Track>> = {
-  wheel: 'home',
+  wheel: 'menu',
+  profileEdit: 'workshop',
   hub: 'home',
   viewer: 'home',
   compare: 'faceoff',
   arena: 'battle',
   shop: 'shop',
-  inventory: 'shop',
-  pass: 'anthem',
+  inventory: 'inventory',
+  pass: 'pass',
   profile: 'anthem',
-  rankings: 'anthem',
-  clans: 'anthem',
+  rankings: 'rankings',
+  clans: 'clans',
   encyclopedia: 'gallery',
-  showroom: 'gallery',
-  characters: 'gallery',
+  showroom: 'showroom',
+  characters: 'characters',
 }
 
 export default function App() {

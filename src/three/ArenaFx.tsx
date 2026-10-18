@@ -160,20 +160,42 @@ export function Impact({ at, color, delay = 0.75 }: { at: THREE.Vector3; color: 
   )
 }
 
-/** Translucent barrier shown while a fighter's shield is up. Flashes when it blocks. */
-export function ShieldDome({ color, active, flashKey }: { color: string; active: boolean; flashKey: number }) {
+/**
+ * Translucent barrier shown while a fighter's shield is up: a bubble of radius 1, which the parent stretches round
+ * the Bakugan. A new `flashKey` (a blocked hit) makes it flash `flashDelay` seconds later, when the hit lands.
+ */
+export function ShieldDome({
+  color,
+  active,
+  flashKey,
+  flashDelay = 0,
+}: {
+  color: string
+  active: boolean
+  /** Key of the last hit this shield blocked; 0 = none. */
+  flashKey: number
+  flashDelay?: number
+}) {
   const ref = useRef<THREE.Group>(null)
   const scale = useRef(0)
   const lastFlash = useRef(flashKey)
+  const flashAt = useRef<number | null>(null)
   const flash = useRef(0)
 
   useFrame(({ clock }, dt) => {
+    const now = clock.elapsedTime
+    // only a new block flashes: the key going back to 0 (the next action) must not bring a broken shield back
     if (lastFlash.current !== flashKey) {
       lastFlash.current = flashKey
+      if (flashKey) flashAt.current = now + flashDelay
+    }
+    if (flashAt.current !== null && now >= flashAt.current) {
+      flashAt.current = null
       flash.current = 1
     }
     flash.current = Math.max(0, flash.current - dt * 2)
-    scale.current = THREE.MathUtils.damp(scale.current, active || flash.current > 0 ? 1 : 0.001, 8, dt)
+    const on = active || flash.current > 0 || flashAt.current !== null
+    scale.current = THREE.MathUtils.damp(scale.current, on ? 1 : 0.001, 8, dt)
     const g = ref.current
     if (!g) return
     g.visible = scale.current > 0.01
@@ -185,13 +207,13 @@ export function ShieldDome({ color, active, flashKey }: { color: string; active:
   })
 
   return (
-    <group ref={ref} position={[0, 1.6, 0]} visible={false}>
+    <group ref={ref} visible={false}>
       <mesh>
-        <sphereGeometry args={[2.1, 32, 24]} />
+        <sphereGeometry args={[1, 32, 24]} />
         <meshBasicMaterial color={color} transparent blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
       </mesh>
       <mesh>
-        <icosahedronGeometry args={[2.15, 2]} />
+        <icosahedronGeometry args={[1.02, 2]} />
         <meshBasicMaterial
           color={color}
           wireframe
