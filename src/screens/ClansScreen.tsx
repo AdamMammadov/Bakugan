@@ -5,9 +5,10 @@ import { Avatar } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
-import { BOTS, isBot } from '../profile/bots'
+import { isBot } from '../profile/bots'
+import { useMinute } from '../profile/botProgress'
 import { brawlerOf, clanMembers, TIER_COLORS, type BrawlerView } from '../profile/brawlers'
-import { clanOf, useClans, type Clan } from '../profile/useClans'
+import { clanOf, freeBots, MAX_MEMBERS, useClanLife, useClans, type Clan } from '../profile/useClans'
 import { friendStatus, tierOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
 import { BrawlerProfileModal, FriendsList } from './BrawlerProfile'
 
@@ -17,6 +18,10 @@ export function ClansScreen() {
   const mine = clanOf(clans, profile?.id)
   const [view, setView] = useState<'mine' | 'browse'>('mine')
   const [openId, setOpenId] = useState<string | null>(null)
+  // CPU brawlers keep joining, leaving and brawling while the page is open
+  useClanLife()
+  const now = useMinute()
+  const requests = mine && mine.leaderId === profile?.id ? (mine.requests?.length ?? 0) : 0
 
   return (
     <motion.div
@@ -30,7 +35,8 @@ export function ClansScreen() {
       <h1 className="font-display mt-8 text-4xl font-black tracking-wider">CLANS</h1>
       <p className="mt-1 max-w-3xl text-sm text-white/45">
         Join a clan, meet its brawlers, add friends and talk in the clan chat. CPU clans are open to everyone; you can also found
-        your own and recruit free CPU brawlers into it. Online clans with players everywhere arrive with the online PvP update.
+        your own: free CPU brawlers ask to join it, and you can recruit them. Online clans with players everywhere arrive with the
+        online PvP update.
       </p>
 
       {!profile ? (
@@ -56,15 +62,20 @@ export function ClansScreen() {
                   }`}
                 >
                   {label}
+                  {id === 'mine' && requests > 0 && (
+                    <span className="ml-2 rounded-full bg-amber-400 px-1.5 text-[10px] tracking-normal text-black">
+                      {requests} {requests === 1 ? 'REQUEST' : 'REQUESTS'}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           )}
           {mine && view === 'mine' ? (
-            <ClanPage clan={mine} me={profile} onOpen={setOpenId} />
+            <ClanPage clan={mine} me={profile} now={now} onOpen={setOpenId} />
           ) : (
             <div className="mt-8 grid grid-cols-[minmax(0,1fr)_400px] gap-8">
-              <ClanBrowser clans={clans} me={profile} mine={mine} onOpen={setOpenId} onJoined={() => setView('mine')} />
+              <ClanBrowser clans={clans} me={profile} mine={mine} now={now} onOpen={setOpenId} onJoined={() => setView('mine')} />
               <aside className="space-y-6">
                 {!mine && <CreateClan me={profile} />}
                 <div className="rounded-xl border border-white/10 bg-black/40 p-5">
@@ -110,17 +121,17 @@ function stamp(at: number) {
 const CpuChip = () => <span className="rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>
 
 /** Members in the order a clan page lists them: leader first, then by rank score. */
-function sortedMembers(clan: Clan, profiles: Profile[]) {
-  return clanMembers(clan, profiles).sort(
+function sortedMembers(clan: Clan, profiles: Profile[], now: number) {
+  return clanMembers(clan, profiles, now).sort(
     (a, b) => Number(b.id === clan.leaderId) - Number(a.id === clan.leaderId) || b.score - a.score,
   )
 }
 
 /** Every clan with its members, score and rank, strongest first. */
-function rankedClans(clans: Clan[], profiles: Profile[]) {
+function rankedClans(clans: Clan[], profiles: Profile[], now: number) {
   return clans
     .map((clan) => {
-      const members = sortedMembers(clan, profiles)
+      const members = sortedMembers(clan, profiles, now)
       return { clan, members, score: members.reduce((n, m) => n + m.score, 0) }
     })
     .sort((a, b) => b.score - a.score)
@@ -194,12 +205,14 @@ function ClanBrowser({
   clans,
   me,
   mine,
+  now,
   onOpen,
   onJoined,
 }: {
   clans: Clan[]
   me: Profile
   mine: Clan | null
+  now: number
   onOpen: (id: string) => void
   onJoined: () => void
 }) {
@@ -213,7 +226,7 @@ function ClanBrowser({
     <section>
       <h2 className="font-display text-xs tracking-[0.5em] text-white/40">ALL CLANS · {clans.length}</h2>
       <div className="mt-3 space-y-3">
-        {rankedClans(clans, profiles).map(({ clan: c, members, score }, i) => {
+        {rankedClans(clans, profiles, now).map(({ clan: c, members, score }, i) => {
           const el = ELEMENT_BY_ID[c.element]
           const leader = members.find((m) => m.id === c.leaderId)
           const isMine = mine?.id === c.id
@@ -354,28 +367,34 @@ function CreateClan({ me }: { me: Profile }) {
       >
         FOUND CLAN
       </button>
-      <p className="mt-2 text-xs text-white/40">Once it is founded you can recruit free CPU brawlers into it.</p>
+      <p className="mt-2 text-xs text-white/40">
+        Once it is founded, free CPU brawlers ask to join it, and you can recruit them yourself.
+      </p>
     </section>
   )
 }
 
-function ClanPage({ clan, me, onOpen }: { clan: Clan; me: Profile; onOpen: (id: string) => void }) {
+function ClanPage({ clan, me, now, onOpen }: { clan: Clan; me: Profile; now: number; onOpen: (id: string) => void }) {
   const profiles = useProfiles((s) => s.profiles)
   const clans = useClans((s) => s.clans)
   const typing = useClans((s) => s.typing[clan.id])
-  const { leave, kick, send, recruit, chatter } = useClans.getState()
+  const { leave, kick, send, recruit, chatter, answerRequest, setOpen } = useClans.getState()
   const [text, setText] = useState('')
   const log = useRef<HTMLDivElement>(null)
   const el = ELEMENT_BY_ID[clan.element]
-  const members = sortedMembers(clan, profiles)
+  const members = sortedMembers(clan, profiles, now)
   const leader = clan.leaderId === me.id
   const otherPlayers = clan.members.filter((id) => id !== me.id && !isBot(id)).length
-  const ranked = rankedClans(clans, profiles)
+  const ranked = rankedClans(clans, profiles, now)
   const place = ranked.findIndex((r) => r.clan.id === clan.id) + 1
   const score = ranked[place - 1]?.score ?? 0
-  const taken = new Set(clans.flatMap((c) => c.members))
-  const freeBots = BOTS.filter((b) => !b.clan && !taken.has(b.id)).length
-  const typingNames = (typing ?? []).map((id) => brawlerOf(id, profiles)?.firstName).filter(Boolean)
+  const full = clan.members.length >= MAX_MEMBERS
+  const free = freeBots(clans).length
+  const cpuMembers = clan.members.filter(isBot).length
+  const requests = (clan.requests ?? [])
+    .map((r) => ({ ...r, b: brawlerOf(r.id, profiles, now) }))
+    .filter((r): r is typeof r & { b: BrawlerView } => !!r.b)
+  const typingNames = (typing ?? []).map((id) => brawlerOf(id, profiles, now)?.firstName).filter(Boolean)
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight })
@@ -408,7 +427,8 @@ function ClanPage({ clan, me, onOpen }: { clan: Clan; me: Profile; onOpen: (id: 
           </h2>
           <p className="mt-1 text-white/60 italic">“{clan.motto || 'No motto yet'}”</p>
           <p className="mt-1 text-sm text-white/45">
-            #{place} in the clan rankings · {score.toLocaleString('en')} score · {members.length} members
+            #{place} in the clan rankings · {score.toLocaleString('en')} score · {members.length}{' '}
+            {members.length === 1 ? 'member' : 'members'}
           </p>
         </div>
         <button
@@ -421,16 +441,36 @@ function ClanPage({ clan, me, onOpen }: { clan: Clan; me: Profile; onOpen: (id: 
 
       <div className="mt-8 grid grid-cols-[380px_minmax(0,1fr)] gap-8">
         <section>
-          <div className="flex items-center justify-between">
-            <h3 className="font-display text-xs tracking-[0.5em] text-white/40">MEMBERS · {members.length}</h3>
+          {!clan.cpu && leader && (
+            <JoinRequests
+              clan={clan}
+              requests={requests}
+              full={full}
+              onAnswer={(id, yes) => {
+                if (answerRequest(clan.id, id, yes) && yes) playSfx('select')
+              }}
+              onOpenChange={(open) => {
+                playSfx('tick')
+                setOpen(clan.id, open)
+              }}
+              onOpen={onOpen}
+            />
+          )}
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-display text-xs tracking-[0.4em] whitespace-nowrap text-white/40">
+              MEMBERS · {members.length}
+              {!clan.cpu && <span className="text-white/25"> / {MAX_MEMBERS}</span>}
+            </h3>
             {leader && !clan.cpu && (
               <button
-                disabled={freeBots === 0}
+                disabled={free === 0 || full}
                 onClick={() => recruit(clan.id) && playSfx('select')}
-                title="Adds a free CPU brawler to your clan"
-                className="font-display rounded border border-white/30 px-3 py-1 text-[10px] tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
+                title={
+                  full ? 'Your clan is full' : free ? 'Adds a free CPU brawler to your clan' : 'No CPU brawler is free right now'
+                }
+                className="font-display rounded border border-white/30 px-3 py-1 text-[10px] tracking-[0.3em] whitespace-nowrap transition enabled:hover:bg-white/10 disabled:opacity-40"
               >
-                + RECRUIT CPU BRAWLER
+                + RECRUIT CPU
               </button>
             )}
           </div>
@@ -457,7 +497,15 @@ function ClanPage({ clan, me, onOpen }: { clan: Clan; me: Profile; onOpen: (id: 
           <div ref={log} className="flex-1 space-y-3 overflow-y-auto p-4">
             {clan.messages.length === 0 && <p className="text-sm text-white/40">No messages yet. Say hi to your clan!</p>}
             {clan.messages.map((msg) => {
-              const author = brawlerOf(msg.author, profiles)
+              if (msg.system)
+                return (
+                  <p key={msg.id} className="text-center text-[11px] text-white/40">
+                    <span className="rounded-full bg-white/5 px-3 py-1">
+                      {msg.text} · {stamp(msg.at)}
+                    </span>
+                  </p>
+                )
+              const author = brawlerOf(msg.author, profiles, now)
               const own = msg.author === me.id
               return (
                 <div key={msg.id} className={`flex items-end gap-2 ${own ? 'flex-row-reverse' : ''}`}>
@@ -487,6 +535,12 @@ function ClanPage({ clan, me, onOpen }: { clan: Clan; me: Profile; onOpen: (id: 
                 {typingNames.join(' and ')} {typingNames.length > 1 ? 'are' : 'is'} typing…
               </p>
             )}
+            {cpuMembers === 0 && (
+              <p className="text-center text-xs text-white/40">
+                Nobody else is in [{clan.tag}] yet, so nobody can answer. CPU brawlers will ask to join soon
+                {leader && free > 0 && ' — or recruit one now'}.
+              </p>
+            )}
           </div>
           <form onSubmit={submit} className="flex gap-2 border-t border-white/10 p-3">
             <input
@@ -502,6 +556,92 @@ function ClanPage({ clan, me, onOpen }: { clan: Clan; me: Profile; onOpen: (id: 
           </form>
         </section>
       </div>
+    </div>
+  )
+}
+
+/** The leader's box for CPU brawlers asking to join, and whether the clan takes them in without asking. */
+function JoinRequests({
+  clan,
+  requests,
+  full,
+  onAnswer,
+  onOpenChange,
+  onOpen,
+}: {
+  clan: Clan
+  requests: { id: string; at: number; b: BrawlerView }[]
+  full: boolean
+  onAnswer: (id: string, yes: boolean) => void
+  onOpenChange: (open: boolean) => void
+  onOpen: (id: string) => void
+}) {
+  return (
+    <div className="mb-6 rounded-xl border border-white/10 bg-black/40 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-display text-xs tracking-[0.3em] whitespace-nowrap text-white/40">
+          JOIN REQUESTS · {requests.length}
+        </h3>
+        <div className="flex rounded-full border border-white/15 p-0.5 text-[10px]">
+          {(
+            [
+              [false, 'ASK FIRST'],
+              [true, 'OPEN'],
+            ] as const
+          ).map(([open, label]) => (
+            <button
+              key={label}
+              onClick={() => !!clan.open !== open && onOpenChange(open)}
+              className={`font-display rounded-full px-2.5 py-1 tracking-[0.15em] whitespace-nowrap transition ${
+                !!clan.open === open ? 'bg-white/15 text-white' : 'text-white/45 hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="mt-1 text-xs text-white/35">
+        {clan.open
+          ? 'Open clan: free CPU brawlers join right away.'
+          : 'Free CPU brawlers ask to join now and then. Requests stay for a day.'}
+        {full && ' Your clan is full.'}
+      </p>
+      {requests.length === 0 ? (
+        !clan.open && <p className="mt-3 text-sm text-white/40">No requests right now.</p>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {requests.map(({ id, at, b }) => {
+            const tier = tierOf(b.score)
+            return (
+              <div key={id} className="flex items-center gap-3 rounded-lg border border-amber-300/30 bg-amber-300/5 p-2">
+                <button onClick={() => onOpen(id)} title={`${b.name}'s profile`}>
+                  <Avatar avatar={b.avatar} color={ELEMENT_BY_ID[b.element].color} size={36} />
+                </button>
+                <div className="min-w-0 flex-1" title={`Asked ${stamp(at)}`}>
+                  <p className="truncate text-sm font-semibold">{b.name}</p>
+                  <p className="truncate text-[11px] text-white/45">
+                    <span style={{ color: TIER_COLORS[tier.index] }}>{tier.name}</span> · {b.rating} BR
+                  </p>
+                </div>
+                <button
+                  disabled={full}
+                  onClick={() => onAnswer(id, true)}
+                  className="font-display rounded border border-emerald-400/60 px-2 py-1 text-[10px] tracking-[0.2em] text-emerald-300 transition enabled:hover:bg-emerald-400/10 disabled:opacity-40"
+                >
+                  ACCEPT
+                </button>
+                <button
+                  onClick={() => onAnswer(id, false)}
+                  className="font-display rounded border border-white/20 px-2 py-1 text-[10px] tracking-[0.2em] text-white/50 transition hover:text-red-300"
+                >
+                  DECLINE
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

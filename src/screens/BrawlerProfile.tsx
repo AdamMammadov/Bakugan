@@ -4,6 +4,7 @@ import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
 import { formBrawlG } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
+import { useMinute } from '../profile/botProgress'
 import { brawlerOf, TIER_COLORS } from '../profile/brawlers'
 import { clanOf, useClans } from '../profile/useClans'
 import { bakuganById, friendStatus, tierOf, useActiveProfile, useProfiles } from '../profile/useProfiles'
@@ -49,7 +50,8 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
   const me = useActiveProfile()
   const clans = useClans((s) => s.clans)
   const openPage = useGame((s) => s.openPage)
-  const b = brawlerOf(id, profiles)
+  const now = useMinute()
+  const b = brawlerOf(id, profiles, now)
   if (!b) return null
   const el = ELEMENT_BY_ID[b.element]
   const tier = tierOf(b.score)
@@ -97,6 +99,12 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
             </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-white/70">{b.bio || 'No bio yet.'}</p>
+          {b.cpu && (
+            <p className="mt-2 text-xs text-white/40">
+              {b.today ? `${b.today} ${b.today === 1 ? 'brawl' : 'brawls'} today` : 'No brawls yet today'}
+              {b.lastBattle && ` · last brawl ${ago(now - b.lastBattle)}`}
+            </p>
+          )}
         </div>
       </div>
 
@@ -152,6 +160,15 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
   )
 }
 
+/** "just now", "25 min ago", "3 h ago", "2 days ago". */
+function ago(ms: number) {
+  const min = Math.floor(ms / 60_000)
+  if (min < 1) return 'just now'
+  if (min < 60) return `${min} min ago`
+  const h = Math.floor(min / 60)
+  return h < 24 ? `${h} h ago` : `${Math.floor(h / 24)} ${h < 48 ? 'day' : 'days'} ago`
+}
+
 /** Add friend → request sent → friends (with remove). */
 export function FriendButton({ id, name, small }: { id: string; name: string; small?: boolean }) {
   const me = useActiveProfile()
@@ -205,7 +222,7 @@ export function FriendsList({ onOpen }: { onOpen: (id: string) => void }) {
   const me = useActiveProfile()
   const profiles = useProfiles((s) => s.profiles)
   const now = useFriendClock()
-  const list = (me?.friends ?? []).map((f) => ({ f, b: brawlerOf(f.id, profiles) })).filter((x) => !!x.b)
+  const list = (me?.friends ?? []).map((f) => ({ f, b: brawlerOf(f.id, profiles, now) })).filter((x) => !!x.b)
   return (
     <section>
       <h3 className="font-display text-xs tracking-[0.5em] text-white/40">

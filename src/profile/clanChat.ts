@@ -4,9 +4,24 @@ import { botById, botTeam } from './bots'
 
 /** Canned clan chat for CPU members: short, friendly and Bakugan-themed. No network involved. */
 
-type Kind = 'greet' | 'thanks' | 'question' | 'shop' | 'brawl' | 'win' | 'loss' | 'tip' | 'mention' | 'chat'
+type Kind =
+  | 'greet'
+  | 'mood'
+  | 'bye'
+  | 'newbie'
+  | 'thanks'
+  | 'laugh'
+  | 'agree'
+  | 'question'
+  | 'shop'
+  | 'brawl'
+  | 'win'
+  | 'loss'
+  | 'tip'
+  | 'mention'
+  | 'chat'
 
-const LINES: Record<Kind | 'welcome' | 'recruited', string[]> = {
+const LINES: Record<Kind | 'welcome' | 'recruited' | 'joined', string[]> = {
   welcome: [
     'Welcome to [{tag}], {name}! Glad to have you.',
     'A new brawler! Welcome aboard, {name}.',
@@ -19,6 +34,12 @@ const LINES: Record<Kind | 'welcome' | 'recruited', string[]> = {
     'Joined up! {bakugan} and I are ready.',
     'Happy to be here. Who wants a training brawl?',
   ],
+  joined: [
+    'Hi everyone! Happy to be in [{tag}] 👋',
+    'Thanks for having me, {name}! {bakugan} and I are ready.',
+    'Hey all! Looking forward to brawling with you.',
+    'Hello [{tag}]! Who’s up for a training brawl?',
+  ],
   greet: [
     'Hey {name}! Ready to brawl?',
     'Yo {name}! Good to see you.',
@@ -26,7 +47,21 @@ const LINES: Record<Kind | 'welcome' | 'recruited', string[]> = {
     'Hello! How are your Bakugan doing?',
     'Hey hey! Gate Card, set! 👋',
   ],
+  mood: [
+    'All good! {bakugan} and I just finished a training brawl. You?',
+    'Great, thanks! Ready for the next brawl.',
+    'Pretty good! Grinding the Season Pass. How about you, {name}?',
+    'Doing fine! Still buzzing from my last win 😄',
+  ],
+  newbie: [
+    'Welcome, {name}! Ask us anything.',
+    'Nice to meet you, {name}! Want a training brawl to warm up?',
+    'Welcome aboard! Tip: daily challenges level the Season Pass fast.',
+  ],
+  bye: ['See you, {name}!', 'Later! Brawl hard.', 'Bye {name}, good luck out there!', 'Catch you next brawl 👋'],
   thanks: ['Anytime!', 'No problem, that’s what clans are for.', 'You got it, {name}.', 'Happy to help! 🙌'],
+  laugh: ['😄', 'Haha, true!', 'LOL 😂', 'Haha, {bakugan} would agree.'],
+  agree: ['👍', 'Sounds good!', 'Deal!', 'Let’s do it, {name}.'],
   question: [
     'Good question… I’d build the team around your own attribute first.',
     'Not sure, but Drago would just charge right in!',
@@ -90,19 +125,58 @@ const LINES: Record<Kind | 'welcome' | 'recruited', string[]> = {
   ],
 }
 
-const NAMES = [...new Set(BAKUGAN.map((b) => b.name))].sort((a, b) => b.length - a.length)
+/** Why a CPU member leaves a clan, for the line in the chat. */
+const LEAVE_REASONS = [
+  'taking a break from brawling',
+  'wants to brawl solo for a while',
+  'is training alone for the next season',
+  'left to start over with a new team',
+]
+
+/** Matches any of the "|"-separated words as a whole word, in any script (so "salam" and "döyüş" work too). */
+const words = (list: string) => new RegExp(`(?<![\\p{L}\\p{N}])(?:${list})(?![\\p{L}\\p{N}])`, 'iu')
+
+// English, plus Azerbaijani, Turkish and Russian, which players here write in (the bots answer in English)
+const KINDS: [Kind, RegExp][] = [
+  [
+    'mood',
+    words(
+      "how are you|how r u|how is it going|how[’']s it going|what[’']s up|wassup|sup|necəsən|necəsiz|necesen|necesiz|nə var nə yox|nasılsın|как дела",
+    ),
+  ],
+  [
+    'thanks',
+    words(
+      'thanks|thank you|thx|ty|sa[gğ] ?ol\\p{L}*|çox sağ ol\\p{L}*|təşəkkür\\p{L}*|tesekkur\\p{L}*|teşekkür\\p{L}*|merci|mersi|спасибо',
+    ),
+  ],
+  ['bye', words('bye|goodbye|see you|see ya|cya|good night|gn|hələlik|helelik|görüşərik|gorusherik|gecən xeyrə|пока')],
+  [
+    'newbie',
+    words("i[’']?m new|new here|just joined|first time|yeni gəlmişəm|yeniyəm|yeni üzv|təzə gəlmişəm|yeniyim|я новенький"),
+  ],
+  ['greet', words('hi|hello|hey|yo|hiya|salam|salamlar|sabahın xeyir|günaydın|hola|merhaba|привет|здравствуйте')],
+  ['win', words('won|win|wins|gg|victory|evolved|qalib|qazandım|uddum|udmuşam|kazandım|победил\\p{L}*')],
+  ['loss', words('lost|lose|loss|losing|uduzdum|uduzuram|məğlub|kaybettim|проиграл\\p{L}*')],
+  ['shop', words('buy|shop|bp|price|prices|cost|skin|skins|mağaza|magaza|almaq|alım|qiymət|qiymet|pul|магазин')],
+  ['tip', words('tip|tips|help|advice|how|kömək|komek|məsləhət|meslehet|necə|nece|yardım|помощь|помоги\\p{L}*')],
+  ['laugh', words('haha\\p{L}*|hehe\\p{L}*|lol|lmao|xd|😂|🤣|😄')],
+  ['agree', words('ok|okay|yes|yeah|sure|deal|bəli|hə|oldu|tamam|yaxşı|да|ок')],
+  ['brawl', words('brawl\\p{L}*|battle|fight|duel|match|play|döyüş\\p{L}*|doyus\\p{L}*|oyna\\p{L}*|savaş\\p{L}*|бой|играть')],
+]
+/** The kinds checked before a Bakugan name in the message counts as talking about that Bakugan. */
+const FIRST_KINDS = 9
+
+const NAMES = [...new Set(BAKUGAN.map((b) => b.name))]
+  .sort((a, b) => b.length - a.length)
+  .map((n) => [n, words(n.toLowerCase())] as const)
 
 function kindOf(text: string): { kind: Kind; mention?: string } {
   const t = text.toLowerCase()
-  const mention = NAMES.find((n) => new RegExp(`\\b${n.toLowerCase()}\\b`).test(t))
-  if (/\b(thanks|thank you|thx|ty)\b/.test(t)) return { kind: 'thanks' }
-  if (/\b(hi|hello|hey|yo|hiya|salam|hola|sup)\b/.test(t)) return { kind: 'greet' }
-  if (/\b(won|win|wins|gg|victory|evolved)\b/.test(t)) return { kind: 'win' }
-  if (/\b(lost|lose|loss|losing)\b/.test(t)) return { kind: 'loss' }
-  if (/\b(buy|shop|bp|price|prices|cost|skin|skins)\b/.test(t)) return { kind: 'shop' }
-  if (/\b(tip|tips|help|advice|how)\b/.test(t)) return { kind: 'tip' }
+  const mention = NAMES.find(([, re]) => re.test(t))?.[0]
+  for (const [kind, re] of KINDS.slice(0, FIRST_KINDS)) if (re.test(t)) return { kind }
   if (mention) return { kind: 'mention', mention }
-  if (/\b(brawl|battle|fight|duel|match|play)\b/.test(t)) return { kind: 'brawl' }
+  for (const [kind, re] of KINDS.slice(FIRST_KINDS)) if (re.test(t)) return { kind }
   if (t.includes('?')) return { kind: 'question' }
   return { kind: 'chat' }
 }
@@ -136,13 +210,23 @@ function say(list: string[], botId: string, ctx: Ctx & { mention?: string }) {
 /** A CPU member's answer to a player's message. */
 export function replyTo(text: string, botId: string, ctx: Ctx) {
   const { kind, mention } = kindOf(text)
-  return say(LINES[kind], botId, { ...ctx, mention })
+  // small talk the bots cannot place still gets a friendly line
+  return say(LINES[kind === 'chat' ? (Math.random() < 0.5 ? 'agree' : 'chat') : kind], botId, { ...ctx, mention })
 }
 
-/** Whether the message is worth an answer (anything but small talk always gets one). */
-export const wantsReply = (text: string) => kindOf(text).kind !== 'chat'
+/** The clan member a message is addressed to by first name ("Sam, brawl?"), if any. */
+export function addressee(text: string, memberIds: string[]) {
+  return memberIds.find((id) => {
+    const first = botById(id)?.name.split(' ')[0]
+    return !!first && words(first.toLowerCase()).test(text.toLowerCase())
+  })
+}
 
 /** Something a CPU member says on their own. */
 export const chatLine = (botId: string, ctx: Ctx) => say(LINES.chat, botId, ctx)
 export const welcomeLine = (botId: string, ctx: Ctx) => say(LINES.welcome, botId, ctx)
 export const recruitedLine = (botId: string, ctx: Ctx) => say(LINES.recruited, botId, ctx)
+/** What a CPU brawler says after joining a clan on their own. */
+export const joinedLine = (botId: string, ctx: Ctx) => say(LINES.joined, botId, ctx)
+/** Why a member left, picked by the seeded roll `r` in [0, 1). */
+export const leaveReason = (r: number) => LEAVE_REASONS[Math.floor(r * LEAVE_REASONS.length)]

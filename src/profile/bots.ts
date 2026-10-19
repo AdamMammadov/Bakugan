@@ -2,6 +2,7 @@ import { BAKUGAN } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
 import { LAUNCH } from '../season/release'
 import { CHARACTERS } from './avatar'
+import { botAt, type LiveBot } from './botProgress'
 
 /** CPU brawlers that fill the rankings and the CPU clans next to the players on this device. */
 export interface BotBrawler {
@@ -15,7 +16,7 @@ export interface BotBrawler {
   wins: number
   losses: number
   kos: number
-  /** Tag of the CPU clan the bot belongs to; null for free brawlers (they can be recruited). */
+  /** Tag of the CPU clan the bot starts in; null for free brawlers. Members move around later (useClans). */
   clan: string | null
   bio: string
 }
@@ -44,7 +45,7 @@ const BIOS = [
   'Season Pass grinder. Daily challenges done before breakfast.',
 ]
 
-/** Deterministic, so the rankings and clans look the same on every visit. */
+/** Where each bot stood when they started brawling on their own (see botProgress.ts for since then). */
 export const BOTS: BotBrawler[] = FIRST.map((first, i) => {
   const c = CHARACTERS[i % CHARACTERS.length]
   const rating = Math.round(4200 * Math.pow(1 - i / FIRST.length, 1.6))
@@ -67,6 +68,9 @@ export const BOTS: BotBrawler[] = FIRST.map((first, i) => {
 const BOT_BY_ID = Object.fromEntries(BOTS.map((b) => [b.id, b]))
 export const botById = (id: string): BotBrawler | undefined => BOT_BY_ID[id]
 export const isBot = (id: string) => id.startsWith('bot-')
+
+/** A bot's record at `now`: rating, XP and wins keep moving with the clock. */
+export const botNow = (bot: BotBrawler, now: number): LiveBot => botAt(bot, BOTS.length, now)
 
 export interface BotClan {
   tag: string

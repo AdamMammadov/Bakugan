@@ -5,9 +5,10 @@ import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import type { Avatar as AvatarValue } from '../profile/avatar'
-import { BOTS } from '../profile/bots'
+import { BOTS, botNow } from '../profile/bots'
+import { useMinute } from '../profile/botProgress'
 import { TIER_COLORS } from '../profile/brawlers'
-import { clanOf, useClans } from '../profile/useClans'
+import { clanOf, useClanLife, useClans } from '../profile/useClans'
 import { rankScore, tierOf, TIERS, useProfiles } from '../profile/useProfiles'
 
 interface Row {
@@ -22,15 +23,22 @@ interface Row {
   losses: number
   clan: string | null
   cpu: boolean
+  /** Score gained (or lost) in the last 24 hours; CPU brawlers only. */
+  day?: number
   frame?: string
   title?: string
 }
+
+const DAY = 86_400_000
 
 export function RankingsScreen() {
   const profiles = useProfiles((s) => s.profiles)
   const activeId = useProfiles((s) => s.activeId)
   const clans = useClans((s) => s.clans)
   const [tab, setTab] = useState<'players' | 'clans'>('players')
+  // CPU brawlers keep brawling (and moving clans) while the rankings are open
+  useClanLife()
+  const now = useMinute()
 
   const rows: Row[] = [
     ...profiles.map((p) => ({
@@ -48,20 +56,25 @@ export function RankingsScreen() {
       frame: p.cosmetics?.frame,
       title: p.cosmetics?.title,
     })),
-    ...BOTS.map((b) => ({
-      id: b.id,
-      name: b.name,
-      avatar: { kind: 'preset' as const, id: b.characterId },
-      element: b.element,
-      score: rankScore(b),
-      rating: b.rating,
-      xp: b.xp,
-      wins: b.wins,
-      losses: b.losses,
-      clan: clanOf(clans, b.id)?.tag ?? null,
-      cpu: true,
-    })),
+    ...BOTS.map((bot) => {
+      const b = botNow(bot, now)
+      return {
+        id: b.id,
+        name: b.name,
+        avatar: { kind: 'preset' as const, id: b.characterId },
+        element: b.element,
+        score: rankScore(b),
+        rating: b.rating,
+        xp: b.xp,
+        wins: b.wins,
+        losses: b.losses,
+        clan: clanOf(clans, b.id)?.tag ?? null,
+        cpu: true,
+        day: rankScore(b) - rankScore(botNow(bot, now - DAY)),
+      }
+    }),
   ].sort((a, b) => b.score - a.score)
+  const myPlace = rows.findIndex((r) => r.id === activeId) + 1
 
   const clanRows = [
     ...clans.map((c) => ({
@@ -87,7 +100,8 @@ export function RankingsScreen() {
       <PageNav current="rankings" />
       <h1 className="font-display mt-8 text-4xl font-black tracking-wider">RANKINGS</h1>
       <p className="mt-1 max-w-3xl text-white/50">
-        Rank score = Brawler Rating (+{25} per win, −{15} per loss) plus total XP ÷ 20 — wins and experience both count.
+        Rank score = Brawler Rating (+{25} per win, −{15} per loss) plus total XP ÷ 20 — wins and experience both count. CPU
+        brawlers keep brawling around the clock, so keep climbing to stay ahead.
       </p>
 
       {/* tier ladder */}
@@ -112,6 +126,11 @@ export function RankingsScreen() {
             {t.toUpperCase()}
           </button>
         ))}
+        {myPlace > 0 && (
+          <span className="font-display ml-auto self-center text-xs tracking-[0.3em] text-white/50">
+            YOU ARE #{myPlace} OF {rows.length}
+          </span>
+        )}
       </div>
 
       {tab === 'players' ? (
@@ -124,7 +143,10 @@ export function RankingsScreen() {
               <th className="text-right">SCORE</th>
               <th className="text-right">RATING</th>
               <th className="text-right">XP</th>
-              <th className="pr-4 text-right">W / L</th>
+              <th className="text-right">W / L</th>
+              <th className="pr-4 text-right" title="Score change in the last 24 hours">
+                24H
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -162,8 +184,15 @@ export function RankingsScreen() {
                   <td className="font-display text-right font-bold">{r.score.toLocaleString('en')}</td>
                   <td className="text-right text-white/70">{r.rating}</td>
                   <td className="text-right text-white/70">{r.xp.toLocaleString('en')}</td>
-                  <td className="rounded-r-lg pr-4 text-right text-white/70">
+                  <td className="text-right text-white/70">
                     {r.wins} / {r.losses}
+                  </td>
+                  <td
+                    className={`rounded-r-lg pr-4 text-right text-sm ${
+                      !r.day ? 'text-white/30' : r.day > 0 ? 'text-emerald-300/80' : 'text-red-300/80'
+                    }`}
+                  >
+                    {r.day === undefined ? '—' : r.day > 0 ? `▲ ${r.day}` : r.day < 0 ? `▼ ${-r.day}` : '·'}
                   </td>
                 </tr>
               )

@@ -1,6 +1,6 @@
 import type { ElementId } from '../data/elements'
 import type { Avatar } from './avatar'
-import { botById, botTeam } from './bots'
+import { botById, botNow, botTeam } from './bots'
 import type { Clan } from './useClans'
 import { rankScore, type Profile } from './useProfiles'
 
@@ -24,11 +24,16 @@ export interface BrawlerView {
   since?: number
   /** Battle team, lead first. */
   team: { id: string; form: number }[]
+  /** CPU brawlers: brawls so far today and when the last one ended. */
+  today?: number
+  lastBattle?: number | null
 }
 
-export function brawlerOf(id: string, profiles: Profile[]): BrawlerView | null {
-  const bot = botById(id)
-  if (bot)
+/** A brawler as they stand at `now` (CPU records move with the clock, see botProgress.ts). */
+export function brawlerOf(id: string, profiles: Profile[], now: number): BrawlerView | null {
+  const base = botById(id)
+  if (base) {
+    const bot = botNow(base, now)
     return {
       id,
       name: bot.name,
@@ -44,7 +49,10 @@ export function brawlerOf(id: string, profiles: Profile[]): BrawlerView | null {
       kos: bot.kos,
       bio: bot.bio,
       team: botTeam(bot),
+      today: bot.today,
+      lastBattle: bot.lastBattle,
     }
+  }
   const p = profiles.find((x) => x.id === id)
   if (!p) return null
   return {
@@ -69,11 +77,12 @@ export function brawlerOf(id: string, profiles: Profile[]): BrawlerView | null {
 }
 
 /** A clan's members that still exist, in clan order. */
-export const clanMembers = (clan: Clan, profiles: Profile[]) =>
-  clan.members.map((id) => brawlerOf(id, profiles)).filter((b): b is BrawlerView => !!b)
+export const clanMembers = (clan: Clan, profiles: Profile[], now: number) =>
+  clan.members.map((id) => brawlerOf(id, profiles, now)).filter((b): b is BrawlerView => !!b)
 
 /** Clan score, as in the clan rankings: the members' rank scores added up. */
-export const clanScore = (clan: Clan, profiles: Profile[]) => clanMembers(clan, profiles).reduce((n, m) => n + m.score, 0)
+export const clanScore = (clan: Clan, profiles: Profile[], now: number) =>
+  clanMembers(clan, profiles, now).reduce((n, m) => n + m.score, 0)
 
 /** Colour of each rank tier (index = tier), as on the rankings page. */
 export const TIER_COLORS = ['#9aa3b5', '#7ec8e3', '#3ee07a', '#f5c518', '#ff7a2f', '#e040fb']
