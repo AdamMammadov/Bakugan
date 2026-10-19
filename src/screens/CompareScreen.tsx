@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { aiForTier, matchedOpponent, TEAM_SIZE } from '../battle/engine'
+import { aiForTier, LIFE, matchedOpponent, PLAYS, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
 import { isReleased, released } from '../season/release'
@@ -53,6 +53,7 @@ export function CompareScreen() {
   const compareForm = useGame((s) => s.compareForm)
   const go = useGame((s) => s.go)
   const enterArena = useGame((s) => s.enterArena)
+  const watchLive = useGame((s) => s.watchLive)
   const mine = BAKUGAN.find((b) => b.id === bakuganId) ?? BAKUGAN[0]
 
   const profile = useActiveProfile()
@@ -119,7 +120,9 @@ export function CompareScreen() {
       <h1 className="font-display mt-4 text-4xl font-black tracking-wider">TEAM FACE-OFF</h1>
       <p className="mt-1 max-w-3xl text-white/50">
         Pick your team. The system matches you with an opponent on your level: as many Bakugan as you bring, the same forms and
-        the same number of ability cards. Every round a Gate Card is set on the field. Defeat every opposing Bakugan to win.
+        the same number of ability cards. Each brawler has a life gauge of {LIFE}. Every round a Gate Card is set, both throw a
+        Bakugan and play up to {PLAYS} ability cards; the higher G-Power wins and the loser loses the difference in life. Empty
+        your opponent's gauge to win.
       </p>
 
       {profile && (
@@ -188,7 +191,7 @@ export function CompareScreen() {
         />
       </div>
 
-      <div className="mt-10 flex justify-center">
+      <div className="mt-10 flex items-center justify-center gap-6">
         <motion.button
           onClick={brawl}
           whileHover={{ scale: 1.05 }}
@@ -196,6 +199,19 @@ export function CompareScreen() {
           className="font-display skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.3em]"
         >
           ENTER THE ARENA
+        </motion.button>
+        {/* other brawlers' matches, as they happen */}
+        <motion.button
+          onClick={() => {
+            playSfx('select')
+            watchLive()
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.96 }}
+          className="font-display flex skew-x-[-12deg] items-center gap-3 border-2 border-red-500/60 bg-black/40 px-8 py-4 text-lg font-black tracking-[0.3em]"
+        >
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
+          WATCH LIVE
         </motion.button>
       </div>
     </motion.div>

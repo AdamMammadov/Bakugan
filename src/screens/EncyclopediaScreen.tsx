@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
+import { HAND_SIZE, LIFE, MAX_HIT, MAX_ROUNDS, MIN_HIT, PLAYS } from '../battle/engine'
 import { BakuganInfo } from '../components/BakuganInfo'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
@@ -490,33 +491,33 @@ function RulesTab() {
     [
       'The brawl',
       [
-        'Each side brings up to three Bakugan. One stands on the field, the others wait on the bench. Every Bakugan has 1,000 life.',
-        'The ability cards of the whole team are shuffled into one deck. You start with three cards in hand and draw one every turn (up to five).',
-        'A card can only be played while the Bakugan it belongs to is on the field.',
-        'On your turn: play an ability card, make a basic attack, or switch Bakugan (switching ends your turn).',
-        'Defeat every opposing Bakugan to win.',
+        `Each brawler has a life gauge of ${LIFE}. A match is played in rounds; empty your opponent's gauge to win.`,
+        'Each side brings up to three Bakugan. At the start of every round each brawler picks one and throws it onto the field.',
+        `Ability phase: the brawlers take turns to play one ability card of the Bakugan they threw, or get READY (pass). It ends when both pass in a row or each has played ${PLAYS} cards.`,
+        `Battle: the higher G-Power wins the round. The loser loses the difference in life: at least ${MIN_HIT}, at most ${MAX_HIT}. A tie is a draw.`,
+        `Next round every card is back: you draw a fresh hand of up to ${HAND_SIZE} from the thrown Bakugan's own cards. After ${MAX_ROUNDS} rounds the brawler with more life wins.`,
       ],
     ],
     [
       'Gate Cards',
       [
-        'Every round a Gate Card is set on the field, alternating between the players.',
+        'Every round a Gate Card is set on the field, the brawlers taking turns. The other brawler plays the first card of the round.',
         'Attribute Gate Cards give Bakugan of that attribute extra G-Power. Character Gate Cards double the power of one specific Bakugan.',
-        'Damage grows with your G-Power compared to your opponent’s, so the gate on the field can turn a match.',
+        'You see the Gate Card before you throw, so pick the Bakugan that stands best on it.',
       ],
     ],
     [
       'Ability cards in battle',
       [
-        'Attack cards strike the opponent. Boost cards raise your G-Power. Weaken cards lower the opponent’s G-Power.',
-        'Drain cards steal G-Power and some life. Shield cards block the opponent’s next attack or ability.',
+        'Every card counts for the round it is played in. Boost and attack cards add their G to your Bakugan; weaken cards take G from the opponent; drain cards steal it (they lose it, you gain it).',
+        'Shield cards cancel the opponent’s next card this round. A finisher, played after two other cards in the same round, empties the opponent’s life gauge at once.',
       ],
     ],
     [
       'Ranked play',
       [
         'The system matches you with a CPU brawler on your level: as many Bakugan as you bring, the same forms and the same number of cards. Bots get sharper as your rank rises.',
-        `A win gives each of your Bakugan ${XP.winMin}–${XP.winMax} XP (+${XP.ko} per KO), ${BP.win} Battle Points (+${BP.streakBonus} per win streak) and +${RATING.win} rating. A loss gives ${XP.lossMin}–${XP.lossMax} XP, ${BP.loss} BP and −${RATING.loss} rating.`,
+        `A win gives each of your Bakugan ${XP.winMin}–${XP.winMax} XP (+${XP.ko} per round it wins), ${BP.win} Battle Points (+${BP.streakBonus} per win streak) and +${RATING.win} rating. A loss gives ${XP.lossMin}–${XP.lossMax} XP, ${BP.loss} BP and −${RATING.loss} rating.`,
         `Evolving takes ${EVOLVE_XP.map((x) => x.toLocaleString('en')).join(' / ')} XP for the 2nd / 3rd / 4th form. A new ability card unlocks every 1,500 XP.`,
         `New Bakugan cost ${PRICES.ownElement.toLocaleString('en')} BP (your attribute) or ${PRICES.otherElement.toLocaleString('en')} BP (other attributes), or unlock with ${PRICES.ownElementXp.toLocaleString('en')} / ${PRICES.otherElementXp.toLocaleString('en')} player XP.`,
         `Ranks: ${TIERS.map((t) => `${t.name} (${t.min}+)`).join(', ')}. Rank score = rating + total XP ÷ 20.`,

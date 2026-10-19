@@ -23,6 +23,7 @@ const Viewer = lazy(() => import('./screens/Viewer').then((m) => ({ default: m.V
 const BakuganShowroom = lazy(() => import('./screens/BakuganShowroom').then((m) => ({ default: m.BakuganShowroom })))
 const CharacterShowroom = lazy(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
 const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
+const LiveScreen = lazy(() => import('./screens/LiveScreen').then((m) => ({ default: m.LiveScreen })))
 
 /** Which song plays where: every page has its own, and the arena picks one of the battle songs. */
 const TRACK_FOR: Partial<Record<Screen, Track>> = {
@@ -32,6 +33,7 @@ const TRACK_FOR: Partial<Record<Screen, Track>> = {
   viewer: 'home',
   compare: 'faceoff',
   arena: 'battle',
+  live: 'battle',
   shop: 'shop',
   inventory: 'inventory',
   pass: 'pass',
@@ -67,6 +69,7 @@ export default function App() {
           {screen === 'viewer' && <Viewer key="viewer" />}
           {screen === 'compare' && <CompareScreen key="compare" />}
           {screen === 'arena' && <ArenaScreen key="arena" />}
+          {screen === 'live' && <LiveScreen key="live" />}
           {screen === 'profile' && <ProfileScreen key="profile" />}
           {screen === 'profileEdit' && <ProfileEditor key="profileEdit" />}
           {screen === 'rankings' && <RankingsScreen key="rankings" />}
@@ -85,6 +88,7 @@ export default function App() {
         <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">
           {![
             'arena',
+            'live',
             'viewer',
             'profile',
             'profileEdit',

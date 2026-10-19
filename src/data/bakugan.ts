@@ -2,16 +2,16 @@ import type { ElementId } from './elements'
 import { ORIGINAL_ABILITIES, ROSTER } from './roster'
 
 /**
- * How an ability works in battle:
- * - attack: a strike that deals damage, scaled by the G-Power ratio
+ * How an ability works in battle (each card counts for the round it is played in):
+ * - attack: strikes with extra power: adds its amount to the user's G-Power
  * - boost:  raises the user's G-Power
  * - weaken: lowers the opponent's G-Power
- * - drain:  steals G-Power (and some life) from the opponent
- * - shield: blocks the opponent's next attack or ability
+ * - drain:  steals G-Power from the opponent
+ * - shield: cancels the opponent's next ability card
  */
 /**
- * `finisher`: defeats the opponent's Bakugan at once, whatever its G-Power, through any shield; playable only once
- * its Bakugan has gathered its power with other cards in the battle (engine FINISHER_CHARGE).
+ * `finisher`: the opponent loses all their remaining life at once, through any shield; playable only once its
+ * Bakugan has gathered its power with other cards in the round (engine FINISHER_CHARGE).
  */
 export type AbilityType = 'attack' | 'boost' | 'weaken' | 'drain' | 'shield' | 'finisher'
 
@@ -424,16 +424,16 @@ export const abilitySelfBonus = (a: Ability) =>
 export function battleEffect(a: Ability) {
   switch (a.type) {
     case 'attack':
-      return `Strikes the opponent (power ${a.amount}). Damage grows with your G-Power.`
+      return `Strikes with ${a.amount} extra power: +${a.amount}G for this round.`
     case 'boost':
-      return `Raises your G-Power by ${a.amount}, so every later hit lands harder.`
+      return `Raises your G-Power by ${a.amount} for this round.`
     case 'weaken':
-      return `Cuts the opponent's G-Power by ${a.amount} and chips their life.`
+      return `Cuts the opponent's G-Power by ${a.amount} for this round.`
     case 'drain':
-      return `Steals ${a.amount}G from the opponent and drains some of their life into yours.`
+      return `Steals ${a.amount}G from the opponent for this round: they lose it, you gain it.`
     case 'shield':
-      return `Raises a shield that blocks the opponent's next attack or ability.`
+      return `Cancels the opponent's next ability card this round.`
     case 'finisher':
-      return `After two other cards gather its power: defeats the opponent's Bakugan at once, however high its G-Power, through any shield.`
+      return `After two other cards in the same round: the opponent loses all their remaining life at once, through any shield.`
   }
 }

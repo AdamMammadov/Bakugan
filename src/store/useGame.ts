@@ -9,6 +9,8 @@ export type Screen =
   | 'viewer'
   | 'compare'
   | 'arena'
+  /** Watching CPU brawlers' live matches. */
+  | 'live'
   | 'profile'
   | 'profileEdit'
   | 'rankings'
@@ -82,6 +84,9 @@ interface GameState {
   /** Opens the compare screen with `id` on the player's side. */
   compareWith: (id: string, form?: number) => void
   enterArena: (setup: ArenaSetup) => void
+  /** Where leaving the live matches goes back to. */
+  liveFrom: Screen
+  watchLive: () => void
   toggleMute: () => void
   openProfile: () => void
   /** Opens one of the player pages (profile, rankings, clans), remembering where to go back to. */
@@ -111,6 +116,8 @@ export const useGame = create<GameState>((set) => ({
   openBakugan: (bakuganId) => set({ bakuganId, screen: 'viewer' }),
   compareWith: (bakuganId, compareForm = 0) => set({ bakuganId, compareForm, screen: 'compare' }),
   enterArena: (arena) => set({ arena, screen: 'arena' }),
+  liveFrom: 'compare',
+  watchLive: () => set((s) => ({ screen: 'live', liveFrom: s.screen === 'live' ? s.liveFrom : s.screen })),
   toggleMute: () => set((s) => ({ muted: !s.muted })),
   openProfile: () => useGame.getState().openPage('profile'),
   openPage: (screen) =>

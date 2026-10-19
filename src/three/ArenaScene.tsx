@@ -10,6 +10,7 @@ import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
 import { LiftDrag } from './LiftDrag'
 import { ChaosBeam, Impact, Projectile, ShieldDome } from './ArenaFx'
+import { BrawlerFocus, ViewLimits } from './ArenaView'
 import { MonsterModel } from './BakuganModels'
 import { BlobShadow } from './BlobShadow'
 import { Brawler, type BrawlerGesture } from './Brawler'
@@ -17,13 +18,36 @@ import { GateCard } from './GateCard'
 import type { AvatarParts } from '../profile/avatar'
 import { LightPillar } from './LightPillar'
 import { env, moveFor, type Pose } from './pose'
+import {
+  depthIn,
+  fitShield,
+  hoverLift,
+  outerShell,
+  poseList,
+  rigOf,
+  sampleInPoses,
+  sampleInto,
+  samplerFor,
+  type ModelSampler,
+  type Rig,
+  type ShieldFit,
+} from './shieldFit'
+import { crowd } from './stadium'
+import { FIELD_RADIUS, Stadium } from './Stadium'
+import { THROW_LAND, ThrownBall } from './ThrowIn'
 
 /** Bakugan tower over the field: about 21 units, so a brawler (≈4 units) reaches their ankles. */
 const FIGHTER_SCALE = 7
-/** Brawler size: a little larger than true scale so they read clearly next to the Bakugan. */
-const BRAWLER_SCALE = 3.6
-const BRAWLER_X = 24
-const BRAWLER_Z = 12
+/** Brawler size: well above true scale, so they read from behind the field (about half a Bakugan's height). */
+const BRAWLER_SCALE = 7.4
+/**
+ * Where the brawlers stand: just behind the far edge of the Gate Card, each on their own side, close enough to the
+ * middle that the usual view sees them in the gap between the two Bakugan.
+ */
+const BRAWLER_X = 17
+const BRAWLER_Z = 57
+/** The field Gate Card (2.2 × 3 card units) at this size covers the ground both Bakugan stand on. */
+const CARD_SCALE = 46
 /** Hip position along the model's length (model units), used as the pivot for rearing up. */
 const HIP_Z = -1.1
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */
@@ -48,6 +72,8 @@ interface Props {
   shields: [boolean, boolean]
   defeated: [boolean, boolean]
   brawlers: [BrawlerInfo, BrawlerInfo]
+  /** Changes when a new round starts: both brawlers throw their Bakugan onto the field again. */
+  throwKey?: number
 }
 
 export interface BrawlerInfo {
@@ -75,70 +101,17 @@ const pullFor = (fighters: Entrant[]) => {
   return (biggest > GIANT ? biggest / 1.15 : 1) * SPREAD
 }
 
-/** A shield bubble round a Bakugan, in its model's frame (model units). */
-interface ShieldFit {
-  center: THREE.Vector3
-  radii: THREE.Vector3
+/** Where a brawler stands (world space) for a stadium of size `k`, and where they look: towards the field's middle. */
+const brawlerSpot = (side: SideIndex, k: number) => {
+  const at = new THREE.Vector3((side === 0 ? -BRAWLER_X : BRAWLER_X) * k, 0, -BRAWLER_Z * k)
+  return { at, facing: at.clone().negate().setY(0).normalize() }
 }
 
-/** About `count` of the model's vertices, where they are drawn right now, in `frame`'s space. */
-function sampleModel(model: THREE.Object3D, frame: THREE.Object3D, count: number) {
-  // updateMatrixWorld (not updateWorldMatrix) also refreshes skinned meshes' bind matrices
-  frame.updateWorldMatrix(true, false)
-  frame.updateMatrixWorld(true)
-  const toFrame = frame.matrixWorld.clone().invert()
-  const meshes: THREE.Mesh[] = []
-  model.traverseVisible((o) => {
-    if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh)
-  })
-  const total = meshes.reduce((n, m) => n + m.geometry.getAttribute('position').count, 0)
-  const step = Math.ceil(total / count)
-  const pts: THREE.Vector3[] = []
-  const toFrameOf = new THREE.Matrix4()
-  for (const m of meshes) {
-    toFrameOf.multiplyMatrices(toFrame, m.matrixWorld)
-    const n = m.geometry.getAttribute('position').count
-    for (let i = 0; i < n; i += step) pts.push(m.getVertexPosition(i, new THREE.Vector3()).applyMatrix4(toFrameOf))
-  }
-  return pts
-}
-
-/** How far out a point lies in a bubble (1 = on its skin). */
-const depthIn = (fit: ShieldFit, p: THREE.Vector3) =>
-  Math.hypot((p.x - fit.center.x) / fit.radii.x, (p.y - fit.center.y) / fit.radii.y, (p.z - fit.center.z) / fit.radii.z)
-
-/** The smallest bubble round the middle of the points' box, stretched along the box's sides, that holds them all. */
-function fitShield(pts: THREE.Vector3[]): ShieldFit {
-  const box = new THREE.Box3().setFromPoints(pts)
-  const center = box.getCenter(new THREE.Vector3())
-  const half = box.getSize(new THREE.Vector3()).multiplyScalar(0.5).addScalar(0.01)
-  // each point as a share of the half box; try stretches up and across, and find the length that holds every point
-  const q = pts.map((p) => p.clone().sub(center).divide(half))
-  const sample = q.filter((_, i) => i % Math.ceil(q.length / 3000) === 0)
-  const lengthFor = (sy: number, sz: number, points: THREE.Vector3[]) => {
-    let sx = 1
-    for (const p of points) {
-      const room = 1 - (p.y / sy) ** 2 - (p.z / sz) ** 2
-      if (room <= 0) return Infinity
-      sx = Math.max(sx, Math.abs(p.x) / Math.sqrt(room))
-    }
-    return sx
-  }
-  let best = new THREE.Vector3(Math.SQRT2, 2, 2)
-  for (let i = 1; i <= 20; i++)
-    for (let j = 1; j <= 20; j++) {
-      const [sy, sz] = [1 + i * 0.05, 1 + j * 0.05]
-      const sx = lengthFor(sy, sz, sample)
-      if (sx * sy * sz < best.x * best.y * best.z) best = new THREE.Vector3(sx, sy, sz)
-    }
-  // every point inside (a point the sample missed may need a little more height and width), with some room
-  while (!Number.isFinite((best.x = lengthFor(best.y, best.z, q)))) best.multiplyScalar(1.05)
-  return { center, radii: half.multiply(best).multiplyScalar(1.06) }
-}
-
-export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers }: Props) {
+export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers, throwKey }: Props) {
   const gateElement = gate ? ELEMENT_BY_ID[gate] : null
   const pull = pullFor(fighters)
+  // the stadium, the card and the brawlers grow with the view when a giant is on the field
+  const k = pull / SPREAD
   const blockFlash = useMemo<[number, number]>(
     () => (event?.event.blocked ? (event.event.target === 0 ? [event.key, 0] : [0, event.key]) : [0, 0]),
     [event],
@@ -152,15 +125,81 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
     [],
   )
 
+  const [el0, el1] = [fighters[0].bakugan.element, fighters[1].bakugan.element]
+  const [name0, name1] = [fighters[0].bakugan.name, fighters[1].bakugan.name]
+  const colors = useMemo<[string, string]>(() => [ELEMENT_BY_ID[el0].color, ELEMENT_BY_ID[el1].color], [el0, el1])
+  const names = useMemo<[string, string]>(() => [name0, name1], [name0, name1])
+  const [model0, model1] = [brawlers[0].model, brawlers[1].model]
+  const onField = useMemo(() => [model0 ?? '', model1 ?? ''], [model0, model1])
+  const spots = useMemo(() => [brawlerSpot(0, k), brawlerSpot(1, k)], [k])
+  const focusSpots = useMemo(
+    () =>
+      spots.map((s) => ({
+        at: s.at.clone().setY(BRAWLER_SCALE * k * 1.05),
+        facing: s.facing,
+        size: BRAWLER_SCALE * k * 1.8,
+      })),
+    [spots, k],
+  )
+  const home = useCallback(
+    () => ({
+      position: new THREE.Vector3(0, 11, 46).multiplyScalar(pull),
+      target: new THREE.Vector3(0, 8.5, 0).multiplyScalar(pull),
+    }),
+    [pull],
+  )
+
+  // a new round: both brawlers throw their Bakugan in again (nothing to throw on the first render)
+  const [firstThrow] = useState(throwKey)
+  const throwing = throwKey !== firstThrow
+  const throwAt = useRef<number | null>(null)
+  const seenThrow = useRef(firstThrow)
+  useFrame(({ clock }) => {
+    if (seenThrow.current === throwKey) return
+    seenThrow.current = throwKey
+    throwAt.current = clock.elapsedTime
+  })
+
+  // the crowd follows the battle on its own too: a cheer for a hit, a gasp at a block, a roar for a knockout
+  useEffect(() => {
+    if (!event || event.event.action.kind === 'switch') return
+    const { actor, damage, blocked, ko } = event.event
+    const timer = setTimeout(() => {
+      if (blocked) crowd('gasp', (1 - actor) as SideIndex)
+      else if (ko) crowd('roar', actor)
+      else if (damage > 0) crowd('cheer', actor)
+    }, IMPACT_AT * 1000)
+    return () => clearTimeout(timer)
+  }, [event])
+  const [down0, down1] = defeated
+  const wasDown = useRef<[boolean, boolean]>([down0, down1])
+  useEffect(() => {
+    const was = wasDown.current
+    if (down0 && !was[0]) crowd('roar', 1)
+    if (down1 && !was[1]) crowd('roar', 0)
+    wasDown.current = [down0, down1]
+  }, [down0, down1])
+  useEffect(() => {
+    if (throwKey === firstThrow) return
+    const timer = setTimeout(() => crowd('cheer'), THROW_LAND * 1000)
+    return () => clearTimeout(timer)
+  }, [throwKey, firstThrow])
+  // the fans greet the Bakugan as they come onto the field
+  useEffect(() => {
+    const timer = setTimeout(() => crowd('cheer'), 1200)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <>
       <color attach="background" args={['#05060a']} />
-      <fog attach="fog" args={['#05060a', 70 * pull, 160 * pull]} />
-      <ambientLight intensity={0.4} />
+      <fog attach="fog" args={['#05060a', 150 * k, 430 * k]} />
+      <ambientLight intensity={0.45} />
+      <hemisphereLight args={['#8fa6d8', '#0b0c12', 0.35]} />
       <directionalLight
         // a giant on the field: the light and its shadow area move out with the view
         position={[12 * pull, 40 * pull, 24 * pull]}
-        intensity={2.4}
+        intensity={2.2}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-45 * pull}
@@ -175,29 +214,31 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
       {fighters.map((f, i) => (
         <pointLight
           key={i}
-          position={[xOf(i as SideIndex, f) * 1.6, 8, -4]}
-          intensity={90}
+          position={[xOf(i as SideIndex, f) * 1.6, 14, -4]}
+          intensity={45}
           color={ELEMENT_BY_ID[f.bakugan.element].glow}
         />
       ))}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[110, 96]} />
-        <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.8} />
+        <circleGeometry args={[(FIELD_RADIUS + 2) * k, 96]} />
+        <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.85} />
       </mesh>
       <Sparkles
         count={300}
         scale={[70, 28, 44]}
         position={[0, 11, 0]}
-        size={2}
+        size={1.6}
         speed={0.3}
         color={gateElement?.glow ?? '#9aa3b5'}
       />
 
+      <Stadium scale={k} colors={colors} names={names} exclude={onField} />
+
       {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={27}>
+      <group rotation={[0, Math.PI / 2, 0]} scale={CARD_SCALE * k}>
         <Suspense fallback={null}>
-          <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} />
+          <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} glow={0.32} />
         </Suspense>
       </group>
 
@@ -211,15 +252,16 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
           blockFlash={blockFlash[i]}
           defeated={defeated[i]}
           onShieldReach={onShieldReach}
+          throwAt={throwAt}
         />
       ))}
 
       {brawlers.map((b, i) => (
         <group
           key={i}
-          position={[i === 0 ? -BRAWLER_X : BRAWLER_X, 0, BRAWLER_Z]}
-          rotation={[0, i === 0 ? Math.PI / 2 - 0.5 : -Math.PI / 2 + 0.5, 0]}
-          scale={BRAWLER_SCALE}
+          position={spots[i].at}
+          rotation={[0, Math.atan2(spots[i].facing.x, spots[i].facing.z), 0]}
+          scale={BRAWLER_SCALE * k}
         >
           <Suspense fallback={null}>
             <Brawler
@@ -228,11 +270,23 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
               model={b.model}
               gesture={b.gesture}
               color={ELEMENT_BY_ID[fighters[i].bakugan.element].color}
+              throwKey={throwKey}
             />
           </Suspense>
           <BlobShadow size={0.9} />
         </group>
       ))}
+
+      {throwing &&
+        fighters.map((e, i) => (
+          <ThrownBall
+            key={`${throwKey}-${i}`}
+            from={spots[i].at.clone().add(new THREE.Vector3(0, BRAWLER_SCALE * k * 2, 0))}
+            to={new THREE.Vector3(xOf(i as SideIndex, e) - (i === 0 ? -1 : 1) * 6, 1.2, 0)}
+            entrant={e}
+            color={ELEMENT_BY_ID[e.bakugan.element].glow}
+          />
+        ))}
 
       {event && (
         <ActionFx
@@ -247,19 +301,26 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers 
         makeDefault
         target={[0, 8.5, 0]}
         enablePan={false}
+        // the wheel zooms towards the cursor, so the player can close in on a brawler or the stands
+        zoomToCursor
         minDistance={8}
-        maxDistance={120 * pull}
+        maxDistance={86 * k}
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
+      <ViewLimits k={k} reach={FIELD_RADIUS - 8} height={70} target={FIELD_RADIUS - 25} />
+      <BrawlerFocus spots={focusSpots} home={home} />
       <LiftDrag max={30} />
       <PullBack k={pull} />
       <EffectComposer>
-        <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
-        <Vignette offset={0.25} darkness={0.75} />
+        <Bloom luminanceThreshold={1} luminanceSmoothing={0.15} intensity={0.65} mipmapBlur />
+        <Vignette offset={0.25} darkness={0.7} />
       </EffectComposer>
     </>
   )
 }
+
+/** The model's height off its spot right now: a winged Bakugan hovers (see Hover in BakuganModels). */
+const hoverOf = (model: THREE.Object3D) => model.children[0]?.position.y ?? 0
 
 /** One Bakugan on the field: rises in on entry, lunges, flinches and falls when defeated. */
 function Fighter({
@@ -270,6 +331,7 @@ function Fighter({
   blockFlash,
   defeated,
   onShieldReach,
+  throwAt,
 }: {
   side: SideIndex
   entrant: Entrant
@@ -279,6 +341,8 @@ function Fighter({
   defeated: boolean
   /** Tells the scene how far the shield reaches out in front of this Bakugan's spot (world units). */
   onShieldReach: (side: SideIndex, entrant: Entrant, reach: number) => void
+  /** Clock time the latest throw started (a new round), or null before any. */
+  throwAt: React.RefObject<number | null>
 }) {
   const element = ELEMENT_BY_ID[entrant.bakugan.element]
   const ref = useRef<THREE.Group>(null)
@@ -290,9 +354,22 @@ function Fighter({
   const fallen = useRef(0)
   const facing = side === 0 ? 1 : -1
   const x = xOf(side, entrant)
-  // the shield is sized to the model once it has loaded, and grows to its idle sway over the first seconds
+  // a throw: the Bakugan goes back into its ball at once, and comes out of the thrown one when it lands
+  const recalled = useRef(-99)
+  const seenThrow = useRef<number | null>(null)
+  // the light pillar it rises in: played on entry, and again when a thrown ball lands
+  const [pillar, setPillar] = useState({ key: 0, delay: 0 })
+  // the shield is sized once the model has loaded, round every pose it strikes (idle sway and every move)
   const [fit, setFit] = useState<ShieldFit | null>(null)
-  const measure = useRef<{ fit: ShieldFit; shell: THREE.Vector3[]; next: number; until: number } | null>(null)
+  const sweep = useRef<{
+    sampler: ModelSampler
+    rig: Rig | null
+    poses: ReturnType<typeof poseList>
+    next: number
+    pts: number[]
+    fit: ShieldFit | null
+    check: number
+  } | null>(null)
 
   useEffect(() => {
     if (!event) return
@@ -306,12 +383,87 @@ function Fighter({
     } else if (target === side && damage > 0 && !blocked) anim.current = { kind: 'hit', move: 'hit', start: null }
   }, [event, side])
 
+  /**
+   * Sizes the shield: once the model is in, it is put through every pose it can strike (a few each frame) and the
+   * bubble is fitted round all of them; while the shield is up, the live pose is checked too and the bubble grows
+   * if anything ever pokes out.
+   */
+  const fitShieldStep = (now: number) => {
+    const mdl = model.current
+    const fr = frame.current
+    if (!mdl || !fr) return
+    const sw = sweep.current
+    if (!sw) {
+      let loaded = false
+      mdl.traverseVisible((o) => {
+        loaded ||= (o as THREE.Mesh).isMesh
+      })
+      if (loaded)
+        sweep.current = {
+          sampler: samplerFor(mdl),
+          rig: rigOf(mdl),
+          poses: poseList(ACTION_DURATION),
+          next: 0,
+          pts: [],
+          fit: null,
+          check: 0,
+        }
+      return
+    }
+    const publish = (f: ShieldFit) => {
+      sw.fit = f
+      setFit(f)
+      onShieldReach(side, entrant, (f.center.z + f.radii.z) * FIGHTER_SCALE)
+    }
+    if (sw.next < sw.poses.length) {
+      // a few milliseconds of poses per frame
+      const start = performance.now()
+      const lift = hoverLift(hoverOf(mdl))
+      while (sw.next < sw.poses.length && performance.now() - start < 6) {
+        sampleInPoses(sw.sampler, mdl, fr, sw.rig, sw.poses.slice(sw.next, sw.next + 6), sw.pts, lift)
+        sw.next += 6
+      }
+      const f = fitShield(sw.pts)
+      sw.pts = outerShell(sw.pts, f)
+      // a first bubble right away, the full one when every pose is in
+      if (!sw.fit || sw.next >= sw.poses.length) publish(f)
+      else sw.fit = f
+      return
+    }
+    if (!shield || now < sw.check || !sw.fit) return
+    sw.check = now + 0.25
+    const live: number[] = []
+    sampleInto(sw.sampler, fr, live)
+    let out = false
+    for (let i = 0; i < live.length && !out; i += 3) out = depthIn(sw.fit, live[i], live[i + 1], live[i + 2]) > 0.98
+    if (out) {
+      sw.pts.push(...live)
+      const f = fitShield(sw.pts)
+      sw.pts = outerShell(sw.pts, f)
+      publish(f)
+    }
+  }
+
   useFrame(({ clock }, dt) => {
     const g = ref.current
     if (!g) return
     const now = clock.elapsedTime
     born.current ??= now
+    const ta = throwAt.current
+    if (ta !== seenThrow.current) {
+      seenThrow.current = ta
+      if (ta !== null && now - ta < THROW_LAND) {
+        // out again when the ball lands
+        recalled.current = born.current + 1.1 <= now ? now : -99
+        born.current = ta + THROW_LAND - 0.25
+        setPillar((p) => ({ key: p.key + 1, delay: ta + THROW_LAND - 0.1 - now }))
+        fallen.current = defeated ? 1 : 0
+        anim.current = null
+      }
+    }
     const grow = THREE.MathUtils.clamp((now - born.current - 0.4) / 0.7, 0, 1)
+    // shrinking back into the ball when recalled
+    const shrink = 1 - THREE.MathUtils.smoothstep(now - recalled.current, 0, 0.3)
     fallen.current = THREE.MathUtils.damp(fallen.current, defeated ? 1 : 0, 3, dt)
 
     // whole-body motion of the current move, in the model's own frame (forward = +Z)
@@ -375,32 +527,12 @@ function Fighter({
       m.rotation.set(pitch, yaw, 0)
     }
 
-    const s = Math.max(1 - Math.pow(1 - grow, 3), 0.001) * (1 - fallen.current * 0.999)
+    const s = Math.max(Math.max(1 - Math.pow(1 - grow, 3), shrink), 0.001) * (1 - fallen.current * 0.999)
     g.scale.setScalar(Math.max(s, 0.001))
     g.position.set(x, -fallen.current * 0.5, 0)
     g.rotation.z = fallen.current * 0.5 * facing
 
-    // measured while standing still (a move would stretch it); each fit keeps the outer points of the ones before
-    const ms = measure.current
-    if (model.current && frame.current && !anim.current && !defeated && (!ms || (now >= ms.next && now < ms.until))) {
-      const pts = sampleModel(model.current, frame.current, ms ? 8000 : 20000)
-      if (pts.length) {
-        const all = ms ? pts.concat(ms.shell) : pts
-        const f = fitShield(all)
-        const changed =
-          !ms || f.center.distanceTo(ms.fit.center) + f.radii.distanceTo(ms.fit.radii) > 0.01 * ms.fit.radii.length()
-        // the outermost points are the ones the next fit must still hold
-        const outer = all
-          .map((p) => ({ p, d: depthIn(f, p) }))
-          .filter((o) => o.d > 0.8)
-          .sort((a, b) => b.d - a.d)
-        measure.current = { fit: f, shell: outer.slice(0, 6000).map((o) => o.p), next: now + 0.5, until: ms?.until ?? now + 8 }
-        if (changed) {
-          setFit(f)
-          onShieldReach(side, entrant, (f.center.z + f.radii.z) * FIGHTER_SCALE)
-        }
-      }
-    }
+    fitShieldStep(now)
   })
 
   return (
@@ -425,7 +557,7 @@ function Fighter({
         </group>
       </group>
       <group position={[x, 0, 0]} scale={FIGHTER_SCALE}>
-        <EntryPillar color={element.glow} />
+        <EntryPillar key={pillar.key} color={element.glow} delay={pillar.delay} />
       </group>
     </group>
   )
@@ -458,17 +590,17 @@ function PullBack({ k }: { k: number }) {
   return null
 }
 
-/** Light pillar that plays once when the fighters appear. */
-function EntryPillar({ color }: { color: string }) {
+/** Light pillar that plays once when the fighters appear (after `delay` s: when a thrown ball lands). */
+function EntryPillar({ color, delay = 0 }: { color: string; delay?: number }) {
   const ref = useRef<THREE.Group>(null)
   const t = useRef(0)
   useFrame((_, dt) => {
     t.current += dt
-    if (ref.current) ref.current.visible = t.current < 1.8
+    if (ref.current) ref.current.visible = t.current < delay + 1.8
   })
   return (
     <group ref={ref}>
-      <LightPillar color={color} duration={1.6} />
+      <LightPillar color={color} duration={1.6} delay={delay} />
     </group>
   )
 }

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { AvatarParts } from '../profile/avatar'
 
-export type BrawlerGesture = 'card' | 'point' | 'flinch' | 'cheer' | 'slump' | null
+export type BrawlerGesture = 'card' | 'point' | 'flinch' | 'cheer' | 'slump' | 'throw' | null
 
 export interface BrawlerCall {
   /** Changes on every new call so the bubble replays. */
@@ -23,6 +23,8 @@ interface Props {
   gesture: { kind: BrawlerGesture; key: number }
   /** Game model of a series character; replaces the drawn body when given. */
   model?: string
+  /** Changes when the brawler throws their Bakugan onto the field (a new round). */
+  throwKey?: number
 }
 
 /** Arm angles and body lean the current gesture asks for (procedural body convention). */
@@ -33,8 +35,12 @@ interface PoseState {
 
 const PANTS = '#23262f'
 
-/** A brawler standing on the field: holds up the ability card, points, cheers. */
-export function Brawler({ parts, photo, color, gesture, model }: Props) {
+/** How long each gesture plays (s) before the brawler goes back to standing (or to a held win or loss pose). */
+const GESTURE_LENGTH = 1.9
+const THROW_LENGTH = 1.1
+
+/** A brawler standing on the field: holds up the ability card, points, cheers, throws their Bakugan. */
+export function Brawler({ parts, photo, color, gesture, model, throwKey }: Props) {
   const pose = useRef<PoseState>({ r: -0.08, l: 0.08 })
   const root = useRef<THREE.Group>(null)
   const armR = useRef<THREE.Group>(null)
@@ -51,13 +57,23 @@ export function Brawler({ parts, photo, color, gesture, model }: Props) {
     hold.current = gesture.kind === 'cheer' || gesture.kind === 'slump' ? gesture.kind : null
   }, [gesture])
 
+  // a new round: wind up and throw the Bakugan (any win or loss pose from the round before ends)
+  const lastThrow = useRef(throwKey)
+  useEffect(() => {
+    if (throwKey === lastThrow.current) return
+    lastThrow.current = throwKey
+    anim.current = { kind: 'throw', start: null }
+    hold.current = null
+  }, [throwKey])
+
   useFrame(({ clock }) => {
     const now = clock.elapsedTime
     const a = anim.current
     if (a.kind && a.start === null) a.start = now
     const t = a.start === null ? 0 : now - a.start
-    const kind = t < 1.9 ? a.kind : hold.current
-    const k = kind === hold.current ? 1 : Math.min(1, t / 0.18) * Math.min(1, (1.9 - t) / 0.3)
+    const length = a.kind === 'throw' ? THROW_LENGTH : GESTURE_LENGTH
+    const kind = t < length ? a.kind : hold.current
+    const k = kind === hold.current ? 1 : Math.min(1, t / 0.18) * Math.min(1, (length - t) / 0.3)
 
     let r = -0.08
     let l = 0.08
@@ -66,6 +82,11 @@ export function Brawler({ parts, photo, color, gesture, model }: Props) {
     if (kind === 'card') r = -2.9 * k
     if (kind === 'point') r = -1.55 * k
     if (kind === 'flinch') lean = -0.25 * k
+    if (kind === 'throw') {
+      // arm back over the head, then swung through (the ball leaves the hand at ~0.45 s), and a lean into it
+      r = t < 0.3 ? -3 : t < 0.6 ? -0.9 : -0.4 * k
+      lean = t < 0.3 ? -0.12 : t < 0.75 ? 0.22 : 0
+    }
     if (kind === 'cheer') {
       r = -2.8
       l = -2.8
@@ -159,7 +180,6 @@ export function Brawler({ parts, photo, color, gesture, model }: Props) {
         {photo ? <PhotoFace url={photo} /> : <Face parts={parts} />}
         {!photo && <Hair parts={parts} />}
       </group>
-
     </group>
   )
 }
