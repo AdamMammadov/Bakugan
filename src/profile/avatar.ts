@@ -15,7 +15,18 @@ export type HairStyle = 'spiky' | 'twintails' | 'bowl' | 'ponytail' | 'long' | '
 export type EyeStyle = 'bright' | 'sharp' | 'calm' | 'happy'
 export type Accessory = 'none' | 'glasses' | 'mask' | 'goggles' | 'headband' | 'cap' | 'visor' | 'crown' | 'halo'
 
-export type Avatar = { kind: 'preset'; id: string } | { kind: 'custom'; parts: AvatarParts } | { kind: 'photo'; dataUrl: string }
+/**
+ * How a player looks: a series character or a drawn avatar (their look in the 3D arena), optionally with their
+ * own photo as the round portrait everywhere in 2D.
+ */
+export type Avatar =
+  | { kind: 'preset'; id: string; photo?: string }
+  | { kind: 'custom'; parts: AvatarParts; photo?: string }
+  /** Old saves only: a photo with no look. Profiles are moved to a preset with `photo` (useProfiles v7). */
+  | { kind: 'photo'; dataUrl: string }
+
+/** A look without the photo. */
+export type Look = { kind: 'preset'; id: string } | { kind: 'custom'; parts: AvatarParts }
 
 export const SKINS = ['#ffe0c7', '#f6cfae', '#e8b48f', '#c98e66', '#9a6646', '#6b4430']
 export const HAIR_STYLES: HairStyle[] = ['spiky', 'twintails', 'bowl', 'ponytail', 'long', 'short', 'swept', 'bald']
@@ -234,25 +245,35 @@ export const CHARACTER_BY_ID = Object.fromEntries(CHARACTERS.map((c) => [c.id, c
 
 export const DEFAULT_PARTS: AvatarParts = CHARACTERS[0].parts
 
-/** Center-crops an uploaded image and shrinks it so it fits comfortably in localStorage. */
-export function photoToDataUrl(file: File, size = 256): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      const side = Math.min(img.width, img.height)
-      const canvas = document.createElement('canvas')
-      canvas.width = canvas.height = size
-      canvas.getContext('2d')!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size)
-      URL.revokeObjectURL(url)
-      resolve(canvas.toDataURL('image/jpeg', 0.85))
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('Could not read that image.'))
-    }
-    img.src = url
-  })
+/** The player's own portrait photo, if they added one. */
+export const photoOf = (a: Avatar) => (a.kind === 'photo' ? a.dataUrl : a.photo)
+
+/** The look of an avatar (an old photo-only one takes the series character of the player's attribute). */
+export function lookOf(a: Avatar, element: ElementId): Look {
+  if (a.kind === 'photo') return { kind: 'preset', id: botCharacter(element).id }
+  return a.kind === 'preset' ? { kind: 'preset', id: a.id } : { kind: 'custom', parts: a.parts }
+}
+
+/** An avatar in the current shape: an old photo-only one becomes a series character with that photo. */
+export const normalizeAvatar = (a: Avatar, element: ElementId): Avatar => {
+  const photo = photoOf(a)
+  return photo ? { ...lookOf(a, element), photo } : lookOf(a, element)
+}
+
+/** Size of a saved portrait photo (px, square: it is always shown in a round frame). */
+export const PHOTO_SIZE = 320
+
+/** Cuts the square `side` × `side` at (`x`, `y`) out of an image as a small JPEG that fits in localStorage. */
+export function cropPhoto(img: HTMLImageElement, x: number, y: number, side: number, size = PHOTO_SIZE) {
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const g = canvas.getContext('2d')!
+  // a dark ground where the square reaches past the photo's edge
+  g.fillStyle = '#07080d'
+  g.fillRect(0, 0, size, size)
+  g.imageSmoothingQuality = 'high'
+  g.drawImage(img, x, y, side, side, 0, 0, size, size)
+  return canvas.toDataURL('image/jpeg', 0.88)
 }
 
 /** The series character a bot brawler plays as, chosen by its lead Bakugan's attribute. */

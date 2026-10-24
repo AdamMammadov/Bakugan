@@ -1,9 +1,9 @@
 import { useId } from 'react'
 import { asset } from '../asset'
-import { CHARACTER_BY_ID, DEFAULT_PARTS, type Avatar as AvatarValue, type AvatarParts } from '../profile/avatar'
+import { CHARACTER_BY_ID, DEFAULT_PARTS, photoOf, type Avatar as AvatarValue, type AvatarParts } from '../profile/avatar'
 import { FRAMES } from '../season/season'
 
-/** A player's picture: an uploaded photo or a drawn character, optionally inside an earned frame. */
+/** A player's round portrait: their own photo, else their character, optionally inside an earned frame. */
 export function Avatar({
   avatar,
   color = '#9aa3b5',
@@ -33,8 +33,13 @@ export function Avatar({
     )
   }
   const style = { width: size, height: size, boxShadow: `0 0 ${size / 5}px ${color}66`, borderColor: color }
-  if (avatar.kind === 'photo') {
-    return <img src={avatar.dataUrl} alt="" className="shrink-0 rounded-full border-2 object-cover" style={style} />
+  const photo = photoOf(avatar)
+  if (photo) {
+    return (
+      <div className="shrink-0 overflow-hidden rounded-full border-2 bg-[#07080d]" style={style}>
+        <img src={photo} alt="" className="block h-full w-full rounded-full object-cover" draggable={false} />
+      </div>
+    )
   }
   const character = avatar.kind === 'preset' ? CHARACTER_BY_ID[avatar.id] : undefined
   const parts = avatar.kind === 'custom' ? avatar.parts : (character?.parts ?? DEFAULT_PARTS)

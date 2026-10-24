@@ -1,8 +1,9 @@
-import { motion } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { Avatar, AvatarDrawing, CharacterPortrait } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
+import { PhotoCropper } from '../components/PhotoCropper'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import {
   ACCESSORIES,
@@ -14,11 +15,13 @@ import {
   EYE_STYLES,
   HAIR_COLORS,
   HAIR_STYLES,
+  lookOf,
   OUTFITS,
-  photoToDataUrl,
+  photoOf,
   SKINS,
   type Avatar as AvatarValue,
   type AvatarParts,
+  type Look,
 } from '../profile/avatar'
 import { bakuganById, starterFor, useProfiles } from '../profile/useProfiles'
 import { OUTFITS as PASS_OUTFITS } from '../season/season'
@@ -42,33 +45,57 @@ export function ProfileEditor() {
   const [lastName, setLastName] = useState(existing?.lastName ?? '')
   const [bio, setBio] = useState(existing?.bio ?? '')
   const [element, setElement] = useState<ElementId>(existing?.element ?? chosenElement ?? 'pyrus')
-  const [avatar, setAvatar] = useState<AvatarValue>(existing?.avatar ?? { kind: 'preset', id: 'dan' })
-  const [parts, setParts] = useState<AvatarParts>(
-    avatar.kind === 'custom' ? avatar.parts : avatar.kind === 'preset' ? CHARACTER_BY_ID[avatar.id].parts : DEFAULT_PARTS,
+  // the look (series character or drawn avatar: how the player stands in the 3D arena) and the photo
+  // (their round portrait in 2D) are chosen apart
+  const [look, setLook] = useState<Look>(() =>
+    existing ? lookOf(existing.avatar, existing.element) : { kind: 'preset', id: 'dan' },
   )
-  const [tab, setTab] = useState<Tab>(avatar.kind === 'photo' ? 'photo' : avatar.kind === 'custom' ? 'build' : 'characters')
+  const [photo, setPhoto] = useState<string | undefined>(existing ? photoOf(existing.avatar) : undefined)
+  const avatar: AvatarValue = photo ? { ...look, photo } : look
+  const [parts, setParts] = useState<AvatarParts>(
+    look.kind === 'custom' ? look.parts : (CHARACTER_BY_ID[look.id]?.parts ?? DEFAULT_PARTS),
+  )
+  const [tab, setTab] = useState<Tab>(look.kind === 'custom' ? 'build' : 'characters')
   const [error, setError] = useState('')
   // the name last filled in from a series character, so picking another one replaces it
   const [autoName, setAutoName] = useState<string | null>(null)
+  // a picture being placed in the round frame (an object URL of the upload), and the last one placed
+  const [cropping, setCropping] = useState<string | null>(null)
+  const [original, setOriginal] = useState<string | null>(null)
   const file = useRef<HTMLInputElement>(null)
   const color = ELEMENT_BY_ID[element].color
   const valid = firstName.trim() && lastName.trim()
+  const character = look.kind === 'preset' ? CHARACTER_BY_ID[look.id] : undefined
+
+  // uploads stay in memory only while the editor is open
+  useEffect(() => () => void (original && URL.revokeObjectURL(original)), [original])
 
   const setPart = <K extends keyof AvatarParts>(key: K, value: AvatarParts[K]) => {
     playSfx('tick')
     const next = { ...parts, [key]: value }
     setParts(next)
-    setAvatar({ kind: 'custom', parts: next })
+    setLook({ kind: 'custom', parts: next })
   }
 
-  async function upload(f: File | undefined) {
-    if (!f) return
-    try {
-      setAvatar({ kind: 'photo', dataUrl: await photoToDataUrl(f) })
-      setError('')
-    } catch (e) {
-      setError((e as Error).message)
+  /** Building your own look starts from the current one, drawn, and drops a name filled in from a character. */
+  function openTab(t: Tab) {
+    setTab(t)
+    if (t !== 'build' || look.kind === 'custom') return
+    setLook({ kind: 'custom', parts })
+    if (autoName && `${firstName} ${lastName}`.trim() === autoName) {
+      setFirstName('')
+      setLastName('')
+      setAutoName(null)
     }
+  }
+
+  function upload(f: File | undefined) {
+    if (!f) return
+    if (!f.type.startsWith('image/')) return setError('That file is not a picture.')
+    setError('')
+    const url = URL.createObjectURL(f)
+    setOriginal(url)
+    setCropping(url)
   }
 
   function save() {
@@ -94,12 +121,17 @@ export function ProfileEditor() {
       exit={{ opacity: 0 }}
     >
       {(existing || hasProfiles) && (
-        <button onClick={() => go(back)} className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white">
+        <button
+          onClick={() => go(back)}
+          className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+        >
           ← CANCEL
         </button>
       )}
       <p className="font-display mt-4 text-xs tracking-[0.5em] text-white/40">BRAWLER PROFILE</p>
-      <h1 className="font-display text-4xl font-black tracking-wider">{existing ? 'EDIT YOUR BRAWLER' : 'CREATE YOUR BRAWLER'}</h1>
+      <h1 className="font-display text-4xl font-black tracking-wider">
+        {existing ? 'EDIT YOUR BRAWLER' : 'CREATE YOUR BRAWLER'}
+      </h1>
 
       <div className="mt-8 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-10">
         {/* avatar */}
@@ -111,6 +143,12 @@ export function ProfileEditor() {
                 {firstName || 'First'} {lastName || 'Last'}
               </p>
               <p className="mt-1 text-white/50">{ELEMENT_BY_ID[element].name} Brawler</p>
+              {/* what the player looks like in the 3D arena, which a photo does not change */}
+              <div className="mt-3 flex items-center gap-2 text-xs text-white/50">
+                <span className="font-display tracking-[0.3em] text-white/35">IN BATTLE</span>
+                <Avatar avatar={look} color={color} size={28} />
+                <span>{character ? character.name : 'Your own brawler'}</span>
+              </div>
             </div>
           </div>
 
@@ -118,7 +156,7 @@ export function ProfileEditor() {
             {(['characters', 'build', 'photo'] as Tab[]).map((t) => (
               <button
                 key={t}
-                onClick={() => setTab(t)}
+                onClick={() => openTab(t)}
                 className="font-display -mb-px border-b-2 px-4 py-2 text-xs tracking-[0.3em] transition"
                 style={{ borderColor: tab === t ? color : 'transparent', color: tab === t ? '#fff' : 'rgba(255,255,255,0.45)' }}
               >
@@ -130,14 +168,14 @@ export function ProfileEditor() {
           {tab === 'characters' && (
             <div className="mt-5 grid grid-cols-4 gap-3">
               {CHARACTERS.map((c) => {
-                const on = avatar.kind === 'preset' && avatar.id === c.id
+                const on = look.kind === 'preset' && look.id === c.id
                 const el = ELEMENT_BY_ID[c.element]
                 return (
                   <button
                     key={c.id}
                     onClick={() => {
                       playSfx('tick')
-                      setAvatar({ kind: 'preset', id: c.id })
+                      setLook({ kind: 'preset', id: c.id })
                       setParts(c.parts)
                       // playing as a series character: use their name unless the player typed their own
                       const typed = `${firstName} ${lastName}`.trim()
@@ -152,7 +190,11 @@ export function ProfileEditor() {
                     style={{ borderColor: on ? el.color : 'rgba(255,255,255,0.08)' }}
                   >
                     <div className="h-16 w-16 overflow-hidden rounded-full">
-                      {c.image ? <CharacterPortrait src={c.image} color={el.color} /> : <AvatarDrawing parts={c.parts} color={el.color} />}
+                      {c.image ? (
+                        <CharacterPortrait src={c.image} color={el.color} />
+                      ) : (
+                        <AvatarDrawing parts={c.parts} color={el.color} />
+                      )}
                     </div>
                     <span className="mt-1 text-center text-xs leading-tight font-semibold">{c.name}</span>
                     <span className="text-[10px] text-white/40">
@@ -166,14 +208,28 @@ export function ProfileEditor() {
 
           {tab === 'build' && (
             <div className="mt-5 space-y-4">
+              <p className="text-sm text-white/55">
+                Your own brawler, drawn here and built from the same parts in the 3D arena. It starts from the character you
+                picked; every change shows on the left.
+              </p>
               <Swatches label="SKIN" options={SKINS} value={parts.skin} onPick={(v) => setPart('skin', v)} />
               <Choices label="HAIR" options={HAIR_STYLES} value={parts.hair} onPick={(v) => setPart('hair', v)} />
-              <Swatches label="HAIR COLOR" options={HAIR_COLORS} value={parts.hairColor} onPick={(v) => setPart('hairColor', v)} />
+              <Swatches
+                label="HAIR COLOR"
+                options={HAIR_COLORS}
+                value={parts.hairColor}
+                onPick={(v) => setPart('hairColor', v)}
+              />
               <Choices label="EYES" options={EYE_STYLES} value={parts.eyes} onPick={(v) => setPart('eyes', v)} />
               <Swatches label="EYE COLOR" options={EYE_COLORS} value={parts.eyeColor} onPick={(v) => setPart('eyeColor', v)} />
               <Swatches
                 label="OUTFIT"
-                options={[...OUTFITS, ...Object.entries(PASS_OUTFITS).filter(([id]) => ownedCosmetics.includes(`outfit:${id}`)).map(([, o]) => o.color)]}
+                options={[
+                  ...OUTFITS,
+                  ...Object.entries(PASS_OUTFITS)
+                    .filter(([id]) => ownedCosmetics.includes(`outfit:${id}`))
+                    .map(([, o]) => o.color),
+                ]}
                 value={parts.outfit}
                 onPick={(v) => setPart('outfit', v)}
               />
@@ -190,16 +246,47 @@ export function ProfileEditor() {
           {tab === 'photo' && (
             <div className="mt-5">
               <p className="text-sm text-white/60">
-                Upload any picture. It is cropped to a square and stays on this device only — nothing is sent anywhere.
+                Add your own photo as your portrait: you choose the part that shows in the round frame. It is shown on your
+                profile, in clans, rankings and the battle screen. In the 3D arena you still brawl as{' '}
+                {character ? character.name : 'your own brawler'} — pick another look under SERIES CHARACTERS or BUILD YOUR OWN.
+                The photo stays on this device only; nothing is sent anywhere.
               </p>
-              <input ref={file} type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
-              <button
-                onClick={() => file.current?.click()}
-                className="font-display mt-4 rounded-md border-2 px-6 py-3 text-sm tracking-[0.3em] transition hover:bg-white/10"
-                style={{ borderColor: color }}
-              >
-                {avatar.kind === 'photo' ? 'CHANGE PHOTO' : 'UPLOAD PHOTO'}
-              </button>
+              <input
+                ref={file}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  upload(e.target.files?.[0])
+                  e.target.value = ''
+                }}
+              />
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                {photo && <Avatar avatar={{ ...look, photo }} color={color} size={72} />}
+                <button
+                  onClick={() => file.current?.click()}
+                  className="font-display rounded-md border-2 px-6 py-3 text-sm tracking-[0.3em] transition hover:bg-white/10"
+                  style={{ borderColor: color }}
+                >
+                  {photo ? 'CHANGE PHOTO' : 'UPLOAD PHOTO'}
+                </button>
+                {photo && (
+                  <>
+                    <button
+                      onClick={() => setCropping(original ?? photo)}
+                      className="font-display rounded-md border-2 border-white/25 px-4 py-3 text-xs tracking-[0.3em] hover:bg-white/10"
+                    >
+                      ADJUST
+                    </button>
+                    <button
+                      onClick={() => setPhoto(undefined)}
+                      className="font-display px-3 py-3 text-xs tracking-[0.3em] text-white/45 hover:text-red-300"
+                    >
+                      REMOVE PHOTO
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </section>
@@ -221,7 +308,10 @@ export function ProfileEditor() {
                   setElement(e.id)
                 }}
                 className="flex flex-col items-center rounded-lg border-2 py-2 transition"
-                style={{ borderColor: element === e.id ? e.color : 'rgba(255,255,255,0.08)', background: element === e.id ? `${e.color}22` : 'transparent' }}
+                style={{
+                  borderColor: element === e.id ? e.color : 'rgba(255,255,255,0.08)',
+                  background: element === e.id ? `${e.color}22` : 'transparent',
+                }}
               >
                 <img src={e.icon} alt="" className="h-10 w-10" />
                 <span className="mt-1 text-xs">{e.name}</span>
@@ -230,8 +320,7 @@ export function ProfileEditor() {
           </div>
           {!existing && (
             <p className="mt-2 text-xs text-white/45">
-              You start with one Bakugan: {bakuganById(starterFor(element)).name}. Win Battle Points to get more
-              from the shop.
+              You start with one Bakugan: {bakuganById(starterFor(element)).name}. Win Battle Points to get more from the shop.
             </p>
           )}
 
@@ -254,17 +343,57 @@ export function ProfileEditor() {
             whileHover={valid ? { scale: 1.04 } : undefined}
             whileTap={valid ? { scale: 0.97 } : undefined}
             className="font-display mt-6 w-full skew-x-[-10deg] border-2 py-4 text-lg font-black tracking-[0.3em] transition"
-            style={{ borderColor: valid ? color : 'rgba(255,255,255,0.15)', background: valid ? `${color}33` : 'transparent', opacity: valid ? 1 : 0.5 }}
+            style={{
+              borderColor: valid ? color : 'rgba(255,255,255,0.15)',
+              background: valid ? `${color}33` : 'transparent',
+              opacity: valid ? 1 : 0.5,
+            }}
           >
             {existing ? 'SAVE PROFILE' : 'START BRAWLING'}
           </motion.button>
         </section>
       </div>
+
+      <AnimatePresence>
+        {cropping && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="rounded-2xl border border-white/15 bg-[#0b0c12] p-7">
+              <p className="font-display text-xs tracking-[0.5em] text-white/40">YOUR PORTRAIT</p>
+              <h2 className="font-display mb-5 text-2xl font-black tracking-wider">PLACE YOUR FACE IN THE CIRCLE</h2>
+              <PhotoCropper
+                src={cropping}
+                color={color}
+                onCancel={() => setCropping(null)}
+                onDone={(url) => {
+                  playSfx('select')
+                  setPhoto(url)
+                  setCropping(null)
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
 
-function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+}) {
   return (
     <label className="block">
       <span className="font-display text-xs tracking-[0.4em] text-white/40">{label}</span>
@@ -279,7 +408,17 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
   )
 }
 
-function Swatches({ label, options, value, onPick }: { label: string; options: string[]; value: string; onPick: (v: string) => void }) {
+function Swatches({
+  label,
+  options,
+  value,
+  onPick,
+}: {
+  label: string
+  options: string[]
+  value: string
+  onPick: (v: string) => void
+}) {
   return (
     <div className="flex items-center gap-3">
       <span className="font-display w-24 shrink-0 text-[10px] tracking-[0.3em] text-white/40">{label}</span>
@@ -323,7 +462,10 @@ function Choices<T extends string>({
             title={locked.includes(o) ? 'Earn it in the Season Pass' : undefined}
             onClick={() => onPick(o)}
             className="rounded-md border px-2.5 py-1 text-xs capitalize transition disabled:opacity-35"
-            style={{ borderColor: value === o ? '#fff' : 'rgba(255,255,255,0.15)', color: value === o ? '#fff' : 'rgba(255,255,255,0.6)' }}
+            style={{
+              borderColor: value === o ? '#fff' : 'rgba(255,255,255,0.15)',
+              color: value === o ? '#fff' : 'rgba(255,255,255,0.6)',
+            }}
           >
             {locked.includes(o) && '🔒 '}
             {o}

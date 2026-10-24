@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { abilitiesOf, BAKUGAN, type Bakugan, type Entrant } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
-import type { Avatar } from './avatar'
+import { normalizeAvatar, type Avatar } from './avatar'
 import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
 import { isReleased, LAUNCH, OWNER_ONLY } from '../season/release'
 import { cosmeticsOnSale, PACKS } from '../shop/shop'
@@ -698,11 +698,12 @@ export const useProfiles = create<ProfilesState>()(
     }),
     {
       name: 'bakugan-profiles',
-      version: 6,
+      version: 7,
       // v3 (new economy and rules): every earlier test profile is cleared so everyone starts from zero
       // v4: Tripod Epsilon left the roster; Robotallion (now Aquos) took its place, so it takes its owners too
       // v5: an evolution with cards of its own unlocks them with XP from when it was reached
       // v6: friends list (empty for existing profiles)
+      // v7: a photo is a portrait on top of a look; a photo-only avatar takes the series character of its attribute
       migrate: (state, version) => {
         if (version < 3) return { profiles: [], activeId: null }
         let s = state as { profiles: Profile[]; activeId: string | null }
@@ -720,6 +721,7 @@ export const useProfiles = create<ProfilesState>()(
             })),
           }
         if (version < 6) s = { ...s, profiles: s.profiles.map((p) => ({ ...p, friends: p.friends ?? [] })) }
+        if (version < 7) s = { ...s, profiles: s.profiles.map((p) => ({ ...p, avatar: normalizeAvatar(p.avatar, p.element) })) }
         return s
       },
     },

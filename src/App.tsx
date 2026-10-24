@@ -11,6 +11,7 @@ import { IntroScreen } from './screens/IntroScreen'
 import { ProfileEditor } from './screens/ProfileEditor'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ClansScreen } from './screens/ClansScreen'
+import { FriendsScreen } from './screens/FriendsScreen'
 import { RankingsScreen } from './screens/RankingsScreen'
 import { EncyclopediaScreen } from './screens/EncyclopediaScreen'
 import { ShopScreen } from './screens/ShopScreen'
@@ -40,6 +41,7 @@ const TRACK_FOR: Partial<Record<Screen, Track>> = {
   profile: 'anthem',
   rankings: 'rankings',
   clans: 'clans',
+  friends: 'clans',
   encyclopedia: 'gallery',
   showroom: 'showroom',
   characters: 'characters',
@@ -74,6 +76,7 @@ export default function App() {
           {screen === 'profileEdit' && <ProfileEditor key="profileEdit" />}
           {screen === 'rankings' && <RankingsScreen key="rankings" />}
           {screen === 'clans' && <ClansScreen key="clans" />}
+          {screen === 'friends' && <FriendsScreen key="friends" />}
           {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
           {screen === 'pass' && <SeasonPassScreen key="pass" />}
           {screen === 'shop' && <ShopScreen key="shop" />}
@@ -94,6 +97,7 @@ export default function App() {
             'profileEdit',
             'rankings',
             'clans',
+            'friends',
             'encyclopedia',
             'showroom',
             'shop',

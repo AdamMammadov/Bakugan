@@ -15,6 +15,7 @@ export type Screen =
   | 'profileEdit'
   | 'rankings'
   | 'clans'
+  | 'friends'
   | 'encyclopedia'
   | 'characters'
   | 'showroom'
@@ -29,6 +30,7 @@ export type PageScreen =
   | 'shop'
   | 'rankings'
   | 'clans'
+  | 'friends'
   | 'encyclopedia'
   | 'showroom'
   | 'characters'
@@ -39,6 +41,7 @@ const PAGES: PageScreen[] = [
   'shop',
   'rankings',
   'clans',
+  'friends',
   'encyclopedia',
   'showroom',
   'characters',
@@ -59,8 +62,11 @@ export interface ArenaSetup {
   right: TeamMember[]
   /** True when the left team is the active player's own; the result then earns XP. */
   ranked: boolean
-  /** The CPU brawler: series character it plays as and the rank tier that sets its strength. */
-  bot: { characterId: string; tier: number }
+  /**
+   * The CPU brawler: series character it plays as and the rank tier that sets its strength; `name` is a
+   * friend's own name when the player invited them (the arena can show it instead of the character's).
+   */
+  bot: { characterId: string; tier: number; name?: string }
 }
 
 interface GameState {

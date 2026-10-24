@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { useUnread } from '../profile/useFriendChat'
+import { useActiveProfile } from '../profile/useProfiles'
 import { useGame, type PageScreen } from '../store/useGame'
 import { centreInStrip } from './strip'
 
@@ -9,6 +11,7 @@ const TABS: [PageScreen, string][] = [
   ['shop', 'SHOP'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
+  ['friends', 'FRIENDS'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
   ['showroom', 'BAKUGAN'],
   ['characters', 'CHARACTERS'],
@@ -20,6 +23,11 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
   const nav = useRef<HTMLElement>(null)
+  const me = useActiveProfile()
+  const unread = useUnread(
+    me?.id,
+    (me?.friends ?? []).map((f) => f.id),
+  )
   // the open page's tab, brought into view when the page changes (not on every render)
   const active = useRef<HTMLButtonElement>(null)
   useEffect(() => centreInStrip(nav.current, active.current), [current])
@@ -30,6 +38,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
     'shop',
     'rankings',
     'clans',
+    'friends',
     'encyclopedia',
     'showroom',
     'characters',
@@ -62,6 +71,9 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
               }`}
             >
               {label}
+              {id === 'friends' && unread > 0 && (
+                <span className="ml-1.5 rounded-full bg-amber-400 px-1.5 text-[10px] tracking-normal text-black">{unread}</span>
+              )}
             </button>
           ))}
         </nav>

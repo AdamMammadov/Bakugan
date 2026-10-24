@@ -16,6 +16,7 @@ const ITEMS: [PageScreen, string][] = [
   ['characters', 'CHARACTERS'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
+  ['friends', 'FRIENDS'],
 ]
 
 /** One compact corner button: the player's chip, opening a menu of the player pages. */
@@ -53,16 +54,18 @@ export function ProfileButton() {
                 }}
               />
             )}
-            {ITEMS.filter(([id]) => profile || (id !== 'profile' && id !== 'inventory')).map(([id, label]) => (
-              <MenuItem
-                key={id}
-                label={label}
-                onClick={() => {
-                  setOpen(false)
-                  openPage(id)
-                }}
-              />
-            ))}
+            {ITEMS.filter(([id]) => profile || (id !== 'profile' && id !== 'inventory' && id !== 'friends')).map(
+              ([id, label]) => (
+                <MenuItem
+                  key={id}
+                  label={label}
+                  onClick={() => {
+                    setOpen(false)
+                    openPage(id)
+                  }}
+                />
+              ),
+            )}
           </motion.div>
         )}
       </AnimatePresence>

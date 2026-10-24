@@ -1,30 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
 import { formBrawlG } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useMinute } from '../profile/botProgress'
 import { brawlerOf, TIER_COLORS } from '../profile/brawlers'
+import { ago } from '../profile/presence'
 import { clanOf, useClans } from '../profile/useClans'
+import { useFriendChat } from '../profile/useFriendChat'
+import { useFriendClock } from '../profile/useFriendClock'
 import { bakuganById, friendStatus, tierOf, useActiveProfile, useProfiles } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
-
-/** The time for friend statuses: it moves on when the next waiting request gets accepted. */
-function useFriendClock() {
-  const me = useActiveProfile()
-  const [now, setNow] = useState(() => Date.now())
-  const next = me?.friends
-    ?.map((f) => f.since)
-    .filter((t) => t > now)
-    .sort((a, b) => a - b)[0]
-  useEffect(() => {
-    if (next === undefined) return
-    const t = window.setTimeout(() => setNow(Date.now()), Math.max(0, next - Date.now()) + 50)
-    return () => clearTimeout(t)
-  }, [next])
-  return now
-}
 
 /** A brawler's profile card (another player on this device or a CPU brawler), with Add friend. */
 export function BrawlerProfileModal({ id, onClose }: { id: string | null; onClose: () => void }) {
@@ -153,20 +139,25 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
             </button>
           </>
         ) : (
-          me && <FriendButton id={id} name={b.firstName} />
+          me && (
+            <>
+              <FriendButton id={id} name={b.firstName} />
+              <button
+                onClick={() => {
+                  onClose()
+                  useFriendChat.getState().setFocus(id)
+                  openPage('friends')
+                }}
+                className="font-display ml-auto rounded border border-white/30 px-4 py-2 text-xs tracking-[0.3em] hover:bg-white/10"
+              >
+                {friendStatus(me, id, now) === 'friend' ? '✉ MESSAGE · FULL PROFILE →' : 'FULL PROFILE →'}
+              </button>
+            </>
+          )
         )}
       </div>
     </motion.div>
   )
-}
-
-/** "just now", "25 min ago", "3 h ago", "2 days ago". */
-function ago(ms: number) {
-  const min = Math.floor(ms / 60_000)
-  if (min < 1) return 'just now'
-  if (min < 60) return `${min} min ago`
-  const h = Math.floor(min / 60)
-  return h < 24 ? `${h} h ago` : `${Math.floor(h / 24)} ${h < 48 ? 'day' : 'days'} ago`
 }
 
 /** Add friend → request sent → friends (with remove). */
@@ -220,16 +211,27 @@ export function FriendButton({ id, name, small }: { id: string; name: string; sm
 /** The active player's friends (and requests still waiting); a click opens their profile. */
 export function FriendsList({ onOpen }: { onOpen: (id: string) => void }) {
   const me = useActiveProfile()
+  const openPage = useGame((s) => s.openPage)
   const profiles = useProfiles((s) => s.profiles)
   const now = useFriendClock()
   const list = (me?.friends ?? []).map((f) => ({ f, b: brawlerOf(f.id, profiles, now) })).filter((x) => !!x.b)
   return (
     <section>
-      <h3 className="font-display text-xs tracking-[0.5em] text-white/40">
-        FRIENDS · {list.filter(({ f }) => f.since <= now).length}
-      </h3>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="font-display text-xs tracking-[0.5em] text-white/40">
+          FRIENDS · {list.filter(({ f }) => f.since <= now).length}
+        </h3>
+        <button
+          onClick={() => openPage('friends')}
+          className="font-display text-[10px] tracking-[0.3em] text-white/45 transition hover:text-white"
+        >
+          OPEN FRIENDS →
+        </button>
+      </div>
       {list.length === 0 && (
-        <p className="mt-2 text-sm text-white/40">No friends yet. Open a clan member’s profile and add them.</p>
+        <p className="mt-2 text-sm text-white/40">
+          No friends yet. Find brawlers on the FRIENDS page, or add clan members from their profile.
+        </p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {list.map(({ f, b }) => {

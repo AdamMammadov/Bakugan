@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
+import { ClanEmblem } from '../components/ClanEmblem'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
@@ -89,23 +90,6 @@ export function ClansScreen() {
 
       <BrawlerProfileModal id={openId} onClose={() => setOpenId(null)} />
     </motion.div>
-  )
-}
-
-function Emblem({ clan, size = 56 }: { clan: Pick<Clan, 'element' | 'tag'>; size?: number }) {
-  const el = ELEMENT_BY_ID[clan.element]
-  return (
-    <div
-      className="flex shrink-0 items-center justify-center"
-      style={{
-        width: size,
-        height: size,
-        clipPath: 'polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)',
-        background: `linear-gradient(160deg, ${el.color}, #07080d)`,
-      }}
-    >
-      <img src={el.icon} alt="" style={{ width: size * 0.55, height: size * 0.55 }} />
-    </div>
   )
 }
 
@@ -239,7 +223,7 @@ function ClanBrowser({
             >
               <div className="flex items-center gap-4">
                 <span className="font-display w-7 text-center text-lg font-black text-white/50">{i + 1}</span>
-                <Emblem clan={c} />
+                <ClanEmblem clan={c} />
                 <div className="min-w-0 flex-1">
                   <p className="font-display flex items-center gap-2 text-xl font-bold">
                     <span className="truncate">
@@ -318,7 +302,7 @@ function CreateClan({ me }: { me: Profile }) {
     <section className="rounded-xl border border-white/10 bg-black/40 p-6">
       <h2 className="font-display text-xs tracking-[0.5em] text-white/40">FOUND A CLAN</h2>
       <div className="mt-4 flex items-center gap-4">
-        <Emblem clan={{ element, tag }} size={64} />
+        <ClanEmblem clan={{ element, tag }} size={64} />
         <p className="font-display text-xl font-bold">
           <span style={{ color: ELEMENT_BY_ID[element].color }}>[{tag.toUpperCase() || 'TAG'}]</span> {name || 'Clan name'}
         </p>
@@ -416,7 +400,7 @@ function ClanPage({ clan, me, now, onOpen }: { clan: Clan; me: Profile; now: num
   return (
     <div className="mt-8">
       <header className="flex items-center gap-6">
-        <Emblem clan={clan} size={96} />
+        <ClanEmblem clan={clan} size={96} />
         <div className="min-w-0 flex-1">
           <p className="font-display flex items-center gap-2 text-xs tracking-[0.5em]" style={{ color: el.color }}>
             {el.name.toUpperCase()} CLAN · FOUNDED {new Date(clan.createdAt).toLocaleDateString('en-GB')}

@@ -6,6 +6,7 @@ import { GateChip } from '../components/GateChip'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { clanOf, useClans } from '../profile/useClans'
+import { useFriendChat } from '../profile/useFriendChat'
 import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, type Bakugan } from '../data/bakugan'
 import { released } from '../season/release'
 import { ELEMENT_BY_ID } from '../data/elements'
@@ -114,6 +115,7 @@ export function ProfileScreen() {
                 <button
                   onClick={() => {
                     useClans.getState().leave(profile.id)
+                    useFriendChat.getState().forget(profile.id)
                     remove(profile.id)
                     setConfirmDelete(false)
                   }}
@@ -439,7 +441,7 @@ function Locker({ profile }: { profile: Profile }) {
 }
 
 /** Rank name with progress towards the next tier. */
-export function RankBadge({ profile, color }: { profile: Profile; color: string }) {
+export function RankBadge({ profile, color }: { profile: Pick<Profile, 'rating' | 'xp'>; color: string }) {
   const score = rankScore(profile)
   const tier = tierOf(score)
   const from = TIERS[tier.index].min

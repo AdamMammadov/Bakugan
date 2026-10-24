@@ -3,7 +3,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ElementId } from '../data/elements'
 import { BOT_CLANS, botById, botClanMembers, isBot, type BotClan } from './bots'
-import { addressee, chatLine, joinedLine, recruitedLine, replyTo, welcomeLine } from './clanChat'
+import { botLine, toEveryone, type Ask } from './chatBrain'
+import { addressee, asker, clanLang, clanLine, clanReply } from './clanChat'
 import { advance, CATCH_UP, freeBots, keepAway, MAX_MEMBERS, STEP, systemLine } from './clanLife'
 import { useProfiles } from './useProfiles'
 
@@ -21,6 +22,8 @@ export interface ClanMessage {
   at: number
   /** A line about the clan itself ("Sam joined the clan."), not something a member said. */
   system?: boolean
+  /** A CPU member's question ("When?"), so the player's short answer to it is understood. */
+  ask?: Ask
 }
 
 export interface Clan {
@@ -88,11 +91,12 @@ const without = (clans: Clan[], memberId: string) =>
     // a player clan with no players left is disbanded (its bots are free again); CPU clans stay
     .filter((c) => c.cpu || playersIn(c).length > 0)
 
-const message = (author: string, text: string, at = Date.now()): ClanMessage => ({
+const message = (author: string, text: string, at = Date.now(), ask?: Ask): ClanMessage => ({
   id: `m${at.toString(36)}${Math.random().toString(36).slice(2, 6)}`,
   author,
   text: text.slice(0, 400),
   at,
+  ...(ask ? { ask } : {}),
 })
 
 /** Adds a message in time order (lines from catching up can be older than the newest one). */
@@ -117,11 +121,13 @@ const randomBot = (clan: Clan, not?: string) => {
 /** The chat's latest lines that members said (not the clan's own notices). */
 const said = (clan: Clan) => clan.messages.filter((m) => !m.system)
 
+type Said = { text: string; ask?: Ask }
+
 /**
  * A bot "types" for a moment, then posts (if it is still in the clan). The line is picked when it posts,
- * knowing the chat's latest lines so it does not repeat one.
+ * knowing the chat as it is then (so it does not repeat a line).
  */
-function botSays(clanId: string, botId: string, line: (recent: string[]) => string, delay: number, done?: () => void) {
+function botSays(clanId: string, botId: string, line: (clan: Clan, recent: string[]) => Said, delay: number, done?: () => void) {
   const typing = (fn: (ids: string[]) => string[]) =>
     useClans.setState((s) => ({ typing: { ...s.typing, [clanId]: fn(s.typing[clanId] ?? []) } }))
   typing((ids) => [...ids, botId])
@@ -129,8 +135,11 @@ function botSays(clanId: string, botId: string, line: (recent: string[]) => stri
     typing((ids) => ids.filter((id) => id !== botId))
     const clan = useClans.getState().clans.find((c) => c.id === clanId)
     if (clan?.members.includes(botId)) {
-      const text = line(clan.messages.slice(-12).map((m) => m.text))
-      useClans.setState((s) => ({ clans: post(s.clans, clanId, message(botId, text)) }))
+      const said = line(
+        clan,
+        clan.messages.slice(-12).map((m) => m.text),
+      )
+      useClans.setState((s) => ({ clans: post(s.clans, clanId, message(botId, said.text, Date.now(), said.ask)) }))
     }
     done?.()
   }, delay)
@@ -141,9 +150,10 @@ const replying: Record<string, number> = {}
 const owed: Record<string, { author: string; text: string } | undefined> = {}
 
 /**
- * CPU members answer every player message: the one addressed by name, else someone who did not speak
- * last, after a short typing delay; sometimes a second one chimes in. A burst of messages gets at most
- * two answers on the way at once, and then one more to the newest message, so none is left unanswered.
+ * CPU members answer every player message, about what it says: the member it is addressed to by name, else
+ * the one whose question it answers, else someone who did not speak last, after a short typing delay. A
+ * message to everyone ("salam hamıya", "who wants to brawl?") may get a second answer. A burst of messages
+ * gets at most two answers on the way at once, and then one more to the newest message.
  */
 function answer(clanId: string, author: string, text: string) {
   const clan = useClans.getState().clans.find((c) => c.id === clanId)
@@ -153,27 +163,34 @@ function answer(clanId: string, author: string, text: string) {
     owed[clanId] = { author, text }
     return
   }
-  const ctx = { name: firstName(author), tag: clan.tag }
   const lastBot = [...said(clan)].reverse().find((m) => isBot(m.author))?.author
-  const first = addressee(text, bots) ?? randomBot(clan, lastBot) ?? bots[0]
-  const say = (bot: string, line: (recent: string[]) => string, delay: number) => {
+  const asked = asker(clan)
+  const first = addressee(text, bots) ?? (asked && bots.includes(asked) ? asked : null) ?? randomBot(clan, lastBot) ?? bots[0]
+  const say = (bot: string, delay: number) => {
     replying[clanId] = (replying[clanId] ?? 0) + 1
-    botSays(clanId, bot, line, delay, () => {
-      replying[clanId] -= 1
-      const next = owed[clanId]
-      owed[clanId] = undefined
-      if (next) answer(clanId, next.author, next.text)
-    })
-  }
-  say(first, (recent) => replyTo(text, first, { ...ctx, recent }), 1300 + Math.random() * 2000)
-  const second = Math.random() < 0.25 ? randomBot(clan, first) : null
-  if (second)
-    say(
-      second,
-      (recent) => (Math.random() < 0.5 ? replyTo(text, second, { ...ctx, recent }) : chatLine(second, { ...ctx, recent })),
-      4000 + Math.random() * 3000,
+    botSays(
+      clanId,
+      bot,
+      (now) => clanReply(now, bot, author, text),
+      delay,
+      () => {
+        replying[clanId] -= 1
+        const next = owed[clanId]
+        owed[clanId] = undefined
+        if (next) answer(clanId, next.author, next.text)
+      },
     )
+  }
+  say(first, 1300 + Math.random() * 2000)
+  const second = !addressee(text, bots) && toEveryone(text) && Math.random() < 0.6 ? randomBot(clan, first) : null
+  if (second) say(second, 4000 + Math.random() * 3000)
 }
+
+/** A line a bot says by itself, in the language the players write in. */
+const own =
+  (key: 'chatter' | 'welcome' | 'recruited' | 'joined', botId: string, name: string) =>
+  (clan: Clan, recent: string[]): Said =>
+    clanLine(key, clan, botId, name, recent, clanLang(clan, useClans.getState().clans))
 
 function cpuClan(c: BotClan): Clan {
   const members = botClanMembers(c.tag)
@@ -198,9 +215,19 @@ function seedChat(clan: Clan): ClanMessage[] {
   const chat = [message(clan.leaderId, `Welcome to [${clan.tag}]! Be friendly, brawl hard, have fun.`, now - 26 * 3_600_000)]
   for (const [i, hours] of [5, 2.5, 0.8, 0.2].entries()) {
     const bot = bots[(i * 3 + 1) % bots.length]
-    chat.push(
-      message(bot, chatLine(bot, { name: 'everyone', tag: clan.tag, recent: chat.map((m) => m.text) }), now - hours * 3_600_000),
+    const line = botLine(
+      'chatter',
+      {
+        botId: bot,
+        player: null,
+        place: { kind: 'clan', clan, friends: false },
+        profiles: [],
+        now,
+        recent: chat.map((m) => m.text),
+      },
+      'en',
     )
+    chat.push(message(bot, line.text, now - hours * 3_600_000))
   }
   return chat
 }
@@ -249,8 +276,7 @@ export const useClans = create<ClansState>()(
         }))
         const clan = get().clans.find((c) => c.id === clanId)
         const bot = clan && randomBot(clan)
-        const ctx = { name: firstName(profileId), tag: clan?.tag ?? '' }
-        if (bot) botSays(clanId, bot, (recent) => welcomeLine(bot, { ...ctx, recent }), 1500 + Math.random() * 1500)
+        if (bot) botSays(clanId, bot, own('welcome', bot, firstName(profileId)), 1500 + Math.random() * 1500)
       },
       leave: (profileId) => set((s) => ({ clans: without(s.clans, profileId) })),
       kick: (clanId, memberId) =>
@@ -290,8 +316,7 @@ export const useClans = create<ClansState>()(
               : c,
           ),
         }))
-        const ctx = { name: firstName(clan.leaderId), tag: clan.tag }
-        botSays(clanId, bot, (recent) => recruitedLine(bot, { ...ctx, recent }), 1200)
+        botSays(clanId, bot, own('recruited', bot, firstName(clan.leaderId)), 1200)
         return bot
       },
       answerRequest: (clanId, botId, accept) => {
@@ -309,8 +334,7 @@ export const useClans = create<ClansState>()(
             return postTo(joined, systemLine(botId, `${botById(botId)?.name} joined the clan.`, now))
           }),
         }))
-        const ctx = { name: firstName(clan.leaderId), tag: clan.tag }
-        if (ok) botSays(clanId, botId, (recent) => joinedLine(botId, { ...ctx, recent }), 1500 + Math.random() * 1500)
+        if (ok) botSays(clanId, botId, own('joined', botId, firstName(clan.leaderId)), 1500 + Math.random() * 1500)
         return ok
       },
       setOpen: (clanId, open) => {
@@ -331,11 +355,11 @@ export const useClans = create<ClansState>()(
         for (const j of life.joined) {
           const clan = get().clans.find((c) => c.id === j.clanId)
           if (!clan) continue
-          const ctx = { name: clan.cpu ? 'everyone' : firstName(clan.leaderId), tag: clan.tag }
-          if (now - j.at < 5 * 60_000) botSays(j.clanId, j.botId, (recent) => joinedLine(j.botId, { ...ctx, recent }), 2500)
+          const line = own('joined', j.botId, clan.cpu ? 'everyone' : firstName(clan.leaderId))
+          if (now - j.at < 5 * 60_000) botSays(j.clanId, j.botId, line, 2500)
           else
             set((s) => ({
-              clans: post(s.clans, j.clanId, message(j.botId, joinedLine(j.botId, ctx), Math.min(now, j.at + 90_000))),
+              clans: post(s.clans, j.clanId, message(j.botId, line(clan, []).text, Math.min(now, j.at + 90_000))),
             }))
         }
       },
@@ -344,8 +368,7 @@ export const useClans = create<ClansState>()(
         const last = clan?.messages.at(-1)
         if (!clan || (last && Date.now() - last.at < 45_000) || Math.random() > 0.35) return
         const bot = randomBot(clan, last?.author)
-        const ctx = { name: firstName(useProfiles.getState().activeId), tag: clan.tag }
-        if (bot) botSays(clanId, bot, (recent) => chatLine(bot, { ...ctx, recent }), 2000)
+        if (bot) botSays(clanId, bot, own('chatter', bot, firstName(useProfiles.getState().activeId)), 2000)
       },
     }),
     {
@@ -356,6 +379,7 @@ export const useClans = create<ClansState>()(
       // v3: the CPU clans joined the list (rebuilt from bots.ts on every load, see merge)
       // v4: CPU clans' members are saved too (they come and go), plus join requests, the open setting, who
       //     keeps away and the time clan life was played to; v3 saves already hold the members, so they carry over
+      // (a message's optional `ask` came later: older messages simply have none, so no new version)
       migrate: (state, version) => (version < 2 ? { clans: [], simAt: 0 } : (state as { clans: Clan[]; simAt?: number })),
       merge: (saved, current) => {
         const s = saved as { clans?: Clan[]; simAt?: number } | undefined
