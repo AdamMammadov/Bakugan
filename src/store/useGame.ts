@@ -22,6 +22,8 @@ export type Screen =
   | 'shop'
   | 'inventory'
   | 'pass'
+  /** Tournaments, boss battles and rule events. */
+  | 'events'
 
 export type PageScreen =
   | 'profile'
@@ -67,6 +69,49 @@ export interface ArenaSetup {
    * friend's own name when the player invited them (the arena can show it instead of the character's).
    */
   bot: { characterId: string; tier: number; name?: string }
+  /** A 2v2 tag match: the player's partner and the two opponents (see TagSetup). */
+  tag?: TagSetup
+  /** An event match (tournament round, boss battle, rule event): its own rules, reported back to src/events. */
+  event?: ArenaEvent
+}
+
+/** A CPU brawler (or a friend, who is a CPU brawler too) taking part in a tag match. */
+export interface TagMember {
+  /** Bot id from src/profile/bots.ts. */
+  botId: string
+  name: string
+  /** Series character it plays as (look, model, voice). */
+  characterId: string
+  /** Rank tier that sets its strength. */
+  tier: number
+  team: TeamMember[]
+}
+
+/**
+ * A 2v2 tag match: the player and `partner` against the two `opponents`. Every round has two duels at once, the
+ * player against one opponent and the partner against the other; between rounds the pairs may swap.
+ */
+export interface TagSetup {
+  partner: TagMember
+  opponents: [TagMember, TagMember]
+  /** True when the partner is one of the player's friends (otherwise a random CPU partner). */
+  friend: boolean
+}
+
+/** An event's rules for one match, and where its result goes. */
+export interface ArenaEvent {
+  /** Event id from src/events. */
+  id: string
+  /** Which match of the event: a tournament round ('qf', 'sf', 'final'), a boss's id… */
+  stage?: string
+  /** Shown in the battle HUD, e.g. "SPRING CUP · SEMI-FINAL". */
+  title: string
+  /** Gate cards both sides use instead of their own decks (ids from src/data/gates.ts). */
+  gates?: string[]
+  /** Extra G-Power for every Bakugan on the CPU side (a boss). */
+  cpuBoost?: number
+  /** Lives per side [player, CPU], if not 3 each. */
+  lives?: [number, number]
 }
 
 interface GameState {

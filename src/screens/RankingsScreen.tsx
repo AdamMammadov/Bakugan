@@ -9,6 +9,7 @@ import { BOTS, botNow } from '../profile/bots'
 import { useMinute } from '../profile/botProgress'
 import { TIER_COLORS } from '../profile/brawlers'
 import { clanOf, useClanLife, useClans } from '../profile/useClans'
+import { dayChange } from '../profile/scoreLog'
 import { rankScore, tierOf, TIERS, useProfiles } from '../profile/useProfiles'
 
 interface Row {
@@ -23,7 +24,7 @@ interface Row {
   losses: number
   clan: string | null
   cpu: boolean
-  /** Score gained (or lost) in the last 24 hours; CPU brawlers only. */
+  /** Score gained (or lost) in the last 24 hours. */
   day?: number
   frame?: string
   title?: string
@@ -53,6 +54,7 @@ export function RankingsScreen() {
       losses: p.stats.losses,
       clan: clanOf(clans, p.id)?.tag ?? null,
       cpu: false,
+      day: dayChange(p.id, rankScore(p), now),
       frame: p.cosmetics?.frame,
       title: p.cosmetics?.title,
     })),
@@ -88,6 +90,8 @@ export function RankingsScreen() {
       cpu: !!c.cpu,
     })),
   ].sort((a, b) => b.score - a.score)
+  const myClan = clanOf(clans, activeId ?? '')
+  const myClanPlace = myClan ? clanRows.findIndex((c) => c.id === myClan.id) + 1 : 0
 
   return (
     <motion.div
@@ -126,9 +130,17 @@ export function RankingsScreen() {
             {t.toUpperCase()}
           </button>
         ))}
-        {myPlace > 0 && (
+        {/* where the player stands on the shown list: themselves among brawlers, their clan among clans */}
+        {tab === 'players' && myPlace > 0 && (
           <span className="font-display ml-auto self-center text-xs tracking-[0.3em] text-white/50">
             YOU ARE #{myPlace} OF {rows.length}
+          </span>
+        )}
+        {tab === 'clans' && (
+          <span className="font-display ml-auto self-center text-xs tracking-[0.3em] text-white/50">
+            {myClan && myClanPlace > 0
+              ? `[${myClan.tag}] IS #${myClanPlace} OF ${clanRows.length} CLANS`
+              : `${clanRows.length} CLANS · YOU ARE NOT IN A CLAN`}
           </span>
         )}
       </div>
