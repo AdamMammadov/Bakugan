@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-import { HAND_SIZE, LIFE, MAX_HIT, MAX_ROUNDS, MIN_HIT, PLAYS } from '../battle/engine'
+import { FINISHER_CHARGE, HAND_SIZE, LIVES, PLAYS, STRIKE } from '../battle/engine'
+import { COMMAND_GATES } from '../data/gates'
 import { BakuganInfo } from '../components/BakuganInfo'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
@@ -491,36 +492,40 @@ function RulesTab() {
     [
       'The brawl',
       [
-        `Each brawler has a life gauge of ${LIFE}. A match is played in rounds; empty your opponent's gauge to win.`,
-        'Each side brings up to three Bakugan. At the start of every round each brawler picks one and throws it onto the field.',
-        `Ability phase: the brawlers take turns to play one ability card of the Bakugan they threw, or get READY (pass). It ends when both pass in a row or each has played ${PLAYS} cards.`,
-        `Battle: the higher G-Power wins the round. The loser loses the difference in life: at least ${MIN_HIT}, at most ${MAX_HIT}. A tie is a draw.`,
-        `Next round every card is back: you draw a fresh hand of up to ${HAND_SIZE} from the thrown Bakugan's own cards. After ${MAX_ROUNDS} rounds the brawler with more life wins.`,
+        `Each brawler has ${LIVES} lives: the balls at the top of the screen. A match is a series of battles, one Bakugan against one. The loser of a battle loses a life; lose ${LIVES} battles and you are defeated.`,
+        'Each side brings one to three Bakugan. A beaten Bakugan goes back to its brawler and can be thrown again in the next battle.',
+        'Every battle: one brawler sets a Gate Card face-down (the brawlers take turns, a coin toss decides who sets the first). The setter throws a Bakugan first, then the other brawler answers with one of theirs.',
+        `Each side draws a hand of up to ${HAND_SIZE} cards from its thrown Bakugan's own ability cards. The brawler who did not set the Gate Card moves first, then you take turns.`,
+        `On your turn you do one thing: play an ability card, open your Gate Card, or ATTACK. After ${PLAYS} cards or gate openings you must attack. There is no passing.`,
+        `ATTACK: your Bakugan strikes and the opponent loses ${Math.round(STRIKE * 100)}% of your G-Power. Your part in the battle is then over; the opponent gets one last move and must strike back.`,
+        'When both have attacked, the higher G-Power wins the battle. A tie goes to the Bakugan thrown first (the Gate Card setter’s). A turn counter (01T, 02T…) runs through the whole match.',
       ],
     ],
     [
       'Gate Cards',
       [
-        'Every round a Gate Card is set on the field, the brawlers taking turns. The other brawler plays the first card of the round.',
-        'Attribute Gate Cards give Bakugan of that attribute extra G-Power. Character Gate Cards double the power of one specific Bakugan.',
-        'You see the Gate Card before you throw, so pick the Bakugan that stands best on it.',
+        'Your Gate Card stays on the field for the whole battle and does nothing until you open it on one of your turns: "Gate Card, open!". After the battle it is spent; each brawler has three.',
+        'Once it is open your opponent always gets a move to answer it, and can nullify it if they have the power. You cannot open it once your opponent has attacked.',
+        'Attribute Gate Cards give Bakugan of their attribute on the card extra G’s. Character Gate Cards raise one specific Bakugan’s G-Power by half.',
+        ...COMMAND_GATES.map((g) => `${g.name}: ${g.text}`),
       ],
     ],
     [
       'Ability cards in battle',
       [
-        'Every card counts for the round it is played in. Boost and attack cards add their G to your Bakugan; weaken cards take G from the opponent; drain cards steal it (they lose it, you gain it).',
-        'Shield cards cancel the opponent’s next card this round. A finisher, played after two other cards in the same round, empties the opponent’s life gauge at once.',
+        'Every card counts for the battle it is played in. Boost cards raise your G-Power; attack cards strike at once and weaken cards cut the opponent’s; drain cards steal it (they lose it, you gain it).',
+        'Nullify cards cancel the opponent’s last ability card or their opened Gate Card, and its G change is undone. There are no shields that block everything.',
+        `A finisher, played after ${FINISHER_CHARGE} other ability cards in the same battle, wins the battle outright.`,
       ],
     ],
     [
       'Ranked play',
       [
         'The system matches you with a CPU brawler on your level: as many Bakugan as you bring, the same forms and the same number of cards. Bots get sharper as your rank rises.',
-        `A win gives each of your Bakugan ${XP.winMin}–${XP.winMax} XP (+${XP.ko} per round it wins), ${BP.win} Battle Points (+${BP.streakBonus} per win streak) and +${RATING.win} rating. A loss gives ${XP.lossMin}–${XP.lossMax} XP, ${BP.loss} BP and −${RATING.loss} rating.`,
+        `A win gives each of your Bakugan ${XP.winMin}–${XP.winMax} XP (+${XP.ko} per battle it wins), ${BP.win} Battle Points (+${BP.streakBonus} per win streak) and +${RATING.win} rating. A loss gives ${XP.lossMin}–${XP.lossMax} XP, ${BP.loss} BP and −${RATING.loss} rating.`,
         `Evolving takes ${EVOLVE_XP.map((x) => x.toLocaleString('en')).join(' / ')} XP for the 2nd / 3rd / 4th form. A new ability card unlocks every 1,500 XP.`,
         `New Bakugan cost ${PRICES.ownElement.toLocaleString('en')} BP (your attribute) or ${PRICES.otherElement.toLocaleString('en')} BP (other attributes), or unlock with ${PRICES.ownElementXp.toLocaleString('en')} / ${PRICES.otherElementXp.toLocaleString('en')} player XP.`,
-        `Ranks: ${TIERS.map((t) => `${t.name} (${t.min}+)`).join(', ')}. Rank score = rating + total XP ÷ 20.`,
+        `Ranks: ${TIERS.map((t) => `${t.name} (${t.min}+)`).join(', ')}. Rank score = rating + total XP ÷ 20; the battle screen shows it as HSP under each brawler.`,
       ],
     ],
   ]

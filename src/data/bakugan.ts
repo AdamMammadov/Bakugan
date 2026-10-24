@@ -2,16 +2,14 @@ import type { ElementId } from './elements'
 import { ORIGINAL_ABILITIES, ROSTER } from './roster'
 
 /**
- * How an ability works in battle (each card counts for the round it is played in):
- * - attack: strikes with extra power: adds its amount to the user's G-Power
+ * How an ability works in battle (a card counts for the battle it is played in; one card per turn):
+ * - attack: the Bakugan strikes with it: the opponent's G-Power drops by its amount at once
  * - boost:  raises the user's G-Power
  * - weaken: lowers the opponent's G-Power
- * - drain:  steals G-Power from the opponent
- * - shield: cancels the opponent's next ability card
- */
-/**
- * `finisher`: the opponent loses all their remaining life at once, through any shield; playable only once its
- * Bakugan has gathered its power with other cards in the round (engine FINISHER_CHARGE).
+ * - drain:  steals G-Power from the opponent (they lose it, the user gains it)
+ * - shield: NULLIFY: cancels the opponent's last ability card or their opened Gate Card (its G change is undone)
+ * - finisher: wins the battle outright; playable only once its Bakugan has gathered its power with other cards in
+ *   the battle (engine FINISHER_CHARGE)
  */
 export type AbilityType = 'attack' | 'boost' | 'weaken' | 'drain' | 'shield' | 'finisher'
 
@@ -398,7 +396,7 @@ BAKUGAN.push(...ROSTER)
 
 export const bakuganForElement = (element: ElementId) => BAKUGAN.filter((b) => b.element === element)
 
-/** Short label for an ability's battle effect, e.g. "+100G" or "BLOCK". */
+/** Short label for an ability's battle effect, e.g. "+100G" or "NULLIFY". */
 export function abilityLabel(a: Ability) {
   switch (a.type) {
     case 'attack':
@@ -410,9 +408,9 @@ export function abilityLabel(a: Ability) {
     case 'drain':
       return `STEAL ${a.amount}G`
     case 'shield':
-      return 'BLOCK'
+      return 'NULLIFY'
     case 'finisher':
-      return 'KO'
+      return 'WIN'
   }
 }
 
@@ -424,16 +422,16 @@ export const abilitySelfBonus = (a: Ability) =>
 export function battleEffect(a: Ability) {
   switch (a.type) {
     case 'attack':
-      return `Strikes with ${a.amount} extra power: +${a.amount}G for this round.`
+      return `Strikes the opponent at once: its G-Power drops by ${a.amount} for this battle.`
     case 'boost':
-      return `Raises your G-Power by ${a.amount} for this round.`
+      return `Raises your G-Power by ${a.amount} for this battle.`
     case 'weaken':
-      return `Cuts the opponent's G-Power by ${a.amount} for this round.`
+      return `Cuts the opponent's G-Power by ${a.amount} for this battle.`
     case 'drain':
-      return `Steals ${a.amount}G from the opponent for this round: they lose it, you gain it.`
+      return `Steals ${a.amount}G from the opponent for this battle: they lose it, you gain it.`
     case 'shield':
-      return `Cancels the opponent's next ability card this round.`
+      return `Nullify: cancels the opponent's last ability card or their opened Gate Card; its G change is undone.`
     case 'finisher':
-      return `After two other cards in the same round: the opponent loses all their remaining life at once, through any shield.`
+      return `After two other ability cards in the same battle: wins the battle outright.`
   }
 }

@@ -45,6 +45,7 @@ function sideOf(bot: BotBrawler): BrawlerSide {
     model: c.model,
     voice: c.voice,
     ai: aiForTier(tier),
+    hsp: rankScore(bot),
   }
 }
 
@@ -84,7 +85,6 @@ export function LiveScreen() {
       brawlers={match.brawlers}
       live
       onLeave={() => go(from)}
-      leaveLabel="✕ EXIT"
       onOver={() => {
         next.current = window.setTimeout(() => {
           const m = liveMatch()

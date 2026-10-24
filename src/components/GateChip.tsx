@@ -1,5 +1,5 @@
 import { ELEMENT_BY_ID } from '../data/elements'
-import { gateElementOf, type GateCard } from '../data/gates'
+import { gateElementOf, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
 
 export function GateChip({ gate }: { gate: GateCard }) {
   const element = ELEMENT_BY_ID[gateElementOf(gate)]
@@ -11,8 +11,8 @@ export function GateChip({ gate }: { gate: GateCard }) {
     >
       <img src={element.icon} alt="" className="h-6 w-6" />
       <div className="leading-tight">
-        <p className="text-xs font-bold">{gate.kind === 'attribute' ? `${element.name} +${gate.amount}` : `${gate.name} ×2`}</p>
-        <p className="text-[10px] text-white/45">{gate.kind === 'attribute' ? 'ATTRIBUTE GATE' : 'CHARACTER GATE'}</p>
+        <p className="text-xs font-bold">{gateLabel(gate)}</p>
+        <p className="text-[10px] text-white/45">{gateKindLabel(gate)}</p>
       </div>
     </div>
   )

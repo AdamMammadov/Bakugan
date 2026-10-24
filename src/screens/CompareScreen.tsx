@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { aiForTier, LIFE, matchedOpponent, PLAYS, TEAM_SIZE } from '../battle/engine'
+import { aiForTier, LIVES, matchedOpponent, PLAYS, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
 import { isReleased, released } from '../season/release'
@@ -120,9 +120,10 @@ export function CompareScreen() {
       <h1 className="font-display mt-4 text-4xl font-black tracking-wider">TEAM FACE-OFF</h1>
       <p className="mt-1 max-w-3xl text-white/50">
         Pick your team. The system matches you with an opponent on your level: as many Bakugan as you bring, the same forms and
-        the same number of ability cards. Each brawler has a life gauge of {LIFE}. Every round a Gate Card is set, both throw a
-        Bakugan and play up to {PLAYS} ability cards; the higher G-Power wins and the loser loses the difference in life. Empty
-        your opponent's gauge to win.
+        the same number of ability cards. Each brawler has {LIVES} lives. Every battle one brawler sets a Gate Card face-down and
+        both throw a Bakugan onto it. Take turns: play an ability card, open your Gate Card, or ATTACK (at most {PLAYS} cards or
+        gate openings, then you must attack). When both have attacked, the higher G-Power wins and the loser loses a life. Lose{' '}
+        {LIVES} battles and you are defeated.
       </p>
 
       {profile && (
