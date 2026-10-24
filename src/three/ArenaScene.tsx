@@ -3,7 +3,6 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { asset } from '../asset'
 import type { BattleEvent, SideIndex } from '../battle/engine'
 import { formModels, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
@@ -14,10 +13,10 @@ import { BrawlerFocus, ViewLimits } from './ArenaView'
 import { MonsterModel } from './BakuganModels'
 import { BlobShadow } from './BlobShadow'
 import { Brawler, type BrawlerGesture } from './Brawler'
-import { GateCard } from './GateCard'
+import { FIELD_CARD_TOP, FieldGateCard } from './FieldGateCard'
 import type { AvatarParts } from '../profile/avatar'
 import { LightPillar } from './LightPillar'
-import { env, moveFor, type Pose } from './pose'
+import { env, moveFor, type Move, type Pose } from './pose'
 import {
   depthIn,
   fitShield,
@@ -48,6 +47,21 @@ const BRAWLER_X = 17
 const BRAWLER_Z = 57
 /** The field Gate Card (2.2 × 3 card units) at this size covers the ground both Bakugan stand on. */
 const CARD_SCALE = 46
+/** Height of the card's top (world units, usual view): the Bakugan stand on it, never in it. */
+const GROUND = FIELD_CARD_TOP * CARD_SCALE
+/**
+ * Smallest look a Bakugan may have in the usual view (model units): the geometric mean of the height and width it
+ * shows the camera. Slim or small ones grow to it (at most MAX_BOOST times), so every Bakugan reads from afar.
+ */
+const MIN_PRESENCE = 2.6
+/** Shortest a Bakugan may stand (model units; a normal one is 3). */
+const MIN_HEIGHT = 2.76
+const MAX_BOOST = 1.6
+/**
+ * How far a Bakugan that is wider than it is long (arms or wings spread, seen edge-on from the side) turns its front
+ * towards the usual view while it waits (radians). It squares up to the opponent whenever it acts or is hit.
+ */
+const STANCE_TURN = 0.5
 /** Hip position along the model's length (model units), used as the pivot for rearing up. */
 const HIP_Z = -1.1
 /** Seconds from an action starting to its hit landing; the UI applies damage at this moment. */
@@ -151,6 +165,8 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
 
   // a new round: both brawlers throw their Bakugan in again (nothing to throw on the first render)
   const [firstThrow] = useState(throwKey)
+  // a battle that starts before its first throw keeps the field empty until the balls land
+  const [waitThrow] = useState(throwKey === 0)
   const throwing = throwKey !== firstThrow
   const throwAt = useRef<number | null>(null)
   const seenThrow = useRef(firstThrow)
@@ -184,11 +200,12 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
     const timer = setTimeout(() => crowd('cheer'), THROW_LAND * 1000)
     return () => clearTimeout(timer)
   }, [throwKey, firstThrow])
-  // the fans greet the Bakugan as they come onto the field
+  // the fans greet the Bakugan as they come onto the field (thrown ones get the cheer when they land)
   useEffect(() => {
+    if (waitThrow) return
     const timer = setTimeout(() => crowd('cheer'), 1200)
     return () => clearTimeout(timer)
-  }, [])
+  }, [waitThrow])
 
   return (
     <>
@@ -235,10 +252,10 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
 
       <Stadium scale={k} colors={colors} names={names} exclude={onField} />
 
-      {/* the field Gate Card both Bakugan stand on */}
-      <group rotation={[0, Math.PI / 2, 0]} scale={CARD_SCALE * k}>
+      {/* the field Gate Card both Bakugan stand on: face down until its owner opens it */}
+      <group scale={CARD_SCALE * k}>
         <Suspense fallback={null}>
-          <GateCard icon={gateElement?.icon ?? asset('wheel/inner.webp')} color={gateElement?.color ?? '#9aa3b5'} glow={0.32} />
+          <FieldGateCard element={gateElement} glow={0.32} />
         </Suspense>
       </group>
 
@@ -251,8 +268,13 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
           shield={shields[i]}
           blockFlash={blockFlash[i]}
           defeated={defeated[i]}
+          over={defeated[0] || defeated[1]}
           onShieldReach={onShieldReach}
           throwAt={throwAt}
+          waitThrow={waitThrow}
+          ground={GROUND * k}
+          // next to a giant the view pulls back: the others grow a little so they still read
+          presence={Math.sqrt(k)}
         />
       ))}
 
@@ -282,7 +304,8 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
           <ThrownBall
             key={`${throwKey}-${i}`}
             from={spots[i].at.clone().add(new THREE.Vector3(0, BRAWLER_SCALE * k * 2, 0))}
-            to={new THREE.Vector3(xOf(i as SideIndex, e) - (i === 0 ? -1 : 1) * 6, 1.2, 0)}
+            // the ball lands on the card's top and bounces there
+            to={new THREE.Vector3(xOf(i as SideIndex, e) - (i === 0 ? -1 : 1) * 6, GROUND * k + 1.2, 0)}
             entrant={e}
             color={ELEMENT_BY_ID[e.bakugan.element].glow}
           />
@@ -322,7 +345,119 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
 /** The model's height off its spot right now: a winged Bakugan hovers (see Hover in BakuganModels). */
 const hoverOf = (model: THREE.Object3D) => model.children[0]?.position.y ?? 0
 
-/** One Bakugan on the field: rises in on entry, lunges, flinches and falls when defeated. */
+/** Whole-body motion of a move, in the model's own frame (forward = +Z). */
+interface Motion {
+  fwd: number
+  lift: number
+  pitch: number
+  yaw: number
+  shake: number
+}
+
+/**
+ * The body motion `t` s into `move`. `bend` scales how far it rears up or leans: a long body rears up less, so its
+ * tail does not swing down through the card (it is lifted off the card for the rest).
+ */
+function motionAt(move: Move, t: number, m: Motion, bend = 1) {
+  m.fwd = m.lift = m.pitch = m.yaw = m.shake = 0
+  switch (move) {
+    case 'bite':
+      m.fwd = 1.1 * env(t, 0.1, 0.85)
+      m.pitch = 0.08 * env(t, 0.2, 0.8)
+      break
+    case 'breath':
+      m.fwd = -0.35 * env(t, 0, 1.5)
+      m.pitch = -0.1 * env(t, 0, 1.5)
+      break
+    case 'clawSwipe':
+      m.pitch = -0.38 * env(t, 0, 0.7)
+      m.fwd = 0.7 * env(t, 0.35, 0.95)
+      m.yaw = 0.25 * env(t, 0.3, 0.95)
+      break
+    case 'tailWhip':
+      // full spin so the tail sweeps through the opponent
+      m.yaw = THREE.MathUtils.smoothstep(t, 0.05, 1.05) * Math.PI * 2
+      m.fwd = 0.4 * env(t, 0.05, 1.05)
+      break
+    case 'stomp':
+      m.pitch = -0.55 * env(t, 0, 0.75)
+      m.lift = 0.25 * env(t, 0, 0.75)
+      if (t > 0.72 && t < 1.1) m.shake = Math.sin(t * 90) * 0.06 * (1.1 - t) * 3
+      break
+    case 'roar':
+      m.pitch = -0.25 * env(t, 0, 1.5)
+      m.shake = Math.sin(t * 60) * 0.02 * env(t, 0.2, 1.4)
+      break
+    case 'guard':
+      m.fwd = -0.45 * env(t, 0, 1.4)
+      m.lift = -0.15 * env(t, 0, 1.4)
+      break
+    case 'hit': {
+      const h = env(t, IMPACT_AT - 0.03, IMPACT_AT + 0.55)
+      m.fwd = -0.9 * h
+      m.pitch = -0.18 * h
+      m.yaw = 0.15 * h
+      if (h > 0) m.shake = Math.sin(t * 80) * 0.08 * h
+      break
+    }
+  }
+  m.pitch *= bend
+  return m
+}
+
+const _motion: Motion = { fwd: 0, lift: 0, pitch: 0, yaw: 0, shake: 0 }
+const _euler = new THREE.Euler()
+const _hip = new THREE.Matrix4()
+const _mm = new THREE.Matrix4()
+const _q = new THREE.Quaternion()
+const _up = new THREE.Vector3(0, 1, 0)
+const _p = new THREE.Vector3()
+const _s = new THREE.Vector3()
+
+/** Where a motion puts the model's frame: the motion group (turning round the hips) with the frame group in it. */
+function motionMatrix(m: Motion, out: THREE.Matrix4) {
+  out.makeRotationFromEuler(_euler.set(m.pitch, m.yaw, 0))
+  out.setPosition(m.shake, m.lift, -HIP_Z + m.fwd)
+  return out.multiply(_hip.makeTranslation(0, 0, HIP_Z))
+}
+
+/**
+ * How low the model reaches (model units, from its spot) in each pose it can strike, so it can be lifted just
+ * enough to stay on the card: `idle` for the idle sway, `moves` per move every 0.1 s.
+ */
+interface GroundTable {
+  idle: number
+  moves: Partial<Record<Move, number[]>>
+}
+
+/** Lowest point of a model in `pose` (from its table), counting the next table step too so it never dips early. */
+function lowestIn(tab: GroundTable, pose: Pose | null, now: number) {
+  if (!pose || pose.start === null) return tab.idle
+  const steps = tab.moves[pose.move]
+  if (!steps) return tab.idle
+  const i = Math.max(0, Math.floor((now - pose.start) * 10))
+  return Math.min(steps[i] ?? tab.idle, steps[i + 1] ?? tab.idle)
+}
+
+/** How a Bakugan stands, from its size and shape once loaded (model units). */
+interface Stance {
+  /** Turn of the front towards the usual view (radians, before the side's sign). */
+  turn: number
+  /** Growth about its front, so slim or small Bakugan still read. */
+  boost: number
+  /** Middle of its body along its length: it turns round here. */
+  pivot: number
+  /** Half its width, for the roll when it falls. */
+  halfWidth: number
+  /** How far it rears up and leans in its moves (1 = fully; long bodies less). */
+  bend: number
+}
+
+/**
+ * One Bakugan on the field: rises out of its thrown ball, lunges, flinches and falls when defeated. It stands on the
+ * card (lifted when a pose would dip into it), and slim or small ones stand a little bigger and turned partly to the
+ * view so they read from afar.
+ */
 function Fighter({
   side,
   entrant,
@@ -332,6 +467,10 @@ function Fighter({
   defeated,
   onShieldReach,
   throwAt,
+  waitThrow,
+  ground,
+  presence,
+  over,
 }: {
   side: SideIndex
   entrant: Entrant
@@ -343,22 +482,47 @@ function Fighter({
   onShieldReach: (side: SideIndex, entrant: Entrant, reach: number) => void
   /** Clock time the latest throw started (a new round), or null before any. */
   throwAt: React.RefObject<number | null>
+  /** The battle starts with an empty field: stay hidden until the first throw lands. */
+  waitThrow: boolean
+  /** Height of the card's top (world units). */
+  ground: number
+  /** The view's pull-back factor for presence (1 = usual view): next to a giant the others stand bigger. */
+  presence: number
+  /** The battle is decided (one side is down): the winner goes back into its ball a moment later. */
+  over: boolean
 }) {
   const element = ELEMENT_BY_ID[entrant.bakugan.element]
   const ref = useRef<THREE.Group>(null)
+  // when it rose out (null while it waits to be thrown in)
   const born = useRef<number | null>(null)
   const anim = useRef<Pose | null>(null)
+  const stanceGroup = useRef<THREE.Group>(null)
   const motion = useRef<THREE.Group>(null)
   const frame = useRef<THREE.Group>(null)
   const model = useRef<THREE.Group>(null)
+  const shadow = useRef<THREE.Mesh>(null)
   const fallen = useRef(0)
+  // once defeated it stays down until the next throw (the battle clears `defeated` before that)
+  const down = useRef(false)
+  // its size on the field last frame, for shrinking back into the ball from where it is
+  const shown = useRef(0)
+  const recallFrom = useRef(0)
+  // back in its ball after winning a battle, until the next throw (and when the battle was decided)
+  const parked = useRef(false)
+  const overAt = useRef<number | null>(null)
   const facing = side === 0 ? 1 : -1
   const x = xOf(side, entrant)
   // a throw: the Bakugan goes back into its ball at once, and comes out of the thrown one when it lands
   const recalled = useRef(-99)
   const seenThrow = useRef<number | null>(null)
-  // the light pillar it rises in: played on entry, and again when a thrown ball lands
-  const [pillar, setPillar] = useState({ key: 0, delay: 0 })
+  // the light pillar it rises in: played on entry, and again when a thrown ball lands (key -1: none yet)
+  const [pillar, setPillar] = useState({ key: -1, delay: 0 })
+  // how it stands (known once the model is in), how far it is turned now, and how high it is lifted off the card
+  const stance = useRef<Stance>({ turn: 0, boost: 1, pivot: 0, halfWidth: 1, bend: 1 })
+  const turned = useRef(0)
+  const raised = useRef(0)
+  // squares up to the opponent for this long (s) when it acts or is targeted
+  const squareFor = useRef(0)
   // the shield is sized once the model has loaded, round every pose it strikes (idle sway and every move)
   const [fit, setFit] = useState<ShieldFit | null>(null)
   const sweep = useRef<{
@@ -369,6 +533,7 @@ function Fighter({
     pts: number[]
     fit: ShieldFit | null
     check: number
+    ground: GroundTable
   } | null>(null)
 
   useEffect(() => {
@@ -377,16 +542,50 @@ function Fighter({
     if (action.kind === 'switch') return
     const ability = action.kind === 'ability' ? action.card.ability : null
     const hostile = !ability || ability.type === 'attack' || ability.type === 'drain' || ability.type === 'finisher'
+    if (actor === side || target === side) squareFor.current = ACTION_DURATION + 0.3
     if (actor === side) {
       const move = moveFor(ability)
       anim.current = { kind: hostile ? 'lunge' : 'cast', move, start: null }
     } else if (target === side && damage > 0 && !blocked) anim.current = { kind: 'hit', move: 'hit', start: null }
   }, [event, side])
 
+  // the shield grows with the Bakugan, about its front
+  const reachOf = (f: ShieldFit) => {
+    const { boost } = stance.current
+    return (boost * (f.center.z + f.radii.z) + (1 - boost) * FRONT_AT) * FIGHTER_SCALE
+  }
+  const measuredFor = useRef(presence)
+
+  /** Measures the model as it stands: how much it turns to the view, grows, and where its middle is. */
+  const measure = (sampler: ModelSampler, fr: THREE.Object3D) => {
+    const pts: number[] = []
+    sampleInto(sampler, fr, pts)
+    const box = new THREE.Box3()
+    for (let i = 0; i < pts.length; i += 3) box.expandByPoint(_p.set(pts[i], pts[i + 1], pts[i + 2]))
+    const size = box.getSize(new THREE.Vector3())
+    const turn = STANCE_TURN * THREE.MathUtils.smoothstep(size.x / Math.max(size.z, 1e-3), 1, 2.2)
+    // what the usual view sees of it: its height, and its length and width as turned
+    const seen = size.z * Math.cos(turn) + size.x * Math.sin(turn)
+    const boost = THREE.MathUtils.clamp(
+      Math.max((MIN_PRESENCE * presence) / Math.sqrt(size.y * seen), (MIN_HEIGHT * presence) / size.y),
+      1,
+      MAX_BOOST,
+    )
+    stance.current = {
+      turn,
+      boost,
+      pivot: (box.min.z + box.max.z) / 2,
+      halfWidth: Math.max(-box.min.x, box.max.x),
+      // rearing up turns round the hips (at -HIP_Z): keep the drop of the far end behind them small
+      bend: Math.min(1, 1.6 / Math.max(1e-3, -HIP_Z - box.min.z)),
+    }
+    return pts
+  }
+
   /**
-   * Sizes the shield: once the model is in, it is put through every pose it can strike (a few each frame) and the
-   * bubble is fitted round all of them; while the shield is up, the live pose is checked too and the bubble grows
-   * if anything ever pokes out.
+   * Sizes the shield and learns how low the model reaches: once the model is in, it is put through every pose it
+   * can strike (a few each frame); the bubble is fitted round all of them, and each pose's lowest point is kept.
+   * While the shield is up, the live pose is checked too and the bubble grows if anything ever pokes out.
    */
   const fitShieldStep = (now: number) => {
     const mdl = model.current
@@ -398,30 +597,59 @@ function Fighter({
       mdl.traverseVisible((o) => {
         loaded ||= (o as THREE.Mesh).isMesh
       })
-      if (loaded)
-        sweep.current = {
-          sampler: samplerFor(mdl),
-          rig: rigOf(mdl),
-          poses: poseList(ACTION_DURATION),
-          next: 0,
-          pts: [],
-          fit: null,
-          check: 0,
-        }
+      if (!loaded) return
+      const sampler = samplerFor(mdl)
+      const rest = measure(sampler, fr)
+      measuredFor.current = presence
+      let low = Infinity
+      for (let i = 1; i < rest.length; i += 3) low = Math.min(low, rest[i])
+      sweep.current = {
+        sampler,
+        rig: rigOf(mdl),
+        poses: poseList(ACTION_DURATION),
+        next: 0,
+        pts: [],
+        fit: null,
+        check: 0,
+        ground: { idle: low, moves: {} },
+      }
       return
+    }
+    // a giant came onto the field (or left): stand bigger (or back to size)
+    if (measuredFor.current !== presence) {
+      measuredFor.current = presence
+      measure(sw.sampler, fr)
+      if (sw.fit) onShieldReach(side, entrant, reachOf(sw.fit))
     }
     const publish = (f: ShieldFit) => {
       sw.fit = f
       setFit(f)
-      onShieldReach(side, entrant, (f.center.z + f.radii.z) * FIGHTER_SCALE)
+      onShieldReach(side, entrant, reachOf(f))
     }
     if (sw.next < sw.poses.length) {
       // a few milliseconds of poses per frame
       const start = performance.now()
       const lift = hoverLift(hoverOf(mdl))
+      const tab = sw.ground
+      if (sw.next === 0) tab.idle = Infinity
       while (sw.next < sw.poses.length && performance.now() - start < 6) {
-        sampleInPoses(sw.sampler, mdl, fr, sw.rig, sw.poses.slice(sw.next, sw.next + 6), sw.pts, lift)
-        sw.next += 6
+        const pose = sw.poses[sw.next++]
+        const from = sw.pts.length
+        sampleInPoses(sw.sampler, mdl, fr, sw.rig, [pose], sw.pts, lift)
+        // the pose's lowest point once the body motion of its move is added
+        const [move, t] = pose
+        const e = move ? motionMatrix(motionAt(move, t, _motion, stance.current.bend), _mm).elements : null
+        let low = Infinity
+        for (let i = from; i < sw.pts.length; i += 3) {
+          const y = e ? e[1] * sw.pts[i] + e[5] * sw.pts[i + 1] + e[9] * sw.pts[i + 2] + e[13] : sw.pts[i + 1]
+          if (y < low) low = y
+        }
+        if (!move) tab.idle = Math.min(tab.idle, low)
+        else {
+          const steps = (tab.moves[move] ??= [])
+          const i = Math.round(t * 10)
+          steps[i] = Math.min(steps[i] ?? Infinity, low)
+        }
       }
       const f = fitShield(sw.pts)
       sw.pts = outerShell(sw.pts, f)
@@ -448,117 +676,120 @@ function Fighter({
     const g = ref.current
     if (!g) return
     const now = clock.elapsedTime
-    born.current ??= now
     const ta = throwAt.current
+    // on the field from the start, unless the battle throws its Bakugan in (then only a throw brings it out)
+    if (born.current === null && !waitThrow && (ta === null || now - ta >= THROW_LAND)) {
+      born.current = now
+      setPillar({ key: 0, delay: 0 })
+    }
     if (ta !== seenThrow.current) {
       seenThrow.current = ta
       if (ta !== null && now - ta < THROW_LAND) {
         // out again when the ball lands
-        recalled.current = born.current + 1.1 <= now ? now : -99
+        recalled.current = now
+        recallFrom.current = shown.current
         born.current = ta + THROW_LAND - 0.25
         setPillar((p) => ({ key: p.key + 1, delay: ta + THROW_LAND - 0.1 - now }))
+        down.current = defeated
+        parked.current = false
         fallen.current = defeated ? 1 : 0
         anim.current = null
       }
     }
-    const grow = THREE.MathUtils.clamp((now - born.current - 0.4) / 0.7, 0, 1)
+    fitShieldStep(now)
+    g.visible = born.current !== null
+    if (born.current === null) return
+
+    // a battle won: the winner returns to its ball (in a flash of light), leaving the field empty for the next one
+    if (!over) overAt.current = null
+    else if (waitThrow && !down.current && !parked.current) {
+      overAt.current ??= now
+      if (now - overAt.current > 2.6) {
+        parked.current = true
+        recalled.current = now
+        recallFrom.current = shown.current
+        setPillar((p) => ({ key: p.key + 1, delay: 0 }))
+      }
+    }
+    const grow = parked.current ? 0 : THREE.MathUtils.clamp((now - born.current - 0.4) / 0.7, 0, 1)
     // shrinking back into the ball when recalled
-    const shrink = 1 - THREE.MathUtils.smoothstep(now - recalled.current, 0, 0.3)
-    fallen.current = THREE.MathUtils.damp(fallen.current, defeated ? 1 : 0, 3, dt)
+    const shrink = recallFrom.current * (1 - THREE.MathUtils.smoothstep(now - recalled.current, 0, 0.3))
+    down.current ||= defeated
+    fallen.current = THREE.MathUtils.damp(fallen.current, down.current ? 1 : 0, 3, dt)
 
     // whole-body motion of the current move, in the model's own frame (forward = +Z)
-    let fwd = 0
-    let lift = 0
-    let pitch = 0
-    let yaw = 0
-    let shake = 0
     const a = anim.current
     if (a) {
       a.start ??= now
-      const t = now - a.start
-      switch (a.move) {
-        case 'bite':
-          fwd = 1.1 * env(t, 0.1, 0.85)
-          pitch = 0.08 * env(t, 0.2, 0.8)
-          break
-        case 'breath':
-          fwd = -0.35 * env(t, 0, 1.5)
-          pitch = -0.1 * env(t, 0, 1.5)
-          break
-        case 'clawSwipe':
-          pitch = -0.38 * env(t, 0, 0.7)
-          fwd = 0.7 * env(t, 0.35, 0.95)
-          yaw = 0.25 * env(t, 0.3, 0.95)
-          break
-        case 'tailWhip': {
-          // full spin so the tail sweeps through the opponent
-          const k = THREE.MathUtils.smoothstep(t, 0.05, 1.05)
-          yaw = k * Math.PI * 2
-          fwd = 0.4 * env(t, 0.05, 1.05)
-          break
-        }
-        case 'stomp':
-          pitch = -0.55 * env(t, 0, 0.75)
-          lift = 0.25 * env(t, 0, 0.75)
-          if (t > 0.72 && t < 1.1) shake = Math.sin(t * 90) * 0.06 * (1.1 - t) * 3
-          break
-        case 'roar':
-          pitch = -0.25 * env(t, 0, 1.5)
-          shake = Math.sin(t * 60) * 0.02 * env(t, 0.2, 1.4)
-          break
-        case 'guard':
-          fwd = -0.45 * env(t, 0, 1.4)
-          lift = -0.15 * env(t, 0, 1.4)
-          break
-        case 'hit': {
-          const h = env(t, IMPACT_AT - 0.03, IMPACT_AT + 0.55)
-          fwd = -0.9 * h
-          pitch = -0.18 * h
-          yaw = 0.15 * h
-          if (h > 0) shake = Math.sin(t * 80) * 0.08 * h
-          break
-        }
-      }
-      if (t > ACTION_DURATION) anim.current = null
+      if (now - a.start > ACTION_DURATION) anim.current = null
     }
+    const mo =
+      anim.current?.start != null ? motionAt(anim.current.move, now - anim.current.start, _motion, stance.current.bend) : null
     const m = motion.current
     if (m) {
-      m.position.set(shake, lift, -HIP_Z + fwd)
-      m.rotation.set(pitch, yaw, 0)
+      m.position.set(mo?.shake ?? 0, mo?.lift ?? 0, -HIP_Z + (mo?.fwd ?? 0))
+      m.rotation.set(mo?.pitch ?? 0, mo?.yaw ?? 0, 0)
     }
+
+    // the stance: turned towards the view while waiting, grown about its front, lifted off the card when a pose dips
+    const st = stance.current
+    squareFor.current = Math.max(0, squareFor.current - dt)
+    turned.current = THREE.MathUtils.damp(turned.current, squareFor.current > 0 ? 0 : st.turn, 6, dt)
+    const low = sweep.current ? lowestIn(sweep.current.ground, anim.current, now) : 0
+    // a little to spare in a move, for its quickest dips between the table's steps
+    const need = Math.max(0, -(low - (anim.current ? 0.04 : 0)) * st.boost)
+    // rises at once, settles back gently
+    raised.current = Math.max(need, THREE.MathUtils.damp(raised.current, need, 8, dt))
+    const sg = stanceGroup.current
+    if (sg) {
+      const b = st.boost
+      const pivot = b * st.pivot + (1 - b) * FRONT_AT
+      _q.setFromAxisAngle(_up, -facing * turned.current)
+      _p.set(0, 0, (1 - b) * FRONT_AT - pivot).applyQuaternion(_q)
+      _p.y += raised.current
+      _p.z += pivot
+      sg.matrix.compose(_p, _q, _s.setScalar(b))
+      sg.matrixWorldNeedsUpdate = true
+    }
+    shadow.current?.scale.setScalar(3.2 * st.boost)
 
     const s = Math.max(Math.max(1 - Math.pow(1 - grow, 3), shrink), 0.001) * (1 - fallen.current * 0.999)
     g.scale.setScalar(Math.max(s, 0.001))
-    g.position.set(x, -fallen.current * 0.5, 0)
-    g.rotation.z = fallen.current * 0.5 * facing
-
-    fitShieldStep(now)
+    shown.current = s
+    // falling over: it rolls onto its side, its lower edge staying on the card
+    const roll = fallen.current * 0.5
+    g.rotation.z = roll * facing
+    g.position.set(x, ground + Math.sin(roll) * st.halfWidth * st.boost * FIGHTER_SCALE * s, 0)
   })
 
   return (
     <group>
-      <group ref={ref} rotation={[0, (Math.PI / 2) * facing, 0]} scale={0.001}>
+      <group ref={ref} rotation={[0, (Math.PI / 2) * facing, 0]} scale={0.001} visible={false}>
         <group scale={FIGHTER_SCALE}>
-          {/* rotations pivot around the hips so rearing up looks natural */}
-          <group ref={motion} position={[0, 0, -HIP_Z]}>
-            <group ref={frame} position={[0, 0, HIP_Z]}>
-              <group ref={model}>
-                <MonsterModel entrant={entrant} poseRef={anim} frontAt={FRONT_AT} />
-              </group>
-              {/* the shield wraps the whole model and moves with it */}
-              {fit && (
-                <group position={fit.center} scale={fit.radii}>
-                  <ShieldDome color={element.glow} active={shield} flashKey={blockFlash} flashDelay={IMPACT_AT} />
+          <group ref={stanceGroup} matrixAutoUpdate={false}>
+            {/* rotations pivot around the hips so rearing up looks natural */}
+            <group ref={motion} position={[0, 0, -HIP_Z]}>
+              <group ref={frame} position={[0, 0, HIP_Z]}>
+                <group ref={model}>
+                  <MonsterModel entrant={entrant} poseRef={anim} frontAt={FRONT_AT} />
                 </group>
-              )}
+                {/* the shield wraps the whole model and moves with it */}
+                {fit && (
+                  <group position={fit.center} scale={fit.radii}>
+                    <ShieldDome color={element.glow} active={shield} flashKey={blockFlash} flashDelay={IMPACT_AT} />
+                  </group>
+                )}
+              </group>
             </group>
           </group>
-          <BlobShadow size={3.2} />
+          <BlobShadow ref={shadow} size={3.2} />
         </group>
       </group>
-      <group position={[x, 0, 0]} scale={FIGHTER_SCALE}>
-        <EntryPillar key={pillar.key} color={element.glow} delay={pillar.delay} />
-      </group>
+      {pillar.key >= 0 && (
+        <group position={[x, ground, 0]} scale={FIGHTER_SCALE}>
+          <EntryPillar key={pillar.key} color={element.glow} delay={pillar.delay} />
+        </group>
+      )}
     </group>
   )
 }

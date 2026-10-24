@@ -1,5 +1,5 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { asset } from '../asset'
@@ -12,8 +12,8 @@ import { listenStadium, type CrowdMood, type StadiumCall } from './stadium'
 
 /**
  * The stadium round the field, like the brawl arenas of the anime: terraced stands all the way round, packed with
- * fans who cheer, jump, boo, gasp, clap and do the wave (each half of the stands backing one brawler, in their
- * attribute's colour), cut-outs of famous brawlers in the front row, name banners, light towers, and a screen
+ * fans who cheer, jump, boo, gasp, clap and do the wave (fans of both brawlers sit mixed all round the stands, in
+ * their own clothes), cut-outs of famous brawlers in the front row, name banners, light towers, and a screen
  * that shows what the announcer calls. It listens to the battle's calls on the stadium bus (stadium.ts).
  * Sizes are for the usual view; `scale` grows it with the view when a giant Bakugan is on the field.
  */
@@ -46,9 +46,6 @@ function rng(seed: number) {
 /** Angle round the stadium (0 = the far end, behind the field; positive towards the opponent's side). */
 const at = (angle: number, r: number, y = 0) => new THREE.Vector3(Math.sin(angle) * r, y, -Math.cos(angle) * r)
 
-const SHIRTS = ['#eeeef2', '#2a2e3a', '#d43c3c', '#3b6fd6', '#f2c230', '#3fae5a', '#9a4fd8', '#f07a2a', '#e85aa8', '#36b7c9']
-const SKINS = ['#f6d2b4', '#ebbd93', '#cf9466', '#9a6542', '#6a4129', '#fde3cc']
-
 /** The famous brawlers who came to watch (cut-outs in the front row), and where they stand. */
 const VIP_ANGLES = [-0.36, 0.36, -0.95, 0.95, -0.66, 0.66, -1.3, 1.3]
 /** Names on the banners round the top of the stands. */
@@ -80,29 +77,17 @@ function seatsFor(vips: number[]): Seat[] {
   for (let row = 0; row < ROWS; row++) {
     const r = ROW_START + row * ROW_DEPTH + ROW_DEPTH * 0.45
     const y = WALL + (row + 1) * ROW_RISE
-    const n = Math.floor((Math.PI * 2 * r) / 3.3)
+    const n = Math.floor((Math.PI * 2 * r) / 2.5)
     for (let i = 0; i < n; i++) {
       const angle = ((i + rand() * 0.3) / n) * Math.PI * 2 - Math.PI
       // aisles every 30 degrees
       const aisle = Math.abs(((angle + Math.PI) % (Math.PI / 6)) - Math.PI / 12)
       if (aisle > Math.PI / 12 - 3 / r) continue
-      if (rand() > 0.74 - row * 0.012) continue
+      if (rand() > 0.84 - row * 0.012) continue
       if (row < 2 && vips.some((v) => Math.abs(v - angle) < 5.4 / r)) continue
-      const p = at(angle, r + (rand() - 0.5) * 1.2, y)
-      // each half of the stands backs one brawler; around the ends they mix
-      const side = Math.abs(p.x) < 18 ? (rand() < 0.5 ? 0 : 1) : p.x < 0 ? 0 : 1
-      seats.push({
-        x: p.x,
-        y,
-        z: p.z,
-        size: 4.3 + rand() * 0.9,
-        seed: rand(),
-        side,
-        team: rand() < 0.15 ? 0 : 0.35 + rand() * 0.55,
-        angle,
-        shirt: new THREE.Color(SHIRTS[Math.floor(rand() * SHIRTS.length)]),
-        skin: new THREE.Color(SKINS[Math.floor(rand() * SKINS.length)]),
-      })
+      const p = at(angle, r + (rand() - 0.5) * 1.6, y)
+      // fans of both brawlers everywhere, mixed at random
+      seats.push({ x: p.x, y, z: p.z, size: 5.2 + rand() * 1.0, seed: rand(), side: rand() < 0.5 ? 0 : 1, angle })
     }
   }
   return seats
@@ -311,35 +296,85 @@ function useVips(exclude: string[]) {
     const texture = new THREE.CanvasTexture(c)
     texture.colorSpace = THREE.SRGBColorSpace
     const cell = (i: number) => [(i % cols) * W, Math.floor(i / cols) * H] as const
+    // a framed, glowing card in the brawler's attribute colours: light rays behind the portrait, a name plate below
     const frame = (i: number) => {
       const [x, y] = cell(i)
-      const color = ELEMENT_BY_ID[chars[i].element].color
+      const el = ELEMENT_BY_ID[chars[i].element]
       g.clearRect(x, y, W, H)
-      g.fillStyle = color
+      g.save()
+      g.shadowColor = el.glow
+      g.shadowBlur = 14
+      const rim = g.createLinearGradient(x, y, x + W, y + H)
+      rim.addColorStop(0, '#ffffff')
+      rim.addColorStop(0.3, el.color)
+      rim.addColorStop(0.75, el.glow)
+      rim.addColorStop(1, '#ffffff')
+      g.fillStyle = rim
       g.beginPath()
-      g.roundRect(x + 6, y + 6, W - 12, H - 12, 22)
+      g.roundRect(x + 8, y + 8, W - 16, H - 16, 20)
       g.fill()
-      g.fillStyle = '#0d1020'
+      g.restore()
+      g.save()
       g.beginPath()
-      g.roundRect(x + 14, y + 14, W - 28, H - 28, 16)
-      g.fill()
+      g.roundRect(x + 15, y + 15, W - 30, H - 30, 14)
+      g.clip()
+      const bg = g.createRadialGradient(x + W / 2, y + H * 0.36, 8, x + W / 2, y + H * 0.36, W * 0.8)
+      bg.addColorStop(0, el.glow)
+      bg.addColorStop(0.45, el.color)
+      bg.addColorStop(1, '#070912')
+      g.fillStyle = bg
+      g.fillRect(x, y, W, H)
+      g.globalAlpha = 0.16
+      g.fillStyle = '#ffffff'
+      for (let k = 0; k < 9; k++) {
+        const a = (k / 9) * Math.PI * 2
+        g.beginPath()
+        g.moveTo(x + W / 2, y + H * 0.36)
+        g.arc(x + W / 2, y + H * 0.36, W, a, a + 0.18)
+        g.fill()
+      }
+      g.restore()
+    }
+    const plate = (i: number) => {
+      const [x, y] = cell(i)
+      const el = ELEMENT_BY_ID[chars[i].element]
+      const top = y + H - 76
+      g.save()
+      g.beginPath()
+      g.roundRect(x + 15, top, W - 30, 61, [0, 0, 14, 14])
+      g.clip()
+      const glass = g.createLinearGradient(0, top, 0, top + 61)
+      glass.addColorStop(0, 'rgba(10,12,24,.92)')
+      glass.addColorStop(1, 'rgba(24,28,52,.96)')
+      g.fillStyle = glass
+      g.fillRect(x + 15, top, W - 30, 61)
+      g.fillStyle = el.color
+      g.fillRect(x + 15, top, W - 30, 4)
+      g.restore()
       g.fillStyle = '#ffffff'
       g.font = `italic 900 30px ${DISPLAY}`
       g.textAlign = 'center'
       g.textBaseline = 'middle'
-      g.fillText(chars[i].name.split(' ')[0].toUpperCase(), x + W / 2, y + H - 40, W - 40)
+      g.shadowColor = el.glow
+      g.shadowBlur = 8
+      g.fillText(chars[i].name.split(' ')[0].toUpperCase(), x + W / 2, top + 33, W - 50)
+      g.shadowBlur = 0
     }
-    chars.forEach((_, i) => frame(i))
+    chars.forEach((_, i) => {
+      frame(i)
+      plate(i)
+    })
     const images = chars.map((ch, i) => {
       const img = new Image()
       img.onload = () => {
         const [x, y] = cell(i)
         g.save()
         g.beginPath()
-        g.roundRect(x + 14, y + 14, W - 28, H - 76, 16)
+        g.roundRect(x + 15, y + 15, W - 30, H - 91, [14, 14, 0, 0])
         g.clip()
-        g.drawImage(img, x + 14, y + 14, W - 28, W - 28)
+        g.drawImage(img, x + 15, y + 15, W - 30, W - 30)
         g.restore()
+        plate(i)
         texture.needsUpdate = true
       }
       img.src = asset(ch.image!)
@@ -530,12 +565,7 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
     gasp: 0,
     wave: 0,
     waveAt: 0,
-    colors: [new THREE.Color(colors[0]), new THREE.Color(colors[1])],
   })
-  useEffect(() => {
-    levels.current.colors[0].set(colors[0])
-    levels.current.colors[1].set(colors[1])
-  }, [colors])
 
   const clock = useThree((s) => s.clock)
   // calls that arrive between frames are played on the next one
@@ -684,7 +714,7 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
       </mesh>
       {vips.geometry && (
         <mesh geometry={vips.geometry}>
-          <meshBasicMaterial map={vips.texture} color="#d0d0d0" transparent alphaTest={0.05} side={THREE.DoubleSide} />
+          <meshBasicMaterial map={vips.texture} color="#e2e2e2" transparent alphaTest={0.05} side={THREE.DoubleSide} />
         </mesh>
       )}
       {/* the big screen over the far stands */}
@@ -698,7 +728,10 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
           <meshBasicMaterial map={screen} color="#d8d8d8" />
         </mesh>
       </group>
-      <Crowd seats={seats} levels={levels} />
+      {/* the fans come in once their models have loaded */}
+      <Suspense fallback={null}>
+        <Crowd seats={seats} levels={levels} />
+      </Suspense>
     </group>
   )
 }

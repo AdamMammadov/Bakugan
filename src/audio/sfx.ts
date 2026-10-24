@@ -1,7 +1,8 @@
 import { Howl } from 'howler'
 import { asset } from '../asset'
-import { DEFAULT_VOICE, type Voice } from '../profile/avatar'
+import { DEFAULT_VOICE } from '../profile/avatar'
 import { useGame } from '../store/useGame'
+import { deliveryFor, speakerOf, type SpeakerVoice } from './voices'
 
 /**
  * Sound effects. Each one first tries a real file from /public/sounds/<name>.mp3;
@@ -118,29 +119,23 @@ export function playSfx(name: SfxName) {
   else synth[name]()
 }
 
-/** The browser voice for a brawler: a female or male English voice when the system has one. */
-function pickVoice(female: boolean): SpeechSynthesisVoice | undefined {
-  const english = speechSynthesis.getVoices().filter((v) => v.lang.startsWith('en'))
-  const femaleName =
-    /female|woman|samantha|victoria|karen|moira|tessa|fiona|zira|susan|hazel|aria|jenny|sonia|libby|emma|ava|allison|serena|kate/i
-  const maleName = /\bmale\b|man\b|daniel|alex|fred|david|mark|george|guy|ryan|thomas|oliver|arthur|aaron|tom\b/i
-  return english.find((v) => (female ? femaleName : maleName).test(v.name) && !(female ? maleName : femaleName).test(v.name))
-}
-
 /**
- * A brawler calls out loud ("Ability activate! Dual Gazer!") in their own voice: a female or male
- * voice, pitched for the character (Masquerade low, Julie bright, Marucho young).
+ * A brawler calls out loud ("Ability activate! Dual Gazer!") in their own voice: every character (and every CPU
+ * brawler, by name) has a browser voice, pitch and pace of their own (see voices.ts). A voice from the character
+ * list is recognised as that character; `id` or `name` on the voice names the speaker for anyone else.
  */
-export function shout(text: string, voice: Voice = DEFAULT_VOICE) {
+export function shout(text: string, voice: SpeakerVoice = DEFAULT_VOICE) {
   if (useGame.getState().muted || typeof speechSynthesis === 'undefined') return
   // brawlers take turns talking: calls queue up instead of cutting each other off
   const u = new SpeechSynthesisUtterance(text)
   u.lang = 'en-US'
-  const v = pickVoice(voice.female)
-  if (v) u.voice = v
-  // without a matching system voice, the pitch alone has to carry it
-  u.pitch = v ? voice.pitch : voice.female ? Math.max(voice.pitch, 1.4) : Math.min(voice.pitch, 0.8)
-  u.rate = voice.rate ?? 1.05
+  const d = deliveryFor(speakerOf(voice), voice)
+  if (d.voice) {
+    u.voice = d.voice
+    u.lang = d.voice.lang
+  }
+  u.pitch = d.pitch
+  u.rate = d.rate
   u.volume = 1
   speechSynthesis.speak(u)
 }

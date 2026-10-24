@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { animate, AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { afterSpeech, hush, playSfx, shout as callOut } from '../audio/sfx'
+import type { SpeakerVoice } from '../audio/voices'
 import {
   act,
   aiForTier,
@@ -47,7 +48,6 @@ import {
   opponentCharacter,
   type Avatar as AvatarValue,
   type AvatarParts,
-  type Voice,
 } from '../profile/avatar'
 import { ACTION_DURATION, ArenaScene, IMPACT_AT } from '../three/ArenaScene'
 import type { BrawlerCall, BrawlerGesture } from '../three/Brawler'
@@ -119,7 +119,8 @@ export interface BrawlerSide {
   avatar: AvatarValue
   parts: AvatarParts
   model?: string
-  voice: Voice
+  /** Their voice; an `id` sets them apart from someone else using the same character's voice. */
+  voice: SpeakerVoice
   /** The bot's strength; null when the player plays this side. */
   ai: AiLevel | null
   /** Holo-Sector Points: the brawler's ranking score, shown under their Bakugan. */
@@ -142,7 +143,11 @@ export function ArenaScreen() {
       avatar: { kind: 'preset', id: bot.id },
       parts: bot.parts,
       model: bot.model,
-      voice: bot.voice,
+      // a CPU playing the player's own character gets a voice of its own
+      voice:
+        profile?.avatar.kind === 'preset' && profile.avatar.id === bot.id
+          ? { ...bot.voice, id: setup.bot.name ?? `cpu ${bot.name}` }
+          : bot.voice,
       ai: aiForTier(setup.bot.tier),
       hsp: botHsp(setup.bot.tier, setup.bot.name ?? bot.id),
     }

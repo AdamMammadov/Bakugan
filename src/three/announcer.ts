@@ -1,3 +1,4 @@
+import { ANNOUNCER, deliveryFor } from '../audio/voices'
 import { useGame } from '../store/useGame'
 
 /**
@@ -12,23 +13,6 @@ export interface Announcer {
 }
 
 const hasSpeech = () => typeof speechSynthesis !== 'undefined'
-
-/** An energetic English voice: the natural male ones first, then any English voice. */
-function announcerVoice(): SpeechSynthesisVoice | undefined {
-  const english = speechSynthesis.getVoices().filter((v) => /^en([-_]|$)/i.test(v.lang))
-  const prefer = [
-    /Microsoft (Guy|Davis|Tony|Jason|Andrew|Brian|Christopher|Eric|Ryan)/i,
-    /Google UK English Male/i,
-    /\b(Daniel|Alex|Aaron|Arthur|Fred|Rishi|Tom)\b/i,
-    /Google US English/i,
-    /\bmale\b/i,
-  ]
-  for (const re of prefer) {
-    const v = english.find((x) => re.test(x.name))
-    if (v) return v
-  }
-  return english.find((v) => v.default) ?? english[0]
-}
 
 export function createAnnouncer(host: HTMLElement): Announcer {
   // the banner: an "ANNOUNCER" tag and the line, slanted, sliding in just above the hand of cards
@@ -102,10 +86,14 @@ export function createAnnouncer(host: HTMLElement): Announcer {
   const speakNow = (msg: string) => {
     const u = new SpeechSynthesisUtterance(msg)
     u.lang = 'en-US'
-    const v = announcerVoice()
-    if (v) u.voice = v
-    u.rate = 1.05
-    u.pitch = 1
+    // a voice of its own: big, quick and low, one no brawler uses when the system has enough
+    const d = deliveryFor(ANNOUNCER)
+    if (d.voice) {
+      u.voice = d.voice
+      u.lang = d.voice.lang
+    }
+    u.rate = d.rate
+    u.pitch = d.pitch
     u.volume = 1
     const done = () => {
       if (mine === u) mine = null

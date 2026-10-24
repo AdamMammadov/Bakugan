@@ -58,7 +58,10 @@ function liveMatch(): LiveMatch {
   const [a, b] = Math.random() < 0.5 ? [ranked[i], ranked[j]] : [ranked[j], ranked[i]]
   // stronger brawlers draw a bigger crowd
   const viewers = Math.round(300 + ((a.rating + b.rating) / 2) * (0.8 + Math.random() * 0.6))
-  return { id: ++matchId, teams: [teamOf(a), teamOf(b)], brawlers: [sideOf(a), sideOf(b)], viewers }
+  const sideB = sideOf(b)
+  // two CPU brawlers playing the same character still sound different
+  if (a.characterId === b.characterId) sideB.voice = { ...sideB.voice, id: b.name }
+  return { id: ++matchId, teams: [teamOf(a), teamOf(b)], brawlers: [sideOf(a), sideB], viewers }
 }
 
 /** Watch live: CPU brawlers' matches, one after another, until the player leaves. Nothing is recorded. */
