@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
+import { PresenceDot, PresenceLabel, PresencePill } from '../components/PresenceBadge'
 import { formBrawlG } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { useMinute } from '../profile/botProgress'
-import { brawlerOf, TIER_COLORS } from '../profile/brawlers'
-import { ago } from '../profile/presence'
+import { brawlerOf, rankColor } from '../profile/brawlers'
+import { ago, statusOf } from '../profile/presence'
 import { clanOf, useClans } from '../profile/useClans'
 import { useFriendChat } from '../profile/useFriendChat'
 import { useFriendClock } from '../profile/useFriendClock'
@@ -42,6 +43,7 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
   const el = ELEMENT_BY_ID[b.element]
   const tier = tierOf(b.score)
   const clan = clanOf(clans, id)
+  const live = statusOf(id, now)
   const battles = b.wins + b.losses
   const stats: [string, string | number][] = [
     ['RANK SCORE', b.score.toLocaleString('en')],
@@ -63,10 +65,13 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
         ✕
       </button>
       <div className="flex items-start gap-6">
-        <Avatar avatar={b.avatar} color={el.color} size={120} frame={b.frame} />
+        <span className="relative shrink-0">
+          <Avatar avatar={b.avatar} color={el.color} size={120} frame={b.frame} />
+          {b.cpu && <PresenceDot state={live.state} size={20} />}
+        </span>
         <div className="min-w-0 flex-1">
-          <p className="font-display flex items-center gap-2 text-xs tracking-[0.4em]" style={{ color: TIER_COLORS[tier.index] }}>
-            {tier.name.toUpperCase()}
+          <p className="font-display flex items-center gap-2 text-xs tracking-[0.4em]" style={{ color: rankColor(tier) }}>
+            {tier.rank.toUpperCase()}
             {b.cpu && <span className="rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>}
           </p>
           {b.title && <p className="font-display mt-1 text-xs tracking-[0.2em] text-amber-200">✦ {b.title}</p>}
@@ -84,6 +89,11 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
               {clan && ` · ${clan.leaderId === id ? 'leader' : 'member'} of ${clan.name}`}
             </span>
           </div>
+          {b.cpu && (
+            <div className="mt-2" data-testid="card-presence">
+              <PresencePill status={live} />
+            </div>
+          )}
           <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-white/70">{b.bio || 'No bio yet.'}</p>
           {b.cpu && (
             <p className="mt-2 text-xs text-white/40">
@@ -214,6 +224,7 @@ export function FriendsList({ onOpen }: { onOpen: (id: string) => void }) {
   const openPage = useGame((s) => s.openPage)
   const profiles = useProfiles((s) => s.profiles)
   const now = useFriendClock()
+  const minute = useMinute()
   const list = (me?.friends ?? []).map((f) => ({ f, b: brawlerOf(f.id, profiles, now) })).filter((x) => !!x.b)
   return (
     <section>
@@ -237,15 +248,30 @@ export function FriendsList({ onOpen }: { onOpen: (id: string) => void }) {
         {list.map(({ f, b }) => {
           const el = ELEMENT_BY_ID[b!.element]
           const waiting = f.since > now
+          const live = statusOf(f.id, Math.max(minute, now))
           return (
             <button
               key={f.id}
               onClick={() => onOpen(f.id)}
-              className={`flex items-center gap-2 rounded-full border border-white/10 bg-black/40 py-1 pr-3 pl-1 text-left transition hover:border-white/40 ${waiting ? 'opacity-60' : ''}`}
+              title={waiting ? 'Request sent' : live.text}
+              className={`flex items-center gap-2 rounded-full border border-white/10 bg-black/40 py-1 pr-3 pl-1 text-left transition hover:border-white/40 hover:bg-white/5 ${waiting ? 'opacity-60' : ''}`}
             >
-              <Avatar avatar={b!.avatar} color={el.color} size={30} />
-              <span className="text-sm font-semibold">{b!.firstName}</span>
-              {waiting && <span className="text-[10px] text-white/45">pending…</span>}
+              <span className="relative shrink-0">
+                <Avatar avatar={b!.avatar} color={el.color} size={30} />
+                {!waiting && <PresenceDot state={live.state} size={10} />}
+              </span>
+              <span className="leading-tight">
+                <span className="block text-sm font-semibold">{b!.firstName}</span>
+                {waiting ? (
+                  <span className="block text-[10px] text-white/45">pending…</span>
+                ) : (
+                  b!.cpu && (
+                    <span className="flex text-[10px]">
+                      <PresenceLabel status={{ ...live, text: live.text.replace('Last seen ', 'seen ') }} />
+                    </span>
+                  )
+                )}
+              </span>
             </button>
           )
         })}

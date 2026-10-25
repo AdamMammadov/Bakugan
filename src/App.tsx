@@ -2,6 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import { lazy, Suspense, useEffect } from 'react'
 import { playMusic, type Track } from './audio/music'
 import { EventToast } from './components/EventToast'
+import { InvitePopup } from './components/InvitePopup'
 import { MuteButton } from './components/MuteButton'
 import { ProfileButton } from './components/ProfileButton'
 import { SeasonNotice } from './components/SeasonNotice'
@@ -94,6 +95,7 @@ export default function App() {
       </Suspense>
       <SeasonNotice />
       <EventToast />
+      <InvitePopup />
       {/* the corner buttons share one row, so they line up whatever their widths */}
       {screen !== 'intro' && (
         <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">

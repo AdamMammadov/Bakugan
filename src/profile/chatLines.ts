@@ -91,6 +91,10 @@ export type LineKey =
   | 'recruited'
   | 'joined'
   | 'friendHello'
+  | 'inviteNo'
+  | 'inviteBusy'
+  | 'inviteLate'
+  | 'inviteOk'
 
 type Lines = Record<LineKey, string[]>
 
@@ -242,6 +246,15 @@ const en: Lines = {
   recruited: ['Thanks for the invite, {me}! Let’s brawl.', 'Joined up! {lead} and I are ready.'],
   joined: ['Hi everyone! Happy to be in [{tag}] 👋', 'Hey all! {lead} and I are ready to brawl.'],
   friendHello: ['Hey {me}, thanks for the add! 🙌 Up for a brawl sometime?', 'Hi {me}! Friends now 😄 Fancy a brawl?'],
+  inviteNo: [
+    'gotta go eat, tomorrow?',
+    'about to log off, later?',
+    'my {lead} needs a rest 😅 next time!',
+    'can’t right now, tomorrow?',
+  ],
+  inviteBusy: ['in the middle of a ranked match, later!', 'mid-brawl right now, give me a few min!'],
+  inviteLate: ['Sorry, I was mid-brawl! Invite me again 🙂', 'Just saw your invite, I was in a match. Next time!'],
+  inviteOk: ['ok, next time 🙂', 'No worries, next time!'],
 }
 
 const az: Lines = {
@@ -402,6 +415,15 @@ const az: Lines = {
   recruited: ['Dəvət üçün sağ ol, {me}! Döyüşək!', 'Qoşuldum! {lead} və mən hazırıq.'],
   joined: ['Hamıya salam! [{tag}] klanında olmağa şadam 👋', 'Salam, dostlar! {lead} və mən döyüşə hazırıq.'],
   friendHello: ['Salam, {me}! Dostluq üçün sağ ol 🙌 Bir gün döyüşək?', 'Salam, {me}! Artıq dostuq 😄 Döyüşə nə deyirsən?'],
+  inviteNo: [
+    'yeməyə getməliyəm, sabah?',
+    'az qala çıxıram, sonra?',
+    '{lead} bir az dincəlsin 😅 növbəti dəfə!',
+    'indi olmur, sabah edək?',
+  ],
+  inviteBusy: ['reytinq döyüşünün ortasındayam, sonra!', 'indi döyüşdəyəm, bir neçə dəqiqə gözlə!'],
+  inviteLate: ['Bağışla, döyüşdə idim! Yenə dəvət et 🙂', 'Dəvətini indi gördüm, matçda idim. Növbəti dəfə!'],
+  inviteOk: ['yaxşı, növbəti dəfə 🙂', 'Problem deyil, sonra!'],
 }
 
 const tr: Lines = {
@@ -524,6 +546,15 @@ const tr: Lines = {
   recruited: ['Davet için sağ ol {me}! Hadi savaşalım!', 'Katıldım! {lead} ve ben hazırız.'],
   joined: ['Herkese selam! [{tag}] klanında olmaktan mutluyum 👋'],
   friendHello: ['Selam {me}! Eklediğin için sağ ol 🙌 Bir gün kapışalım mı?'],
+  inviteNo: [
+    'yemeğe gitmem lazım, yarın?',
+    'çıkmak üzereyim, sonra?',
+    '{lead} biraz dinlensin 😅 bir dahaki sefere!',
+    'şu an olmaz, yarın?',
+  ],
+  inviteBusy: ['dereceli maçın ortasındayım, sonra!', 'şu an maçtayım, birkaç dakika ver!'],
+  inviteLate: ['Kusura bakma, maçtaydım! Tekrar davet et 🙂', 'Davetini şimdi gördüm, maçtaydım. Bir dahaki sefere!'],
+  inviteOk: ['tamam, bir dahaki sefere 🙂', 'Sorun değil, sonra!'],
 }
 
 const ru: Lines = {
@@ -619,6 +650,15 @@ const ru: Lines = {
   recruited: ['Спасибо за приглашение, {me}! В бой!'],
   joined: ['Всем привет! Рад быть в [{tag}] 👋'],
   friendHello: ['Привет, {me}! Спасибо, что добавил 🙌 Сразимся как-нибудь?'],
+  inviteNo: [
+    'иду поесть, завтра?',
+    'уже выхожу, давай позже?',
+    '{lead} надо отдохнуть 😅 в другой раз!',
+    'сейчас не могу, завтра?',
+  ],
+  inviteBusy: ['я в середине рейтингового матча, позже!', 'сейчас в бою, дай пару минут!'],
+  inviteLate: ['Прости, был в бою! Позови ещё раз 🙂', 'Только увидел приглашение, был в матче. В следующий раз!'],
+  inviteOk: ['ок, в следующий раз 🙂', 'Без проблем, потом!'],
 }
 
 export const LINES: Record<Lang, Lines> = { en, az, tr, ru }

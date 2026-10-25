@@ -6,8 +6,8 @@ import { Avatar } from '../components/Avatar'
 import { BAKUGAN, formBrawlG, formOf } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { CHARACTER_BY_ID } from '../profile/avatar'
-import { TIER_COLORS } from '../profile/brawlers'
-import { TIERS, useProfiles } from '../profile/useProfiles'
+import { rankColor } from '../profile/brawlers'
+import { tierOf, useProfiles, type Profile } from '../profile/useProfiles'
 import { useGame, type TagMember, type TeamMember } from '../store/useGame'
 import { findOpponents, memberScore, randomPartner, tagArena, teamNote } from './tagSetup'
 
@@ -93,7 +93,7 @@ export function TagFaceOff({
             label="YOUR TEAM"
             rows={[
               { name: me.name, sub: 'YOU', avatar: me.avatar, color: me.color, team },
-              memberRow(partner, friend ? 'YOUR FRIEND' : 'CPU PARTNER'),
+              memberRow(partner, friend ? 'YOUR FRIEND' : 'CPU PARTNER', profiles, now),
             ]}
             action={
               !friend && !ranked
@@ -112,7 +112,7 @@ export function TagFaceOff({
           <div className="font-display mt-24 text-5xl font-black text-white/30 italic">VS</div>
           <TeamColumn
             label={`OPPONENTS${teamNote(opponents) ? ` · ${teamNote(opponents)!.toUpperCase()}` : ''}`}
-            rows={opponents.map((o) => memberRow(o, 'CPU'))}
+            rows={opponents.map((o) => memberRow(o, 'CPU', profiles, now))}
             action={
               ranked
                 ? undefined
@@ -150,10 +150,11 @@ interface Row {
   avatar: Parameters<typeof Avatar>[0]['avatar']
   color: string
   team: TeamMember[]
-  tier?: number
+  /** Their rank now, e.g. "Battle Brawler II". */
+  rank?: ReturnType<typeof tierOf>
 }
 
-function memberRow(m: TagMember, sub: string): Row {
+function memberRow(m: TagMember, sub: string, profiles: Profile[], now: number): Row {
   const c = CHARACTER_BY_ID[m.characterId]
   const lead = BAKUGAN.find((b) => b.id === m.team[0]?.id)
   return {
@@ -162,7 +163,7 @@ function memberRow(m: TagMember, sub: string): Row {
     avatar: { kind: 'preset', id: m.characterId },
     color: ELEMENT_BY_ID[lead?.element ?? c?.element ?? 'pyrus'].color,
     team: m.team,
-    tier: m.tier,
+    rank: tierOf(memberScore(m.botId, profiles, now)),
   }
 }
 
@@ -185,9 +186,7 @@ function TeamColumn({ label, rows, action }: { label: string; rows: Row[]; actio
               <p className="font-display truncate text-lg leading-tight font-bold">{r.name}</p>
               <p className="font-display text-[10px] tracking-[0.3em] text-white/45">
                 {r.sub}
-                {r.tier !== undefined && (
-                  <span style={{ color: TIER_COLORS[r.tier] }}> · {TIERS[r.tier]?.name.toUpperCase()}</span>
-                )}
+                {r.rank && <span style={{ color: rankColor(r.rank) }}> · {r.rank.rank.toUpperCase()}</span>}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {r.team.map((t) => {

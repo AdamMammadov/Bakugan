@@ -362,7 +362,7 @@ function botInfo(input: ChatInput): BotInfo {
       El: ELEMENT_BY_ID[bot.element].name,
       elTop: top.name,
       elTopG: top.baseG,
-      tier: tierOf(score).name,
+      tier: tierOf(score).rank,
       rating: bot.rating,
       score: score.toLocaleString('en'),
       pos,
@@ -742,7 +742,7 @@ function someoneElse(input: ChatInput) {
 
 /** Something a bot says by itself (`key`: chatter, welcome, joined…), in `lang`. */
 export function botLine(
-  key: 'chatter' | 'welcome' | 'recruited' | 'joined' | 'friendHello',
+  key: 'chatter' | 'welcome' | 'recruited' | 'joined' | 'friendHello' | 'inviteNo' | 'inviteBusy' | 'inviteLate' | 'inviteOk',
   input: Omit<ChatInput, 'text' | 'history'> & { recent?: string[]; name?: string },
   lang: Lang,
 ): ChatReply {
