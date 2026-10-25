@@ -1,35 +1,31 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
+import { useCallback, useState, type CSSProperties } from 'react'
 import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
+import { BakuganDrawer } from '../components/BakuganDrawer'
+import { BakuganThumb } from '../components/BakuganThumb'
+import { entrantOf } from '../components/collection'
+import { CollectionBrowser } from '../components/CollectionBrowser'
 import { GateChip } from '../components/GateChip'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
+import { rankColor } from '../profile/brawlers'
 import { clanOf, useClans } from '../profile/useClans'
 import { useFriendChat } from '../profile/useFriendChat'
-import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, type Bakugan } from '../data/bakugan'
-import { released } from '../season/release'
+import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
 import {
-  canEvolve,
   cardCount,
   cardXpFor,
-  nextCardXp,
-  nextEvolveXp,
   rankScore,
   teamEntrants,
   tierOf,
   useActiveProfile,
   useProfiles,
-  bakuganById,
-  TIERS,
-  type OwnedBakugan,
   type Profile,
 } from '../profile/useProfiles'
-import { SKINS, skinFits } from '../season/season'
 import { useGame } from '../store/useGame'
-import { RewardIcon } from '../components/RewardIcon'
 import { EventTrophies } from '../components/EventTrophies'
 import { BrawlerProfileModal, FriendsList } from './BrawlerProfile'
 
@@ -41,6 +37,11 @@ export function ProfileScreen() {
   const editProfile = useGame((s) => s.editProfile)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [friendId, setFriendId] = useState<string | null>(null)
+  // the Bakugan whose details are open, and the list its arrows step through
+  const [detail, setDetail] = useState<{ id: string; list: string[] } | null>(null)
+  const openDetail = useCallback((id: string, list: string[]) => setDetail({ id, list }), [])
+  const stepDetail = useCallback((id: string) => setDetail((d) => (d ? { ...d, id } : d)), [])
+  const closeDetail = useCallback(() => setDetail(null), [])
 
   return (
     <motion.div
@@ -92,10 +93,11 @@ export function ProfileScreen() {
           <div className="mt-8">
             <FriendsList onOpen={setFriendId} />
           </div>
-          <Team profile={profile} />
-          <Collection profile={profile} />
+          <Team profile={profile} onOpen={openDetail} />
+          <CollectionBrowser profile={profile} openId={detail?.id ?? null} onOpen={openDetail} />
           <Locker profile={profile} />
           <Cards profile={profile} />
+          <BakuganDrawer profile={profile} open={detail} onNavigate={stepDetail} onClose={closeDetail} />
         </>
       )}
 
@@ -150,7 +152,7 @@ function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () =>
     <header className="mt-8 flex items-start gap-8">
       <Avatar avatar={profile.avatar} color={element.color} size={150} frame={profile.cosmetics?.frame} />
       <div className="min-w-0 flex-1">
-        <RankBadge profile={profile} color={element.color} />
+        <RankBadge profile={profile} />
         {profile.cosmetics?.title && (
           <p className="font-display mt-1 text-sm tracking-[0.2em] text-amber-200">✦ {profile.cosmetics.title}</p>
         )}
@@ -210,7 +212,7 @@ function Stats({ profile }: { profile: Profile }) {
   )
 }
 
-function Team({ profile }: { profile: Profile }) {
+function Team({ profile, onOpen }: { profile: Profile; onOpen: (id: string, list: string[]) => void }) {
   const team = teamEntrants(profile)
   return (
     <section className="mt-10">
@@ -221,203 +223,51 @@ function Team({ profile }: { profile: Profile }) {
         {team.map((e, i) => {
           const el = ELEMENT_BY_ID[e.bakugan.element]
           return (
-            <div
+            <button
               key={e.bakugan.id}
-              className="flex items-center gap-3 rounded-lg border-2 bg-black/40 px-4 py-2"
-              style={{ borderColor: `${el.color}aa` }}
+              onClick={() => {
+                playSfx('select')
+                onOpen(e.bakugan.id, profile.team)
+              }}
+              title={`${e.bakugan.evolutions[e.form].name}: details`}
+              className="group flex cursor-pointer items-center gap-3 rounded-xl border-2 border-[color:var(--b)] bg-black/40 p-1.5 pr-5 text-left transition hover:-translate-y-0.5 hover:border-[color:var(--c)] hover:bg-white/[0.06] hover:shadow-[0_8px_24px_-8px_var(--c)]"
+              style={{ '--b': `${el.color}88`, '--c': el.color } as CSSProperties}
             >
-              <span className="font-display text-[10px] tracking-widest text-white/40">{i === 0 ? 'LEAD' : `#${i + 1}`}</span>
-              <img src={el.icon} alt="" className="h-8 w-8" />
-              <span className="font-display font-bold">{e.bakugan.evolutions[e.form].name}</span>
-            </div>
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                <div className="h-full w-full transition-transform duration-300 group-hover:scale-110">
+                  <BakuganThumb entrant={entrantOf(e.bakugan.id, e.form, e.skin)} />
+                </div>
+              </div>
+              <div className="leading-tight">
+                <span
+                  className="font-display text-[10px] tracking-widest"
+                  style={{ color: i === 0 ? '#f5c542' : 'rgba(255,255,255,0.4)' }}
+                >
+                  {i === 0 ? '★ LEAD' : `#${i + 1}`}
+                </span>
+                <p className="font-display font-bold">{e.bakugan.evolutions[e.form].name}</p>
+                <p className="flex items-center gap-1 text-xs text-white/45">
+                  <img src={el.icon} alt="" className="h-3.5 w-3.5" />
+                  {formBrawlG(e)}G
+                </p>
+              </div>
+            </button>
           )
         })}
-        <span className="text-sm text-white/40">Change the team with the TEAM buttons below. Gate deck:</span>
+        {Array.from({ length: Math.max(0, 3 - team.length) }, (_, i) => (
+          <div
+            key={i}
+            className="flex h-[4.75rem] w-40 items-center justify-center rounded-xl border-2 border-dashed border-white/15 px-3 text-center text-[11px] text-white/35"
+          >
+            Empty slot · add a Bakugan from below
+          </div>
+        ))}
+        <span className="text-sm text-white/40">Click a Bakugan to change the team. Gate deck:</span>
         {gateDeck(team).map((g) => (
           <GateChip key={g.id} gate={g} />
         ))}
       </div>
     </section>
-  )
-}
-
-function Collection({ profile }: { profile: Profile }) {
-  const openPage = useGame((s) => s.openPage)
-  return (
-    <section className="mt-10">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
-          BAKUGAN COLLECTION · {profile.collection.length}/{released().length}
-        </h2>
-        <button
-          onClick={() => openPage('shop')}
-          className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.3em] hover:bg-white/10"
-        >
-          GET MORE IN THE SHOP →
-        </button>
-      </div>
-      <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
-        {profile.collection.map((owned) => (
-          <OwnedCard key={owned.id} bakugan={bakuganById(owned.id)} owned={owned} profile={profile} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function OwnedCard({ bakugan, owned, profile }: { bakugan: Bakugan; owned: OwnedBakugan; profile: Profile }) {
-  const evolve = useProfiles((s) => s.evolve)
-  const setTeam = useProfiles((s) => s.setTeam)
-  const element = ELEMENT_BY_ID[bakugan.element]
-  const need = nextEvolveXp(bakugan, owned)
-  const prev = owned.form === 0 ? 0 : (nextEvolveXp(bakugan, { ...owned, form: owned.form - 1 }) ?? 0)
-  const ready = canEvolve(owned)
-  const inTeam = profile.team.indexOf(bakugan.id)
-  const cardNext = nextCardXp(owned)
-  const applyCardKey = useProfiles((s) => s.applyCardKey)
-  const setSkin = useProfiles((s) => s.setSkin)
-  const skins = SKINS.filter((sk) => profile.cosmetics?.owned.includes(`skin:${sk.id}`) && skinFits(sk, bakugan.id))
-  const [flash, setFlash] = useState(0)
-
-  function toggleTeam() {
-    playSfx('tick')
-    if (inTeam !== -1) {
-      if (profile.team.length > 1) setTeam(profile.team.filter((id) => id !== bakugan.id))
-    } else setTeam([...profile.team.slice(0, 2), bakugan.id])
-  }
-
-  return (
-    <div
-      className="relative overflow-hidden rounded-xl border bg-black/40 p-5 backdrop-blur"
-      style={{ borderColor: `${element.color}55` }}
-    >
-      <AnimatePresence>
-        {flash > 0 && (
-          <motion.div
-            key={flash}
-            className="pointer-events-none absolute inset-0"
-            style={{ background: `radial-gradient(circle, ${element.glow}cc, transparent 70%)` }}
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-          />
-        )}
-      </AnimatePresence>
-      <div className="flex items-start gap-4">
-        <img src={element.icon} alt="" className="h-14 w-14" style={{ filter: `drop-shadow(0 0 12px ${element.glow})` }} />
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-2xl font-bold">{bakugan.evolutions[owned.form].name}</p>
-          <p className="text-sm text-white/50">
-            {element.name} · {formBrawlG({ bakugan, form: owned.form })}G · {owned.wins}W / {owned.battles} battles · {owned.kos}{' '}
-            KOs
-          </p>
-        </div>
-        <button
-          onClick={toggleTeam}
-          className="font-display rounded border px-2 py-1 text-[10px] tracking-widest transition"
-          style={{
-            borderColor: inTeam !== -1 ? element.color : 'rgba(255,255,255,0.2)',
-            background: inTeam !== -1 ? `${element.color}33` : 'transparent',
-          }}
-        >
-          {inTeam === -1 ? '+ TEAM' : inTeam === 0 ? '★ LEAD' : `TEAM #${inTeam + 1}`}
-        </button>
-      </div>
-
-      {/* evolution chain */}
-      <div className="mt-4 flex flex-wrap items-center gap-1 text-xs">
-        {bakugan.evolutions.map((evo, i) => (
-          <span key={`${evo.name}-${evo.series}`} className="flex items-center gap-1">
-            {i > 0 && <span className="text-white/25">→</span>}
-            <span
-              className="rounded px-2 py-0.5"
-              style={{
-                background: i === owned.form ? `${element.color}55` : i < owned.form ? `${element.color}22` : 'transparent',
-                border: `1px solid ${i <= owned.form ? element.color : 'rgba(255,255,255,0.12)'}`,
-                color: i <= owned.form ? '#fff' : 'rgba(255,255,255,0.35)',
-              }}
-            >
-              {evo.name}
-              {evo.series !== 'Battle Brawlers' && <span className="text-white/40"> ({evo.series})</span>}
-            </span>
-          </span>
-        ))}
-      </div>
-
-      {/* xp to next evolution */}
-      <div className="mt-4">
-        <div className="flex justify-between text-xs">
-          <span className="font-display tracking-widest text-white/40">XP {owned.xp}</span>
-          <span className="text-white/60">
-            {need === null
-              ? 'Final form reached'
-              : ready
-                ? 'Ready to evolve!'
-                : `${need - owned.xp} XP to ${bakugan.evolutions[owned.form + 1].name}`}
-          </span>
-        </div>
-        <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${need === null ? 100 : Math.min(100, ((owned.xp - prev) / (need - prev)) * 100)}%`,
-              background: `linear-gradient(90deg, ${element.color}, ${element.glow})`,
-            }}
-          />
-        </div>
-      </div>
-      {ready && (
-        <motion.button
-          onClick={() => {
-            playSfx('gPower')
-            setFlash(Date.now())
-            evolve(bakugan.id)
-          }}
-          animate={{ boxShadow: [`0 0 0px ${element.glow}`, `0 0 24px ${element.glow}`, `0 0 0px ${element.glow}`] }}
-          transition={{ repeat: Infinity, duration: 1.6 }}
-          className="font-display mt-3 w-full border-2 py-2 font-black tracking-[0.3em]"
-          style={{ borderColor: element.color, background: `${element.color}33` }}
-        >
-          EVOLVE → {bakugan.evolutions[owned.form + 1].name.toUpperCase()}
-        </motion.button>
-      )}
-      <p className="mt-3 text-xs text-white/50">
-        Ability cards {cardCount(owned)}/{abilitiesOf(bakugan, owned.form).length}
-        {cardNext !== null && ` · next card at ${cardNext} XP`}
-      </p>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-        {cardNext !== null && (profile.cardKeys ?? 0) > 0 && (
-          <button
-            onClick={() => {
-              playSfx('gPower')
-              applyCardKey(bakugan.id)
-            }}
-            className="rounded border border-amber-300/60 px-2 py-1 text-amber-200 hover:bg-amber-300/10"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <RewardIcon kind="cardKey" size={16} /> USE CARD KEY ({profile.cardKeys})
-            </span>
-          </button>
-        )}
-        {skins.length > 0 && (
-          <label className="flex items-center gap-1 text-white/50">
-            SKIN
-            <select
-              value={owned.skin ?? ''}
-              onChange={(e) => setSkin(bakugan.id, e.target.value || undefined)}
-              className="rounded border border-white/20 bg-black/80 px-1 py-0.5 text-white"
-            >
-              <option value="">Original</option>
-              {skins.map((sk) => (
-                <option key={sk.id} value={sk.id}>
-                  {sk.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
-    </div>
   )
 }
 
@@ -442,26 +292,26 @@ function Locker({ profile }: { profile: Profile }) {
   )
 }
 
-/** Rank name with progress towards the next tier. */
-export function RankBadge({ profile, color }: { profile: Pick<Profile, 'rating' | 'xp'>; color: string }) {
+/** Rank (with its division) and progress towards the next one, in the rank's colour. */
+export function RankBadge({ profile, color }: { profile: Pick<Profile, 'rating' | 'xp'>; color?: string }) {
   const score = rankScore(profile)
   const tier = tierOf(score)
-  const from = TIERS[tier.index].min
+  const c = color ?? rankColor(tier)
   return (
     <div className="flex items-center gap-3">
-      <p className="font-display text-xs tracking-[0.5em]" style={{ color }}>
-        {tier.name.toUpperCase()}
+      <p className="font-display text-xs tracking-[0.5em]" style={{ color: c }}>
+        {tier.rank.toUpperCase()}
       </p>
-      {tier.next && (
+      {tier.nextRank && (
         <>
           <div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full"
-              style={{ width: `${((score - from) / (tier.next.min - from)) * 100}%`, background: color }}
+              style={{ width: `${((score - tier.min) / (tier.nextRank.min - tier.min)) * 100}%`, background: c }}
             />
           </div>
           <span className="text-xs text-white/40">
-            {tier.next.min - score} to {tier.next.name}
+            {tier.nextRank.min - score} to {tier.nextRank.name}
           </span>
         </>
       )}
@@ -469,11 +319,30 @@ export function RankBadge({ profile, color }: { profile: Pick<Profile, 'rating' 
   )
 }
 
+/** Every Bakugan's ability cards in one long list, folded away until asked for (each Bakugan's details show its own). */
 function Cards({ profile }: { profile: Profile }) {
+  const [open, setOpen] = useState(false)
   return (
     <section className="mt-10 pb-10">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">ABILITY CARDS</h2>
-      <div className="mt-3 space-y-5">
+      <button
+        onClick={() => {
+          playSfx('tick')
+          setOpen(!open)
+        }}
+        aria-expanded={open}
+        className="group flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-6 py-4 text-left transition hover:border-white/25 hover:bg-white/[0.05]"
+      >
+        <h2 className="font-display text-xs tracking-[0.5em] text-white/40 transition group-hover:text-white/70">
+          ALL ABILITY CARDS
+        </h2>
+        <span className="text-sm text-white/40">
+          {profile.collection.reduce((n, o) => n + cardCount(o), 0)} unlocked across {profile.collection.length} Bakugan
+        </span>
+        <span className="font-display ml-auto text-xs tracking-[0.3em] text-white/50 transition group-hover:text-white">
+          {open ? 'HIDE ▴' : 'SHOW ▾'}
+        </span>
+      </button>
+      <div className={`mt-3 space-y-5 ${open ? '' : 'hidden'}`}>
         {profile.collection.map((owned) => {
           const bakugan = BAKUGAN.find((b) => b.id === owned.id)!
           const element = ELEMENT_BY_ID[bakugan.element]

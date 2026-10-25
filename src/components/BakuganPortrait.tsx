@@ -20,11 +20,16 @@ let host: number | null = null
 let ids = 0
 /** How each mounted portrait takes over as host. */
 const claims = new Map<number, () => void>()
+/** How many mounted portraits show each picture: one nobody shows any more is skipped in the queue. */
+const wanted = new Map<string, number>()
 
 const keyOf = (e: Entrant) => `${e.bakugan.id}-${e.form}-${e.skin ?? ''}`
 
 function pump() {
-  if (current || !waiting.length) return
+  if (current) return
+  // e.g. a long list filtered down: the pictures still on screen come first
+  while (waiting.length && !wanted.get(waiting[0].key)) waiting.shift()
+  if (!waiting.length) return
   current = waiting.shift()!
   listeners.forEach((fn) => fn())
 }
@@ -55,9 +60,12 @@ export function BakuganPortrait({ entrant, mirror = false }: { entrant: Entrant;
       listeners.forEach((l) => l())
     })
     if (host === null) host = id
+    const shown = keyOf(entrant)
+    wanted.set(shown, (wanted.get(shown) ?? 0) + 1)
     request(entrant)
     fn()
     return () => {
+      wanted.set(shown, (wanted.get(shown) ?? 1) - 1)
       listeners.delete(fn)
       claims.delete(id)
       if (host === id) {

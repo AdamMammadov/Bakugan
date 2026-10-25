@@ -131,6 +131,8 @@ export interface OwnedBakugan {
   wins: number
   battles: number
   kos: number
+  /** When it last brawled (sorts the collection by recent use). */
+  lastUsed?: number
   /** Equipped skin id (cosmetic colour variant). */
   skin?: string
   /** Ability cards unlocked early with Card Keys. */
@@ -616,7 +618,14 @@ export const useProfiles = create<ProfilesState>()(
           const kos = report.kos[o.id] ?? 0
           const base = (report.won ? roll(XP.winMin, XP.winMax) : roll(XP.lossMin, XP.lossMax)) + kos * XP.ko
           const gained = boosted ? Math.round(base * 1.5) : base
-          const next = { ...o, xp: o.xp + gained, battles: o.battles + 1, wins: o.wins + (report.won ? 1 : 0), kos: o.kos + kos }
+          const next = {
+            ...o,
+            xp: o.xp + gained,
+            battles: o.battles + 1,
+            wins: o.wins + (report.won ? 1 : 0),
+            kos: o.kos + kos,
+            lastUsed: Date.now(),
+          }
           reward.xp[o.id] = gained
           if (canEvolve(next) && !canEvolve(o)) reward.evolveReady.push(o.id)
           const cards = cardCount(next) - cardCount(o)
