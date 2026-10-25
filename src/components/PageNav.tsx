@@ -1,13 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { useUnread } from '../profile/useFriendChat'
+import { openEvents } from '../events/nav'
 import { useActiveProfile } from '../profile/useProfiles'
 import { useGame, type PageScreen } from '../store/useGame'
 import { centreInStrip } from './strip'
 
-const TABS: [PageScreen, string][] = [
+/** The events page is a tab too, though it is not one of the store's PageScreens. */
+type Tab = PageScreen | 'events'
+
+const TABS: [Tab, string][] = [
   ['profile', 'PROFILE'],
   ['inventory', 'INVENTORY'],
   ['pass', 'SEASON PASS'],
+  ['events', 'EVENTS'],
   ['shop', 'SHOP'],
   ['rankings', 'RANKINGS'],
   ['clans', 'CLANS'],
@@ -18,7 +23,7 @@ const TABS: [PageScreen, string][] = [
 ]
 
 /** Back button plus tabs between the player pages. */
-export function PageNav({ current, children }: { current: PageScreen; children?: React.ReactNode }) {
+export function PageNav({ current, children }: { current: Tab; children?: React.ReactNode }) {
   const back = useGame((s) => s.back)
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
@@ -43,6 +48,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
     'showroom',
     'characters',
     'profileEdit',
+    'events',
   ].includes(back)
     ? 'hub'
     : back
@@ -65,7 +71,10 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
             <button
               key={id}
               ref={id === current ? active : undefined}
-              onClick={() => openPage(id)}
+              onClick={() =>
+                // from the events page another tab keeps where BACK goes
+                id === 'events' ? openEvents() : current === 'events' ? useGame.setState({ screen: id }) : openPage(id)
+              }
               className={`font-display shrink-0 rounded-full px-4 py-1.5 text-xs tracking-[0.3em] whitespace-nowrap transition ${
                 id === current ? 'bg-white/15 text-white' : 'text-white/45 hover:text-white'
               }`}

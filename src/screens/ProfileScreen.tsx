@@ -30,6 +30,7 @@ import {
 import { SKINS, skinFits } from '../season/season'
 import { useGame } from '../store/useGame'
 import { RewardIcon } from '../components/RewardIcon'
+import { EventTrophies } from '../components/EventTrophies'
 import { BrawlerProfileModal, FriendsList } from './BrawlerProfile'
 
 export function ProfileScreen() {
@@ -166,6 +167,7 @@ function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () =>
             · {element.attribute} · since {new Date(profile.createdAt).toLocaleDateString('en-GB')}
           </span>
         </div>
+        <EventTrophies profileId={profile.id} />
         <p className="mt-4 max-w-3xl leading-relaxed whitespace-pre-line text-white/75">{profile.bio || 'No bio yet.'}</p>
       </div>
       <div className="flex shrink-0 flex-col gap-2">

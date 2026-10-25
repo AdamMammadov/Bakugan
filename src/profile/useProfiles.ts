@@ -398,6 +398,8 @@ interface ProfilesState {
   /** Rolls the active player over into a new season when the old one has ended. */
   syncSeason: () => void
   dismissSeasonNotice: () => void
+  /** Gives the active player rewards earned outside the pass (events). */
+  grantRewards: (rewards: Reward[]) => boolean
   /** Collects the reward of a reached pass level. */
   claimLevel: (level: number) => boolean
   claimAll: () => number
@@ -594,6 +596,17 @@ export const useProfiles = create<ProfilesState>()(
       },
       syncSeason: () => set((s) => patchActive(s, (p) => rollSeason(p))),
       dismissSeasonNotice: () => set((s) => patchActive(s, (p) => ({ ...p, seasonNotice: null }))),
+      grantRewards: (rewards) => {
+        const p = get().profiles.find((x) => x.id === get().activeId)
+        if (!p) return false
+        const seasonId = seasonFor(p).id
+        let next: Profile | null = p
+        for (const r of rewards) next = next && grant(next, r, seasonId)
+        if (!next) return false
+        const done = next
+        set((s) => patchActive(s, () => done))
+        return true
+      },
       claimLevel: (level) => {
         const p = get().profiles.find((x) => x.id === get().activeId)
         if (!p) return false

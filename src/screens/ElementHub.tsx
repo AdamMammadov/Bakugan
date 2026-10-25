@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { BakuganInfo } from '../components/BakuganInfo'
+import { EventsChip } from '../components/EventsChip'
 import { bakuganForElement, type Bakugan } from '../data/bakugan'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { ELEMENT_BY_ID, type ElementInfo } from '../data/elements'
@@ -111,6 +112,7 @@ export function ElementHub() {
           </h1>
         </div>
         <SeasonChip />
+        <EventsChip />
       </header>
 
       {profile && profile.element !== elementId && <OtherAttribute profile={profile} element={element} />}

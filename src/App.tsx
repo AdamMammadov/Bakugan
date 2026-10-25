@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import { lazy, Suspense, useEffect } from 'react'
 import { playMusic, type Track } from './audio/music'
+import { EventToast } from './components/EventToast'
 import { MuteButton } from './components/MuteButton'
 import { ProfileButton } from './components/ProfileButton'
 import { SeasonNotice } from './components/SeasonNotice'
@@ -18,6 +19,8 @@ import { ShopScreen } from './screens/ShopScreen'
 import { InventoryScreen } from './screens/InventoryScreen'
 import { SeasonPassScreen } from './screens/SeasonPassScreen'
 import { useGame, type Screen } from './store/useGame'
+// pays out event matches whichever screen is open
+import './events/progress'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
 const Viewer = lazy(() => import('./screens/Viewer').then((m) => ({ default: m.Viewer })))
@@ -25,6 +28,8 @@ const BakuganShowroom = lazy(() => import('./screens/BakuganShowroom').then((m) 
 const CharacterShowroom = lazy(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
 const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
 const LiveScreen = lazy(() => import('./screens/LiveScreen').then((m) => ({ default: m.LiveScreen })))
+// boss cards draw Bakugan portraits with three.js
+const EventsScreen = lazy(() => import('./screens/EventsScreen').then((m) => ({ default: m.EventsScreen })))
 
 /** Which song plays where: every page has its own, and the arena picks one of the battle songs. */
 const TRACK_FOR: Partial<Record<Screen, Track>> = {
@@ -45,6 +50,7 @@ const TRACK_FOR: Partial<Record<Screen, Track>> = {
   encyclopedia: 'gallery',
   showroom: 'showroom',
   characters: 'characters',
+  events: 'faceoff',
 }
 
 export default function App() {
@@ -83,9 +89,11 @@ export default function App() {
           {screen === 'inventory' && <InventoryScreen key="inventory" />}
           {screen === 'showroom' && <BakuganShowroom key="showroom" />}
           {screen === 'characters' && <CharacterShowroom key="characters" />}
+          {screen === 'events' && <EventsScreen key="events" />}
         </AnimatePresence>
       </Suspense>
       <SeasonNotice />
+      <EventToast />
       {/* the corner buttons share one row, so they line up whatever their widths */}
       {screen !== 'intro' && (
         <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">
@@ -104,6 +112,7 @@ export default function App() {
             'inventory',
             'characters',
             'pass',
+            'events',
           ].includes(screen) && <ProfileButton />}
           <MuteButton />
         </div>

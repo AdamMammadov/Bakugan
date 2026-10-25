@@ -1,15 +1,17 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { ELEMENT_BY_ID } from '../data/elements'
+import { openEvents } from '../events/nav'
 import { useActiveProfile } from '../profile/useProfiles'
 import { useGame, type PageScreen } from '../store/useGame'
 import { Avatar } from './Avatar'
 import { BpIcon } from './RewardIcon'
 
-const ITEMS: [PageScreen, string][] = [
+const ITEMS: [PageScreen | 'events', string][] = [
   ['profile', 'PROFILE'],
   ['inventory', 'INVENTORY'],
   ['pass', 'SEASON PASS'],
+  ['events', 'EVENTS'],
   ['shop', 'SHOP'],
   ['encyclopedia', 'ENCYCLOPEDIA'],
   ['showroom', 'BAKUGAN SHOWROOM'],
@@ -61,7 +63,8 @@ export function ProfileButton() {
                   label={label}
                   onClick={() => {
                     setOpen(false)
-                    openPage(id)
+                    if (id === 'events') openEvents()
+                    else openPage(id)
                   }}
                 />
               ),

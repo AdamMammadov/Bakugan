@@ -186,7 +186,9 @@ function MatchArena({ setup }: { setup: ArenaSetup }) {
     const cpu: BrawlerSide = {
       // an invited friend brawls under their own name
       name: setup.bot.name ?? bot.name,
-      tag: `CPU · ${(TIERS[setup.bot.tier]?.name ?? TIERS[0].name).toUpperCase()}`,
+      tag: setup.event?.id.startsWith('boss:')
+        ? `BOSS · ${String(setup.event.stage ?? '').toUpperCase()}`
+        : `CPU · ${(TIERS[setup.bot.tier]?.name ?? TIERS[0].name).toUpperCase()}`,
       avatar: { kind: 'preset', id: bot.id },
       parts: bot.parts,
       model: bot.model,
