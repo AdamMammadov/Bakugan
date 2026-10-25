@@ -24,15 +24,27 @@ export interface HudBrawler {
   hsp?: number
 }
 
-/** The lives at the top: a glossy ball per life, a lost one greyed out with a cross. */
-export function LifeBalls({ lives, color, right }: { lives: number; color: string; right?: boolean }) {
+/** The lives at the top: a glossy ball per life (`max` of them), a lost one greyed out with a cross. */
+export function LifeBalls({
+  lives,
+  color,
+  right,
+  max = LIVES,
+  small,
+}: {
+  lives: number
+  color: string
+  right?: boolean
+  max?: number
+  small?: boolean
+}) {
   return (
-    <div className={`flex gap-2 ${right ? 'flex-row-reverse' : ''}`}>
-      {Array.from({ length: LIVES }, (_, i) => {
+    <div className={`flex ${small ? 'gap-1' : 'gap-2'} ${right ? 'flex-row-reverse' : ''}`}>
+      {Array.from({ length: max }, (_, i) => {
         // the lost ones are the inner balls, towards the middle
         const lost = i >= lives
         return (
-          <div key={i} className="relative h-7 w-7">
+          <div key={i} className={`relative ${small ? 'h-3.5 w-3.5' : 'h-7 w-7'}`}>
             <motion.div
               className="absolute inset-0 rounded-full border-2"
               animate={
@@ -51,7 +63,7 @@ export function LifeBalls({ lives, color, right }: { lives: number; color: strin
             <AnimatePresence>
               {lost && (
                 <motion.span
-                  className="font-display absolute inset-0 flex items-center justify-center text-lg font-black text-[#ff4a3d]"
+                  className={`font-display absolute inset-0 flex items-center justify-center font-black text-[#ff4a3d] ${small ? 'text-[9px]' : 'text-lg'}`}
                   style={{ textShadow: '0 0 8px #000' }}
                   initial={{ opacity: 0, scale: 2.5 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -68,8 +80,8 @@ export function LifeBalls({ lives, color, right }: { lives: number; color: strin
   )
 }
 
-/** "05T": the match's turn counter. */
-export function TurnCounter({ turn, battle }: { turn: number; battle: number }) {
+/** "05T": the match's turn counter, and the battle (or a tag match's round) under it. */
+export function TurnCounter({ turn, battle, label = 'BATTLE' }: { turn: number; battle: number; label?: string }) {
   return (
     <div className="flex flex-col items-center leading-none">
       <p
@@ -79,7 +91,9 @@ export function TurnCounter({ turn, battle }: { turn: number; battle: number }) 
         {String(Math.max(1, turn)).padStart(2, '0')}
         <span className="text-2xl">T</span>
       </p>
-      <p className="font-display mt-1 text-[10px] tracking-[0.45em] text-white/50">BATTLE {battle}</p>
+      <p className="font-display mt-1 text-[10px] tracking-[0.45em] text-white/50">
+        {label} {battle}
+      </p>
     </div>
   )
 }
@@ -126,6 +140,7 @@ export function BrawlerHud({
   teams,
   color,
   badge,
+  boost,
 }: {
   state: BattleState
   side: SideIndex
@@ -134,6 +149,8 @@ export function BrawlerHud({
   /** The brawler's colour (their first Bakugan's attribute). */
   color: string
   badge?: ReactNode
+  /** A boss's extra G-Power on every Bakugan (already in their G): shown as a boss boost. */
+  boost?: number
 }) {
   const right = side === 1
   const s = state.sides[side]
@@ -146,13 +163,21 @@ export function BrawlerHud({
   const el = entrant ? ELEMENT_BY_ID[entrant.bakugan.element] : null
   return (
     <div className={`flex w-[17rem] flex-col gap-2 ${right ? 'items-end text-right' : ''}`}>
-      <LifeBalls lives={s.lives} color={color} right={right} />
+      <LifeBalls lives={s.lives} max={s.maxLives} color={color} right={right} />
       <div className={`flex items-center gap-3 ${right ? 'flex-row-reverse' : ''}`}>
         <BrawlerFace avatar={brawler.avatar} parts={brawler.parts} color={color} size={64} />
         <div className="min-w-0">
           {badge}
           <p className="font-display truncate text-lg leading-tight font-black tracking-wider">{brawler.name.toUpperCase()}</p>
           <p className="font-display truncate text-[10px] tracking-[0.3em] text-white/50">{brawler.tag}</p>
+          {!!boost && (
+            <p
+              className="font-display mt-1 inline-block rounded border border-[#ff4a3d]/80 bg-[#ff4a3d]/20 px-1.5 text-[10px] font-bold tracking-[0.2em] text-[#ff8a7d]"
+              title={`Boss boost: every Bakugan of ${brawler.name} has ${boost} extra G-Power`}
+            >
+              ☠ BOSS BOOST +{boost}G
+            </p>
+          )}
         </div>
       </div>
 
@@ -180,7 +205,11 @@ export function BrawlerHud({
               </div>
               <GPower value={g} color={el.color} glow={el.glow} right={right} />
               <p className="text-[10px] tracking-wider text-white/45">
-                {d ? `BASE ${fighter.g}` : state.phase === 'throw' ? 'READY TO THROW' : `${fighter.g} G`}
+                {d
+                  ? `BASE ${fighter.g}${boost ? ` · BOSS +${boost}` : ''}`
+                  : state.phase === 'throw'
+                    ? 'READY TO THROW'
+                    : `${fighter.g} G`}
               </p>
             </>
           ) : (

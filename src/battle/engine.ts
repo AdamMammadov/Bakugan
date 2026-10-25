@@ -6,7 +6,7 @@ import { released } from '../season/release'
 /**
  * Bakugan brawl as in the Battle Brawlers anime (season 1).
  *
- * Match: each brawler has LIVES lives (the balls at the top of the screen). A match is a series of battles, one
+ * Match: each brawler has LIVES lives (the balls at the top of the screen; an event may set others). A match is a series of battles, one
  * Bakugan against one; the loser of a battle loses a life and a brawler out of lives is defeated. A beaten Bakugan
  * goes back to its brawler and can be thrown again, so teams of 1, 2 or 3 all work.
  *
@@ -110,7 +110,11 @@ export interface Side {
   decks: Card[][]
   /** Gate Cards not set yet; one is spent each time this side sets one. */
   gates: GateCard[]
+  /** The whole gate deck: once every card is spent, the deck comes back. */
+  gateDeck: GateCard[]
   lives: number
+  /** Lives at the start of the match (LIVES, unless an event says otherwise). */
+  maxLives: number
   /** Team member on the field (this battle's, or the last one's until the next throw). */
   active: number
   wins: number
@@ -207,7 +211,7 @@ function shuffle<T>(items: T[], rng: () => number): T[] {
 
 const round10 = (n: number) => Math.round(n / 10) * 10
 
-function makeSide(team: Entrant[], gates: GateCard[]): Side {
+export function makeSide(team: Entrant[], gates: GateCard[], lives = LIVES): Side {
   return {
     team: team.map((e) => ({ bakugan: e.bakugan, form: e.form, name: formOf(e).name, g: formBrawlG(e) + (e.bonusG ?? 0) })),
     decks: team.map((e) =>
@@ -216,21 +220,24 @@ function makeSide(team: Entrant[], gates: GateCard[]): Side {
         .map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id })),
     ),
     gates: [...gates],
-    lives: LIVES,
+    gateDeck: [...gates],
+    lives,
+    maxLives: lives,
     active: 0,
     wins: 0,
   }
 }
 
-/** A new match; `first` won the coin toss and sets the first Gate Card. */
+/** A new match; `first` won the coin toss and sets the first Gate Card. `lives` per side, LIVES each by default. */
 export function startBattle(
   left: Entrant[],
   right: Entrant[],
   gates: [GateCard[], GateCard[]],
   first: SideIndex = 0,
+  lives: [number, number] = [LIVES, LIVES],
 ): BattleState {
   return {
-    sides: [makeSide(left, gates[0]), makeSide(right, gates[1])],
+    sides: [makeSide(left, gates[0], lives[0]), makeSide(right, gates[1], lives[1])],
     phase: 'set',
     battle: 1,
     turn: 0,
@@ -300,6 +307,9 @@ function clone(state: BattleState): BattleState {
 // ---------------------------------------------------------------- queries
 
 export const activeOf = (side: Side) => side.team[side.active]
+
+/** The Gate Cards a side can set now: those not spent yet, or the whole deck again once all are. */
+export const gatesLeft = (side: Side) => (side.gates.length ? side.gates : side.gateDeck)
 
 /** A side's G-Power in the battle: its Bakugan's own plus every effect still standing. */
 export function powerOf(d: Duel, side: SideIndex) {
@@ -534,6 +544,8 @@ const nameOf = (state: BattleState, side: SideIndex) => {
 export function setGate(prev: BattleState, index: number): BattleState {
   const state = clone(prev)
   const side = state.sides[state.setter]
+  // every card of the deck spent (a long match): the deck comes back
+  if (!side.gates.length) side.gates = [...side.gateDeck]
   const i = Math.min(Math.max(index, 0), side.gates.length - 1)
   state.gate = side.gates.length ? side.gates.splice(i, 1)[0] : null
   state.phase = 'throw'
@@ -563,7 +575,7 @@ export function throwBakugan(prev: BattleState, side: SideIndex, index: number, 
     hands,
     state.gate ? { card: state.gate, owner: state.setter } : null,
     state.setter,
-    [LIVES - state.sides[0].lives, LIVES - state.sides[1].lives],
+    [state.sides[0].maxLives - state.sides[0].lives, state.sides[1].maxLives - state.sides[1].lives],
   )
   state.phase = 'battle'
   state.log.push(`${nameOf(state, state.setter)} vs ${nameOf(state, other(state.setter))}!`)
@@ -772,7 +784,7 @@ export const chooseAction = (state: BattleState, level: AiLevel = AI_EASY, rng: 
   chooseDuelMove(state.duel!, level, rng)
 
 /** Rough G a team member brings: its own G plus its best cards. */
-function memberValue(s: Side, i: number) {
+export function memberValue(s: Side, i: number) {
   const cards = s.decks[i]
     .map((c) => {
       const a = c.ability
@@ -808,10 +820,11 @@ function gateValue(gate: GateCard, f: Fighter, livesLost: number) {
 /** The Gate Card the setter sets (index into its gates): the one that fits its team best. */
 export function chooseGate(state: BattleState, level: AiLevel = AI_EASY, rng: () => number = Math.random) {
   const s = state.sides[state.setter]
-  const lost = LIVES - s.lives
+  const lost = s.maxLives - s.lives
+  const gates = gatesLeft(s)
   let best = 0
   let bestV = -Infinity
-  s.gates.forEach((gate, gi) => {
+  gates.forEach((gate, gi) => {
     const v = Math.max(...s.team.map((f, i) => memberValue(s, i) + gateValue(gate, f, lost))) + rng() * level.noise
     if (v > bestV) {
       bestV = v
@@ -824,7 +837,7 @@ export function chooseGate(state: BattleState, level: AiLevel = AI_EASY, rng: ()
 /** The team member a side throws: the strongest with its gate (when it is the setter's) and its cards. */
 export function chooseThrow(state: BattleState, side: SideIndex, level: AiLevel = AI_EASY, rng: () => number = Math.random) {
   const s = state.sides[side]
-  const lost = LIVES - s.lives
+  const lost = s.maxLives - s.lives
   const own = state.setter === side && state.gate
   const options = s.team.map((f, i) => ({
     i,

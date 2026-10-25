@@ -12,6 +12,7 @@ import {
   gateDelta,
   chooseGate,
   chooseThrow,
+  gatesLeft,
   LIVES,
   nextBattle,
   nullifyTargets,
@@ -26,6 +27,7 @@ import {
   throwerOf,
   type AiLevel,
   type BattleEvent,
+  type BattleResult,
   type BattleState,
   type Card,
   type Effect,
@@ -37,9 +39,10 @@ import { cardTag } from '../battle/labels'
 import { BakuganPortrait } from '../components/BakuganPortrait'
 import { BAKUGAN, battleEffect, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
-import { gateDeck, gateElementOf, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
+import { GATE_BY_ID, gateDeck, gateElementOf, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
+import { reportEventResult } from '../events/results'
 import { bakuganById, rankScore, TIERS, useActiveProfile, useProfiles, type BattleReward } from '../profile/useProfiles'
-import { useGame, type TeamMember } from '../store/useGame'
+import { useGame, type ArenaSetup, type TeamMember } from '../store/useGame'
 import {
   botCharacter,
   CHARACTER_BY_ID,
@@ -49,11 +52,12 @@ import {
   type Avatar as AvatarValue,
   type AvatarParts,
 } from '../profile/avatar'
-import { ACTION_DURATION, ArenaScene, IMPACT_AT } from '../three/ArenaScene'
+import { ACTION_DURATION, ArenaScene, IMPACT_AT, type BrawlerInfo } from '../three/ArenaScene'
 import type { BrawlerCall, BrawlerGesture } from '../three/Brawler'
 import { preloadModels } from '../three/BakuganModels'
 import { announce, crowd } from '../three/stadium'
 import { BrawlerHud, GateSlot, TurnCounter } from './BattleHud'
+import { TagArena } from './TagArena'
 
 const INTRO_MS = 2600
 /** "BATTLE n" before the Gate Card is set. */
@@ -127,11 +131,54 @@ export interface BrawlerSide {
   hsp?: number
 }
 
-/** A ranked or free-play brawl: the player against a CPU brawler. */
+/** Lives in words, for the announcer. */
+const livesLine = (n: number) => `${['No', 'One', 'Two', 'Three', 'Four', 'Five'][n] ?? n} ${n === 1 ? 'life' : 'lives'}`
+
+/** "SPRING CUP · SEMI-FINAL" as the announcer says it: "Spring Cup, Semi-Final". */
+const spoken = (title: string) =>
+  title
+    .split('·')
+    .map((part) =>
+      part
+        .trim()
+        .toLowerCase()
+        .replace(/(^|[\s-])\p{L}/gu, (c) => c.toUpperCase()),
+    )
+    .join(', ')
+
+/** The arena: a 1v1 match, or a 2v2 tag battle when the setup has one. */
 export function ArenaScreen() {
   const setup = useGame((s) => s.arena)!
+  const [again, setAgain] = useState(0)
+  if (setup.tag) return <TagArena key={again} setup={setup} tag={setup.tag} onAgain={() => setAgain((n) => n + 1)} />
+  return <MatchArena setup={setup} />
+}
+
+/** A ranked or free-play brawl: the player against a CPU brawler (an event match plays by the event's rules). */
+function MatchArena({ setup }: { setup: ArenaSetup }) {
   const go = useGame((s) => s.go)
-  const teams = useMemo(() => [toTeam(setup.left), toTeam(setup.right)] as const, [setup])
+  const event = setup.event
+  const boost = Math.max(0, event?.cpuBoost ?? 0)
+  const teams = useMemo(
+    () =>
+      [
+        toTeam(setup.left),
+        // a boss: every Bakugan on the CPU side gets the event's extra G-Power
+        toTeam(setup.right).map((e) => (boost ? { ...e, bonusG: (e.bonusG ?? 0) + boost } : e)),
+      ] as const,
+    [setup, boost],
+  )
+  // an event's Gate Cards replace both sides' own decks
+  const gates = useMemo((): [GateCard[], GateCard[]] | undefined => {
+    const list = (event?.gates ?? []).map((id) => GATE_BY_ID[id]).filter((g): g is GateCard => !!g)
+    return list.length ? [list, [...list]] : undefined
+  }, [event])
+  const lives = useMemo((): [number, number] | undefined => {
+    const l = event?.lives
+    return l ? [Math.max(1, Math.round(l[0])), Math.max(1, Math.round(l[1]))] : undefined
+  }, [event])
+  // the event hears how its match ended, once
+  const reported = useRef(false)
   const profile = useActiveProfile()
 
   const brawlers = useMemo((): [BrawlerSide, BrawlerSide] => {
@@ -189,10 +236,62 @@ export function ArenaScreen() {
     ]
   }, [profile, setup, teams])
 
-  return <Brawl teams={teams} brawlers={brawlers} ranked={setup.ranked} onLeave={() => go('compare')} />
+  if (!event) return <Brawl teams={teams} brawlers={brawlers} ranked={setup.ranked} onLeave={() => go('compare')} />
+  return (
+    <Brawl
+      teams={teams}
+      brawlers={brawlers}
+      ranked={setup.ranked}
+      gates={gates}
+      lives={lives}
+      boost={boost}
+      title={event.title}
+      exit={{ label: 'BACK TO EVENTS', onClick: () => go('events') }}
+      onLeave={() => go('events')}
+      onOver={(s) => {
+        if (reported.current) return
+        reported.current = true
+        reportEventResult({ event, won: s.winner === 0, livesLeft: s.sides[0].lives, battles: s.results.length })
+      }}
+    />
+  )
 }
 
 type Cue = { gesture: { kind: BrawlerGesture; key: number }; call: BrawlerCall | null }
+
+/** A battle a host hands to the brawl (a round of a tag match). */
+export interface HostBattle {
+  /** A new key starts this battle. */
+  key: number
+  /** The battle, in phase 'set'. */
+  state: BattleState
+  /** The banner as it starts, e.g. "ROUND 2". */
+  title: string
+  sub: string
+}
+
+/** Lets a host follow the brawl: the stadium announcer and the cards the player has activated. */
+export interface HostTools {
+  call: (line: string) => void
+  /** Ability cards the player has activated so far (Season Pass challenges). */
+  abilities: () => number
+}
+
+/**
+ * A match run from outside (a tag match): the brawl plays the battles it is given, one at a time, and hands each
+ * result back instead of going on to the next battle by itself. `teams` and `brawlers` are the current battle's.
+ */
+export interface BrawlHost {
+  battle: HostBattle
+  /** The opening: what shows under BAKUGAN, BRAWL! and the announcer's lines. */
+  intro: { sub: string; lines: string[] }
+  /** The brawl is up: the host's way to the announcer. */
+  connect: (tools: HostTools) => void
+  /** A battle is decided (its state after resolveBattle). */
+  onBattle: (end: BattleState, result: BattleResult) => void
+  /** Under the turn counter: "ROUND". */
+  counter?: string
+}
 
 /** A battle's end on screen: the counters, then the winner, then its final blow. */
 interface Clash {
@@ -205,6 +304,8 @@ interface Clash {
   livesLeft: number
   /** 0 counting up · 1 winner shown · 2 the blow, a life lost */
   step: number
+  /** A battle of a hosted (tag) match: a brawler out of lives is out, not the match lost. */
+  hosted?: boolean
 }
 
 interface BrawlProps {
@@ -220,14 +321,56 @@ interface BrawlProps {
   onOver?: (state: BattleState) => void
   /** Shown above the turn counter (the live badge). */
   badge?: ReactNode
+  /** Event rules: the Gate Cards each side sets, instead of their own decks. */
+  gates?: [GateCard[], GateCard[]]
+  /** Event rules: lives per side (LIVES each when left out). */
+  lives?: [number, number]
+  /** A boss's extra G-Power on side 1's Bakugan (already in its team's G), shown in its HUD. */
+  boost?: number
+  /** The event's name, shown over the turn counter. */
+  title?: string
+  /** After the match, one way out (e.g. BACK TO EVENTS) instead of REMATCH and CHANGE TEAMS. */
+  exit?: { label: string; onClick: () => void }
+  /** A match run from outside (a tag match), see BrawlHost. */
+  host?: BrawlHost
+  /** Drawn over the arena (a host's own HUD, panels and result). */
+  overlay?: ReactNode
+  /** Where a brawler's call-out bubble sits, from the screen's edge (e.g. clear of a panel). */
+  callInset?: [string, string]
+  /** A tag battle: each brawler's teammate, standing next to them in the scene. */
+  partners?: [BrawlerInfo | null, BrawlerInfo | null]
 }
 
 /** The match itself: lives, battles on a Gate Card, turns and each battle's end. */
-export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, onOver, badge }: BrawlProps) {
+export function Brawl({
+  teams,
+  brawlers,
+  live = false,
+  ranked = false,
+  onLeave,
+  onOver,
+  badge,
+  gates,
+  lives,
+  boost = 0,
+  title,
+  exit,
+  host,
+  overlay,
+  callInset,
+  partners,
+}: BrawlProps) {
   useEffect(() => teams.flat().forEach((e) => preloadModels(e.bakugan)), [teams])
 
   // a coin toss decides who sets the first Gate Card
-  const fresh = () => startBattle(teams[0], teams[1], [gateDeck(teams[0]), gateDeck(teams[1])], Math.random() < 0.5 ? 0 : 1)
+  const fresh = () =>
+    startBattle(
+      teams[0],
+      teams[1],
+      gates ? [[...gates[0]], [...gates[1]]] : [gateDeck(teams[0]), gateDeck(teams[1])],
+      Math.random() < 0.5 ? 0 : 1,
+      lives,
+    )
   const [battle, setBattle] = useState<BattleState>(fresh)
   // What the HUD shows; lags `battle` until each card or strike lands.
   const [shown, setShown] = useState<BattleState>(battle)
@@ -242,6 +385,8 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
   const [reward, setReward] = useState<BattleReward | null>(null)
   const [rematch, setRematch] = useState<'idle' | 'asking' | 'declined'>('idle')
   const [toast, setToast] = useState<{ text: string; key: number } | null>(null)
+  // a hosted match: who is on the field changes with each battle, together with `shown`
+  const [view, setView] = useState({ teams, brawlers })
   const [cues, setCues] = useState<[Cue, Cue]>([
     { gesture: { kind: null, key: 0 }, call: null },
     { gesture: { kind: null, key: 0 }, call: null },
@@ -329,7 +474,8 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
   // ------------------------------------------------------------ match flow
 
   function begin(delay: number) {
-    const s = fresh()
+    const s = host ? host.battle.state : fresh()
+    setView({ teams, brawlers })
     setBattle(s)
     setShown(s)
     setEvent(null)
@@ -343,26 +489,39 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
     playerCards.current = 0
     hinted.current = false
     playSfx('brawl')
-    say('BAKUGAN, BRAWL!', `${nameOf(0)} vs ${nameOf(1)}`)
+    say('BAKUGAN, BRAWL!', host ? host.intro.sub : `${nameOf(0)} vs ${nameOf(1)}`)
     cue(0, 'point', 'BAKUGAN, BRAWL!', undefined, 'Bakugan, brawl!')
     later(900, () => cue(1, 'point', 'BAKUGAN, BRAWL!', undefined, 'Bakugan, brawl!'))
-    call(`Welcome to the Bakugan Arena! ${nameOf(0)} versus ${nameOf(1)}! Three lives each!`)
-    call(`${nameOf(s.setter)} wins the coin toss and sets the first Gate Card!`)
     crowd('cheer')
+    if (host) {
+      host.connect({ call, abilities: () => playerCards.current })
+      host.intro.lines.forEach(call)
+      started.current = host.battle.key
+      const b = host.battle
+      return later(delay, () => battleStart(s, b))
+    }
+    const [l0, l1] = [s.sides[0].maxLives, s.sides[1].maxLives]
+    const livesCall = l0 === l1 ? `${livesLine(l0)} each!` : `${nameOf(0)} has ${livesLine(l0)}, ${nameOf(1)} ${livesLine(l1)}!`
+    call(`Welcome to the ${title ? spoken(title) : 'Bakugan Arena'}! ${nameOf(0)} versus ${nameOf(1)}! ${livesCall}`)
+    if (boost) call(`Watch out! Every Bakugan of ${nameOf(1)} brawls with ${boost} extra G!`)
+    call(`${nameOf(s.setter)} wins the coin toss and sets the first Gate Card!`)
     later(delay, () => battleStart(s))
   }
 
-  /** A new battle: the setter sets a Gate Card face-down. */
-  function battleStart(s: BattleState) {
+  /** A new battle: the setter sets a Gate Card face-down. A host's battle brings its own banner. */
+  function battleStart(s: BattleState, hosted?: HostBattle) {
+    setView({ teams, brawlers })
     setBattle(s)
     setShown(s)
     setClash(null)
     setEvent(null)
     setShields([false, false])
-    say(`BATTLE ${s.battle}`, `${nameOf(s.setter)} sets the Gate Card`)
+    setBusy(true)
+    if (hosted) say(hosted.title, hosted.sub)
+    else say(`BATTLE ${s.battle}`, `${nameOf(s.setter)} sets the Gate Card`)
     if (s.battle > 1) crowd('chant')
     later(BATTLE_MS, () => {
-      if (human(s.setter) && s.sides[0].gates.length > 1) {
+      if (human(s.setter) && gatesLeft(s.sides[0]).length > 1) {
         setPicking('gate')
         setBusy(false)
       } else gateSet(s, human(s.setter) ? 0 : chooseGate(s, levelOf(s.setter)))
@@ -554,6 +713,7 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
       finisher: result.finisher,
       livesLeft,
       step: 0,
+      hosted: !!host,
     })
     if (!result.finisher) call(`Both Bakugan have attacked! ${result.power[0]} G against ${result.power[1]} G!`)
     later(COUNT_MS, () => {
@@ -573,7 +733,7 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
         const tie = diff === 0 && !result.finisher
         const line = `${d.fighters[winner].name} wins the battle${tie ? ' on the tie: it was thrown first' : ''}! ${nameOf(loser)} loses a life!`
         call(diff <= CLOSE && !result.finisher ? `What a close call! ${line}` : line)
-        if (livesLeft === 1) {
+        if (livesLeft === 1 && !host) {
           call(`Match point for ${nameOf(winner)}! ${nameOf(loser)} has one life left!`)
           crowd('chant', winner)
         } else crowd('roar', winner)
@@ -584,6 +744,7 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
 
   function afterBattle(s: BattleState) {
     setClash(null)
+    if (host) return host.onBattle(s, s.results[s.results.length - 1])
     if (s.phase === 'over') finish(s)
     else battleStart(nextBattle(s))
   }
@@ -613,7 +774,7 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
           team: s.sides[0].team.map((f) => f.bakugan.id),
           kos,
           abilities: playerCards.current,
-          flawless: s.sides[0].lives === LIVES,
+          flawless: s.sides[0].lives === s.sides[0].maxLives,
         }),
       )
     }
@@ -637,7 +798,11 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
   }
 
   // the match starts once the screen is up, and everything stops when it closes
-  const flow = useRef({ start: () => {}, stop: () => {} })
+  const flow = useRef<{ start: () => void; stop: () => void; battle: (b: HostBattle) => void }>({
+    start: () => {},
+    stop: () => {},
+    battle: () => {},
+  })
   useEffect(() => {
     flow.current = {
       start: () => begin(INTRO_MS),
@@ -645,6 +810,7 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
         stopAll()
         clearTimeout(toastTimer.current)
       },
+      battle: (b) => battleStart(b.state, b),
     }
   })
   useEffect(() => {
@@ -654,31 +820,44 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
       flow.current.stop()
     }
   }, [])
+  // a host's next battle (after the flow above has this render's teams and brawlers)
+  const started = useRef<number | null>(null)
+  const hostBattle = host?.battle
+  useEffect(() => {
+    if (!hostBattle || started.current === null || started.current === hostBattle.key) return
+    started.current = hostBattle.key
+    flow.current.battle(hostBattle)
+  }, [hostBattle])
 
   // ------------------------------------------------------------ view
 
+  // who is on the field: in a hosted match the battle's own brawlers (they change with `shown`), else the props
+  const cast = host ? view : { teams, brawlers }
+  const shownName = (side: SideIndex) => cast.brawlers[side].name
+  const onField = cast.brawlers[0].ai === null && !live
   const duel = battle.duel
-  const myTurn = controls && !busy && battle.phase === 'battle' && duel?.turn === 0 && battle.winner === null
+  const myTurn = onField && !busy && battle.phase === 'battle' && duel?.turn === 0 && battle.winner === null
   // each brawler's colour: their lead Bakugan's attribute
-  const colors = [0, 1].map((i) => ELEMENT_BY_ID[teams[i][0].bakugan.element].color) as [string, string]
+  const colors = [0, 1].map((i) => ELEMENT_BY_ID[cast.teams[i][0].bakugan.element].color) as [string, string]
   const fieldGate = shown.duel?.gate
-  const over = battle.winner !== null && battle.phase === 'over' && !clash
+  const over = !host && battle.winner !== null && battle.phase === 'over' && !clash
   const gateOwner = shown.duel?.gate?.owner ?? shown.setter
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Canvas shadows camera={{ position: [0, 11, 46], fov: 50 }} dpr={[1, 2]}>
         <ArenaScene
-          fighters={[teams[0][shown.sides[0].active], teams[1][shown.sides[1].active]]}
+          fighters={[cast.teams[0][shown.sides[0].active], cast.teams[1][shown.sides[1].active]]}
           // a face-down Gate Card shows no attribute; it lights up once opened (and goes dark again if nullified)
           gate={fieldGate?.open && !fieldGate.nullified ? gateElementOf(fieldGate.card) : null}
           event={event}
           shields={shields}
           defeated={defeated}
           throwKey={throwKey}
+          partners={partners}
           brawlers={[
-            { parts: brawlers[0].parts, model: brawlers[0].model, gesture: cues[0].gesture },
-            { parts: brawlers[1].parts, model: brawlers[1].model, gesture: cues[1].gesture },
+            { parts: cast.brawlers[0].parts, model: cast.brawlers[0].model, gesture: cues[0].gesture },
+            { parts: cast.brawlers[1].parts, model: cast.brawlers[1].model, gesture: cues[1].gesture },
           ]}
         />
       </Canvas>
@@ -689,9 +868,10 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
           <div
             key={c.call.key}
             className={`pointer-events-none absolute bottom-[31%] z-10 ${i === 0 ? 'left-[4%]' : 'right-[4%]'}`}
+            style={callInset ? (i === 0 ? { left: callInset[0] } : { right: callInset[1] }) : undefined}
           >
             <div className="brawler-call" style={{ borderColor: colors[i] }}>
-              <span className="brawler-call-name text-white/60">{brawlers[i].name}</span>
+              <span className="brawler-call-name text-white/60">{cast.brawlers[i].name}</span>
               <span className="brawler-call-title">{c.call.title}</span>
               {c.call.sub && <span className="brawler-call-sub">{c.call.sub}</span>}
             </div>
@@ -702,14 +882,19 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
       {/* the HUD: each brawler's lives, face, Bakugan card with its G-Power and HSP; the turn counter and Gate Card */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-black/75 via-black/40 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-4 px-4 pt-3">
-        <BrawlerHud state={shown} side={0} brawler={brawlers[0]} teams={teams} color={colors[0]} />
+        <BrawlerHud state={shown} side={0} brawler={cast.brawlers[0]} teams={cast.teams} color={colors[0]} />
         <div className="flex min-w-48 flex-col items-center text-center">
           {badge}
-          <TurnCounter turn={shown.turn + (shown.phase === 'battle' ? 1 : 0)} battle={shown.battle} />
-          <GateSlot state={shown} ownerName={nameOf(gateOwner)} mine={controls && gateOwner === 0} />
-          <PhaseLabel state={battle} busy={busy} controls={controls} picking={picking} names={[nameOf(0), nameOf(1)]} />
+          {title && (
+            <p className="font-display mb-2 max-w-72 rounded-full border border-[#ffc94a]/70 bg-black/70 px-3 py-1 text-[10px] font-bold tracking-[0.3em] text-[#ffc94a]">
+              ★ {title.toUpperCase()}
+            </p>
+          )}
+          <TurnCounter turn={shown.turn + (shown.phase === 'battle' ? 1 : 0)} battle={shown.battle} label={host?.counter} />
+          <GateSlot state={shown} ownerName={shownName(gateOwner)} mine={onField && gateOwner === 0} />
+          <PhaseLabel state={battle} busy={busy} controls={onField} picking={picking} names={[shownName(0), shownName(1)]} />
         </div>
-        <BrawlerHud state={shown} side={1} brawler={brawlers[1]} teams={teams} color={colors[1]} />
+        <BrawlerHud state={shown} side={1} brawler={cast.brawlers[1]} teams={cast.teams} color={colors[1]} boost={boost} />
       </div>
 
       {/* leaving a live match being watched (a brawler cannot walk out of their own match) */}
@@ -722,11 +907,11 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
         </button>
       )}
 
-      {picking === 'gate' && !busy && <GatePicker gates={battle.sides[0].gates} onPick={(i) => gateSet(battle, i)} />}
-      {picking === 'throw' && !busy && <ThrowPicker state={battle} teams={teams} onPick={(i) => pickThrow(battle, i)} />}
+      {picking === 'gate' && !busy && <GatePicker gates={gatesLeft(battle.sides[0])} onPick={(i) => gateSet(battle, i)} />}
+      {picking === 'throw' && !busy && <ThrowPicker state={battle} teams={cast.teams} onPick={(i) => pickThrow(battle, i)} />}
 
       {/* the player's moves: the cards in hand, the Gate Card and ATTACK */}
-      {controls && battle.phase === 'battle' && duel && (
+      {onField && battle.phase === 'battle' && duel && (
         <MoveBar
           state={battle}
           myTurn={myTurn}
@@ -760,7 +945,7 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
       </AnimatePresence>
 
       <AnimatePresence>
-        {clash && <ClashView key={clash.key} clash={clash} colors={colors} brawlerNames={[nameOf(0), nameOf(1)]} />}
+        {clash && <ClashView key={clash.key} clash={clash} colors={colors} brawlerNames={[shownName(0), shownName(1)]} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -785,6 +970,13 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
             {reward && <RewardList reward={reward} />}
             {live ? (
               <p className="font-display mt-5 animate-pulse text-sm tracking-[0.4em] text-white/60">NEXT LIVE MATCH STARTING…</p>
+            ) : exit ? (
+              <button
+                onClick={exit.onClick}
+                className="font-display mt-5 border-2 border-white/70 px-8 py-3 tracking-[0.3em] hover:bg-white/10"
+              >
+                {exit.label}
+              </button>
             ) : (
               <>
                 {rematch === 'asking' && (
@@ -812,6 +1004,8 @@ export function Brawl({ teams, brawlers, live = false, ranked = false, onLeave, 
           </motion.div>
         )}
       </AnimatePresence>
+
+      {overlay}
 
       <AnimatePresence>
         {toast && (
@@ -1227,7 +1421,15 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
           animate={{ opacity: 1, y: 0 }}
         >
           {brawlerNames[loser].toUpperCase()} LOSES A LIFE ·{' '}
-          {clash.livesLeft === 0 ? 'DEFEATED!' : clash.livesLeft === 1 ? 'MATCH POINT!' : `${clash.livesLeft} LEFT`}
+          {clash.livesLeft === 0
+            ? clash.hosted
+              ? 'OUT OF THE MATCH!'
+              : 'DEFEATED!'
+            : clash.livesLeft === 1
+              ? clash.hosted
+                ? 'LAST LIFE!'
+                : 'MATCH POINT!'
+              : `${clash.livesLeft} LEFT`}
         </motion.p>
       )}
     </motion.div>
@@ -1257,7 +1459,7 @@ function CountUp({ value }: { value: number }) {
 }
 
 /** XP and unlocks earned in a ranked brawl. */
-function RewardList({ reward }: { reward: BattleReward }) {
+export function RewardList({ reward }: { reward: BattleReward }) {
   const lines = [
     {
       id: 'bp',

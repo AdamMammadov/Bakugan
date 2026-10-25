@@ -18,6 +18,7 @@ import { threadKey, unreadFrom, useFriendChat } from '../profile/useFriendChat'
 import {
   bakuganById,
   friendStatus,
+  rankScore,
   teamEntrants,
   tierOf,
   unlockedCards,
@@ -29,6 +30,8 @@ import { useGame, type TeamMember } from '../store/useGame'
 import { useFriendClock } from '../profile/useFriendClock'
 import { FriendButton } from './BrawlerProfile'
 import { RankBadge } from './ProfileScreen'
+import { TagFaceOff } from './TagFaceOff'
+import { tagMember } from './tagSetup'
 
 // the 3D stage pulls in three.js, so it loads with the first profile shown
 const FriendStage = lazy(() => import('../components/FriendStage'))
@@ -296,6 +299,8 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
   const now = useMinute()
   const chat = useRef<HTMLInputElement>(null)
   const [confirm, setConfirm] = useState(false)
+  // the tag battle face-off with this friend as partner
+  const [tag, setTag] = useState(false)
   const b = brawlerOf(id, profiles, now)
   if (!b) return null
   const el = ELEMENT_BY_ID[b.element]
@@ -376,11 +381,22 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
             ⚔ INVITE TO BATTLE
           </button>
           <button
-            disabled
-            title="2v2 tag battles with friends are on the way"
-            className="font-display cursor-not-allowed rounded border-2 border-dashed border-white/20 px-5 py-2 text-xs tracking-[0.3em] text-white/40"
+            disabled={!canBattle}
+            onClick={() => {
+              playSfx('select')
+              setTag(true)
+            }}
+            title={
+              status !== 'friend'
+                ? 'Become friends first'
+                : me.team.length
+                  ? `2 vs 2: you and ${b.firstName} against two CPU brawlers of your level`
+                  : 'Pick a team first'
+            }
+            className="font-display rounded border-2 px-5 py-2 text-xs tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
+            style={{ borderColor: '#ffc94a', background: '#ffc94a1f' }}
           >
-            TAG BATTLES — COMING SOON
+            ⚔⚔ TAG BATTLE
           </button>
           {status === 'friend' ? (
             confirm ? (
@@ -410,7 +426,19 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
           )}
         </div>
         {status === 'friend' && (
-          <p className="mt-2 text-xs text-white/35">Invite to battle: a friendly brawl, no rating at stake.</p>
+          <p className="mt-2 text-xs text-white/35">
+            Invite to battle: a friendly brawl, no rating at stake. Tag battle: you and {b.firstName} against two CPU brawlers of
+            your level, 2 vs 2 (friendly too).
+          </p>
+        )}
+        {tag && canBattle && (
+          <TagFaceOff
+            me={{ name: `${me.firstName} ${me.lastName}`, avatar: me.avatar, color: ELEMENT_BY_ID[me.element].color }}
+            team={teamEntrants(me).map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards, skin: e.skin }))}
+            partner={tagMember(id, profiles, now) ?? undefined}
+            score={rankScore(me)}
+            onClose={() => setTag(false)}
+          />
         )}
 
         <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2">

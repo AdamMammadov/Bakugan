@@ -19,8 +19,9 @@ import {
   useProfiles,
   type OwnedBakugan,
 } from '../profile/useProfiles'
-import { opponentCharacter } from '../profile/avatar'
+import { botCharacter, opponentCharacter } from '../profile/avatar'
 import { useGame } from '../store/useGame'
+import { TagFaceOff } from './TagFaceOff'
 
 /** Fills a team up to `size` with Bakugan not already in it. */
 function fillTeam(start: Entrant[], size = TEAM_SIZE): Entrant[] {
@@ -74,6 +75,8 @@ export function CompareScreen() {
   const opponent = (team: Entrant[]) => matchedOpponent(team, Math.random, aiForTier(tier).edge)
   // the system always picks the opponent, on the player's level; nobody chooses their rival's forms
   const [right, setRight] = useState<Entrant[]>(() => opponent(left))
+  // the tag battle face-off (a random CPU partner)
+  const [tag, setTag] = useState(false)
   const avoid = profile?.avatar.kind === 'preset' ? profile.avatar.id : undefined
   // picked once per opponent team, not on every render
   const bot = useMemo(() => opponentCharacter(right[0].bakugan, avoid), [right, avoid])
@@ -90,10 +93,11 @@ export function CompareScreen() {
     setLeft(profile ? fillOwn(own, profile.collection, size) : fillTeam(free, size))
   }
 
+  const pack = (team: Entrant[]) =>
+    team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards, bonusG: e.bonusG, skin: e.skin }))
+
   function brawl() {
     playSfx('brawl')
-    const pack = (team: Entrant[]) =>
-      team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards, bonusG: e.bonusG, skin: e.skin }))
     if (profile) setTeam(own.map((e) => e.bakugan.id))
     enterArena({
       left: pack(left),
@@ -214,7 +218,41 @@ export function CompareScreen() {
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
           WATCH LIVE
         </motion.button>
+        {/* 2 vs 2 with a random CPU partner of the player's rank */}
+        <motion.button
+          onClick={() => {
+            playSfx('select')
+            if (profile) setTeam(own.map((e) => e.bakugan.id))
+            setTag(true)
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.96 }}
+          title="2 vs 2: you and a random CPU partner of your rank against two CPU brawlers"
+          className="font-display skew-x-[-12deg] border-2 border-[#ffc94a]/80 bg-black/40 px-8 py-4 text-lg font-black tracking-[0.3em]"
+        >
+          ⚔⚔ RANDOM TAG BATTLE
+        </motion.button>
       </div>
+      {tag && (
+        <TagFaceOff
+          me={
+            profile
+              ? {
+                  name: `${profile.firstName} ${profile.lastName}`,
+                  avatar: profile.avatar,
+                  color: ELEMENT_BY_ID[profile.element].color,
+                }
+              : {
+                  name: 'You',
+                  avatar: { kind: 'preset', id: botCharacter(left[0].bakugan.element).id },
+                  color: ELEMENT_BY_ID[left[0].bakugan.element].color,
+                }
+          }
+          team={pack(left)}
+          score={profile ? rankScore(profile) : 0}
+          onClose={() => setTag(false)}
+        />
+      )}
     </motion.div>
   )
 }

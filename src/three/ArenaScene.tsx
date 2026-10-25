@@ -88,6 +88,8 @@ interface Props {
   brawlers: [BrawlerInfo, BrawlerInfo]
   /** Changes when a new round starts: both brawlers throw their Bakugan onto the field again. */
   throwKey?: number
+  /** A tag battle: each brawler's teammate, standing next to them (null: none). */
+  partners?: [BrawlerInfo | null, BrawlerInfo | null]
 }
 
 export interface BrawlerInfo {
@@ -95,6 +97,8 @@ export interface BrawlerInfo {
   photo?: string
   model?: string
   gesture: { kind: BrawlerGesture; key: number }
+  /** Their colour (a teammate's own; a brawler on the field takes their Bakugan's). */
+  color?: string
 }
 
 /** Bakugan up to this size (evolution growth times models.scale) fit the usual view; a bigger one makes it pull back. */
@@ -121,7 +125,13 @@ const brawlerSpot = (side: SideIndex, k: number) => {
   return { at, facing: at.clone().negate().setY(0).normalize() }
 }
 
-export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers, throwKey }: Props) {
+/** A tag battle's teammate: a little behind their mate, towards the middle (in the gap between the Bakugan). */
+const partnerSpot = (side: SideIndex, k: number) => {
+  const at = new THREE.Vector3((side === 0 ? -1 : 1) * (BRAWLER_X - 8.5) * k, 0, -(BRAWLER_Z + 7) * k)
+  return { at, facing: at.clone().negate().setY(0).normalize() }
+}
+
+export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers, throwKey, partners }: Props) {
   const gateElement = gate ? ELEMENT_BY_ID[gate] : null
   const pull = pullFor(fighters)
   // the stadium, the card and the brawlers grow with the view when a giant is on the field
@@ -144,7 +154,9 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
   const colors = useMemo<[string, string]>(() => [ELEMENT_BY_ID[el0].color, ELEMENT_BY_ID[el1].color], [el0, el1])
   const names = useMemo<[string, string]>(() => [name0, name1], [name0, name1])
   const [model0, model1] = [brawlers[0].model, brawlers[1].model]
-  const onField = useMemo(() => [model0 ?? '', model1 ?? ''], [model0, model1])
+  const [mate0, mate1] = [partners?.[0]?.model, partners?.[1]?.model]
+  // brawlers on the field are not in the crowd too
+  const onField = useMemo(() => [model0 ?? '', model1 ?? '', mate0 ?? '', mate1 ?? ''], [model0, model1, mate0, mate1])
   const spots = useMemo(() => [brawlerSpot(0, k), brawlerSpot(1, k)], [k])
   const focusSpots = useMemo(
     () =>
@@ -298,6 +310,30 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
           <BlobShadow size={0.9} />
         </group>
       ))}
+
+      {partners?.map((b, i) => {
+        if (!b) return null
+        const spot = partnerSpot(i as SideIndex, k)
+        return (
+          <group
+            key={`mate-${i}`}
+            position={spot.at}
+            rotation={[0, Math.atan2(spot.facing.x, spot.facing.z), 0]}
+            scale={BRAWLER_SCALE * k}
+          >
+            <Suspense fallback={null}>
+              <Brawler
+                parts={b.parts}
+                photo={b.photo}
+                model={b.model}
+                gesture={b.gesture}
+                color={b.color ?? ELEMENT_BY_ID[fighters[i].bakugan.element].color}
+              />
+            </Suspense>
+            <BlobShadow size={0.9} />
+          </group>
+        )
+      })}
 
       {throwing &&
         fighters.map((e, i) => (
