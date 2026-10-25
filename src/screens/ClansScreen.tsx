@@ -8,7 +8,7 @@ import { PageNav } from '../components/PageNav'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { isBot } from '../profile/bots'
 import { useMinute } from '../profile/botProgress'
-import { brawlerOf, clanMembers, TIER_COLORS, type BrawlerView } from '../profile/brawlers'
+import { brawlerOf, clanMembers, rankColor, type BrawlerView } from '../profile/brawlers'
 import { clanOf, freeBots, MAX_MEMBERS, useClanLife, useClans, type Clan } from '../profile/useClans'
 import { friendStatus, tierOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
 import { BrawlerProfileModal, FriendsList } from './BrawlerProfile'
@@ -167,7 +167,7 @@ function MemberRow({
         </p>
         <p className="truncate text-xs text-white/50">
           {clan.leaderId === m.id ? <span className="text-amber-200">★ Leader</span> : 'Member'} ·{' '}
-          <span style={{ color: TIER_COLORS[tier.index] }}>{tier.name}</span> · {m.rating} BR · {m.wins} wins
+          <span style={{ color: rankColor(tier) }}>{tier.rank}</span> · {m.rating} BR · {m.wins} wins
         </p>
       </div>
       {onKick && (
@@ -605,7 +605,7 @@ function JoinRequests({
                 <div className="min-w-0 flex-1" title={`Asked ${stamp(at)}`}>
                   <p className="truncate text-sm font-semibold">{b.name}</p>
                   <p className="truncate text-[11px] text-white/45">
-                    <span style={{ color: TIER_COLORS[tier.index] }}>{tier.name}</span> · {b.rating} BR
+                    <span style={{ color: rankColor(tier) }}>{tier.rank}</span> · {b.rating} BR
                   </p>
                 </div>
                 <button

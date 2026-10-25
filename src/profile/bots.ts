@@ -45,11 +45,35 @@ const BIOS = [
   'Season Pass grinder. Daily challenges done before breakfast.',
 ]
 
+/**
+ * Starting rating by place (bot index → BR), drawn between these points: one Legendary, a few Masters, and most
+ * bots in the low and middle tiers (see TIERS in useProfiles.ts).
+ */
+const START_RATING: [number, number][] = [
+  [0, 4120],
+  [1, 3560],
+  [4, 2980],
+  [11, 2120],
+  [22, 1340],
+  [35, 590],
+  [47, 40],
+]
+
+function startRating(i: number) {
+  const k = START_RATING.findIndex((_, j) => j + 1 >= START_RATING.length || i < START_RATING[j + 1][0])
+  const [a, ra] = START_RATING[k]
+  const [b, rb] = START_RATING[k + 1] ?? START_RATING[k]
+  const f = b > a ? (i - a) / (b - a) : 0
+  // a little seeded wobble so neighbours are not evenly spaced
+  return Math.max(0, Math.round(ra + (rb - ra) * f + ((i * 37) % 11) * 4 - 20))
+}
+
 /** Where each bot stood when they started brawling on their own (see botProgress.ts for since then). */
 export const BOTS: BotBrawler[] = FIRST.map((first, i) => {
   const c = CHARACTERS[i % CHARACTERS.length]
-  const rating = Math.round(4200 * Math.pow(1 - i / FIRST.length, 1.6))
-  const wins = Math.round(rating / 18 + (i % 4) * 3)
+  const rating = startRating(i)
+  // climbing takes many brawls under the ranked rules; lower bots win a smaller share
+  const wins = Math.round(rating / 8 + 6 + (i % 4) * 4)
   return {
     id: `bot-${i}`,
     name: `${first} ${LAST[(i * 7) % LAST.length]}`,
@@ -58,7 +82,7 @@ export const BOTS: BotBrawler[] = FIRST.map((first, i) => {
     rating,
     xp: wins * 65 + (i % 5) * 400,
     wins,
-    losses: Math.round(wins * (0.45 + (i % 3) * 0.15)),
+    losses: Math.round(wins * (0.6 + (0.45 * i) / FIRST.length + (i % 3) * 0.08)),
     kos: Math.round(wins * (1.4 + (i % 4) * 0.2)),
     clan: CLAN_CYCLE[i % CLAN_CYCLE.length],
     bio: BIOS[(i * 5) % BIOS.length],

@@ -31,7 +31,8 @@ import {
  * - Battles pay Battle Points (BP). BP buy more Bakugan in the shop: Bakugan of your own
  *   attribute are cheaper than those of other attributes. Very high player XP also unlocks them.
  * - Each Bakugan earns its own XP in battle. Evolving and unlocking ability cards take a lot of it.
- * - Brawler Rating (BR) goes up with wins and down with losses; the rank comes from BR and total XP.
+ * - Brawler Rating (BR) goes up with ranked wins and down with losses (see RATING); the rank comes mostly from BR,
+ *   with a small, capped share from total XP.
  */
 
 /** Bakugan XP needed for each next form (index = current form). E.g. Hydranoid → Dual 6.5k → Alpha 15k. */
@@ -42,7 +43,6 @@ const CARD_XP = 1500
 
 export const XP = { winMin: 60, winMax: 70, lossMin: 15, lossMax: 20, ko: 8 }
 export const BP = { win: 100, loss: 25, streakBonus: 10, streakCap: 5 }
-export const RATING = { win: 25, loss: 15 }
 
 export const PRICES = {
   /** BP for a Bakugan of the player's own attribute. */
@@ -54,14 +54,74 @@ export const PRICES = {
   otherElementXp: 30000,
 }
 
+/** The six major tiers (index 0–5 sets CPU strength and matchmaking); each has divisions III → II → I. */
 export const TIERS = [
   { name: 'Rookie', min: 0 },
-  { name: 'Brawler', min: 300 },
-  { name: 'Battle Brawler', min: 800 },
-  { name: 'Ace Brawler', min: 1500 },
-  { name: 'Master Brawler', min: 2500 },
-  { name: 'Legendary Brawler', min: 4000 },
+  { name: 'Brawler', min: 600 },
+  { name: 'Battle Brawler', min: 1350 },
+  { name: 'Ace Brawler', min: 2100 },
+  { name: 'Master Brawler', min: 3000 },
+  { name: 'Legendary Brawler', min: 4050 },
 ]
+
+/** Score each division of a major tier takes: the higher the tier, the wider. */
+const DIVISION_SIZE = [200, 250, 250, 300, 350, 400]
+
+export type Division = 'III' | 'II' | 'I'
+
+export interface Rank {
+  /** E.g. "Battle Brawler II"; the top rank has no division. */
+  name: string
+  /** Major tier index (0–5); the top rank counts as Legendary (5). */
+  tier: number
+  division: Division | null
+  min: number
+}
+
+/** The rank above Legendary Brawler I that only very few reach. */
+export const TOP_RANK = { name: 'Legend of Vestroia', min: 5300 }
+
+/** Every rank, lowest first: 6 tiers × 3 divisions, then the top rank. */
+export const RANKS: Rank[] = [
+  ...TIERS.flatMap((t, tier) =>
+    (['III', 'II', 'I'] as const).map((division, k) => ({
+      name: `${t.name} ${division}`,
+      tier,
+      division,
+      min: t.min + k * DIVISION_SIZE[tier],
+    })),
+  ),
+  { name: TOP_RANK.name, tier: TIERS.length - 1, division: null, min: TOP_RANK.min },
+]
+
+/**
+ * Ranked rating, Elo-like. `swing` holds what a win gains and a loss costs against an equal opponent at the start
+ * of each major tier, then at the top rank and 1,500 past it (in between it slides): higher ranks gain less and
+ * lose more. A stronger opponent makes a win worth more and a loss cost less (and the other way round), up to
+ * `maxGap` of score apart on an Elo scale of `scale`. Win streaks of 3+ add 1 per win, up to `streakCap`.
+ * `win` and `loss` are the Rookie values, for rules texts.
+ */
+export const RATING = {
+  win: 24,
+  loss: 8,
+  swing: [
+    [24, 8],
+    [22, 11],
+    [20, 14],
+    [18, 16.5],
+    [16, 18.5],
+    [15, 20],
+    [13, 23],
+    [8, 28],
+  ],
+  scale: 400,
+  maxGap: 300,
+  streakCap: 5,
+}
+const SWING_AT = [...TIERS.map((t) => t.min), TOP_RANK.min, TOP_RANK.min + 1500]
+
+/** Rank score from experience: 1 point per `per` total XP, at most `max`, so playing alone cannot carry a rank. */
+export const RANK_XP = { per: 200, max: 200 }
 
 export interface OwnedBakugan {
   id: string
@@ -153,6 +213,8 @@ export interface BattleReport {
   abilities?: number
   /** Won without losing a Bakugan. */
   flawless?: boolean
+  /** Rank score of the opponent (tag battles: the two opponents' average); left out = on the player's level. */
+  foe?: number
 }
 
 export interface BattleReward {
@@ -163,7 +225,7 @@ export interface BattleReward {
   newCards: Record<string, number>
   /** Bakugan unlocked by reaching a total-XP milestone. */
   unlocked: string[]
-  /** New rank name when the player moved up a tier. */
+  /** New rank name (with its division, e.g. "Brawler II") when the player moved up a rank. */
   rankUp: string | null
   passXp: number
   passLevelUp: number | null
@@ -253,13 +315,58 @@ export function priceOf(p: Profile, bakugan: Bakugan) {
   return { bp: own ? PRICES.ownElement : PRICES.otherElement, xp: own ? PRICES.ownElementXp : PRICES.otherElementXp }
 }
 
-/** Score the rank and leaderboard use: wins (through BR) and experience both count. */
-export const rankScore = (p: Pick<Profile, 'rating' | 'xp'>) => p.rating + Math.floor(p.xp / 20)
+/** Score the rank and leaderboard use: mostly ranked wins (through BR), plus a little, capped, for experience. */
+export const rankScore = (p: Pick<Profile, 'rating' | 'xp'>) =>
+  Math.max(0, p.rating) + Math.min(RANK_XP.max, Math.floor(Math.max(0, p.xp) / RANK_XP.per))
 
+/**
+ * The rank at a score. `index`, `name` and `next` are the major tier (index 0–5, for CPU strength and matchmaking);
+ * `rank`, `division`, `step` and `nextRank` are the full rank with its division.
+ */
 export function tierOf(score: number) {
-  let i = 0
-  while (i + 1 < TIERS.length && score >= TIERS[i + 1].min) i++
-  return { index: i, name: TIERS[i].name, next: TIERS[i + 1] ?? null }
+  let r = 0
+  while (r + 1 < RANKS.length && score >= RANKS[r + 1].min) r++
+  const rank = RANKS[r]
+  const i = rank.tier
+  return {
+    index: i,
+    name: TIERS[i].name,
+    next: TIERS[i + 1] ?? null,
+    /** E.g. "Battle Brawler II". */
+    rank: rank.name,
+    division: rank.division,
+    /** Place on the whole ladder (index into RANKS): 0 = Rookie III. */
+    step: r,
+    /** Score this rank starts at. */
+    min: rank.min,
+    /** The next rank up, null at the top. */
+    nextRank: RANKS[r + 1] ?? null,
+    /** The top rank (above Legendary Brawler I). */
+    top: r === RANKS.length - 1,
+  }
+}
+
+/** What a ranked win gains and a loss costs against an equal opponent at a rank score. */
+export function ratingSwing(score: number) {
+  const s = Math.max(0, score)
+  const k = SWING_AT.findIndex((_, j) => j + 1 >= SWING_AT.length || s < SWING_AT[j + 1])
+  const [w0, l0] = RATING.swing[k]
+  const [w1, l1] = RATING.swing[k + 1] ?? RATING.swing[k]
+  const f = k + 1 < SWING_AT.length ? Math.min(1, (s - SWING_AT[k]) / (SWING_AT[k + 1] - SWING_AT[k])) : 0
+  return { win: w0 + (w1 - w0) * f, loss: l0 + (l1 - l0) * f }
+}
+
+/**
+ * Rating change of a ranked result at rank score `score` against an opponent of score `foe` (same level when left
+ * out); `streak` counts the wins in a row with this one. Positive for a win, negative for a loss.
+ */
+export function ratingChange(score: number, won: boolean, foe = score, streak = 0) {
+  const { win, loss } = ratingSwing(score)
+  const gap = Math.max(-RATING.maxGap, Math.min(RATING.maxGap, foe - score))
+  // the chance an Elo player of `score` had to beat one of `foe`
+  const expected = 1 / (1 + 10 ** (gap / RATING.scale))
+  if (!won) return -Math.max(1, Math.round(2 * loss * expected))
+  return Math.max(1, Math.round(2 * win * (1 - expected))) + Math.min(RATING.streakCap, Math.max(0, streak - 2))
 }
 
 export const rankOf = (p: Profile) => tierOf(rankScore(p)).name
@@ -518,12 +625,15 @@ export const useProfiles = create<ProfilesState>()(
         })
         const streak = report.won ? p.stats.streak + 1 : 0
         reward.bp = report.won ? BP.win + Math.min(streak - 1, BP.streakCap) * BP.streakBonus : BP.loss
-        reward.rating = report.won ? RATING.win : -Math.min(RATING.loss, p.rating)
+        // Elo-like: the opponent's score and the player's own rank set the change; rating never goes below 0
+        const score = rankScore(p)
+        const foe = Number.isFinite(report.foe) ? report.foe! : score
+        reward.rating = Math.max(-Math.max(0, p.rating), ratingChange(score, report.won, foe, streak))
         const xp = p.xp + Object.values(reward.xp).reduce((a, b) => a + b, 0)
-        const rating = p.rating + reward.rating
-        const before = tierOf(rankScore(p))
+        const rating = Math.max(0, p.rating) + reward.rating
+        const before = tierOf(score)
         const after = tierOf(rankScore({ rating, xp }))
-        if (after.index > before.index) reward.rankUp = after.name
+        if (after.step > before.step) reward.rankUp = after.rank
         const stats = {
           battles: p.stats.battles + 1,
           wins: p.stats.wins + (report.won ? 1 : 0),

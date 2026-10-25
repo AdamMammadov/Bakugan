@@ -1,22 +1,25 @@
 import { useEffect, useState } from 'react'
 import type { BotBrawler } from './bots'
+import { rankScore, ratingChange, ratingSwing } from './useProfiles'
 
 /**
  * CPU brawlers keep brawling while nobody is looking. There is no server, so their record is worked out
  * from the clock: every bot plays a number of brawls each day (some days none), at fixed times, and wins
  * or loses each one by a seeded roll. Same bot + same time = same numbers, on every screen and after a
- * reload. A bot's win chance falls as it nears the rating its skill can hold (that ceiling creeps up with
- * time), so strong bots keep climbing, weak ones level off, and bad days cost rating.
+ * reload. Ratings move by the players' ranked rules (ratingChange, against a bot on its own level). A bot's win
+ * chance falls as it nears the rating its skill can hold (that ceiling creeps up slowly with time), so bots stay
+ * spread over the ladder, strong ones keep climbing a little, and bad days cost rating.
  */
 
 const MINUTE = 60_000
 const DAY = 86_400_000
 /** First (UTC) day the bots brawl on their own: their bots.ts numbers are where they stood at its start. */
 const START_DAY = Math.floor(Date.UTC(2026, 9, 17) / DAY)
-/** Same rules as the players: +25 per win, −15 per loss, so 37.5% wins holds a rating level. */
-const WIN = 25
-const LOSS = 15
-const HOLD = LOSS / (WIN + LOSS)
+/** Share of wins that holds a rating level at a rank score (higher ranks need more). */
+function holdAt(score: number) {
+  const { win, loss } = ratingSwing(score)
+  return loss / (win + loss)
+}
 
 /** A seeded roll in [0, 1) for three whole numbers. */
 export function roll(a: number, b: number, c = 0) {
@@ -38,6 +41,8 @@ interface Tally {
   /** Brawls on the day so far (for the profile card). */
   today: number
   lastBattle: number | null
+  /** Wins in a row (the streak bonus). */
+  streak: number
 }
 
 interface Plan {
@@ -62,8 +67,8 @@ function planOf(bot: BotBrawler, count: number): Plan {
     n,
     skill,
     pace: 2 + 5 * skill + 3 * roll(n, 1),
-    headroom: 300 + 1500 * skill,
-    growth: 2 + 8 * skill,
+    headroom: 60 + 240 * skill,
+    growth: 0.3 + 2.2 * skill * skill,
     start: bot.rating,
   })
 }
@@ -88,16 +93,17 @@ function playDay(plan: Plan, day: number, from: Tally, until: number): Tally {
   const ceiling = plan.start + plan.headroom + plan.growth * (day - START_DAY)
   for (const [k, at] of times.entries()) {
     if (at > until) break
-    const chance = Math.min(0.8, Math.max(0.2, HOLD + (0.15 * (ceiling - r.rating)) / plan.headroom + form))
+    const score = rankScore(r)
+    const chance = Math.min(0.8, Math.max(0.2, holdAt(score) + (0.15 * (ceiling - r.rating)) / plan.headroom + form))
     const size = teamSize(r.rating)
     const won = roll(plan.n, day, 100 + k) < chance
     const kos = Math.floor(roll(plan.n, day, 200 + k) * (won ? size + 1 : size))
+    r.streak = won ? r.streak + 1 : 0
+    r.rating = Math.max(0, r.rating + ratingChange(score, won, score, r.streak))
     if (won) {
-      r.rating += WIN
       r.wins++
       r.xp += (60 + Math.round(10 * roll(plan.n, day, 300 + k))) * size + kos * 8
     } else {
-      r.rating -= Math.min(LOSS, r.rating)
       r.losses++
       r.xp += (15 + Math.round(5 * roll(plan.n, day, 300 + k))) * size + kos * 8
     }
@@ -130,6 +136,7 @@ export function botAt(bot: BotBrawler, count: number, now: number): LiveBot {
     kos: bot.kos,
     today: 0,
     lastBattle: null,
+    streak: 0,
   }
   if (day >= START_DAY) {
     const starts = (dayStarts[bot.id] ??= [rec])

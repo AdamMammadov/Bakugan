@@ -5,7 +5,9 @@ import { rankScore, useProfiles } from './useProfiles'
  * (the CPU brawlers' history is worked out from the clock instead). An entry is added whenever a score changes;
  * entries older than three days are dropped, keeping the newest of them so a 24-hour lookup always has a start.
  */
-const KEY = 'bakugan-score-log'
+// v2: the rank score formula changed; scores logged under the old one are dropped so the 24h column starts afresh
+const KEY = 'bakugan-score-log-v2'
+const OLD_KEYS = ['bakugan-score-log']
 const DAY = 86_400_000
 const KEEP = 3 * DAY
 
@@ -68,6 +70,11 @@ export function dayChange(id: string, score: number, now = Date.now()): number {
 
 /** Starts keeping the log: now, and on every change to the profiles (battles, XP, a new profile). */
 export function startScoreLog() {
+  try {
+    for (const key of OLD_KEYS) localStorage.removeItem(key)
+  } catch {
+    // storage blocked: nothing to clear
+  }
   logScores()
   useProfiles.subscribe(() => logScores())
 }

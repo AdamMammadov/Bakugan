@@ -4,7 +4,7 @@ import { CUP_ROUNDS, ROUND_NAME } from '../events/catalog'
 import type { CupEntrant, CupMatch, CupRun } from '../events/store'
 import { championOf } from '../events/tournament'
 import type { Avatar as AvatarValue } from '../profile/avatar'
-import { tierOf, TIERS } from '../profile/useProfiles'
+import { tierOf } from '../profile/useProfiles'
 import { Avatar } from './Avatar'
 import { Trophy } from './EventArt'
 
@@ -127,7 +127,7 @@ function Row({
         <p className={`truncate text-sm font-bold ${me ? 'text-amber-300' : 'text-white'}`}>{me ? `${e.name} (YOU)` : e.name}</p>
         <p className="truncate text-[10px] text-white/40">
           <img src={el.icon} alt="" className="mr-1 inline h-3 w-3 align-[-2px]" />
-          {TIERS[tierOf(e.score).index].name}
+          {tierOf(e.score).rank}
         </p>
       </div>
       {decided && (

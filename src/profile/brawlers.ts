@@ -114,3 +114,8 @@ export const clanScore = (clan: Clan, profiles: Profile[], now: number) =>
 
 /** Colour of each rank tier (index = tier), as on the rankings page. */
 export const TIER_COLORS = ['#9aa3b5', '#7ec8e3', '#3ee07a', '#f5c518', '#ff7a2f', '#e040fb']
+/** Colour of the top rank, above Legendary Brawler I. */
+export const TOP_COLOR = '#fff1a8'
+
+/** Colour of a rank as tierOf gives it (the top rank has its own). */
+export const rankColor = (tier: { index: number; top?: boolean }) => (tier.top ? TOP_COLOR : TIER_COLORS[tier.index])

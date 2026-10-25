@@ -7,10 +7,10 @@ import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import type { Avatar as AvatarValue } from '../profile/avatar'
 import { BOTS, botNow } from '../profile/bots'
 import { useMinute } from '../profile/botProgress'
-import { TIER_COLORS } from '../profile/brawlers'
+import { rankColor, TIER_COLORS, TOP_COLOR } from '../profile/brawlers'
 import { clanOf, useClanLife, useClans } from '../profile/useClans'
 import { dayChange } from '../profile/scoreLog'
-import { rankScore, tierOf, TIERS, useProfiles } from '../profile/useProfiles'
+import { RANK_XP, RANKS, rankScore, ratingSwing, tierOf, TIERS, TOP_RANK, useProfiles } from '../profile/useProfiles'
 
 interface Row {
   id: string
@@ -77,6 +77,8 @@ export function RankingsScreen() {
     }),
   ].sort((a, b) => b.score - a.score)
   const myPlace = rows.findIndex((r) => r.id === activeId) + 1
+  // the active player's rank, marked on the ladder
+  const myStep = myPlace > 0 ? tierOf(rows[myPlace - 1].score).step : -1
 
   const clanRows = [
     ...clans.map((c) => ({
@@ -104,20 +106,62 @@ export function RankingsScreen() {
       <PageNav current="rankings" />
       <h1 className="font-display mt-8 text-4xl font-black tracking-wider">RANKINGS</h1>
       <p className="mt-1 max-w-3xl text-white/50">
-        Rank score = Brawler Rating (+{25} per win, −{15} per loss) plus total XP ÷ 20 — wins and experience both count. CPU
-        brawlers keep brawling around the clock, so keep climbing to stay ahead.
+        Rank score is your Brawler Rating plus 1 point per {RANK_XP.per} XP (at most {RANK_XP.max}), so ranked wins are what
+        count. Beating a stronger brawler earns more and losing to a weaker one costs more, and the higher your rank, the less a
+        win gives and the more a loss takes (friendly brawls don’t count). CPU brawlers keep brawling around the clock.
       </p>
 
-      {/* tier ladder */}
+      {/* rank ladder: each tier's divisions III → II → I, then the top rank */}
       <div className="mt-6 flex flex-wrap gap-2">
-        {TIERS.map((t, i) => (
-          <div key={t.name} className="rounded-md border border-white/10 bg-black/40 px-3 py-2">
-            <p className="font-display text-sm font-bold" style={{ color: TIER_COLORS[i] }}>
-              {t.name}
-            </p>
-            <p className="text-xs text-white/45">{t.min}+ score</p>
-          </div>
-        ))}
+        {TIERS.map((t, i) => {
+          const swing = ratingSwing(t.min)
+          return (
+            <div key={t.name} className="min-w-[10.5rem] flex-1 rounded-md border border-white/10 bg-black/40 px-3 py-2">
+              <p className="font-display text-sm font-bold" style={{ color: TIER_COLORS[i] }}>
+                {t.name}
+              </p>
+              <div className="mt-1 flex gap-1">
+                {RANKS.map((r, step) => ({ r, step }))
+                  .filter(({ r }) => r.tier === i && r.division)
+                  .map(({ r, step }) => (
+                    <span
+                      key={r.name}
+                      title={`${r.name}: ${r.min.toLocaleString('en')}+ score${step === myStep ? ' · you are here' : ''}`}
+                      className="flex-1 rounded border px-1 py-0.5 text-center leading-tight"
+                      style={{
+                        borderColor: step === myStep ? TIER_COLORS[i] : 'rgba(255,255,255,0.1)',
+                        background: step === myStep ? `${TIER_COLORS[i]}26` : undefined,
+                      }}
+                    >
+                      <span className="font-display block text-[11px] font-bold" style={{ color: TIER_COLORS[i] }}>
+                        {r.division}
+                      </span>
+                      <span className="block text-[10px] text-white/45">{r.min.toLocaleString('en')}</span>
+                    </span>
+                  ))}
+              </div>
+              <p
+                className="mt-1 text-[10px] text-white/35"
+                title="Rating a ranked win gains and a loss costs, against an equal brawler"
+              >
+                win +{Math.round(swing.win)} · loss −{Math.round(swing.loss)}
+              </p>
+            </div>
+          )
+        })}
+        <div
+          className="min-w-[10.5rem] flex-1 rounded-md border px-3 py-2"
+          style={{
+            borderColor: myStep === RANKS.length - 1 ? TOP_COLOR : `${TOP_COLOR}55`,
+            background: `linear-gradient(135deg, ${TOP_COLOR}1f, rgba(0,0,0,0.4))`,
+          }}
+        >
+          <p className="font-display text-sm font-bold" style={{ color: TOP_COLOR }}>
+            ✦ {TOP_RANK.name}
+          </p>
+          <p className="mt-1 text-xs text-white/60">{TOP_RANK.min.toLocaleString('en')}+ score</p>
+          <p className="mt-1 text-[10px] text-white/35">Above Legendary Brawler I: only the very best get here.</p>
+        </div>
       </div>
 
       <div className="mt-8 flex gap-2">
@@ -190,8 +234,9 @@ export function RankingsScreen() {
                       )}
                     </div>
                   </td>
-                  <td className="font-display text-sm font-bold" style={{ color: TIER_COLORS[tier.index] }}>
-                    {tier.name}
+                  <td className="font-display text-sm font-bold whitespace-nowrap" style={{ color: rankColor(tier) }}>
+                    {tier.top && '✦ '}
+                    {tier.rank}
                   </td>
                   <td className="font-display text-right font-bold">{r.score.toLocaleString('en')}</td>
                   <td className="text-right text-white/70">{r.rating}</td>
