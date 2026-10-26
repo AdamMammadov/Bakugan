@@ -623,7 +623,8 @@ export function Brawl({
     const bakugan = d.fighters[side].name
     if (human(side)) playerCards.current++
     playSfx('ability')
-    cue(side, 'card', a.type === 'shield' ? 'NULLIFY!' : 'ABILITY ACTIVATE!', a.name, `Ability activate! ${a.name}!`)
+    // the big call-out is the effects overlay's (FxOverlay); the brawler just gestures and shouts
+    cue(side, 'card', undefined, undefined, `Ability activate! ${a.name}!`)
     if (a.type === 'shield' || a.type === 'finisher') crowd('gasp')
     else if (a.amount >= 150 || a.type === 'drain') crowd('roar', side)
     // the announcer calls the card as it lands
@@ -695,10 +696,10 @@ export function Brawl({
         : 'themselves'
     playSfx('gateCard')
     if (action === 'close') {
-      cue(side, 'card', 'GATE CARD, CLOSE!', gate.name, 'Gate card, close!')
+      cue(side, 'card', undefined, undefined, 'Gate card, close!')
       crowd('gasp')
     } else {
-      cue(side, 'card', 'GATE CARD, OPEN!', action === 'take' ? `${gate.name} · for me!` : gate.name, 'Gate card, open!')
+      cue(side, 'card', undefined, undefined, 'Gate card, open!')
       crowd('roar', side)
     }
     later(GATE_FLIP_MS, () => {

@@ -7,6 +7,10 @@ import type { BattleEvent, SideIndex } from '../battle/engine'
 import { formModels, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { AbilityEffect } from './AbilityEffect'
+import { BattleFx, type FxFighter } from './BattleFx'
+import { BodyAura, type AuraKind } from './BodyAura'
+import { listenFx } from './fx'
+import { AURA_LIFE, busAbilityRecently, FxFade, fxClock, fxScale } from './fxShared'
 import { LiftDrag } from './LiftDrag'
 import { ChaosBeam, Impact, Projectile, ShieldDome } from './ArenaFx'
 import { BrawlerFocus, ViewLimits } from './ArenaView'
@@ -166,6 +170,15 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
         size: BRAWLER_SCALE * k * 1.8,
       })),
     [spots, k],
+  )
+  const fxFighters = useMemo<[FxFighter, FxFighter]>(
+    () =>
+      [0, 1].map((i) => ({
+        x: xOf(i as SideIndex, fighters[i]),
+        element: fighters[i].bakugan.element,
+        size: Math.min(GIANT, Math.max(1, sizeOf(fighters[i]))),
+      })) as [FxFighter, FxFighter],
+    [fighters],
   )
   const home = useCallback(
     () => ({
@@ -355,6 +368,8 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
           />
         ) : null,
       )}
+
+      <BattleFx fighters={fxFighters} ground={GROUND * k} k={k} gateOn={!!gate} colors={colors} />
 
       {event && (
         <ActionFx
@@ -570,6 +585,14 @@ function Fighter({
   const squareFor = useRef(0)
   // the shield is sized once the model has loaded, round every pose it strikes (idle sway and every move)
   const [fit, setFit] = useState<ShieldFit | null>(null)
+  // the light on its own body for the battle's big moments (fx.ts): an aura, G-Power rising, a hit, its defeat
+  const [auras, setAuras] = useState<
+    { key: number; kind: AuraKind; colors: [string, string, string]; delay: number; fade: { current: number } }[]
+  >([])
+  const auraKey = useRef(0)
+  // the auras now showing, by key, and whether each is being cut short (its card nullified)
+  const auraFades = useRef(new Map<number, { kind: AuraKind; fade: { current: number }; end: number }>())
+  const auraDying = useRef(new Map<number, { current: number }>())
   const sweep = useRef<{
     sampler: ModelSampler
     rig: Rig | null
@@ -593,6 +616,42 @@ function Fighter({
       anim.current = { kind: hostile ? 'lunge' : 'cast', move, start: null }
     } else if (target === side && damage > 0 && !blocked) anim.current = { kind: 'hit', move: 'hit', start: null }
   }, [event, side])
+
+  useEffect(() => {
+    const fades = auraFades.current
+    const add = (kind: AuraKind, colors: [string, string, string], delay = 0) => {
+      const key = ++auraKey.current
+      const fade = { current: 1 }
+      fades.set(key, { kind, fade, end: fxClock.now + delay + AURA_LIFE[kind] + 0.1 })
+      setAuras((list) => [...list, { key, kind, colors, delay, fade }])
+    }
+    const own = ELEMENT_BY_ID[entrant.bakugan.element]
+    const changed = (d: number, at: number) => {
+      if (d > 0) add('gain', ['#fff2b0', own.glow, '#ffffff'], at)
+      else if (d < 0) add('hit', ['#ff2a1a', '#ff8a5a', '#ffffff'], at)
+    }
+    const stop = listenFx((c) => {
+      if (c.kind === 'ability') {
+        if (c.side === side) {
+          const el = ELEMENT_BY_ID[c.element]
+          add('aura', [el.color, el.glow, '#ffffff'])
+        }
+        changed(c.delta[side], c.side === side ? 0.4 : 0.45)
+      } else if (c.kind === 'gateOpen') changed(c.delta[side], 0.9)
+      else if (c.kind === 'defeat' && c.side === side) add('burst', [own.color, own.glow, '#ffffff'])
+      else if (c.kind === 'nullify' && c.by !== side && c.target !== 'gate')
+        for (const [key, a] of fades) if (a.kind === 'aura') auraDying.current.set(key, a.fade)
+    })
+    return stop
+  }, [side, entrant.bakugan.element])
+  const sampleBody = useCallback(() => {
+    const sw = sweep.current
+    const fr = frame.current
+    if (!sw || !fr) return null
+    const pts: number[] = []
+    sampleInto(sw.sampler, fr, pts)
+    return pts.length ? Float32Array.from(pts) : null
+  }, [])
 
   // the shield grows with the Bakugan, about its front
   const reachOf = (f: ShieldFit) => {
@@ -718,6 +777,15 @@ function Fighter({
   }
 
   useFrame(({ clock }, dt) => {
+    for (const f of auraDying.current.values()) f.current = Math.max(0, f.current - (dt * fxScale()) / 0.22)
+    let ended = false
+    for (const [key, a] of auraFades.current)
+      if (fxClock.now > a.end) {
+        auraFades.current.delete(key)
+        auraDying.current.delete(key)
+        ended = true
+      }
+    if (ended) setAuras((list) => list.filter((a) => auraFades.current.has(a.key)))
     const g = ref.current
     if (!g) return
     const now = clock.elapsedTime
@@ -818,6 +886,11 @@ function Fighter({
                 <group ref={model}>
                   <MonsterModel entrant={entrant} poseRef={anim} frontAt={FRONT_AT} />
                 </group>
+                {auras.map((a) => (
+                  <FxFade.Provider key={a.key} value={a.fade}>
+                    <BodyAura kind={a.kind} colors={a.colors} delay={a.delay} sample={sampleBody} />
+                  </FxFade.Provider>
+                ))}
                 {/* the shield wraps the whole model and moves with it */}
                 {fit && (
                   <group position={fit.center} scale={fit.radii}>
@@ -897,6 +970,8 @@ function ActionFx({
   const ax = xOf(actor, fighters[actor])
   const tx = xOf(target, fighters[target])
   const reach = shieldReach[target]
+  // the effects bus already played this card's show (BattleFx): only the strike itself is drawn here
+  const [shown] = useState(busAbilityRecently)
   const from = useMemo(() => new THREE.Vector3(ax * 0.75, CHEST_Y, 0), [ax])
   const to = useMemo(() => {
     // a blocked hit stops on the front of the shield
@@ -937,7 +1012,7 @@ function ActionFx({
     return (
       <>
         <Projectile from={from} to={to} preset={preset} color={me.color} glow={me.glow} />
-        {!blocked && (
+        {!blocked && !shown && (
           <group position={[tx, 0, 0]} scale={0.8}>
             <AbilityEffect effect="shadowOrb" color={me.color} glow={me.glow} />
           </group>
@@ -946,6 +1021,7 @@ function ActionFx({
     )
   }
   if (type === 'boost') {
+    if (shown) return null
     return (
       <group position={[ax, 0, 0]} scale={0.8}>
         <AbilityEffect effect="aura" color={me.color} glow={me.glow} />
@@ -953,5 +1029,6 @@ function ActionFx({
     )
   }
   // shield: the dome itself is driven by fighter state; add a short burst
+  if (shown) return null
   return <Impact at={new THREE.Vector3(ax, CHEST_Y, 0)} color={me.glow} delay={0.1} />
 }

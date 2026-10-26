@@ -3,11 +3,21 @@ import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { asset } from '../asset'
-import { CHANT_BARS, CHANT_BEAT, CHANT_CLAPS, CHANT_LENGTH, CHANT_SHOUTS, crowdSound, startCrowd } from '../audio/crowd'
+import {
+  CHANT_BARS,
+  CHANT_BEAT,
+  CHANT_CLAPS,
+  CHANT_LENGTH,
+  CHANT_SHOUTS,
+  crowdSound,
+  crowdTension,
+  startCrowd,
+} from '../audio/crowd'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { CHARACTERS } from '../profile/avatar'
 import { createAnnouncer, type Announcer } from './announcer'
 import { Crowd, type CrowdLevels, type Seat } from './Crowd'
+import { listenFx } from './fx'
 import { listenStadium, type CrowdMood, type StadiumCall } from './stadium'
 
 /**
@@ -87,7 +97,15 @@ function seatsFor(vips: number[]): Seat[] {
       if (row < 2 && vips.some((v) => Math.abs(v - angle) < 5.4 / r)) continue
       const p = at(angle, r + (rand() - 0.5) * 1.6, y)
       // fans of both brawlers everywhere, mixed at random
-      seats.push({ x: p.x, y, z: p.z, size: 5.2 + rand() * 1.0, seed: rand(), side: rand() < 0.5 ? 0 : 1, angle })
+      const seat: Seat = { x: p.x, y, z: p.z, size: 5.2 + rand() * 1.0, seed: rand(), side: rand() < 0.5 ? 0 : 1, angle }
+      // some sit next to a friend and chat now and then (turning to each other)
+      const last = seats[seats.length - 1]
+      if (last && !last.chat && last.y === y && Math.hypot(last.x - p.x, last.z - p.z) < 3.4 && rand() < 0.45) {
+        const t = rand()
+        last.chat = [t, 1, 1]
+        seat.chat = [t, -1, 1]
+      }
+      seats.push(seat)
     }
   }
   return seats
@@ -448,7 +466,7 @@ function screenTexture() {
   return t
 }
 
-type Level = 'hype' | 'arms' | 'jump' | 'boo' | 'clap' | 'gasp' | 'wave'
+type Level = 'hype' | 'arms' | 'jump' | 'boo' | 'clap' | 'gasp' | 'wave' | 'dismay' | 'flash'
 /** One reaction rising to `amp` over `attack` s, holding `hold` s and fading over `release` s, for one side or both. */
 interface Swell {
   key: Level
@@ -470,18 +488,22 @@ const swellAt = (s: Swell, now: number) => {
 
 /** What each mood does to the stands: [level, whose fans (lead / other / both), amount, attack, hold, release]. */
 const MOODS: Record<CrowdMood, [Level, 'lead' | 'other' | 'both', number, number, number, number][]> = {
+  // the side that scored cheers; the other side's fans hold their heads, a few boo
   cheer: [
     ['hype', 'lead', 0.9, 0.15, 2.2, 1.2],
     ['arms', 'lead', 0.85, 0.15, 1.8, 0.9],
     ['jump', 'lead', 0.45, 0.2, 1.6, 0.8],
-    ['hype', 'other', 0.3, 0.3, 1.2, 1],
+    ['dismay', 'other', 0.7, 0.25, 1.4, 0.9],
+    ['boo', 'other', 0.55, 0.3, 1.2, 0.8],
+    ['flash', 'both', 0.45, 0.05, 1.5, 0.8],
   ],
   roar: [
     ['hype', 'lead', 1, 0.1, 3.2, 1.5],
     ['arms', 'lead', 1, 0.1, 2.8, 1.2],
     ['jump', 'lead', 1, 0.15, 2.6, 1.2],
-    ['hype', 'other', 0.55, 0.2, 2, 1.2],
-    ['arms', 'other', 0.35, 0.2, 1.5, 1],
+    ['dismay', 'other', 0.95, 0.2, 2.2, 1.2],
+    ['boo', 'other', 0.6, 0.3, 1.8, 1],
+    ['flash', 'both', 1, 0.05, 2.6, 1.2],
   ],
   boo: [
     ['boo', 'lead', 1, 0.3, 2, 0.8],
@@ -565,7 +587,29 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
     gasp: 0,
     wave: 0,
     waveAt: 0,
+    dismay: [0, 0],
+    tension: 0,
+    flash: 0,
+    lights: 0,
   })
+  // how tense the battle is: every move adds to it (more when the two sides trade blows), it fades over time and
+  // breaks when a Bakugan falls
+  const tension = useRef({ level: 0, lastSide: -1 })
+  useEffect(
+    () =>
+      listenFx((call) => {
+        const t = tension.current
+        if (call.kind === 'defeat') {
+          t.level = 0
+          t.lastSide = -1
+          return
+        }
+        const side = call.kind === 'ability' ? call.side : call.by
+        t.level = Math.min(1, t.level + (t.lastSide >= 0 && t.lastSide !== side ? 0.24 : 0.14))
+        t.lastSide = side
+      }),
+    [],
+  )
 
   const clock = useThree((s) => s.clock)
   // calls that arrive between frames are played on the next one
@@ -614,7 +658,8 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
     if (now - lastCall.current.at > lastCall.current.idleNext) {
       const r = (Math.sin(now * 12.9898) * 43758.5453) % 1
       const pick = Math.abs(r)
-      if (pick < 0.55) react('chant', pick < 0.27 ? 0 : 1, now)
+      // a chant for one side, or (when the battle is calm) a Mexican wave round the stadium
+      if (pick < 0.45 || tension.current.level > 0.4) react('chant', pick < 0.22 ? 0 : 1, now)
       else startWave(now, 1)
       lastCall.current.idleNext = 18 + pick * 16
     }
@@ -628,15 +673,24 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
       clap: [0, 0],
       gasp: [0, 0],
       wave: [0, 0],
+      dismay: [0, 0],
+      flash: [0, 0],
     }
     swells.current = swells.current.filter((s) => now - s.start < s.attack + s.hold + s.release)
     for (const s of swells.current) {
       const v = swellAt(s, now)
       for (const side of [0, 1] as const) if (s.side === null || s.side === side) sum[s.key][side] = Math.max(sum[s.key][side], v)
     }
-    for (const k of ['hype', 'arms', 'jump', 'boo', 'clap'] as const) l[k] = sum[k]
+    for (const k of ['hype', 'arms', 'jump', 'boo', 'clap', 'dismay'] as const) l[k] = sum[k]
     l.gasp = sum.gasp[0]
     l.wave = sum.wave[0]
+    l.flash = sum.flash[0]
+    // the tension fades slowly; while it is high the fans hold their phones up, and the murmur grows
+    const tn = tension.current
+    tn.level *= Math.exp(-dt / 30)
+    l.tension = THREE.MathUtils.damp(l.tension, tn.level, 2, dt)
+    l.lights = Math.max(THREE.MathUtils.smoothstep(l.tension, 0.4, 0.85), chant.current ? 0.3 : 0)
+    crowdTension(l.tension)
     const w = waveRun.current
     l.waveAt = w.from + (now - w.start) * 1.9
     // the chant's beat: fists up on "Ba-ku-gan!", hands together on the claps
@@ -740,7 +794,7 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
       </group>
       {/* the fans come in once their models have loaded */}
       <Suspense fallback={null}>
-        <Crowd seats={seats} levels={levels} />
+        <Crowd seats={seats} levels={levels} colors={colors} />
       </Suspense>
     </group>
   )

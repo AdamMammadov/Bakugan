@@ -21,7 +21,9 @@ export const CHANT_CLAPS = [2, 2.5, 3]
 export const CHANT_LENGTH = CHANT_BEAT * 4 * CHANT_BARS
 
 let bus: GainNode | null = null
-let murmur: { stop: () => void } | null = null
+let murmur: { stop: () => void; swell: GainNode } | null = null
+/** How tense the battle is (0–1): the murmur grows with it. */
+let tension = 0
 let noiseBuf: AudioBuffer | null = null
 let users = 0
 let timer = 0
@@ -45,6 +47,8 @@ function level() {
   const a = audio()
   const want = users > 0 && !muted() ? LEVEL * (talking() ? 0.55 : 1) : 0
   bus.gain.setTargetAtTime(want, a.currentTime, 0.15)
+  // a tense battle: the stands buzz louder
+  murmur?.swell.gain.setTargetAtTime(1 + tension * 0.9, a.currentTime, 0.6)
 }
 
 /** Three seconds of pink noise, shared by every crowd sound. */
@@ -228,14 +232,16 @@ export function startCrowd() {
         .connect(gain)
         .connect(sway)
     }
-    sway.connect(out())
+    const swell = a.createGain()
+    sway.connect(swell).connect(out())
     src.start(at)
     murmur = {
+      swell,
       stop: () => {
         const t = audio().currentTime + 1.5
         src.stop(t)
         lfos.forEach((o) => o.stop(t))
-        setTimeout(() => sway.disconnect(), 2000)
+        setTimeout(() => swell.disconnect(), 2000)
       },
     }
     timer = window.setInterval(level, 150)
@@ -250,6 +256,11 @@ export function startCrowd() {
       clearInterval(timer)
     }
   }
+}
+
+/** How tense the battle is now (0–1), for the murmur (read with the bus level a few times a second). */
+export function crowdTension(level: number) {
+  tension = Math.max(0, Math.min(1, level))
 }
 
 /** The crowd reacts out loud; `strength` 0–1 scales it. */
