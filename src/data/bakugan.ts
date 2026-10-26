@@ -2,13 +2,13 @@ import type { ElementId } from './elements'
 import { ORIGINAL_ABILITIES, ROSTER } from './roster'
 
 /**
- * How an ability works in battle (a card counts for the battle it is played in; one card per turn). The higher
- * G-Power is winning, and a Bakugan that drops to 0 G is defeated at once:
+ * How an ability works in battle (a card counts for the battle it is played in; playing one is a move). The higher
+ * G-Power wins the clash, and a Bakugan that drops to 0 G is defeated at once:
  * - attack: the Bakugan strikes with it: the opponent's G-Power drops by its amount at once
  * - boost:  raises the user's G-Power
  * - weaken: lowers the opponent's G-Power
  * - drain:  steals G-Power from the opponent (they lose it, the user gains it)
- * - shield: NULLIFY: cancels the opponent's last ability card or their opened Gate Card (its G change is undone)
+ * - shield: NULLIFY: cancels the opponent's last ability card (its G change is undone)
  * - finisher: wins the battle outright; playable only once its Bakugan has gathered its power with other cards in
  *   the battle (engine FINISHER_CHARGE)
  */
@@ -431,7 +431,7 @@ export function battleEffect(a: Ability) {
     case 'drain':
       return `Steals ${a.amount}G from the opponent for this battle: they lose it, you gain it.`
     case 'shield':
-      return `Nullify: cancels the opponent's last ability card or their opened Gate Card; its G change is undone.`
+      return `Nullify: cancels the opponent's last ability card; its G change is undone.`
     case 'finisher':
       return `After two other ability cards in the same battle: wins the battle outright.`
   }

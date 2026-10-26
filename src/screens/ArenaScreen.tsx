@@ -6,17 +6,18 @@ import type { SpeakerVoice } from '../audio/voices'
 import {
   act,
   aiForTier,
-  canAct,
-  canOpenGate,
   cardLock,
   chooseAction,
   chooseGate,
   chooseThrow,
   gapOf,
+  gateAction,
   gateDelta,
+  gateEffectOf,
   gatesLeft,
   leaderOf,
   LIVES,
+  MOVES,
   nextBattle,
   nullifyTargets,
   other,
@@ -34,13 +35,14 @@ import {
   type Card,
   type Duel,
   type DuelEnd,
-  type Effect,
+  type GateAction,
   type Move,
   type SideIndex,
   type Step,
 } from '../battle/engine'
 import { cardTag } from '../battle/labels'
 import { BakuganPortrait } from '../components/BakuganPortrait'
+import { FxOverlay } from '../components/FxOverlay'
 import { BAKUGAN, battleEffect, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { GATE_BY_ID, gateDeck, gateElementOf, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
@@ -59,8 +61,9 @@ import {
 import { ACTION_DURATION, ArenaScene, IMPACT_AT, type BrawlerInfo } from '../three/ArenaScene'
 import type { BrawlerCall, BrawlerGesture } from '../three/Brawler'
 import { preloadModels } from '../three/BakuganModels'
+import { fx } from '../three/fx'
 import { announce, crowd } from '../three/stadium'
-import { AHEAD, BattleStatus, BEHIND, BrawlerHud, GateSlot, TurnCounter } from './BattleHud'
+import { AHEAD, BEHIND, BrawlerHud, GateSlot, TurnCounter } from './BattleHud'
 import { TagArena } from './TagArena'
 
 const INTRO_MS = 2600
@@ -73,9 +76,7 @@ const PICK_MS = 700
 /** One brawler's throw: the call, the ball's flight, and the Bakugan standing on the card. */
 const THROW_MS = 2400
 const AI_DELAY_MS = 800
-/** A pass: the brawler's call shows before the next move. */
-const PASS_MS = 1100
-/** The Gate Card flips over before its effect lands. */
+/** The Gate Card flips over (or closes) before its effect lands. */
 const GATE_FLIP_MS = 900
 const GATE_HOLD_MS = 2300
 /** The two G-Power counters count up before the winner shows. */
@@ -416,7 +417,8 @@ export function Brawl({
   const stopWaits = useRef<(() => void)[]>([])
   const seq = useRef(1)
   const toastTimer = useRef(0)
-  const hinted = useRef(false)
+  // a brawler skipped for want of a move is called out once a battle
+  const skipped = useRef<[boolean, boolean]>([false, false])
   // ability cards the player activated, for Season Pass challenges
   const playerCards = useRef(0)
 
@@ -483,7 +485,6 @@ export function Brawl({
     setPicking(null)
     setBusy(true)
     playerCards.current = 0
-    hinted.current = false
     playSfx('brawl')
     say('BAKUGAN, BRAWL!', host ? host.intro.sub : `${nameOf(0)} vs ${nameOf(1)}`)
     cue(0, 'point', 'BAKUGAN, BRAWL!', undefined, 'Bakugan, brawl!')
@@ -575,41 +576,22 @@ export function Brawl({
     later(THROW_MS, () => waitQuiet(() => throwStep(next)))
   }
 
-  /** Both Bakugan stand: the announcer gives their G-Powers and who has to answer. */
+  /** Both Bakugan stand: the announcer gives their G-Powers, and the Gate Card's owner moves first. */
   function battleReady(s: BattleState) {
     const d = s.duel!
     const names = [d.fighters[0].name, d.fighters[1].name]
-    hinted.current = false
+    skipped.current = [false, false]
     if (d.done) return waitQuiet(() => nextMove(s))
-    const mover = d.turn
-    const gap = Math.abs(gapOf(d, mover))
-    const ahead = leaderOf(d) === mover
-    call(
-      `${names[0]}, ${d.fighters[0].g} G! ${names[1]}, ${d.fighters[1].g} G! ` +
-        (ahead
-          ? `${nameOf(mover)} moves first, ${gap ? `${gap} G ahead` : 'ahead on the tie'}!`
-          : `${nameOf(mover)} moves first and has to answer${gap ? `: ${gap} G behind` : ''}!`),
-    )
+    const rule = s.battle === 1 ? ` ${MOVES === 3 ? 'Three' : MOVES} moves each!` : ''
+    call(`${names[0]}, ${d.fighters[0].g} G! ${names[1]}, ${d.fighters[1].g} G!${rule} ${nameOf(d.turn)} moves first!`)
     waitQuiet(() => nextMove(s), 500)
   }
 
   function nextMove(s: BattleState) {
     setBattle(s)
     if (s.phase === 'clash') return battleEnd(s)
-    const d = s.duel!
-    const side = d.turn
+    const side = s.duel!.turn
     if (!human(side)) return later(AI_DELAY_MS, () => run(s, chooseAction(s, levelOf(side))))
-    // ahead with nothing left to play: the player can only hold
-    if (!canAct(d, side)) {
-      say('NOTHING LEFT TO PLAY', `You hold at ${powerOf(d, side)} G`)
-      return later(PASS_MS, () => run(s, { kind: 'pass' }))
-    }
-    if (!hinted.current) {
-      hinted.current = true
-      const gap = Math.abs(gapOf(d, side))
-      if (leaderOf(d) === side) say('YOUR MOVE', `You're ${gap ? `${gap} G ahead` : 'ahead on the tie'}: hold, or add more power`)
-      else say('YOUR MOVE', `You're ${gap ? `${gap} G behind` : 'tied, and lose ties'}: play a card to get ahead`, BEHIND)
-    }
     setBusy(false)
   }
 
@@ -618,27 +600,18 @@ export function Brawl({
     const step = act(s, move)
     // the card leaves the hand at once; the HUD (`shown`) catches up when the move lands
     setBattle(step.state)
-    if (move.kind === 'gate') return openGate(s, step)
-    if (move.kind === 'pass') return pass(s, step)
-    playCard(s, step, move.card)
+    if (step.gate) gateMove(s, step, step.gate)
+    else if (move.kind === 'ability') playCard(s, step, move.card)
   }
 
-  /** A pass: ahead, the brawler holds ("beat that!"); behind, they give the battle up. */
-  function pass(s: BattleState, step: Step) {
-    const d = s.duel!
-    const side = d.turn
-    const foe = other(side)
-    const g = powerOf(d, side)
-    if (step.state.duel!.end === 'gaveUp') {
-      cue(side, 'slump', "I CAN'T BEAT THAT…", undefined, "I can't beat that...")
-      call(`${nameOf(side)} can't get past ${powerOf(d, foe)} G and gives up the battle!`)
-      crowd('gasp')
-    } else {
-      cue(side, 'point', 'HOLD!', `Beat ${g} G!`, HOLD_LINES[d.moves % HOLD_LINES.length])
-      call(`${nameOf(side)} holds at ${g} G! ${nameOf(foe)} has to beat it!`)
-    }
-    setShown(step.state)
-    later(PASS_MS, () => waitQuiet(() => nextMove(step.state)))
+  /** After a move: the brawler who could not answer it is called out (once a battle), as their turn is skipped. */
+  function skipLine(s: BattleState, step: Step) {
+    const d = step.state.duel!
+    const actor = s.duel!.turn
+    const foe = other(actor)
+    if (d.done || d.turn !== actor || d.left[foe] <= 0 || skipped.current[foe]) return ''
+    skipped.current[foe] = true
+    return ` ${nameOf(foe)} has no move to make!`
   }
 
   /** "Ability activate!": the card's effect plays on the field, then the G-Powers change. */
@@ -651,20 +624,27 @@ export function Brawl({
     if (human(side)) playerCards.current++
     playSfx('ability')
     cue(side, 'card', a.type === 'shield' ? 'NULLIFY!' : 'ABILITY ACTIVATE!', a.name, `Ability activate! ${a.name}!`)
-    if (a.type === 'shield') {
-      crowd('gasp')
-      if (step.cancelled) say('NULLIFY!', `${a.name} cancels ${effectName(step.cancelled, step.state)}`, '#ff4a3d')
-    } else if (a.type === 'finisher') crowd('gasp')
+    if (a.type === 'shield' || a.type === 'finisher') crowd('gasp')
     else if (a.amount >= 150 || a.type === 'drain') crowd('roar', side)
     // the announcer calls the card as it lands
-    const line = cardLine(step, card, bakugan, d.fighters[foe].name, nameOf(side), nameOf(foe))
+    const line = cardLine(step, card, bakugan, d.fighters[foe].name, nameOf(side), nameOf(foe)) + skipLine(s, step)
     waitQuiet(() => perform(step, a, line), 700)
+  }
+
+  /** A Bakugan is down to 0 G, or beaten by a finisher: it falls at once. */
+  function fallen(step: Step) {
+    const d = step.state.duel!
+    if (d.end !== 'finisher' && d.end !== 'ko') return
+    const loser = other(d.winner!)
+    setDefeated(loser === 0 ? [true, false] : [false, true])
+    fx({ kind: 'defeat', side: loser })
   }
 
   /** The Bakugan acts on the field: animation, then the G-Power changes on the HUD and the announcer calls it. */
   function perform(step: Step, a: Ability, line: string) {
     const ev = step.event!
     const side = ev.actor
+    const d = step.state.duel!
     setEvent({ event: ev, key: nextKey() })
     if (a.type === 'shield') {
       // the nullifying Bakugan's shield flashes up for a moment
@@ -678,37 +658,67 @@ export function Brawl({
       }
       if (ev.actorG || ev.targetG) playSfx('gPower')
       setShown(step.state)
+      if (a.type === 'shield')
+        fx({ kind: 'nullify', by: side, name: step.cancelled?.card?.ability.name ?? a.name, target: 'ability' })
+      else
+        fx({
+          kind: 'ability',
+          side,
+          element: d.fighters[side].bakugan.element,
+          name: a.name,
+          delta: step.effect?.delta ?? [0, 0],
+        })
       call(line)
-      // a finisher, or a Bakugan down to 0 G: it falls at once
-      const end = step.state.duel!.end
-      if (end === 'finisher' || end === 'ko') {
-        const loser = other(step.state.duel!.winner!)
-        setDefeated(loser === 0 ? [true, false] : [false, true])
-      }
+      fallen(step)
     })
     const hold = a.type === 'finisher' ? FINISHER_HOLD_MS : 0
     // the next move waits for the announcer's call
     later(ACTION_DURATION * 1000 + hold, () => waitQuiet(() => nextMove(step.state)))
   }
 
-  /** "Gate Card, open!": the card flips over in the middle and its effect lands. */
-  function openGate(s: BattleState, step: Step) {
+  /**
+   * The Gate Card tug-of-war: its owner opens it ("Gate Card, open!"), the other brawler closes it, opens it for
+   * themselves, and the owner may close it again. The card flips (or shuts) in the middle, then its effect lands.
+   */
+  function gateMove(s: BattleState, step: Step, action: GateAction) {
     const side = s.duel!.turn
     const gate = step.state.duel!.gate!.card
-    const e = step.effect!
+    const element = gateElementOf(gate)
+    // "himself" / "herself" for an anime character brawling as themselves; anyone else opens it for "themselves"
+    const avatar = brawlers[side].avatar
+    const character = avatar.kind === 'preset' ? CHARACTER_BY_ID[avatar.id] : undefined
+    const self =
+      character && character.name.split(' ')[0] === nameOf(side).split(' ')[0]
+        ? character.voice.female
+          ? 'herself'
+          : 'himself'
+        : 'themselves'
     playSfx('gateCard')
-    cue(side, 'card', 'GATE CARD, OPEN!', gate.name, `Gate card, open! ${gate.name}!`)
-    say('GATE CARD, OPEN!', `${gate.name}: ${gate.text}`, ELEMENT_BY_ID[gateElementOf(gate)].color)
-    crowd('roar', side)
+    if (action === 'close') {
+      cue(side, 'card', 'GATE CARD, CLOSE!', gate.name, 'Gate card, close!')
+      crowd('gasp')
+    } else {
+      cue(side, 'card', 'GATE CARD, OPEN!', action === 'take' ? `${gate.name} · for me!` : gate.name, 'Gate card, open!')
+      crowd('roar', side)
+    }
     later(GATE_FLIP_MS, () => {
+      const d = step.state.duel!
       setShown(step.state)
-      if (e.delta[0] || e.delta[1]) playSfx('gPower')
-      call(`${nameOf(side)} reveals ${gate.name}! ${gateOutcome(step.state, e)}`)
-      const end = step.state.duel!.end
-      if (end === 'ko') {
-        const loser = other(step.state.duel!.winner!)
-        setDefeated(loser === 0 ? [true, false] : [false, true])
+      if (action === 'close') {
+        fx({ kind: 'gateClose', by: side, element, name: gate.name })
+        if (step.cancelled && (step.cancelled.delta[0] || step.cancelled.delta[1])) playSfx('gPower')
+        call(`${nameOf(side)} closes the Gate Card! ${undoneOutcome(d, step)}${skipLine(s, step)}`)
+      } else {
+        const e = step.effect!
+        fx({ kind: 'gateOpen', by: side, element, name: gate.name, delta: e.delta })
+        if (e.delta[0] || e.delta[1]) playSfx('gPower')
+        const who =
+          action === 'take'
+            ? `${nameOf(side)} opens it for ${self}: ${gate.name}!`
+            : `It's ${gate.kind === 'attribute' ? 'an Attribute' : gate.kind === 'character' ? 'a Character' : 'a Command'} Gate Card: ${gate.name}!`
+        call(`${who} ${gateOutcome(d, e.delta)}${skipLine(s, step)}`)
       }
+      fallen(step)
     })
     later(GATE_HOLD_MS, () => waitQuiet(() => nextMove(step.state)))
   }
@@ -734,7 +744,12 @@ export function Brawl({
       step: 0,
       hosted: !!host,
     })
-    const endCall = endLine(result.end, nameOf(loser), d.fighters[loser].name, result.power)
+    const endCall = endLine(result.end, [d.fighters[0].name, d.fighters[1].name], result.power)
+    if (result.end === 'clash') {
+      // both Bakugan go at each other: the higher G-Power wins
+      cue(0, 'point')
+      cue(1, 'point')
+    }
     if (endCall) call(endCall)
     later(COUNT_MS, () => {
       setClash((c) => c && { ...c, step: 1 })
@@ -751,6 +766,7 @@ export function Brawl({
         cue(winner, 'cheer', 'YES!', undefined, `Yes! Way to go, ${d.fighters[winner].name}!`)
         setShown(next)
         setDefeated(loser === 0 ? [true, false] : [false, true])
+        if (!struck) fx({ kind: 'defeat', side: loser })
         const tie = diff === 0 && !result.finisher
         const line = `${d.fighters[winner].name} wins the battle${tie ? ' on the tie: it was thrown first' : ''}! ${nameOf(loser)} loses a life!`
         call(diff <= CLOSE && !struck ? `What a close call! ${line}` : line)
@@ -866,18 +882,15 @@ export function Brawl({
   const gateOwner = shown.duel?.gate?.owner ?? shown.setter
   // the Bakugan on the field: this battle's once thrown (the other side's last one waits in its ball till then)
   const onCard = (side: SideIndex) => (shown.duel ? shown.sides[side].active : (shown.thrown[side] ?? shown.sides[side].active))
-  const fighterColors = [0, 1].map((i) => ELEMENT_BY_ID[cast.teams[i][onCard(i as SideIndex)].bakugan.element].color) as [
-    string,
-    string,
-  ]
+  const hand = onField && battle.phase === 'battle' && !!duel
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Canvas shadows camera={{ position: [0, 11, 46], fov: 50 }} dpr={[1, 2]}>
         <ArenaScene
           fighters={[cast.teams[0][onCard(0)], cast.teams[1][onCard(1)]]}
-          // a face-down Gate Card shows no attribute; it lights up once opened (and goes dark again if nullified)
-          gate={fieldGate?.open && !fieldGate.nullified ? gateElementOf(fieldGate.card) : null}
+          // a face-down Gate Card shows no attribute; it lights up while open (and goes dark again when closed)
+          gate={fieldGate && fieldGate.openFor !== null ? gateElementOf(fieldGate.card) : null}
           event={event}
           shields={shields}
           defeated={defeated}
@@ -889,6 +902,9 @@ export function Brawl({
           ]}
         />
       </Canvas>
+
+      {/* the big battle moments over the field (fx.ts), under the HUD */}
+      <FxOverlay />
 
       {/* what each brawler calls out, above their head on the field */}
       {cues.map((c, i) =>
@@ -919,10 +935,9 @@ export function Brawl({
             </p>
           )}
           <TurnCounter turn={shown.turn + (shown.phase === 'battle' ? 1 : 0)} battle={shown.battle} label={host?.counter} />
-          <GateSlot state={shown} ownerName={shownName(gateOwner)} mine={onField && gateOwner === 0} />
-          {shown.duel && (battle.phase === 'battle' || battle.phase === 'clash') ? (
-            <BattleStatus state={shown} you={onField} names={[shownName(0), shownName(1)]} colors={fighterColors} />
-          ) : (
+          <GateSlot state={shown} names={[shownName(0), shownName(1)]} mine={onField && gateOwner === 0} />
+          {/* whose move it is sits next to the player's hand; up here only while there is none */}
+          {!hand && (
             <PhaseLabel state={battle} busy={busy} controls={onField} picking={picking} names={[shownName(0), shownName(1)]} />
           )}
         </div>
@@ -942,16 +957,8 @@ export function Brawl({
       {picking === 'gate' && !busy && <GatePicker gates={gatesLeft(battle.sides[0])} onPick={(i) => gateSet(battle, i)} />}
       {picking === 'throw' && !busy && <ThrowPicker state={battle} teams={cast.teams} onPick={(i) => pickThrow(battle, i)} />}
 
-      {/* the player's moves: the cards in hand, the Gate Card and PASS (hold, or give up) */}
-      {onField && battle.phase === 'battle' && duel && (
-        <MoveBar
-          state={battle}
-          myTurn={myTurn}
-          color={ELEMENT_BY_ID[duel.fighters[0].bakugan.element].color}
-          foeName={shownName(1)}
-          onMove={(m) => run(battle, m)}
-        />
-      )}
+      {/* the player's moves: the ability cards in hand and the gate action, when there is one */}
+      {hand && <MoveBar state={battle} myTurn={myTurn} foeName={shownName(1)} onMove={(m) => run(battle, m)} />}
 
       <AnimatePresence>
         {banner && !clash && battle.winner === null && (
@@ -1059,21 +1066,12 @@ export function Brawl({
 
 // ---------------------------------------------------------------- announcer lines
 
-/** What an effect is called on screen: an ability card's name or the Gate Card's. */
-function effectName(e: Effect, s: BattleState) {
-  return e.kind === 'gate' ? `the Gate Card (${s.duel?.gate?.card.name ?? ''})` : (e.card?.ability.name ?? 'the card')
-}
-
-/** What the brawler calls out when holding the lead. */
-const HOLD_LINES = ['Beat that if you can!', 'Your move!', "Let's see what you've got!", 'Go ahead, top that!']
-
-/** After a move, the state of the race: who has to answer now (or how the battle ended). */
-function raceLine(d: Duel, names: [string, string]) {
+/** After a move: who leads the race now (nothing once the battle is decided). */
+function raceLine(d: Duel) {
   if (d.done) return ''
   const lead = leaderOf(d)
   const gap = Math.abs(gapOf(d, lead))
-  if (d.turn === lead) return `${names[lead]} leads by ${gap} G!`
-  return gap ? `${names[d.turn]} is ${gap} G behind and has to answer!` : `It's a tie! ${names[d.turn]} has to answer!`
+  return gap ? `${d.fighters[lead].name} leads by ${gap} G!` : `Dead even! Ties go to ${d.fighters[lead].name}!`
 }
 
 /** The announcer on a card, whoever plays it. */
@@ -1083,9 +1081,8 @@ function cardLine(step: Step, card: Card, bakugan: string, foeBakugan: string, b
   const side = step.event!.actor
   const foe = other(side)
   const e = step.effect!
-  const names: [string, string] = side === 0 ? [brawler, foeBrawler] : [foeBrawler, brawler]
-  const next = raceLine(d, names)
-  const ko = d.end === 'ko' ? `${foeBakugan} is down to 0 G!` : ''
+  const next = raceLine(d)
+  const ko = d.end === 'ko' ? `${foeBakugan} has 0 G — defeated!` : ''
   switch (a.type) {
     case 'boost':
       return `${brawler} activates ${a.name}! ${bakugan} powers up to ${powerOf(d, side)} G! ${next}`
@@ -1097,43 +1094,43 @@ function cardLine(step: Step, card: Card, bakugan: string, foeBakugan: string, b
       return `${a.name}! ${bakugan} steals ${e.delta[side]} G from ${foeBakugan}! ${ko || next}`
     case 'shield':
       return step.cancelled
-        ? `${brawler} activates ${a.name}! ${foeBrawler}'s ${effectName(step.cancelled, step.state)} is nullified! ${next}`
+        ? `${brawler} activates ${a.name}! ${foeBrawler}'s ${step.cancelled.card?.ability.name ?? 'card'} is nullified! ${next}`
         : `${brawler} activates ${a.name}!`
     case 'finisher':
       return `${bakugan} unleashes ${a.name}! ${foeBakugan} is wiped out!`
   }
 }
 
-/** The announcer as a battle is decided (the finisher's own line already said it). */
-function endLine(end: DuelEnd, loser: string, loserBakugan: string, power: [number, number]) {
-  const score = `${Math.max(...power)} G against ${Math.min(...power)} G!`
+/** The announcer as a battle is decided (the finisher's and the 0 G calls already said it). */
+function endLine(end: DuelEnd, bakugan: [string, string], power: [number, number]) {
   switch (end) {
     case 'ko':
-      return `${loserBakugan} has no G-Power left! It's defeated!`
     case 'finisher':
       return ''
-    case 'gaveUp':
-      return `${loser} gives up! ${score}`
-    case 'noAnswer':
-      return `${loser} has nothing left to answer with! ${score}`
-    case 'standoff':
-      return `Neither side can play any more! ${score}`
+    case 'clash':
+      return `Clash! ${bakugan[0]}, ${power[0]} G, against ${bakugan[1]}, ${power[1]} G!`
   }
 }
 
-/** The announcer on an opened Gate Card. */
-function gateOutcome(s: BattleState, e: Effect) {
-  const d = s.duel!
+/** What a G change did to both Bakugan, for the announcer. */
+function gateOutcome(d: Duel, delta: [number, number]) {
   const parts = ([0, 1] as const)
-    .filter((i) => e.delta[i])
-    .map((i) => `${d.fighters[i].name} ${e.delta[i] > 0 ? 'rises' : 'drops'} to ${powerOf(d, i)} G`)
-  const next = raceLine(d, [d.fighters[0].name, d.fighters[1].name])
-  return parts.length ? `${parts.join(', ')}! ${next}` : `But nothing happens! ${next}`
+    .filter((i) => delta[i])
+    .map((i) => `${d.fighters[i].name} ${delta[i] > 0 ? 'rises' : 'drops'} to ${powerOf(d, i)} G`)
+  const ko = d.end === 'ko' ? `${d.fighters[other(d.winner!)].name} has 0 G — defeated!` : raceLine(d)
+  return parts.length ? `${parts.join(', ')}! ${ko}` : `But it does nothing here! ${ko}`
+}
+
+/** The announcer on a closed Gate Card: its effect is undone. */
+function undoneOutcome(d: Duel, step: Step) {
+  const e = step.cancelled
+  if (!e || (!e.delta[0] && !e.delta[1])) return `Its effect is gone! ${raceLine(d)}`
+  return gateOutcome(d, [-e.delta[0], -e.delta[1]])
 }
 
 // ---------------------------------------------------------------- the player's controls
 
-/** Whose move it is, under the Gate Card. */
+/** Whose move it is, under the Gate Card (while the player has no hand to show it by). */
 function PhaseLabel({
   state,
   busy,
@@ -1155,7 +1152,7 @@ function PhaseLabel({
   else if (state.phase === 'throw') text = 'BAKUGAN, BRAWL!'
   else if (state.phase === 'battle' && turn !== undefined)
     text = controls && turn === 0 ? 'YOUR MOVE' : `${names[turn].toUpperCase()}'S MOVE`
-  else if (state.phase === 'clash' || state.phase === 'result') text = 'BATTLE!'
+  else if (state.phase === 'clash' || state.phase === 'result') text = 'CLASH!'
   if (!text || state.phase === 'over') return null
   return (
     <p className="font-display mt-2 rounded border border-white/15 bg-black/60 px-3 py-1 text-[10px] tracking-[0.35em] text-white/85">
@@ -1164,53 +1161,57 @@ function PhaseLabel({
   )
 }
 
-/** What a move would leave on the field, on its button: both G-Powers and whether the player would be ahead. */
+/** Where a move would leave the battle, at the foot of its card: "→ 490 VS 480", green if the player would lead. */
 function previewText(d: Duel, move: Move): { text: string; color: string } {
   const p = previewMove(d, move)
-  if (p.winner === 0) return { text: p.end === 'ko' ? 'KNOCKS IT OUT: YOU WIN THE BATTLE' : 'WINS THE BATTLE', color: AHEAD }
-  if (p.winner === 1) return { text: 'YOU WOULD LOSE THE BATTLE', color: BEHIND }
-  const gap = p.power[0] - p.power[1]
-  const ahead = gap > 0 || (gap === 0 && d.first === 0)
-  return {
-    text: `${p.power[0]} VS ${p.power[1]} · ${ahead ? (gap ? `AHEAD BY ${gap}` : 'AHEAD ON THE TIE') : gap ? `STILL ${-gap} BEHIND` : 'TIED, STILL BEHIND'}`,
-    color: ahead ? AHEAD : BEHIND,
-  }
+  const vs = `${p.power[0]} VS ${p.power[1]}`
+  if (p.winner === 0) return { text: p.end === 'clash' ? `${vs} · WIN` : 'YOU WIN', color: AHEAD }
+  if (p.winner === 1) return { text: `${vs} · LOSE`, color: BEHIND }
+  const ahead = p.power[0] > p.power[1] || (p.power[0] === p.power[1] && d.first === 0)
+  return { text: vs, color: ahead ? AHEAD : BEHIND }
 }
 
-/** The player's moves in battle: each card in hand, opening the Gate Card, and PASS (hold the lead, or give up). */
+/** The player's hand: whose move it is, each ability card, and the gate action when there is one. */
 function MoveBar({
   state,
   myTurn,
-  color,
   foeName,
   onMove,
 }: {
   state: BattleState
   myTurn: boolean
-  color: string
   foeName: string
   onMove: (move: Move) => void
 }) {
   const d = state.duel!
-  const gate = d.gate?.owner === 0 && !d.gate.open ? d.gate.card : null
   const owner = d.fighters[0]
-  const ahead = leaderOf(d) === 0
-  const gap = Math.abs(gapOf(d, 0))
-  const mine = powerOf(d, 0)
-  const theirs = powerOf(d, 1)
+  const color = ELEMENT_BY_ID[owner.bakugan.element].color
+  const action = gateAction(d, 0)
   const live = myTurn && !d.done
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 px-24 pb-5 *:pointer-events-auto">
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-center gap-2.5 px-6 pb-4 *:pointer-events-auto">
+      <div className="flex w-28 shrink-0 flex-col items-center self-center text-center">
+        <motion.p
+          key={d.turn}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="font-display text-xs leading-tight font-black tracking-[0.15em]"
+          style={{ color: myTurn ? '#fff' : 'rgba(255,255,255,0.5)', textShadow: myTurn ? `0 0 12px ${color}` : 'none' }}
+        >
+          {d.turn === 0 ? 'YOUR MOVE' : `${foeName.split(' ')[0].toUpperCase()}'S MOVE`}
+        </motion.p>
+        {myTurn && <span className="mt-1 h-0.5 w-10 animate-pulse rounded" style={{ background: color }} />}
+      </div>
       {d.hands[0].map((card) => {
         const lock = cardLock(d, 0, card)
-        const target = card.ability.type === 'shield' ? bestTarget(d) : null
+        const target = card.ability.type === 'shield' ? nullifyTargets(d, 0)[0]?.card?.ability.name : null
         return (
           <HandButton
             key={card.uid}
             disabled={!myTurn || !!lock}
             locked={lock ?? undefined}
             onClick={() => onMove({ kind: 'ability', card })}
-            color={ELEMENT_BY_ID[owner.bakugan.element].color}
+            color={color}
             owner={owner.name}
             title={card.ability.name}
             tag={cardTag(card.ability)}
@@ -1220,117 +1221,101 @@ function MoveBar({
           />
         )
       })}
-      {gate && (
+      {action && d.gate && (
         <GateButton
-          gate={gate}
-          preview={gateDelta(d, gate, 0)}
-          result={live && canOpenGate(d, 0) ? previewText(d, { kind: 'gate' }) : undefined}
-          disabled={!myTurn || !canOpenGate(d, 0)}
+          action={action}
+          gate={d.gate.card}
+          change={gateChange(d, action)}
+          result={live ? previewText(d, { kind: 'gate' }) : undefined}
+          disabled={!myTurn}
           onClick={() => onMove({ kind: 'gate' })}
         />
       )}
-      <div className="flex w-52 shrink-0 flex-col items-stretch gap-1.5 self-center">
-        <p className="font-display text-center text-[10px] tracking-[0.3em] text-white/60">
-          {myTurn ? 'YOUR MOVE' : `${foeName.toUpperCase()}'S MOVE…`}
-        </p>
-        <p className="font-display text-center text-lg leading-none font-black" style={{ color: ahead ? AHEAD : BEHIND }}>
-          {gap ? `${gap} G ${ahead ? 'AHEAD' : 'BEHIND'}` : ahead ? 'TIED · YOU WIN TIES' : 'TIED · THEY WIN TIES'}
-        </p>
-        <p className="text-center text-[11px] leading-snug text-white/70">
-          {ahead
-            ? `${foeName} has to beat ${mine} G. Hold, or add more power.`
-            : `Get past ${theirs} G: play a card${gate && canOpenGate(d, 0) ? ' or open your Gate Card' : ''}.`}
-        </p>
-        <motion.button
-          disabled={!myTurn}
-          onClick={() => onMove({ kind: 'pass' })}
-          whileHover={myTurn ? { scale: 1.04 } : undefined}
-          whileTap={myTurn ? { scale: 0.96 } : undefined}
-          className={`font-display rounded-lg border-2 py-2.5 text-lg font-black tracking-[0.25em] backdrop-blur transition disabled:opacity-35 ${
-            ahead ? 'border-[#3ee07a] bg-[#3ee07a]/15' : 'border-white/30 bg-black/50 text-white/80'
-          }`}
-          style={{ boxShadow: myTurn && ahead ? `0 0 22px ${color}88` : 'none' }}
-        >
-          {ahead ? 'HOLD' : 'GIVE UP'}
-          <span className="mt-0.5 block text-[10px] font-normal tracking-[0.15em] text-white/70">
-            {ahead ? `PASS · ${foeName.toUpperCase()} MUST ANSWER` : 'PASS · LOSE THIS BATTLE'}
-          </span>
-        </motion.button>
-      </div>
     </div>
   )
 }
 
-/** What a nullify card would cancel now (the effect worth the most to the player). */
-function bestTarget(d: NonNullable<BattleState['duel']>) {
-  const targets = nullifyTargets(d, 0)
-  if (!targets.length) return null
-  const best = [...targets].sort((a, b) => b.delta[1] - b.delta[0] - (a.delta[1] - a.delta[0]))[0]
-  return best.kind === 'gate' ? `their Gate Card (${d.gate?.card.name})` : (best.card?.ability.name ?? null)
+/** The G change the player's gate action would make now (player, opponent). */
+function gateChange(d: Duel, action: GateAction): [number, number] {
+  if (action !== 'close') return gateDelta(d, d.gate!.card, 0)
+  const e = gateEffectOf(d)
+  return e ? [-e.delta[0], -e.delta[1]] : [0, 0]
 }
 
 const signed = (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}G`
 
-/** The player's own face-down Gate Card: "Gate Card, open!" */
+/** The gate action as a card in hand: what it is called, and what it would do now. */
+const GATE_MOVE: Record<GateAction, { title: string; help: string }> = {
+  open: {
+    title: 'GATE CARD, OPEN!',
+    help: 'Opens your Gate Card: it works in your favour. Your opponent may spend a move to close it, then open it for themselves.',
+  },
+  close: {
+    title: 'CLOSE GATE CARD',
+    help: 'Spends a move to close the Gate Card: its effect is undone. Then you may open it for yourself.',
+  },
+  take: {
+    title: 'OPEN IT FOR YOURSELF',
+    help: 'Opens the Gate Card in your favour: in full if it fits your Bakugan, half otherwise. Its owner may close it again.',
+  },
+}
+
 function GateButton({
+  action,
   gate,
-  preview,
+  change,
   result,
   disabled,
   onClick,
 }: {
+  action: GateAction
   gate: GateCard
-  /** What opening it would do right now (G for the player, for the opponent). */
-  preview: [number, number]
+  /** What the action would do right now (G for the player, for the opponent). */
+  change: [number, number]
   /** Where that would leave the battle. */
   result?: { text: string; color: string }
   disabled: boolean
   onClick: () => void
 }) {
   const el = ELEMENT_BY_ID[gateElementOf(gate)]
+  const move = GATE_MOVE[action]
+  const gain = change[0] - change[1]
   return (
-    <div className="group relative flex min-w-0 flex-1 basis-0 [max-width:10rem]">
+    <div className="group relative flex min-w-0 flex-1 basis-0 [max-width:9rem]">
       <motion.button
         disabled={disabled}
         onClick={onClick}
-        whileHover={disabled ? undefined : { y: -14 }}
-        className="relative flex h-[clamp(6rem,24vh,11rem)] w-full flex-col rounded-lg border-2 p-3 text-left backdrop-blur transition disabled:cursor-not-allowed"
+        whileHover={disabled ? undefined : { y: -12 }}
+        className="relative flex h-[clamp(5.5rem,19vh,8.5rem)] w-full flex-col rounded-lg border-2 p-2.5 pb-6 text-left backdrop-blur transition disabled:cursor-not-allowed"
         style={{
           borderColor: '#ffc94a',
-          opacity: disabled ? 0.45 : 1,
+          opacity: disabled ? 0.55 : 1,
           background: 'linear-gradient(160deg, rgba(42,29,74,.92), rgba(10,8,20,.92))',
           boxShadow: disabled ? 'none' : '0 0 20px #ffc94a66',
         }}
       >
-        <span className="font-display text-[11px] font-bold tracking-wider text-[#ffc94a]">▣ GATE CARD, OPEN!</span>
-        <span className="flex items-center gap-1.5 text-[10px] tracking-wider text-white/45 uppercase">
+        <span className="font-display text-[10px] leading-tight font-black tracking-wider text-[#ffc94a]">▣ {move.title}</span>
+        <span className="font-display mt-1 flex items-center gap-1 text-xs leading-tight font-bold">
           <img src={el.icon} alt="" className="h-4 w-4" />
-          {gateKindLabel(gate)}
+          {gateLabel(gate)}
         </span>
-        <span className="font-display mt-1 text-sm leading-tight font-bold">{gateLabel(gate)}</span>
-        {/* what it would do if opened now */}
         <span
-          className="font-display mt-1.5 text-[11px] leading-snug font-bold tracking-wider"
-          style={{
-            color: preview[0] - preview[1] > 0 ? '#3ee07a' : preview[0] || preview[1] ? '#ff6a4a' : 'rgba(255,255,255,0.45)',
-          }}
+          className="font-display mt-1 text-[10px] leading-snug font-bold tracking-wider"
+          style={{ color: gain > 0 ? AHEAD : 'rgba(255,255,255,0.45)' }}
         >
-          {preview[0] || preview[1]
-            ? `NOW: ${[preview[0] && `YOU ${signed(preview[0])}`, preview[1] && `FOE ${signed(preview[1])}`].filter(Boolean).join(' · ')}`
-            : 'NO EFFECT RIGHT NOW'}
-        </span>
-        <span className="mt-1 line-clamp-1 text-xs leading-snug text-white/55 [@media(min-height:720px)]:line-clamp-2">
-          {gate.text}
+          {change[0] || change[1]
+            ? [change[0] && `YOU ${signed(change[0])}`, change[1] && `FOE ${signed(change[1])}`].filter(Boolean).join(' · ')
+            : 'NO EFFECT NOW'}
         </span>
         {result && <ResultLine result={result} />}
       </motion.button>
       <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-4 w-64 -translate-x-1/2 rounded-lg border border-[#ffc94a]/70 bg-black/90 p-4 opacity-0 shadow-2xl backdrop-blur transition group-hover:opacity-100">
-        <p className="font-display text-[11px] font-bold tracking-wider text-[#ffc94a]">YOUR GATE CARD · FACE-DOWN</p>
-        <p className="font-display mt-1 text-base font-bold">{gate.name}</p>
-        <p className="mt-2 text-sm leading-snug text-white/80">{gate.text}</p>
-        <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-snug text-white/60">
-          Opening it takes your turn. Your opponent can then answer it, or nullify it.
+        <p className="font-display text-[11px] font-bold tracking-wider text-[#ffc94a]">{move.title}</p>
+        <p className="font-display mt-1 text-base font-bold">
+          {gate.name} <span className="text-[10px] tracking-wider text-white/45">{gateKindLabel(gate)}</span>
         </p>
+        <p className="mt-2 text-sm leading-snug text-white/80">{gate.text}</p>
+        <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-snug text-white/60">{move.help}</p>
       </div>
     </div>
   )
@@ -1394,7 +1379,9 @@ function ThrowPicker({
     >
       <p className="font-display mb-1 text-xs tracking-[0.5em] text-white/80">CHOOSE YOUR BAKUGAN · THROW!</p>
       <p className="mb-4 text-xs text-white/55">
-        {foe ? `${foe.name} (${foe.g} G) stands on the Gate Card. Who answers it?` : 'You throw first: your Bakugan wins a tie.'}
+        {foe
+          ? `${foe.name} (${foe.g} G) stands on the Gate Card. Who answers it?`
+          : 'You throw first: you move first, and your Bakugan wins a tie.'}
       </p>
       <div className="flex gap-3">
         {s.team.map((f, i) => {
@@ -1486,7 +1473,7 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
           >
             {clash.names[clash.winner].toUpperCase()} WINS!
           </p>
-          <p className="font-display mt-1 text-sm tracking-[0.3em] text-white/70">{clashReason(clash, brawlerNames, tie)}</p>
+          <p className="font-display mt-1 text-sm tracking-[0.3em] text-white/70">{clashReason(clash, tie)}</p>
         </motion.div>
       )}
       {clash.step >= 2 && (
@@ -1512,20 +1499,15 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
 }
 
 /** Why the battle was won, under the winner's name. */
-function clashReason(clash: Clash, brawlers: [string, string], tie: boolean) {
+function clashReason(clash: Clash, tie: boolean) {
   const loser = other(clash.winner)
-  const by = tie ? 'ON THE TIE: THROWN FIRST' : `BY ${Math.abs(clash.power[0] - clash.power[1])} G`
   switch (clash.end) {
     case 'finisher':
       return 'WON OUTRIGHT BY ITS FINISHER'
     case 'ko':
       return `${clash.names[loser].toUpperCase()} HAS 0 G — DEFEATED`
-    case 'gaveUp':
-      return `${by} · ${brawlers[loser].toUpperCase()} GAVE UP`
-    case 'noAnswer':
-      return `${by} · ${brawlers[loser].toUpperCase()} HAD NO ANSWER`
-    case 'standoff':
-      return `${by} · NO MOVES LEFT`
+    case 'clash':
+      return tie ? 'CLASH · ON THE TIE: THROWN FIRST' : `CLASH · BY ${Math.abs(clash.power[0] - clash.power[1])} G`
   }
 }
 
@@ -1638,29 +1620,26 @@ function HandButton({
   onClick: () => void
 }) {
   return (
-    <div className="group relative flex min-w-0 flex-1 basis-0 [max-width:10rem]">
+    <div className="group relative flex min-w-0 flex-1 basis-0 [max-width:9rem]">
       <motion.button
         disabled={disabled}
         onClick={onClick}
-        whileHover={disabled ? undefined : { y: -14 }}
-        className="relative flex h-[clamp(6rem,24vh,11rem)] w-full flex-col rounded-lg border-2 bg-black/75 p-3 text-left backdrop-blur transition disabled:cursor-not-allowed"
+        whileHover={disabled ? undefined : { y: -12 }}
+        className="relative flex h-[clamp(5.5rem,19vh,8.5rem)] w-full flex-col rounded-lg border-2 bg-black/75 p-2.5 pb-6 text-left backdrop-blur transition disabled:cursor-not-allowed"
         style={{
           borderColor: locked ? 'rgba(255,255,255,0.1)' : `${color}aa`,
           opacity: locked ? 0.4 : disabled ? 0.6 : 1,
           boxShadow: disabled ? 'none' : `0 0 18px ${color}44`,
         }}
       >
-        <span className="font-display text-[11px] font-bold tracking-wider" style={{ color }}>
+        <span className="font-display text-[10px] font-bold tracking-wider" style={{ color }}>
           {tag}
         </span>
-        {owner && <span className="truncate text-[10px] tracking-wider text-white/45 uppercase">{owner}</span>}
-        <span className="font-display mt-1 text-sm leading-tight font-bold">{title}</span>
-        <span className="mt-1.5 line-clamp-2 text-xs leading-snug text-white/65 [@media(min-height:720px)]:line-clamp-3">
-          {text}
-        </span>
+        <span className="font-display mt-0.5 text-[13px] leading-tight font-bold">{title}</span>
+        <span className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/60">{text}</span>
         {preview && <ResultLine result={preview} />}
         {locked && (
-          <span className="font-display absolute inset-x-0 bottom-2 px-2 text-center text-[10px] leading-tight tracking-widest text-white/80">
+          <span className="font-display absolute inset-x-0 bottom-1.5 px-2 text-center text-[9px] leading-tight tracking-widest text-white/80">
             {locked.toUpperCase()}
           </span>
         )}
@@ -1673,6 +1652,7 @@ function HandButton({
       >
         <p className="font-display text-[11px] font-bold tracking-wider" style={{ color }}>
           {tag}
+          {owner && <span className="ml-2 text-white/45">{owner.toUpperCase()}</span>}
         </p>
         <p className="font-display mt-1 text-base font-bold">{title}</p>
         <p className="mt-2 text-sm leading-snug text-white/80">{text}</p>

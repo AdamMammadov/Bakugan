@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-import { FINISHER_CHARGE, HAND_SIZE, LIVES } from '../battle/engine'
+import { FINISHER_CHARGE, HAND_SIZE, LIVES, MOVES } from '../battle/engine'
 import { COMMAND_GATES } from '../data/gates'
 import { BakuganInfo } from '../components/BakuganInfo'
 import { GRID, GRID_SIZE } from '../components/grid'
@@ -507,19 +507,19 @@ function RulesTab() {
         `Each brawler has ${LIVES} lives: the balls at the top of the screen. A match is a series of battles, one Bakugan against one. The loser of a battle loses a life; lose ${LIVES} battles and you are defeated.`,
         'Each side brings one to three Bakugan. A beaten Bakugan goes back to its brawler and can be thrown again in the next battle.',
         'Every battle: one brawler sets a Gate Card face-down (the brawlers take turns, a coin toss decides who sets the first). The setter throws a Bakugan first, then the other brawler answers with one of theirs.',
-        `Each side draws a hand of up to ${HAND_SIZE} cards from its thrown Bakugan's own ability cards; the brawler who set the Gate Card draws one fewer (the Gate Card is their extra card). The other brawler moves first, then you take turns.`,
-        'On your turn you do one thing: play an ability card, open your own Gate Card, or pass.',
-        'The higher G-Power is winning; a tie goes to the Bakugan thrown first (the Gate Card setter’s). Whoever is behind has to answer: play a card or open the Gate Card to get ahead. Whoever is ahead can pass to hold: the opponent must beat their G-Power.',
-        'A battle ends at once when a Bakugan drops to 0 G: it is defeated. It also ends when the brawler behind passes or has nothing left to play, or when neither side can move: the higher G-Power wins. So one card can decide a battle: 550 G against 700 G, you play +100 (650 G), they answer with +100 (800 G), and if you have nothing that gets you past 800 G, you lose the battle.',
-        'The loser of a battle loses a life. A turn counter (01T, 02T…) runs through the whole match.',
+        `Each side draws a hand of up to ${HAND_SIZE} cards from its thrown Bakugan's own ability cards. Then each brawler has ${MOVES} moves; you take turns, and the Gate Card's owner moves first.`,
+        'A move is one thing: activate an ability card ("Ability activate!"), or a Gate Card action. There is no passing. A brawler with nothing they can play skips their turn.',
+        'Once both brawlers have made their moves (or neither can move), the Bakugan clash: the higher G-Power wins the battle. A tie goes to the Bakugan thrown first (the Gate Card setter’s).',
+        'A battle ends at once when a Bakugan drops to 0 G: it is defeated. A finisher wins it outright. Big cards decide battles: 550 G against 600 G, they open their Gate Card (+150, 750 G), you answer with +400 (950 G).',
+        'The loser of a battle loses a life; their Bakugan goes back into its ball and can be thrown again. A turn counter (01T, 02T…) runs through the whole match.',
       ],
     ],
     [
       'Gate Cards',
       [
-        'Your Gate Card stays on the field for the whole battle and does nothing until you open it on one of your turns: "Gate Card, open!". After the battle it is spent; each brawler has three.',
-        'Opening it takes your turn. Your opponent can then answer it, or nullify it if they have the power.',
-        'Attribute Gate Cards give Bakugan of their attribute on the card extra G’s. Character Gate Cards raise one specific Bakugan’s G-Power by half.',
+        'Your Gate Card stays on the field for the battle and does nothing until you open it with one of your moves: "Gate Card, open!". After the battle it is spent; each brawler has three.',
+        'Then it is a tug-of-war, each step a move: your opponent may close it (its effect is undone), then open it for themselves (it works for them); you may then close it again. Each brawler opens it once and closes it once at most.',
+        'A Gate Card always works for the brawler it is open for. Attribute Gate Cards give their Bakugan extra G’s: in full if it has the card’s attribute, half otherwise. Character Gate Cards raise its G-Power by half if it is the card’s Bakugan, by a quarter otherwise. On a Command Gate Card, “you” is the brawler it is open for.',
         ...COMMAND_GATES.map((g) => `${g.name}: ${g.text}`),
       ],
     ],
@@ -527,7 +527,7 @@ function RulesTab() {
       'Ability cards in battle',
       [
         'Every card counts for the battle it is played in. Boost cards raise your G-Power; attack cards strike at once and weaken cards cut the opponent’s; drain cards steal it (they lose it, you gain it). An attack that takes a Bakugan down to 0 G defeats it.',
-        'Nullify cards cancel the opponent’s last ability card or their opened Gate Card, and its G change is undone. There are no shields that block everything.',
+        'Nullify cards cancel the opponent’s last ability card, and its G change is undone. There are no shields that block everything.',
         `A finisher, played after ${FINISHER_CHARGE} other ability cards in the same battle, wins the battle outright.`,
       ],
     ],

@@ -12,8 +12,11 @@ export type FxCall =
   | { kind: 'gateOpen'; by: SideIndex; element: ElementId | null; name: string; delta: [number, number] }
   /** `by` closes the open Gate Card: its effect is undone. */
   | { kind: 'gateClose'; by: SideIndex; element: ElementId | null; name: string }
-  /** `by` nullifies the opponent's last ability card. */
-  | { kind: 'nullify'; by: SideIndex; name: string }
+  /**
+   * `by` nullifies the opponent's last ability card, or their open Gate Card (`target`; when left out, the effects
+   * guess from the moves just before).
+   */
+  | { kind: 'nullify'; by: SideIndex; name: string; target?: 'ability' | 'gate' }
   /** A Bakugan's G-Power drops to 0, or it loses the clash. */
   | { kind: 'defeat'; side: SideIndex }
 

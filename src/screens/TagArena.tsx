@@ -683,9 +683,11 @@ function DuelPanel({
         <div className="flex items-center gap-2 text-[9px] tracking-widest text-white/45">
           <span className="h-px flex-1 bg-white/15" />
           {gate
-            ? gate.open
-              ? `GATE: ${gateLabel(gate.card).toUpperCase()}${gate.nullified ? ' · NULLIFIED' : ''}`
-              : `GATE CARD FACE-DOWN · ${cast.short[mini.pair[gate.owner]].toUpperCase()}`
+            ? gate.openFor !== null
+              ? `GATE: ${gateLabel(gate.card).toUpperCase()} · FOR ${cast.short[mini.pair[gate.openFor]].toUpperCase()}`
+              : gate.opened[gate.owner]
+                ? `GATE: ${gateLabel(gate.card).toUpperCase()} · CLOSED`
+                : `GATE CARD FACE-DOWN · ${cast.short[mini.pair[gate.owner]].toUpperCase()}`
             : s.phase === 'set'
               ? 'SETTING THE GATE CARD…'
               : s.gate

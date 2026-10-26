@@ -5,11 +5,12 @@ import type { ElementId } from './elements'
 /**
  * Gate Cards, after the Battle Brawlers anime and the season-1 card game (BakuProject card database,
  * https://bakuproject.info/cards, and the Bakugan Wiki). A Gate Card is set face-down and does nothing until its
- * owner opens it ("Gate Card, open!"); then:
- * - Attribute Gate Cards give Bakugan of one attribute on the card extra G's (either side's);
- * - Character Gate Cards double the G-Power of one specific Bakugan;
+ * owner opens it ("Gate Card, open!"). It always works in the favour of the brawler it is open for: its owner, or the
+ * opponent who closed it and opened it for themselves (engine gateDelta):
+ * - Attribute Gate Cards give that brawler's Bakugan extra G's: in full if it has the card's attribute, half otherwise;
+ * - Character Gate Cards raise its G-Power by half if it is the card's Bakugan (×1.5), by a quarter otherwise;
  * - Command Gate Cards have a rule of their own (Level Down, Energy Merge, Super Pyrus…).
- * "You" in a card's text is the brawler who set it.
+ * "You" in a card's text is the brawler it is open for.
  */
 export type GateCommand =
   | 'level-down'
@@ -51,7 +52,7 @@ export const ATTRIBUTE_GATES: GateCard[] = ELEMENTS.flatMap((element) =>
     name: `${cap(element)} - ${amount}`,
     element,
     amount,
-    text: `${cap(element)} Bakugan on this card gain +${amount} G's.`,
+    text: `Your Bakugan gains +${amount} G's if it is ${cap(element)}, +${amount / 2} G's otherwise.`,
   })),
 )
 
@@ -69,7 +70,7 @@ export const CHARACTER_GATES: GateCard[] = [
   kind: 'character' as const,
   name,
   bakugan,
-  text: `${name}'s G-Power rises by half (×1.5).`,
+  text: `If your Bakugan is ${name}, its G-Power rises by half (×1.5); any other Bakugan's, by a quarter.`,
 }))
 
 /** Season-1 Command Gate Cards, their numbers set to this game's G scale. */
@@ -109,7 +110,7 @@ export const COMMAND_GATES: GateCard[] = [
     command: 'positive-delta',
     element: 'haos',
     amount: 200,
-    text: "A Pyrus, Aquos or Haos opponent loses 200 G's. Against any other attribute, your own Bakugan loses 200 G's.",
+    text: "A Pyrus, Aquos or Haos opponent loses 200 G's; an opponent of any other attribute, 100 G's.",
   },
   {
     id: 'reloaded',

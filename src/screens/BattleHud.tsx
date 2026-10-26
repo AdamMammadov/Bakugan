@@ -1,10 +1,10 @@
 import { animate, AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
-  canOpenGate,
   gapOf,
   leaderOf,
   LIVES,
+  MOVES,
   other,
   powerOf,
   type BattleState,
@@ -17,14 +17,14 @@ import { BakuganPortrait } from '../components/BakuganPortrait'
 import { TYPE_ICON } from '../battle/labels'
 import type { Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
-import { gateElementOf, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
+import { gateElementOf, gateKindLabel, gateLabel } from '../data/gates'
 import { CHARACTER_BY_ID, DEFAULT_PARTS, photoOf, type Avatar as AvatarValue, type AvatarParts } from '../profile/avatar'
 
 /**
  * The battle HUD, after the anime's brawl screen: on each side the brawler's face, under it a card with the Bakugan
- * on the field, its attribute and its G-Power in big digits, then the brawler's HSP. At the top each brawler's
- * lives (three balls; a lost battle greys one out) and the turn counter in the middle, with whose move it is and who
- * is ahead under it.
+ * on the field, its attribute, its G-Power in big digits and the moves it has left (pips), then the brawler's HSP.
+ * At the top each brawler's lives (three balls; a lost battle greys one out), and in the middle the turn counter and
+ * the Gate Card.
  */
 
 /** Ahead or behind at a glance. */
@@ -179,6 +179,7 @@ export function BrawlerHud({
   const el = entrant ? ELEMENT_BY_ID[entrant.bakugan.element] : null
   // whose move it is lights up their card
   const moving = !!d && !d.done && state.phase === 'battle' && d.turn === side
+  const left = d ? d.left[side] : 0
   return (
     <div className={`flex w-[17rem] flex-col gap-2 ${right ? 'items-end text-right' : ''}`}>
       <LifeBalls lives={s.lives} max={s.maxLives} color={color} right={right} />
@@ -245,12 +246,33 @@ export function BrawlerHud({
             </p>
           )}
         </div>
-        {moving && (
-          <span
-            className={`font-display absolute top-1 rounded-sm bg-white px-1.5 text-[9px] font-black tracking-[0.2em] text-black ${right ? 'left-1' : 'right-1'}`}
+        {/* the moves left this battle, a pip each; the brawler to move has theirs lit */}
+        {d && (
+          <div
+            className={`absolute top-1.5 flex items-center gap-1 ${right ? 'left-2 flex-row-reverse' : 'right-2'}`}
+            title={`${left} of ${MOVES} moves left`}
           >
-            MOVE
-          </span>
+            {moving && (
+              <span className="font-display rounded-sm bg-white px-1 text-[8px] font-black tracking-[0.2em] text-black">
+                MOVE
+              </span>
+            )}
+            {Array.from({ length: MOVES }, (_, i) => {
+              const on = i < left
+              return (
+                <motion.span
+                  key={i}
+                  className="h-2 w-2 rounded-full border"
+                  style={{
+                    borderColor: on ? '#fff' : 'rgba(255,255,255,0.3)',
+                    background: on ? (el?.color ?? '#fff') : 'transparent',
+                    boxShadow: on && moving ? `0 0 6px ${el?.glow ?? '#fff'}` : 'none',
+                  }}
+                  animate={{ scale: on ? 1 : 0.75 }}
+                />
+              )
+            })}
+          </div>
         )}
       </motion.div>
 
@@ -331,7 +353,7 @@ function GPower({ value, color, glow, right }: { value: number; color: string; g
   )
 }
 
-/** What a side did in this battle: its cards (crossed out when nullified) and its opened gate. */
+/** What a side did in this battle: its cards (crossed out when nullified) and the gate opened for it (when closed). */
 function EffectChips({
   effects,
   state,
@@ -358,17 +380,18 @@ function EffectChips({
           const a = e.card.ability
           label = a.type === 'shield' ? `⊘ ${a.name}` : `${TYPE_ICON[a.type]} ${a.name} ${a.type === 'finisher' ? 'KO' : amount}`
         }
+        const undone = e.kind === 'gate' ? 'CLOSED' : 'NULLIFIED'
         return (
           <motion.span
             key={e.id}
             initial={{ opacity: 0, scale: 1.4 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${e.nullified ? 'text-white/35 line-through' : ''}`}
+            className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${e.undone ? 'text-white/35 line-through' : ''}`}
             style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(0,0,0,0.6)' }}
-            title={e.nullified ? 'Nullified' : (e.card?.ability.description ?? '')}
+            title={e.undone ? undone : (e.card?.ability.description ?? '')}
           >
             {label}
-            {e.nullified && <span className="ml-1 text-[#ff4a3d] no-underline">NULLIFIED</span>}
+            {e.undone && <span className="ml-1 text-[#ff4a3d] no-underline">{undone}</span>}
           </motion.span>
         )
       })}
@@ -377,15 +400,15 @@ function EffectChips({
 }
 
 /**
- * The Gate Card in the middle: face-down until its owner opens it (its owner sees what it is), then its name and
- * effect; a nullified one is stamped.
+ * The Gate Card in the middle: face-down until its owner opens it (its owner sees what it is), then its name and whose
+ * favour it works in; closed again, it is greyed out.
  */
-export function GateSlot({ state, ownerName, mine }: { state: BattleState; ownerName: string; mine: boolean }) {
-  const card = state.duel?.gate?.card ?? state.gate
+export function GateSlot({ state, names, mine }: { state: BattleState; names: [string, string]; mine: boolean }) {
+  const gate = state.duel?.gate
+  const card = gate?.card ?? state.gate
   if (!card) return null
-  const open = !!state.duel?.gate?.open
-  const nullified = !!state.duel?.gate?.nullified
-  if (!open)
+  const owner = names[gate?.owner ?? state.setter].toUpperCase()
+  if (!gate || (!gate.opened[0] && !gate.opened[1]))
     return (
       <motion.div
         key="down"
@@ -394,166 +417,35 @@ export function GateSlot({ state, ownerName, mine }: { state: BattleState; owner
         animate={{ opacity: 1, y: 0, rotateX: 0 }}
       >
         <div
-          className="flex h-16 w-12 items-center justify-center rounded-md border-2 border-[#ffc94a]/70 shadow-[0_0_16px_#ffc94a55]"
+          className="flex h-14 w-10 items-center justify-center rounded-md border-2 border-[#ffc94a]/70 shadow-[0_0_16px_#ffc94a55]"
           style={{ background: 'repeating-linear-gradient(45deg,#2a1d4a 0 6px,#1a1230 6px 12px)' }}
         >
-          <span className="font-display text-2xl font-black text-[#ffc94a]">?</span>
+          <span className="font-display text-xl font-black text-[#ffc94a]">?</span>
         </div>
-        <p className="font-display mt-1 text-[9px] tracking-[0.3em] text-white/55">GATE CARD · {ownerName.toUpperCase()}</p>
+        <p className="font-display mt-1 text-[9px] tracking-[0.3em] text-white/55">GATE CARD · {owner}</p>
         {mine && <p className="text-[10px] text-white/45">yours: {gateLabel(card)}</p>}
       </motion.div>
     )
-  return <OpenGate card={card} nullified={nullified} ownerName={ownerName} />
-}
-
-function OpenGate({ card, nullified, ownerName }: { card: GateCard; nullified: boolean; ownerName: string }) {
   const el = ELEMENT_BY_ID[gateElementOf(card)]
+  const open = gate.openFor !== null
   return (
     <motion.div
-      key="open"
-      className="relative mt-2 w-60 rounded-lg border-2 bg-black/75 px-3 py-2 text-center backdrop-blur"
-      style={{ borderColor: nullified ? '#666' : el.color, boxShadow: nullified ? 'none' : `0 0 22px ${el.color}88` }}
-      initial={{ opacity: 0, rotateY: 90, scale: 1.3 }}
+      key={`${gate.openFor}`}
+      className="relative mt-2 flex items-center gap-2 rounded-lg border-2 bg-black/75 px-3 py-1.5 backdrop-blur"
+      style={{ borderColor: open ? el.color : '#666', boxShadow: open ? `0 0 18px ${el.color}88` : 'none' }}
+      initial={{ opacity: 0, rotateY: 90, scale: 1.2 }}
       animate={{ opacity: 1, rotateY: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+      title={`${card.name} (${gateKindLabel(card).toLowerCase()}): ${card.text}`}
     >
-      <div className={`flex items-center justify-center gap-2 ${nullified ? 'opacity-40' : ''}`}>
-        <img src={el.icon} alt="" className="h-6 w-6" />
-        <p className="font-display text-sm font-black">{card.name.toUpperCase()}</p>
+      <img src={el.icon} alt="" className={`h-6 w-6 ${open ? '' : 'opacity-40 grayscale'}`} />
+      <div className={`text-left leading-tight ${open ? '' : 'opacity-50'}`}>
+        <p className="font-display text-xs font-black">{gateLabel(card).toUpperCase()}</p>
+        <p className="font-display text-[9px] tracking-[0.25em] text-white/60">
+          {open ? `OPEN · FOR ${names[gate.openFor!].toUpperCase()}` : `${owner}'S`}
+        </p>
       </div>
-      <p className={`text-[10px] leading-snug text-white/70 ${nullified ? 'line-through opacity-50' : ''}`}>{card.text}</p>
-      <p className="font-display mt-0.5 text-[9px] tracking-[0.3em] text-white/40">
-        {gateKindLabel(card)} · {ownerName.toUpperCase()}
-      </p>
-      {nullified && (
-        <motion.span
-          className="font-display absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 rounded border-2 border-[#ff4a3d] bg-black/70 px-2 text-lg font-black tracking-widest text-[#ff4a3d]"
-          initial={{ scale: 2.4, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-        >
-          NULLIFIED
-        </motion.span>
-      )}
+      {!open && <span className="font-display text-xs font-black tracking-widest text-[#ff4a3d]">CLOSED</span>}
     </motion.div>
-  )
-}
-
-/** What the battle status says: whose move, and in plain words what is going on. */
-function statusOf(d: Duel, you: boolean, names: [string, string]) {
-  const p: [number, number] = [powerOf(d, 0), powerOf(d, 1)]
-  const bakugan = [d.fighters[0].name, d.fighters[1].name]
-  const loud = bakugan.map((n) => n.toUpperCase())
-  const lead = leaderOf(d)
-  const gap = Math.abs(p[0] - p[1])
-  if (d.done) {
-    const w = d.winner ?? lead
-    const l = other(w)
-    const score = `${bakugan[w]} wins, ${p[w]} G to ${p[l]} G`
-    switch (d.end) {
-      case 'ko':
-        return { head: `${loud[l]} HAS 0 G — DEFEATED`, hint: `${bakugan[w]} wins the battle`, side: w }
-      case 'finisher':
-        return { head: `${loud[w]} WINS OUTRIGHT`, hint: 'A finisher decides the battle', side: w }
-      case 'gaveUp':
-        return { head: `${names[l]} GIVES UP`, hint: score, side: w }
-      case 'noAnswer':
-        return { head: `${names[l]} HAS NO ANSWER`, hint: score, side: w }
-      default:
-        return { head: 'NO MOVES LEFT', hint: score, side: w }
-    }
-  }
-  const t = d.turn
-  const foe = other(t)
-  const mine = you && t === 0
-  const head = mine ? 'YOUR MOVE' : `${names[t]}'S MOVE`
-  const tied = gap === 0
-  let hint: string
-  if (mine) {
-    const way = canOpenGate(d, 0) ? 'play a card or open your Gate Card' : 'play a card'
-    if (lead === 0)
-      hint = tied ? 'Tied, and you win ties: hold, or add more power' : `You're ${gap} G ahead: hold, or add more power`
-    else hint = tied ? `Tied, and ties go to ${bakugan[1]}: ${way} to get ahead` : `You're ${gap} G behind: ${way} to get ahead`
-  } else if (you) {
-    hint =
-      lead === 0
-        ? `You're ${tied ? 'ahead on the tie' : `${gap} G ahead`}: ${names[t]} has to answer`
-        : `${names[t]} is ${tied ? 'ahead on the tie' : `${gap} G ahead`} and may hold`
-  } else
-    hint =
-      lead === t
-        ? `${names[t]} is ${tied ? 'ahead on the tie' : `${gap} G ahead`}: hold, or add more power`
-        : `${names[t]} is ${tied ? 'behind on the tie' : `${gap} G behind`} and has to answer ${names[foe]}`
-  return { head, hint, side: t }
-}
-
-/**
- * Under the Gate Card: whose move it is, a bar of the two G-Powers (the leader's colour past the middle) with the gap,
- * and one plain line on what is going on ("You're 150 G behind: play a card or open your Gate Card to get ahead").
- */
-export function BattleStatus({
-  state,
-  you,
-  names,
-  colors,
-}: {
-  state: BattleState
-  /** The player brawls on side 0 (else both are watched). */
-  you: boolean
-  names: [string, string]
-  /** The colour of each Bakugan on the field. */
-  colors: [string, string]
-}) {
-  const d = state.duel
-  if (!d) return null
-  const p: [number, number] = [powerOf(d, 0), powerOf(d, 1)]
-  const share = p[0] + p[1] > 0 ? p[0] / (p[0] + p[1]) : 0.5
-  const lead = leaderOf(d)
-  const gap = Math.abs(p[0] - p[1])
-  const { head, hint, side } = statusOf(d, you, [names[0].toUpperCase(), names[1].toUpperCase()] as [string, string])
-  const pointer = d.done ? '' : side === 0 ? '◀ ' : ''
-  const after = d.done ? '' : side === 1 ? ' ▶' : ''
-  return (
-    <div className="mt-2 flex w-[23rem] flex-col items-center rounded-lg border border-white/15 bg-black/70 px-3 py-2 backdrop-blur">
-      <motion.p
-        key={`${head}-${d.moves}`}
-        className="font-display text-sm font-black tracking-[0.25em]"
-        style={{ color: d.done && d.end === 'ko' ? BEHIND : '#fff', textShadow: `0 0 14px ${colors[side]}` }}
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        {pointer}
-        {head}
-        {after}
-      </motion.p>
-      <div className="mt-1.5 flex w-full items-center gap-2">
-        <span className="font-display w-12 text-right text-xs font-black tabular-nums" style={{ color: colors[0] }}>
-          {p[0]}
-        </span>
-        <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
-          <motion.div
-            className="absolute inset-y-0 left-0"
-            style={{ background: colors[0] }}
-            animate={{ width: `${share * 100}%` }}
-            transition={{ duration: 0.7 }}
-          />
-          <motion.div
-            className="absolute inset-y-0 right-0"
-            style={{ background: colors[1] }}
-            animate={{ width: `${(1 - share) * 100}%` }}
-            transition={{ duration: 0.7 }}
-          />
-          <div className="absolute inset-y-[-2px] left-1/2 w-0.5 -translate-x-1/2 bg-white" />
-        </div>
-        <span className="font-display w-12 text-left text-xs font-black tabular-nums" style={{ color: colors[1] }}>
-          {p[1]}
-        </span>
-      </div>
-      <p className="font-display mt-1 text-[10px] tracking-[0.25em] text-white/75">
-        {gap
-          ? `${d.fighters[lead].name.toUpperCase()} AHEAD BY ${gap} G`
-          : `TIED · ${d.fighters[lead].name.toUpperCase()} WINS TIES (THROWN FIRST)`}
-      </p>
-      <p className="mt-0.5 text-center text-xs leading-snug text-white/85">{hint}</p>
-    </div>
   )
 }
