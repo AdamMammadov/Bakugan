@@ -10,5 +10,5 @@ export const TYPE_ICON: Record<Ability['type'], string> = {
   finisher: '☠',
 }
 
-/** A short label for an ability card's effect, e.g. "▲ +100G" or "⊘ NULLIFY". */
-export const cardTag = (a: Ability) => `${TYPE_ICON[a.type]} ${abilityLabel(a)}`
+/** A short label for an ability card's effect in battle, e.g. "▲ +100G", "⚔ −300G FOE" or "⊘ NULLIFY". */
+export const cardTag = (a: Ability) => `${TYPE_ICON[a.type]} ${a.type === 'attack' ? `−${a.amount}G FOE` : abilityLabel(a)}`

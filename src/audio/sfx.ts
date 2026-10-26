@@ -2,7 +2,7 @@ import { Howl } from 'howler'
 import { asset } from '../asset'
 import { DEFAULT_VOICE } from '../profile/avatar'
 import { useGame } from '../store/useGame'
-import { deliveryFor, speakerOf, type SpeakerVoice } from './voices'
+import { ANNOUNCER, deliveryFor, speakerOf, type Delivery, type SpeakerVoice } from './voices'
 
 /**
  * Sound effects. Each one first tries a real file from /public/sounds/<name>.mp3;
@@ -119,17 +119,54 @@ export function playSfx(name: SfxName) {
   else synth[name]()
 }
 
+// ---------------------------------------------------------------- speech
+
 /**
- * A brawler calls out loud ("Ability activate! Dual Gazer!") in their own voice: every character (and every CPU
- * brawler, by name) has a browser voice, pitch and pace of their own (see voices.ts). A voice from the character
- * list is recognised as that character; `id` or `name` on the voice names the speaker for anyone else.
+ * Everyone who talks (the brawlers and the announcer) shares one queue, so nobody talks over anybody: a line starts
+ * only once the last one has ended. The queue stays short and fresh, so the voices keep up with the action: a line
+ * that waited too long is dropped, and when too many pile up the oldest announcer lines go first.
  */
-export function shout(text: string, voice: SpeakerVoice = DEFAULT_VOICE) {
-  if (useGame.getState().muted || typeof speechSynthesis === 'undefined') return
-  // brawlers take turns talking: calls queue up instead of cutting each other off
-  const u = new SpeechSynthesisUtterance(text)
+interface Line {
+  text: string
+  delivery: Delivery
+  /** When it was asked for, and how long it stays worth saying (ms). */
+  at: number
+  ttl: number
+  /** An announcer line: it gives way to the brawlers' calls. */
+  minor: boolean
+  /** Runs as the line starts (or right away if it cannot be spoken), e.g. to show it on screen. */
+  onStart?: () => void
+}
+
+/** Lines waiting at most (the one being spoken not counted). */
+const QUEUE_MAX = 3
+/** How long a brawler's call and an announcer line stay worth saying. */
+const CALL_TTL = 3500
+const LINE_TTL = 5000
+
+const queue: Line[] = []
+let talking: { u: SpeechSynthesisUtterance; timer: number } | null = null
+
+const hasSpeech = () => typeof speechSynthesis !== 'undefined'
+const silent = () => useGame.getState().muted || !hasSpeech()
+
+/** About how long a line takes to say (ms), for when a voice never reports that it ended. */
+const lengthOf = (text: string, rate: number) => (text.split(/\s+/).length / (2.6 * rate)) * 1000 + 800
+
+function pump() {
+  if (talking || !hasSpeech()) return
+  const now = performance.now()
+  let line = queue.shift()
+  while (line && now - line.at > line.ttl) line = queue.shift()
+  if (!line) return
+  if (silent()) {
+    line.onStart?.()
+    queue.splice(0).forEach((l) => l.onStart?.())
+    return
+  }
+  const u = new SpeechSynthesisUtterance(line.text)
   u.lang = 'en-US'
-  const d = deliveryFor(speakerOf(voice), voice)
+  const d = line.delivery
   if (d.voice) {
     u.voice = d.voice
     u.lang = d.voice.lang
@@ -137,12 +174,63 @@ export function shout(text: string, voice: SpeakerVoice = DEFAULT_VOICE) {
   u.pitch = d.pitch
   u.rate = d.rate
   u.volume = 1
+  const done = () => {
+    if (talking?.u !== u) return
+    clearTimeout(talking.timer)
+    talking = null
+    pump()
+  }
+  u.onend = done
+  u.onerror = done
+  // a voice that never says it has ended does not hold up everyone else
+  const timer = window.setTimeout(
+    () => {
+      if (talking?.u !== u) return
+      speechSynthesis.cancel()
+      done()
+    },
+    lengthOf(line.text, d.rate) * 1.5 + 1500,
+  )
+  talking = { u, timer }
+  line.onStart?.()
   speechSynthesis.speak(u)
 }
 
-const speaking = () => typeof speechSynthesis !== 'undefined' && (speechSynthesis.speaking || speechSynthesis.pending)
+function enqueue(line: Line) {
+  if (silent()) return line.onStart?.()
+  // a brawler's call goes ahead of announcer lines still waiting: it belongs to what happens now
+  const at = line.minor ? queue.length : queue.findIndex((l) => l.minor)
+  queue.splice(at < 0 ? queue.length : at, 0, line)
+  while (queue.length > QUEUE_MAX) {
+    const i = queue.findIndex((l) => l.minor)
+    queue.splice(i >= 0 ? i : 0, 1)
+  }
+  pump()
+}
 
-/** Runs `fn` once the brawlers have finished talking (or after `maxMs` at the latest). */
+/**
+ * A brawler calls out loud ("Ability activate! Dual Gazer!") in their own voice: every character (and every CPU
+ * brawler, by name) has a browser voice, pitch and pace of their own (see voices.ts). A voice from the character
+ * list is recognised as that character; `id` or `name` on the voice names the speaker for anyone else.
+ */
+export function shout(text: string, voice: SpeakerVoice = DEFAULT_VOICE) {
+  if (silent()) return
+  enqueue({ text, delivery: deliveryFor(speakerOf(voice), voice), at: performance.now(), ttl: CALL_TTL, minor: false })
+}
+
+/** The announcer says a line in its own voice; `onStart` runs as it starts (or at once when the sound is off). */
+export function announceLine(text: string, onStart?: () => void) {
+  enqueue({ text, delivery: deliveryFor(ANNOUNCER), at: performance.now(), ttl: LINE_TTL, minor: true, onStart })
+}
+
+/** Someone is talking, or a fresh line is waiting to be said. */
+export function speaking() {
+  if (talking) return true
+  const now = performance.now()
+  return queue.some((l) => now - l.at <= l.ttl)
+}
+
+/** Runs `fn` once everyone has finished talking (or after `maxMs` at the latest). */
 export function afterSpeech(fn: () => void, maxMs = 4000, minMs = 0): () => void {
   const start = performance.now()
   let timer = 0
@@ -155,7 +243,15 @@ export function afterSpeech(fn: () => void, maxMs = 4000, minMs = 0): () => void
   return () => clearTimeout(timer)
 }
 
-/** Stops every queued call, e.g. when leaving the arena. */
+/** Stops every line, said or waiting, e.g. when leaving the arena. */
 export function hush() {
-  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
+  queue.length = 0
+  if (talking) clearTimeout(talking.timer)
+  talking = null
+  if (hasSpeech()) speechSynthesis.cancel()
 }
+
+// the sound switched off mid-line: stop talking
+useGame.subscribe((s, prev) => {
+  if (s.muted && !prev.muted) hush()
+})

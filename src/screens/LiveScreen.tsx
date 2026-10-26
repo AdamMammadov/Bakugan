@@ -3,7 +3,7 @@ import { aiForTier } from '../battle/engine'
 import { abilitiesOf, BAKUGAN, type Entrant } from '../data/bakugan'
 import { CHARACTER_BY_ID } from '../profile/avatar'
 import { BOTS, botNow, botTeam, type BotBrawler } from '../profile/bots'
-import { rankScore, tierOf, TIERS } from '../profile/useProfiles'
+import { rankScore, tierOf } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 import { Brawl, type BrawlerSide } from './ArenaScreen'
 
@@ -36,15 +36,15 @@ function teamOf(bot: BotBrawler): Entrant[] {
 
 function sideOf(bot: BotBrawler): BrawlerSide {
   const c = CHARACTER_BY_ID[bot.characterId]
-  const tier = tierOf(rankScore(bot)).index
+  const rank = tierOf(rankScore(bot))
   return {
     name: bot.name,
-    tag: `${TIERS[tier].name.toUpperCase()} · ${bot.rating} BR`,
+    tag: `${rank.rank.toUpperCase()} · ${bot.rating} BR`,
     avatar: { kind: 'preset', id: bot.characterId },
     parts: c.parts,
     model: c.model,
     voice: c.voice,
-    ai: aiForTier(tier),
+    ai: aiForTier(rank.index),
     hsp: rankScore(bot),
   }
 }

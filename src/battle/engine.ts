@@ -14,24 +14,23 @@ import { released } from '../season/release'
  * - Gate Card: one brawler sets a Gate Card from their gate deck, face-down (they take turns; a coin toss decides
  *   who sets the first). It stays on the field for the whole battle and is spent afterwards. It does nothing until
  *   its owner opens it on one of their turns ("Gate Card, open!").
- * - Throw: the setter throws first, the other brawler answers with a Bakugan of their own. The Bakugan thrown first
- *   wins a tie.
+ * - Throw: the setter throws first, then the other brawler answers with a Bakugan of their own. The Bakugan thrown
+ *   first wins a tie. Each draws HAND_SIZE ability cards from its Bakugan's deck; the setter draws one fewer, as its
+ *   Gate Card is its extra card.
  * - Turns: the brawler who did not set the gate moves first, then they alternate. A turn is one move: play an
- *   ability card, open your Gate Card, or ATTACK. A side makes at most PLAYS card or gate moves, then must attack.
- * - Attack: the Bakugan strikes (the opponent loses STRIKE of the attacker's G-Power) and the attacker's part in
- *   the battle is over. The opponent may answer with one more move, then must strike back.
+ *   ability card, open your own Gate Card, or pass.
+ * - The higher G-Power is winning. The brawler behind has to answer and get ahead; the one ahead may pass to hold
+ *   ("beat that!"). Passing while behind gives the battle up.
+ * - The battle ends at once when a Bakugan drops to 0 G (it is defeated) or a finisher is played. It also ends when
+ *   the brawler to move is behind and passes or has nothing left to play, when both pass in a row, or when neither
+ *   can move: then the higher G-Power wins (a tie goes to the Bakugan thrown first).
  * - Nullify cards cancel the opponent's last ability card or their opened Gate Card (its G change is undone).
- * - When both have attacked, the higher G-Power wins the battle.
  */
 
 export const LIVES = 3
 export const TEAM_SIZE = 3
-/** Cards drawn each battle from the thrown Bakugan's own deck. */
+/** Cards drawn each battle from the thrown Bakugan's own deck (the Gate Card's setter draws one fewer). */
 export const HAND_SIZE = 4
-/** Card plays and gate opens a side may make in one battle before it must attack. */
-export const PLAYS = 3
-/** An attack takes this share of the attacker's G-Power from the opponent (rounded to 10). */
-export const STRIKE = 0.3
 /** Other ability cards a Bakugan must play in the battle before its finisher (it gathers its power first). */
 export const FINISHER_CHARGE = 2
 
@@ -63,11 +62,11 @@ export interface FieldGate {
   nullified: boolean
 }
 
-/** Something that moved G-Power in a battle: an ability card, the opened Gate Card or a strike. */
+/** Something that moved G-Power in a battle: an ability card or the opened Gate Card. */
 export interface Effect {
   id: string
   side: SideIndex
-  kind: 'ability' | 'gate' | 'strike'
+  kind: 'ability' | 'gate'
   card?: Card
   /** G-Power change for side 0 and side 1. */
   delta: [number, number]
@@ -76,17 +75,18 @@ export interface Effect {
   cancels?: string
 }
 
+/**
+ * Why a battle ended. ko: a Bakugan dropped to 0 G · finisher: won outright · gaveUp: the brawler behind passed ·
+ * noAnswer: the brawler behind had nothing left to play · standoff: both passed, or neither could move.
+ */
+export type DuelEnd = 'ko' | 'finisher' | 'gaveUp' | 'noAnswer' | 'standoff'
+
 /** One battle: one Bakugan against one on a Gate Card. Knows nothing of lives or teams. */
 export interface Duel {
   fighters: [Fighter, Fighter]
   hands: [Card[], Card[]]
   gate: FieldGate | null
   effects: Effect[]
-  attacked: [boolean, boolean]
-  /** Card plays and gate opens made. */
-  plays: [number, number]
-  /** Most plays allowed: PLAYS, or one more once the opponent has attacked. */
-  limit: [number, number]
   /** Ability cards played (a finisher needs FINISHER_CHARGE of them first). */
   cards: [number, number]
   /** Side to move. */
@@ -97,11 +97,15 @@ export interface Duel {
   lost: [number, number]
   /** Moves made in this battle. */
   moves: number
-  /** Both struck, or a finisher won it. */
+  /** Passes in a row. */
+  passes: number
+  /** The battle is decided. */
   done: boolean
   winner: SideIndex | null
   /** Won outright by a finisher. */
   finisher: boolean
+  /** Why it ended (null while it goes on). */
+  end: DuelEnd | null
 }
 
 export interface Side {
@@ -121,8 +125,8 @@ export interface Side {
 }
 
 /**
- * set: the setter picks a Gate Card · throw: the setter, then the other side, picks a Bakugan · battle: turns ·
- * clash: both have struck, the battle is decided · result: a life is lost, the next battle comes · over: match won
+ * set: the setter picks a Gate Card · throw: the setter, then the other side, throws a Bakugan · battle: turns ·
+ * clash: the battle is decided · result: a life is lost, the next battle comes · over: match won
  */
 export type Phase = 'set' | 'throw' | 'battle' | 'clash' | 'result' | 'over'
 
@@ -138,6 +142,8 @@ export interface BattleResult {
   /** Its owner opened the Gate Card (and nobody nullified it). */
   gateUsed: boolean
   finisher: boolean
+  /** How the battle was decided. */
+  end: DuelEnd
   moves: number
 }
 
@@ -163,13 +169,13 @@ export interface BattleState {
   results: BattleResult[]
 }
 
-/** What a Bakugan does on the field (drives the arena animation): `basic` is a strike. */
+/** What a Bakugan does on the field (drives the arena animation): `basic` is the winner's final blow. */
 export type Action = { kind: 'basic' } | { kind: 'ability'; card: Card } | { kind: 'switch'; to: number }
 
 /** A move in battle. A nullify card may name the effect it cancels (the best one when left out). */
-export type Move = { kind: 'ability'; card: Card; target?: string } | { kind: 'gate' } | { kind: 'attack' }
+export type Move = { kind: 'ability'; card: Card; target?: string } | { kind: 'gate' } | { kind: 'pass' }
 
-/** What happened in one card play, strike or battle result; drives the arena animation. */
+/** What happened in one card play or battle result; drives the arena animation. */
 export interface BattleEvent {
   actor: SideIndex
   target: SideIndex
@@ -180,7 +186,7 @@ export interface BattleEvent {
   actorG: number
   targetG: number
   blocked: boolean
-  /** The target's brawler is out of lives. */
+  /** The target is beaten for good: knocked out, out of lives, or hit by a finisher. */
   ko: boolean
   /** Index of a Bakugan that came onto the field (not used by battles). */
   enters?: { side: SideIndex; index: number }
@@ -188,7 +194,7 @@ export interface BattleEvent {
   clash?: { power: [number, number]; diff: number }
 }
 
-/** What a move did, for the screen: the scene event (none for a gate opening) and the effect it made. */
+/** What a move did, for the screen: the scene event (none for a gate opening or a pass) and the effect it made. */
 export interface Step {
   state: BattleState
   event: BattleEvent | null
@@ -260,24 +266,25 @@ export function startDuel(
   first: SideIndex,
   lost: [number, number] = [0, 0],
 ): Duel {
-  return {
+  const d: Duel = {
     fighters,
     hands,
     gate: gate ? { ...gate, open: false, nullified: false } : null,
     effects: [],
-    attacked: [false, false],
-    plays: [0, 0],
-    limit: [PLAYS, PLAYS],
     cards: [0, 0],
     // the brawler who did not set the gate moves first
     turn: other(first),
     first,
     lost,
     moves: 0,
+    passes: 0,
     done: false,
     winner: null,
     finisher: false,
+    end: null,
   }
+  settle(d)
+  return d
 }
 
 function cloneDuel(d: Duel): Duel {
@@ -286,9 +293,6 @@ function cloneDuel(d: Duel): Duel {
     hands: [[...d.hands[0]], [...d.hands[1]]],
     gate: d.gate ? { ...d.gate } : null,
     effects: d.effects.map((e) => ({ ...e })),
-    attacked: [...d.attacked],
-    plays: [...d.plays],
-    limit: [...d.limit],
     cards: [...d.cards],
   }
 }
@@ -318,10 +322,15 @@ export function powerOf(d: Duel, side: SideIndex) {
   return Math.max(0, g)
 }
 
-/** G the side's attack takes from the opponent right now. */
-export const strikeOf = (d: Duel, side: SideIndex) => Math.min(round10(powerOf(d, side) * STRIKE), powerOf(d, other(side)))
+/** Who is winning right now: the higher G-Power, a tie to the Bakugan thrown first. */
+export function leaderOf(d: Duel): SideIndex {
+  const a = powerOf(d, 0)
+  const b = powerOf(d, 1)
+  return a === b ? d.first : a > b ? 0 : 1
+}
 
-export const playsLeft = (d: Duel, side: SideIndex) => (d.attacked[side] ? 0 : Math.max(0, d.limit[side] - d.plays[side]))
+/** How far the side is ahead (negative: behind), in G. */
+export const gapOf = (d: Duel, side: SideIndex) => powerOf(d, side) - powerOf(d, other(side))
 
 /** How many of the cards a finisher waits for its side has played this battle. */
 export const chargeOf = (d: Duel, side: SideIndex) => d.cards[side]
@@ -337,8 +346,7 @@ export function nullifyTargets(d: Duel, side: SideIndex): Effect[] {
 
 /** Why a card cannot be played now (null when it can). */
 export function cardLock(d: Duel, side: SideIndex, card: Card): string | null {
-  if (d.done || d.attacked[side]) return 'Attacked'
-  if (playsLeft(d, side) <= 0) return 'Attack now!'
+  if (d.done) return 'Battle over'
   if (card.ability.type === 'shield' && !nullifyTargets(d, side).length) return 'Nothing to nullify'
   if (card.ability.type === 'finisher' && chargeOf(d, side) < FINISHER_CHARGE) {
     const n = FINISHER_CHARGE - chargeOf(d, side)
@@ -349,9 +357,11 @@ export function cardLock(d: Duel, side: SideIndex, card: Card): string | null {
 
 export const canPlay = (d: Duel, side: SideIndex, card: Card) => cardLock(d, side, card) === null
 
-/** The side can open its face-down Gate Card now: not once the opponent has struck (it could not answer any more). */
-export const canOpenGate = (d: Duel, side: SideIndex) =>
-  !d.done && !!d.gate && d.gate.owner === side && !d.gate.open && playsLeft(d, side) > 0 && !d.attacked[other(side)]
+/** The side can open its own face-down Gate Card now. */
+export const canOpenGate = (d: Duel, side: SideIndex) => !d.done && !!d.gate && d.gate.owner === side && !d.gate.open
+
+/** The side has something to play: an ability card or its face-down Gate Card (else it can only pass). */
+export const canAct = (d: Duel, side: SideIndex) => canOpenGate(d, side) || d.hands[side].some((c) => canPlay(d, side, c))
 
 /** G change opening the gate would make now (side 0, side 1). */
 export function gateDelta(d: Duel, gate: GateCard, owner: SideIndex): [number, number] {
@@ -389,7 +399,7 @@ export function gateDelta(d: Duel, gate: GateCard, owner: SideIndex): [number, n
         break
       }
       case 'reloaded': {
-        // every G the opponent's cards and strikes took from it
+        // every G the opponent's cards took from it
         let lost = 0
         for (const e of d.effects) if (!e.nullified && e.side === foe && e.delta[owner] < 0) lost -= e.delta[owner]
         delta[owner] = lost + gate.amount
@@ -402,20 +412,13 @@ export function gateDelta(d: Duel, gate: GateCard, owner: SideIndex): [number, n
   return delta
 }
 
-/** The battle's winner once both have struck: the higher G-Power, a tie to the Bakugan thrown first. */
-export function leaderOf(d: Duel): SideIndex {
-  const a = powerOf(d, 0)
-  const b = powerOf(d, 1)
-  return a === b ? d.first : a > b ? 0 : 1
-}
-
 // ---------------------------------------------------------------- battle moves
 
-/** Every move the side to move can make (a nullify once per target it could cancel). */
+/** Every move the side to move can make (a nullify once per target it could cancel); passing is always one. */
 export function duelMoves(d: Duel): Move[] {
   if (d.done) return []
   const side = d.turn
-  const moves: Move[] = [{ kind: 'attack' }]
+  const moves: Move[] = [{ kind: 'pass' }]
   if (canOpenGate(d, side)) moves.push({ kind: 'gate' })
   const seen = new Set<string>()
   for (const card of d.hands[side]) {
@@ -433,6 +436,24 @@ export function duelMoves(d: Duel): Move[] {
 
 /** How much a cancelled effect was worth to `side` (G in its favour once it is undone). */
 const cancelGain = (e: Effect, side: SideIndex) => e.delta[other(side)] - e.delta[side]
+
+function finish(d: Duel, winner: SideIndex, end: DuelEnd) {
+  d.done = true
+  d.winner = winner
+  d.end = end
+  d.finisher = end === 'finisher'
+}
+
+/**
+ * The side to move has nothing left to play: behind, it cannot answer and loses the battle; ahead, it can only
+ * pass, and if the opponent cannot move either the battle is over.
+ */
+function settle(d: Duel) {
+  if (d.done || canAct(d, d.turn)) return
+  const leader = leaderOf(d)
+  if (leader !== d.turn) finish(d, leader, 'noAnswer')
+  else if (!canAct(d, other(d.turn))) finish(d, leader, 'standoff')
+}
 
 /** One move in a duel (pure). */
 export function duelStep(
@@ -458,27 +479,23 @@ export function duelStep(
   let scene = true
   const delta = (mine: number, theirs: number): [number, number] => (actor === 0 ? [mine, theirs] : [theirs, mine])
 
-  if (move.kind === 'attack') {
-    const x = strikeOf(d, actor)
-    effect = { id: `s${d.moves}-${actor}`, side: actor, kind: 'strike', delta: delta(0, -x), nullified: false }
-    d.attacked[actor] = true
-    // the opponent may answer with one more move before it strikes back
-    d.limit[target] = Math.min(d.limit[target], d.plays[target] + 1)
-    event.damage = x
-    event.targetG = -x
+  if (move.kind === 'pass') {
+    d.passes++
+    scene = false
+    // passing while behind gives the battle up; ahead, it holds, unless the opponent just passed too
+    if (leaderOf(d) !== actor) finish(d, target, 'gaveUp')
+    else if (d.passes >= 2) finish(d, actor, 'standoff')
   } else if (move.kind === 'gate') {
     const gate = d.gate!
     gate.open = true
     effect = { id: 'gate', side: actor, kind: 'gate', delta: gateDelta(d, gate.card, actor), nullified: false }
-    d.plays[actor]++
-    // the opponent always gets a move to answer an opened Gate Card (to nullify it, if it has the power)
-    d.limit[target] = Math.max(d.limit[target], d.plays[target] + 1)
+    d.passes = 0
     scene = false
   } else {
     const card = move.card
     const a = card.ability
     d.hands[actor] = d.hands[actor].filter((c) => c.uid !== card.uid)
-    d.plays[actor]++
+    d.passes = 0
     if (a.type !== 'finisher') d.cards[actor]++
     event.action = { kind: 'ability', card }
     const foeG = powerOf(d, target)
@@ -509,9 +526,7 @@ export function duelStep(
         break
       }
       case 'finisher':
-        d.done = true
-        d.winner = actor
-        d.finisher = true
+        finish(d, actor, 'finisher')
         event.ko = true
         break
     }
@@ -524,13 +539,25 @@ export function duelStep(
   if (effect) d.effects.push(effect)
   d.moves++
 
-  if (!d.done && d.attacked[0] && d.attacked[1]) {
-    d.done = true
-    d.winner = leaderOf(d)
+  // a Bakugan down to 0 G is defeated at once
+  if (!d.done) {
+    const zero = SIDES.filter((s) => powerOf(d, s) <= 0)
+    if (zero.length) {
+      finish(d, zero.length === 2 ? actor : other(zero[0]), 'ko')
+      event.ko = zero.includes(target)
+    }
   }
-  // the turn passes, unless the opponent has already struck: then this side moves until it strikes back
-  if (!d.done) d.turn = d.attacked[target] ? actor : target
+  if (!d.done) {
+    d.turn = target
+    settle(d)
+  }
   return { duel: d, event: scene ? event : null, effect, cancelled }
+}
+
+/** Both G-Powers after a move (and whether it would win the battle): the card previews on screen. */
+export function previewMove(d: Duel, move: Move): { power: [number, number]; winner: SideIndex | null; end: DuelEnd | null } {
+  const next = duelStep(d, move).duel
+  return { power: [powerOf(next, 0), powerOf(next, 1)], winner: next.winner, end: next.end }
 }
 
 // ---------------------------------------------------------------- match flow
@@ -561,7 +588,10 @@ export function throwerOf(state: BattleState): SideIndex | null {
   return state.thrown[o] === null ? o : null
 }
 
-/** A side throws a team member onto the Gate Card; once both have, each draws a hand and the battle begins. */
+/**
+ * A side throws a team member onto the Gate Card; once both have, each draws a hand and the battle begins (decided
+ * at once if the brawler to move is behind with nothing to play).
+ */
 export function throwBakugan(prev: BattleState, side: SideIndex, index: number, rng: () => number = Math.random): BattleState {
   const state = clone(prev)
   const s = state.sides[side]
@@ -569,7 +599,12 @@ export function throwBakugan(prev: BattleState, side: SideIndex, index: number, 
   if (state.thrown[0] === null || state.thrown[1] === null) return state
   const picks = state.thrown as [number, number]
   state.sides.forEach((x, i) => (x.active = picks[i]))
-  const hands = picks.map((p, i) => shuffle(state.sides[i].decks[p], rng).slice(0, HAND_SIZE)) as [Card[], Card[]]
+  // the setter's Gate Card takes the place of one ability card: they draw one fewer
+  const hands = picks.map((p, i) => {
+    const deck = state.sides[i].decks[p]
+    const n = Math.min(HAND_SIZE, deck.length) - (i === state.setter && state.gate ? 1 : 0)
+    return shuffle(deck, rng).slice(0, Math.max(0, n))
+  }) as [Card[], Card[]]
   state.duel = startDuel(
     [activeOf(state.sides[0]), activeOf(state.sides[1])],
     hands,
@@ -577,22 +612,24 @@ export function throwBakugan(prev: BattleState, side: SideIndex, index: number, 
     state.setter,
     [state.sides[0].maxLives - state.sides[0].lives, state.sides[1].maxLives - state.sides[1].lives],
   )
-  state.phase = 'battle'
+  state.phase = state.duel.done ? 'clash' : 'battle'
   state.log.push(`${nameOf(state, state.setter)} vs ${nameOf(state, other(state.setter))}!`)
   return state
 }
 
-function describe(state: BattleState, side: SideIndex, effect: Effect | null, cancelled: Effect | null): string {
+function describe(state: BattleState, side: SideIndex, move: Move, effect: Effect | null, cancelled: Effect | null): string {
+  const d = state.duel!
   const name = nameOf(state, side)
   const foe = nameOf(state, other(side))
+  if (move.kind === 'pass')
+    return d.end === 'gaveUp' ? `${name} cannot get ahead and gives up.` : `${name} holds at ${powerOf(d, side)}G.`
   if (!effect) return ''
   const mine = effect.delta[side]
   const theirs = effect.delta[other(side)]
   const g = (n: number) => `${n > 0 ? '+' : ''}${n}G`
-  if (effect.kind === 'strike') return `${name} attacks: ${foe} ${g(theirs)}.`
   if (effect.kind === 'gate') {
     const parts = [mine && `${name} ${g(mine)}`, theirs && `${foe} ${g(theirs)}`].filter(Boolean)
-    return `Gate Card open: ${state.duel?.gate?.card.name}! ${parts.join(', ') || 'No effect.'}`
+    return `Gate Card open: ${d.gate?.card.name}! ${parts.join(', ') || 'No effect.'}`
   }
   const a = effect.card!.ability
   if (a.type === 'shield')
@@ -611,9 +648,29 @@ export function act(prev: BattleState, move: Move): Step {
   const r = duelStep(state.duel!, move)
   state.duel = r.duel
   state.turn++
-  state.log.push(describe(state, side, r.effect, r.cancelled))
+  state.log.push(describe(state, side, move, r.effect, r.cancelled))
   if (r.duel.done) state.phase = 'clash'
   return { state, event: r.event, effect: r.effect, cancelled: r.cancelled }
+}
+
+/** How a battle was won, for the log and the tag panels. */
+function endLine(state: BattleState, winner: SideIndex, power: [number, number], end: DuelEnd) {
+  const loser = other(winner)
+  const w = nameOf(state, winner)
+  const l = nameOf(state, loser)
+  const score = `${power[winner]}G to ${power[loser]}G`
+  switch (end) {
+    case 'ko':
+      return `${l} is down to 0G: ${w} wins the battle!`
+    case 'finisher':
+      return `${w} wins the battle outright!`
+    case 'gaveUp':
+      return `${w} wins the battle, ${score}: ${l} gave up.`
+    case 'noAnswer':
+      return `${w} wins the battle, ${score}: ${l} had no answer.`
+    case 'standoff':
+      return `${w} wins the battle, ${score}.`
+  }
 }
 
 /**
@@ -625,6 +682,7 @@ export function resolveBattle(prev: BattleState): { state: BattleState; event: B
   const d = state.duel!
   const winner = d.winner ?? leaderOf(d)
   const loser = other(winner)
+  const end = d.end ?? 'standoff'
   const power: [number, number] = [powerOf(d, 0), powerOf(d, 1)]
   state.sides[loser].lives = Math.max(0, state.sides[loser].lives - 1)
   state.sides[winner].wins++
@@ -637,17 +695,14 @@ export function resolveBattle(prev: BattleState): { state: BattleState; event: B
     gate: state.gate,
     gateUsed: !!d.gate?.open && !d.gate.nullified,
     finisher: d.finisher,
+    end,
     moves: d.moves,
   }
   state.results.push(result)
   const ko = state.sides[loser].lives === 0
   if (ko) state.winner = winner
   state.phase = ko ? 'over' : 'result'
-  state.log.push(
-    d.finisher
-      ? `${nameOf(state, winner)} wins the battle outright!`
-      : `${nameOf(state, winner)} wins the battle, ${power[winner]}G to ${power[loser]}G.`,
-  )
+  state.log.push(endLine(state, winner, power, end))
   const event: BattleEvent = {
     actor: winner,
     target: loser,
@@ -704,6 +759,10 @@ export const aiForTier = (tier: number): AiLevel => BOT_LEVELS[Math.min(Math.max
 
 /** What a face-down Gate Card of the opponent is guessed to be worth to its owner. */
 const HIDDEN_GATE_G = 150
+/** A battle won or lost, against any lead in G. */
+const WIN = 5000
+/** Cards still in hand count a little more than played ones: they keep the brawler's options open. */
+const KEEP = 1.1
 
 /** The duel as `me` sees it: the opponent's face-down Gate Card is a guess, not the real card. */
 function seenBy(d: Duel, me: SideIndex): Duel {
@@ -725,58 +784,80 @@ function cardSwing(d: Duel, side: SideIndex, card: Card): number {
       return Math.min(a.amount, foeG)
     case 'drain':
       return 2 * Math.min(a.amount, foeG)
-    case 'shield': {
+    case 'shield':
       // worth what it can cancel now, or a fair guess at what the opponent will play
-      const best = Math.max(0, ...nullifyTargets(d, side).map((e) => cancelGain(e, side)))
-      return d.attacked[other(side)] ? best : Math.max(best, 90)
-    }
+      return Math.max(90, ...nullifyTargets(d, side).map((e) => cancelGain(e, side)))
     case 'finisher':
-      return 3000
+      return 1000
   }
 }
 
-/** G swing a side can still make with its moves left: its best cards and its gate (the foe may answer, so a share). */
+/** G swing a side can still make: the cards in its hand and its face-down Gate Card. */
 function potential(d: Duel, side: SideIndex) {
-  const n = playsLeft(d, side)
-  if (!n) return 0
-  const options = d.hands[side]
-    .filter((c) => c.ability.type !== 'finisher' || chargeOf(d, side) + n - 1 >= FINISHER_CHARGE)
-    .map((c) => cardSwing(d, side, c))
+  const hand = d.hands[side]
+  // a finisher counts once there are enough other cards to charge it
+  const charge = chargeOf(d, side) + hand.filter((c) => c.ability.type !== 'finisher').length
+  let sum = 0
+  for (const c of hand) if (c.ability.type !== 'finisher' || charge >= FINISHER_CHARGE) sum += cardSwing(d, side, c)
   if (d.gate && d.gate.owner === side && !d.gate.open) {
     const g = gateDelta(d, d.gate.card, side)
-    options.push(Math.max(0, g[side] - g[other(side)]))
+    sum += Math.max(0, g[side] - g[other(side)])
   }
-  options.sort((a, b) => b - a)
-  return options.slice(0, n).reduce((sum, v) => sum + v, 0) * 0.6
+  return sum
 }
 
-/** How good the battle looks for `me`, in G: a win or loss is worth far more than any lead. */
+/**
+ * How good the battle looks for `me`, in G: a win or loss is worth far more than any lead. Otherwise it is a race of
+ * G-Power: the lead now plus what each side still holds.
+ */
 function evaluate(d: Duel, me: SideIndex): number {
   const foe = other(me)
   const diff = powerOf(d, me) - powerOf(d, foe)
-  if (d.done) return (d.winner === me ? 2000 : -2000) + diff
-  let est = diff + potential(d, me) - potential(d, foe)
-  if (!d.attacked[me]) est += strikeOf(d, me)
-  if (!d.attacked[foe]) est -= strikeOf(d, foe)
-  return est + (d.first === me ? 5 : -5)
+  if (d.done) return (d.winner === me ? WIN : -WIN) + diff
+  return diff + KEEP * (potential(d, me) - potential(d, foe)) + (d.first === me ? 5 : -5)
 }
 
-function search(d: Duel, me: SideIndex, depth: number): number {
+function search(d: Duel, me: SideIndex, depth: number, alpha: number, beta: number): number {
   if (depth <= 0 || d.done) return evaluate(d, me)
-  const values = duelMoves(d).map((m) => search(duelStep(d, m).duel, me, depth - 1))
-  return d.turn === me ? Math.max(...values) : Math.min(...values)
+  const mine = d.turn === me
+  let best = mine ? -Infinity : Infinity
+  for (const m of duelMoves(d)) {
+    const v = search(duelStep(d, m).duel, me, depth - 1, alpha, beta)
+    if (mine) {
+      best = Math.max(best, v)
+      alpha = Math.max(alpha, v)
+    } else {
+      best = Math.min(best, v)
+      beta = Math.min(beta, v)
+    }
+    if (alpha >= beta) break
+  }
+  return best
 }
 
-/** The bot's move in a duel. */
+/**
+ * The bot's move in a duel: behind, it answers (or gives up when nothing gets it ahead); ahead, it mostly holds and
+ * keeps its cards for the opponent's answer.
+ */
 export function chooseDuelMove(real: Duel, level: AiLevel = AI_EASY, rng: () => number = Math.random): Move {
   const me = real.turn
   const d = seenBy(real, me)
-  const options = duelMoves(d).map((move) => ({
+  let moves = duelMoves(d)
+  // behind, a brawler never gives up while a card would put it ahead
+  if (leaderOf(d) !== me && moves.some((m) => m.kind !== 'pass' && leads(d, m, me)))
+    moves = moves.filter((m) => m.kind !== 'pass')
+  const options = moves.map((move) => ({
     move,
-    v: search(duelStep(d, move).duel, me, level.depth - 1) + rng() * level.noise,
+    v: search(duelStep(d, move).duel, me, level.depth - 1, -Infinity, Infinity) + rng() * level.noise,
   }))
   options.sort((a, b) => b.v - a.v)
-  return options[0]?.move ?? { kind: 'attack' }
+  return options[0]?.move ?? { kind: 'pass' }
+}
+
+/** After the move, `me` would be winning (ahead, or the battle won). */
+function leads(d: Duel, move: Move, me: SideIndex) {
+  const next = duelStep(d, move).duel
+  return next.done ? next.winner === me : leaderOf(next) === me
 }
 
 /** The bot's move in the battle of a match. */
@@ -791,7 +872,7 @@ export function memberValue(s: Side, i: number) {
       return a.type === 'drain' ? 2 * a.amount : a.type === 'shield' ? 90 : a.type === 'finisher' ? 300 : a.amount
     })
     .sort((a, b) => b - a)
-    .slice(0, PLAYS)
+    .slice(0, HAND_SIZE - 1)
   return s.team[i].g + cards.reduce((n, v) => n + v, 0) * 0.5
 }
 

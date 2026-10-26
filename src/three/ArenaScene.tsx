@@ -86,8 +86,8 @@ interface Props {
   shields: [boolean, boolean]
   defeated: [boolean, boolean]
   brawlers: [BrawlerInfo, BrawlerInfo]
-  /** Changes when a new round starts: both brawlers throw their Bakugan onto the field again. */
-  throwKey?: number
+  /** Each side's throws so far: a side's count goes up when its brawler throws a Bakugan onto the field. */
+  throws?: [number, number]
   /** A tag battle: each brawler's teammate, standing next to them (null: none). */
   partners?: [BrawlerInfo | null, BrawlerInfo | null]
 }
@@ -131,7 +131,7 @@ const partnerSpot = (side: SideIndex, k: number) => {
   return { at, facing: at.clone().negate().setY(0).normalize() }
 }
 
-export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers, throwKey, partners }: Props) {
+export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers, throws = [0, 0], partners }: Props) {
   const gateElement = gate ? ELEMENT_BY_ID[gate] : null
   const pull = pullFor(fighters)
   // the stadium, the card and the brawlers grow with the view when a giant is on the field
@@ -175,17 +175,22 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
     [pull],
   )
 
-  // a new round: both brawlers throw their Bakugan in again (nothing to throw on the first render)
-  const [firstThrow] = useState(throwKey)
+  // each brawler throws in turn: a side's Bakugan comes in when its count goes up (nothing to throw on the first render)
+  const [throw0, throw1] = throws
+  const [firstThrow] = useState<[number, number]>([throw0, throw1])
   // a battle that starts before its first throw keeps the field empty until the balls land
-  const [waitThrow] = useState(throwKey === 0)
-  const throwing = throwKey !== firstThrow
-  const throwAt = useRef<number | null>(null)
-  const seenThrow = useRef(firstThrow)
+  const [waitThrow] = useState(throw0 === 0 && throw1 === 0)
+  const throwing = [throw0 !== firstThrow[0], throw1 !== firstThrow[1]]
+  // clock time each side's latest throw started
+  const throwAt = useRef<[number | null, number | null]>([null, null])
+  const seenThrow = useRef<[number, number]>([...firstThrow])
   useFrame(({ clock }) => {
-    if (seenThrow.current === throwKey) return
-    seenThrow.current = throwKey
-    throwAt.current = clock.elapsedTime
+    const now: [number, number] = [throw0, throw1]
+    for (const i of [0, 1] as const) {
+      if (seenThrow.current[i] === now[i]) continue
+      seenThrow.current[i] = now[i]
+      throwAt.current[i] = clock.elapsedTime
+    }
   })
 
   // the crowd follows the battle on its own too: a cheer for a hit, a gasp at a block, a roar for a knockout
@@ -207,11 +212,14 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
     if (down1 && !was[1]) crowd('roar', 0)
     wasDown.current = [down0, down1]
   }, [down0, down1])
+  // the fans cheer each Bakugan as its ball lands
+  const thrownCount = throw0 + throw1
+  const [firstCount] = useState(thrownCount)
   useEffect(() => {
-    if (throwKey === firstThrow) return
+    if (thrownCount === firstCount) return
     const timer = setTimeout(() => crowd('cheer'), THROW_LAND * 1000)
     return () => clearTimeout(timer)
-  }, [throwKey, firstThrow])
+  }, [thrownCount, firstCount])
   // the fans greet the Bakugan as they come onto the field (thrown ones get the cheer when they land)
   useEffect(() => {
     if (waitThrow) return
@@ -304,7 +312,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
               model={b.model}
               gesture={b.gesture}
               color={ELEMENT_BY_ID[fighters[i].bakugan.element].color}
-              throwKey={throwKey}
+              throwKey={throws[i]}
             />
           </Suspense>
           <BlobShadow size={0.9} />
@@ -335,17 +343,18 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
         )
       })}
 
-      {throwing &&
-        fighters.map((e, i) => (
+      {fighters.map((e, i) =>
+        throwing[i] ? (
           <ThrownBall
-            key={`${throwKey}-${i}`}
+            key={`${throws[i]}-${i}`}
             from={spots[i].at.clone().add(new THREE.Vector3(0, BRAWLER_SCALE * k * 2, 0))}
             // the ball lands on the card's top and bounces there
             to={new THREE.Vector3(xOf(i as SideIndex, e) - (i === 0 ? -1 : 1) * 6, GROUND * k + 1.2, 0)}
             entrant={e}
             color={ELEMENT_BY_ID[e.bakugan.element].glow}
           />
-        ))}
+        ) : null,
+      )}
 
       {event && (
         <ActionFx
@@ -516,8 +525,8 @@ function Fighter({
   defeated: boolean
   /** Tells the scene how far the shield reaches out in front of this Bakugan's spot (world units). */
   onShieldReach: (side: SideIndex, entrant: Entrant, reach: number) => void
-  /** Clock time the latest throw started (a new round), or null before any. */
-  throwAt: React.RefObject<number | null>
+  /** Clock time each side's latest throw started, or null before its first. */
+  throwAt: React.RefObject<[number | null, number | null]>
   /** The battle starts with an empty field: stay hidden until the first throw lands. */
   waitThrow: boolean
   /** Height of the card's top (world units). */
@@ -712,7 +721,7 @@ function Fighter({
     const g = ref.current
     if (!g) return
     const now = clock.elapsedTime
-    const ta = throwAt.current
+    const ta = throwAt.current[side]
     // on the field from the start, unless the battle throws its Bakugan in (then only a throw brings it out)
     if (born.current === null && !waitThrow && (ta === null || now - ta >= THROW_LAND)) {
       born.current = now

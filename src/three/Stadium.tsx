@@ -585,21 +585,31 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
   }, [container])
 
   useEffect(() => startCrowd(), [])
-  useEffect(() => listenStadium((call) => inbox.current.push({ call, at: performance.now() })), [])
+  const shownOn = useRef({ names, colors })
+  shownOn.current = { names, colors }
+  // the shared speech queue keeps the announcer's lines in order with the brawlers' calls, so they go in at once (the
+  // big screen shows each line as it is said); the crowd's reactions play on the next frame
+  useEffect(
+    () =>
+      listenStadium((call) => {
+        if (call.kind !== 'announce') return void inbox.current.push({ call, at: performance.now() })
+        const line = call.text
+        announcer.current?.say(line, () => {
+          lastLine.current = line
+          paintScreen(screen, shownOn.current.names, shownOn.current.colors, line)
+        })
+      }),
+    [screen],
+  )
+
+  // the big screen shows each line as the announcer says it, under the Bakugan on the field then
 
   useFrame((_, dt) => {
     const now = clock.elapsedTime
-    // play what the battle asked for; after a pause (a hidden tab) only what is still fresh, and the last line
+    // play what the battle asked for; after a pause (a hidden tab) only what is still fresh
     const calls = inbox.current.splice(0)
-    const lastAnnounce = calls.findLast(({ call }) => call.kind === 'announce')
-    for (const { call, at } of calls) {
-      if (call.kind === 'announce') {
-        if (lastAnnounce?.call !== call) continue
-        lastLine.current = call.text
-        paintScreen(screen, names, colors, call.text)
-        announcer.current?.say(call.text)
-      } else if (performance.now() - at < 1500) react(call.mood, call.side ?? null, now)
-    }
+    for (const { call, at } of calls)
+      if (call.kind === 'crowd' && performance.now() - at < 1500) react(call.mood, call.side ?? null, now)
     // nothing has happened for a while: the fans start something themselves
     if (now - lastCall.current.at > lastCall.current.idleNext) {
       const r = (Math.sin(now * 12.9898) * 43758.5453) % 1

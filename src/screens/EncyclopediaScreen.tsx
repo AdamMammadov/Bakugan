@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-import { FINISHER_CHARGE, HAND_SIZE, LIVES, PLAYS, STRIKE } from '../battle/engine'
+import { FINISHER_CHARGE, HAND_SIZE, LIVES } from '../battle/engine'
 import { COMMAND_GATES } from '../data/gates'
 import { BakuganInfo } from '../components/BakuganInfo'
 import { GRID, GRID_SIZE } from '../components/grid'
@@ -9,7 +9,19 @@ import { type Bakugan } from '../data/bakugan'
 import { viewable } from '../season/release'
 import { CARD_TYPES, cardBakugan, loadCards, type CardType, type DbCard } from '../data/cardDb'
 import { CORRELATIONS, DIAGONAL, ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
-import { BP, EVOLVE_XP, ownsBakugan, PRICES, RATING, TIERS, unlockHint, useActiveProfile, XP } from '../profile/useProfiles'
+import {
+  BP,
+  EVOLVE_XP,
+  ownsBakugan,
+  PRICES,
+  RANK_XP,
+  RATING,
+  TIERS,
+  TOP_RANK,
+  unlockHint,
+  useActiveProfile,
+  XP,
+} from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 
 type Tab = 'bakugan' | 'cards' | 'attributes' | 'rules'
@@ -168,12 +180,12 @@ function CardsTab({ cards, bakugan, setBakugan }: { cards: DbCard[]; bakugan: st
             <button
               key={t.id}
               onClick={() => setTypes(toggle(types, t.id))}
-              className="rounded-full border px-3 py-1 text-xs transition"
-              style={{
-                borderColor: on ? TYPE_COLOR[t.id] : 'rgba(255,255,255,0.15)',
-                background: on ? `${TYPE_COLOR[t.id]}33` : 'transparent',
-                color: on ? '#fff' : 'rgba(255,255,255,0.6)',
-              }}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                on
+                  ? 'text-white hover:brightness-125'
+                  : 'border-white/15 text-white/60 hover:border-white/50 hover:bg-white/10 hover:text-white'
+              }`}
+              style={on ? { borderColor: TYPE_COLOR[t.id], background: `${TYPE_COLOR[t.id]}33` } : undefined}
             >
               {t.label}
             </button>
@@ -332,7 +344,7 @@ function BakuganTab({ cards, onCards }: { cards: DbCard[]; onCards: (name: strin
       <div className="flex gap-2">
         <button
           onClick={() => setElement(null)}
-          className={`rounded-full border px-3 py-1 text-xs ${element ? 'border-white/15 text-white/50' : 'border-white text-white'}`}
+          className={`rounded-full border px-3 py-1 text-xs transition hover:bg-white/10 ${element ? 'border-white/15 text-white/50 hover:border-white/50 hover:text-white' : 'border-white text-white'}`}
         >
           ALL
         </button>
@@ -495,17 +507,18 @@ function RulesTab() {
         `Each brawler has ${LIVES} lives: the balls at the top of the screen. A match is a series of battles, one Bakugan against one. The loser of a battle loses a life; lose ${LIVES} battles and you are defeated.`,
         'Each side brings one to three Bakugan. A beaten Bakugan goes back to its brawler and can be thrown again in the next battle.',
         'Every battle: one brawler sets a Gate Card face-down (the brawlers take turns, a coin toss decides who sets the first). The setter throws a Bakugan first, then the other brawler answers with one of theirs.',
-        `Each side draws a hand of up to ${HAND_SIZE} cards from its thrown Bakugan's own ability cards. The brawler who did not set the Gate Card moves first, then you take turns.`,
-        `On your turn you do one thing: play an ability card, open your Gate Card, or ATTACK. After ${PLAYS} cards or gate openings you must attack. There is no passing.`,
-        `ATTACK: your Bakugan strikes and the opponent loses ${Math.round(STRIKE * 100)}% of your G-Power. Your part in the battle is then over; the opponent gets one last move and must strike back.`,
-        'When both have attacked, the higher G-Power wins the battle. A tie goes to the Bakugan thrown first (the Gate Card setter’s). A turn counter (01T, 02T…) runs through the whole match.',
+        `Each side draws a hand of up to ${HAND_SIZE} cards from its thrown Bakugan's own ability cards; the brawler who set the Gate Card draws one fewer (the Gate Card is their extra card). The other brawler moves first, then you take turns.`,
+        'On your turn you do one thing: play an ability card, open your own Gate Card, or pass.',
+        'The higher G-Power is winning; a tie goes to the Bakugan thrown first (the Gate Card setter’s). Whoever is behind has to answer: play a card or open the Gate Card to get ahead. Whoever is ahead can pass to hold: the opponent must beat their G-Power.',
+        'A battle ends at once when a Bakugan drops to 0 G: it is defeated. It also ends when the brawler behind passes or has nothing left to play, or when neither side can move: the higher G-Power wins. So one card can decide a battle: 550 G against 700 G, you play +100 (650 G), they answer with +100 (800 G), and if you have nothing that gets you past 800 G, you lose the battle.',
+        'The loser of a battle loses a life. A turn counter (01T, 02T…) runs through the whole match.',
       ],
     ],
     [
       'Gate Cards',
       [
         'Your Gate Card stays on the field for the whole battle and does nothing until you open it on one of your turns: "Gate Card, open!". After the battle it is spent; each brawler has three.',
-        'Once it is open your opponent always gets a move to answer it, and can nullify it if they have the power. You cannot open it once your opponent has attacked.',
+        'Opening it takes your turn. Your opponent can then answer it, or nullify it if they have the power.',
         'Attribute Gate Cards give Bakugan of their attribute on the card extra G’s. Character Gate Cards raise one specific Bakugan’s G-Power by half.',
         ...COMMAND_GATES.map((g) => `${g.name}: ${g.text}`),
       ],
@@ -513,7 +526,7 @@ function RulesTab() {
     [
       'Ability cards in battle',
       [
-        'Every card counts for the battle it is played in. Boost cards raise your G-Power; attack cards strike at once and weaken cards cut the opponent’s; drain cards steal it (they lose it, you gain it).',
+        'Every card counts for the battle it is played in. Boost cards raise your G-Power; attack cards strike at once and weaken cards cut the opponent’s; drain cards steal it (they lose it, you gain it). An attack that takes a Bakugan down to 0 G defeats it.',
         'Nullify cards cancel the opponent’s last ability card or their opened Gate Card, and its G change is undone. There are no shields that block everything.',
         `A finisher, played after ${FINISHER_CHARGE} other ability cards in the same battle, wins the battle outright.`,
       ],
@@ -522,10 +535,10 @@ function RulesTab() {
       'Ranked play',
       [
         'The system matches you with a CPU brawler on your level: as many Bakugan as you bring, the same forms and the same number of cards. Bots get sharper as your rank rises.',
-        `A win gives each of your Bakugan ${XP.winMin}–${XP.winMax} XP (+${XP.ko} per battle it wins), ${BP.win} Battle Points (+${BP.streakBonus} per win streak) and +${RATING.win} rating. A loss gives ${XP.lossMin}–${XP.lossMax} XP, ${BP.loss} BP and −${RATING.loss} rating.`,
+        `A win gives each of your Bakugan ${XP.winMin}–${XP.winMax} XP (+${XP.ko} per battle it wins), ${BP.win} Battle Points (+${BP.streakBonus} per win streak) and about +${RATING.win} rating at Rookie against an equal brawler, more against a stronger one and less the higher your rank. A loss gives ${XP.lossMin}–${XP.lossMax} XP and ${BP.loss} BP, and costs about −${RATING.loss} rating at Rookie, more the higher your rank.`,
         `Evolving takes ${EVOLVE_XP.map((x) => x.toLocaleString('en')).join(' / ')} XP for the 2nd / 3rd / 4th form. A new ability card unlocks every 1,500 XP.`,
         `New Bakugan cost ${PRICES.ownElement.toLocaleString('en')} BP (your attribute) or ${PRICES.otherElement.toLocaleString('en')} BP (other attributes), or unlock with ${PRICES.ownElementXp.toLocaleString('en')} / ${PRICES.otherElementXp.toLocaleString('en')} player XP.`,
-        `Ranks: ${TIERS.map((t) => `${t.name} (${t.min}+)`).join(', ')}. Rank score = rating + total XP ÷ 20; the battle screen shows it as HSP under each brawler.`,
+        `Ranks: ${TIERS.map((t) => t.name).join(', ')}, each with divisions III → II → I, then ${TOP_RANK.name} (${TOP_RANK.min.toLocaleString('en')}+). Rank score = rating + 1 per ${RANK_XP.per} XP (at most ${RANK_XP.max}); the battle screen shows it as HSP under each brawler.`,
       ],
     ],
   ]

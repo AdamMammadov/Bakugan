@@ -1,18 +1,20 @@
-import { ANNOUNCER, deliveryFor } from '../audio/voices'
+import { announceLine } from '../audio/sfx'
 import { useGame } from '../store/useGame'
 
 /**
  * The stadium announcer: each line shows as a lower-third banner over the arena and is read out by the browser's
- * voice. A new line replaces the one on screen; the voice never builds up a backlog (an old line still being read
- * is cut off, and one that could not start in time is dropped). It waits for brawlers who are mid-call instead of
- * talking over them, and stays quiet while the game's sound is off.
+ * voice. Its lines wait their turn in the shared speech queue (sfx.ts), so it never talks over a brawler or itself;
+ * the banner comes up as the line is said, and a line that waited too long is dropped. With the sound off the lines
+ * still come up one after another.
  */
 export interface Announcer {
-  say: (text: string) => void
+  /** Shows and says a line; `onShow` runs as it comes up. */
+  say: (text: string, onShow?: () => void) => void
   dispose: () => void
 }
 
-const hasSpeech = () => typeof speechSynthesis !== 'undefined'
+/** With the sound off, each line stays up at least this long before the next one replaces it. */
+const SILENT_GAP = 2200
 
 export function createAnnouncer(host: HTMLElement): Announcer {
   // the banner: an "ANNOUNCER" tag and the line, slanted, sliding in just above the hand of cards
@@ -44,9 +46,11 @@ export function createAnnouncer(host: HTMLElement): Announcer {
   host.append(root)
 
   let hideTimer = 0
-  let poll = 0
-  let mine: SpeechSynthesisUtterance | null = null
-  let waiting: { text: string; at: number } | null = null
+  let alive = true
+  // lines shown without a voice, one after another
+  const silentLines: { text: string; onShow?: () => void }[] = []
+  let silentTimer = 0
+  let silentNext = 0
 
   const show = (msg: string) => {
     text.textContent = msg
@@ -83,81 +87,35 @@ export function createAnnouncer(host: HTMLElement): Announcer {
     )
   }
 
-  const speakNow = (msg: string) => {
-    const u = new SpeechSynthesisUtterance(msg)
-    u.lang = 'en-US'
-    // a voice of its own: big, quick and low, one no brawler uses when the system has enough
-    const d = deliveryFor(ANNOUNCER)
-    if (d.voice) {
-      u.voice = d.voice
-      u.lang = d.voice.lang
-    }
-    u.rate = d.rate
-    u.pitch = d.pitch
-    u.volume = 1
-    const done = () => {
-      if (mine === u) mine = null
-    }
-    u.onend = done
-    u.onerror = done
-    mine = u
-    speechSynthesis.speak(u)
+  const showSilent = () => {
+    silentTimer = 0
+    const line = silentLines.shift()
+    if (!line || !alive) return
+    show(line.text)
+    line.onShow?.()
+    silentNext = performance.now() + SILENT_GAP
+    if (silentLines.length) silentTimer = window.setTimeout(showSilent, SILENT_GAP)
   }
-
-  // a line that had to wait for a brawler is read once the voice is free, if it is still fresh
-  const check = () => {
-    if (!waiting) {
-      clearInterval(poll)
-      poll = 0
-      return
-    }
-    if (useGame.getState().muted || performance.now() - waiting.at > 3500) {
-      waiting = null
-      return
-    }
-    if (!speechSynthesis.speaking && !speechSynthesis.pending) {
-      const msg = waiting.text
-      waiting = null
-      speakNow(msg)
-    }
-  }
-
-  const speak = (msg: string) => {
-    if (!hasSpeech() || useGame.getState().muted) return
-    const busy = speechSynthesis.speaking || speechSynthesis.pending
-    if (!busy) speakNow(msg)
-    else if (mine && !speechSynthesis.pending) {
-      // only our own previous line is playing: cut it off
-      speechSynthesis.cancel()
-      speakNow(msg)
-    } else {
-      // a brawler is talking (or queued): wait for them, keeping just the newest line
-      waiting = { text: msg, at: performance.now() }
-      poll ||= window.setInterval(check, 120)
-    }
-  }
-
-  // sound switched off mid-line: stop talking
-  const unsubscribe = useGame.subscribe((s) => {
-    if (s.muted && mine && hasSpeech()) {
-      mine = null
-      waiting = null
-      speechSynthesis.cancel()
-    }
-  })
 
   return {
-    say: (msg: string) => {
+    say: (msg: string, onShow?: () => void) => {
       const clean = msg.trim()
       if (!clean) return
-      show(clean)
-      speak(clean)
+      if (!useGame.getState().muted && typeof speechSynthesis !== 'undefined')
+        return announceLine(clean, () => {
+          if (!alive) return
+          show(clean)
+          onShow?.()
+        })
+      // no voice: the newest two lines wait their turn on screen
+      silentLines.push({ text: clean, onShow })
+      while (silentLines.length > 2) silentLines.shift()
+      if (!silentTimer) silentTimer = window.setTimeout(showSilent, Math.max(0, silentNext - performance.now()))
     },
     dispose: () => {
+      alive = false
       clearTimeout(hideTimer)
-      clearInterval(poll)
-      unsubscribe()
-      if (mine && hasSpeech()) speechSynthesis.cancel()
+      clearTimeout(silentTimer)
       root.remove()
     },
   }

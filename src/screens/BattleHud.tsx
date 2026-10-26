@@ -1,6 +1,17 @@
 import { animate, AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { LIVES, other, powerOf, type BattleState, type Effect, type SideIndex } from '../battle/engine'
+import {
+  canOpenGate,
+  gapOf,
+  leaderOf,
+  LIVES,
+  other,
+  powerOf,
+  type BattleState,
+  type Duel,
+  type Effect,
+  type SideIndex,
+} from '../battle/engine'
 import { Avatar, AvatarDrawing, CharacterPortrait } from '../components/Avatar'
 import { BakuganPortrait } from '../components/BakuganPortrait'
 import { TYPE_ICON } from '../battle/labels'
@@ -12,8 +23,13 @@ import { CHARACTER_BY_ID, DEFAULT_PARTS, photoOf, type Avatar as AvatarValue, ty
 /**
  * The battle HUD, after the anime's brawl screen: on each side the brawler's face, under it a card with the Bakugan
  * on the field, its attribute and its G-Power in big digits, then the brawler's HSP. At the top each brawler's
- * lives (three balls; a lost battle greys one out) and the turn counter in the middle.
+ * lives (three balls; a lost battle greys one out) and the turn counter in the middle, with whose move it is and who
+ * is ahead under it.
  */
+
+/** Ahead or behind at a glance. */
+export const AHEAD = '#3ee07a'
+export const BEHIND = '#ff5a4f'
 
 export interface HudBrawler {
   name: string
@@ -161,6 +177,8 @@ export function BrawlerHud({
   const fighter = index === null ? null : s.team[index]
   const g = d ? powerOf(d, side) : (fighter?.g ?? 0)
   const el = entrant ? ELEMENT_BY_ID[entrant.bakugan.element] : null
+  // whose move it is lights up their card
+  const moving = !!d && !d.done && state.phase === 'battle' && d.turn === side
   return (
     <div className={`flex w-[17rem] flex-col gap-2 ${right ? 'items-end text-right' : ''}`}>
       <LifeBalls lives={s.lives} max={s.maxLives} color={color} right={right} />
@@ -182,12 +200,18 @@ export function BrawlerHud({
       </div>
 
       {/* the Bakugan card */}
-      <div
+      <motion.div
         className={`relative flex w-full items-stretch overflow-hidden rounded-lg border-2 bg-black/70 backdrop-blur ${right ? 'flex-row-reverse' : ''}`}
-        style={{
-          borderColor: el ? `${el.color}cc` : 'rgba(255,255,255,0.15)',
-          boxShadow: el ? `0 0 22px ${el.color}44` : 'none',
+        style={{ borderColor: el ? (moving ? '#fff' : `${el.color}cc`) : 'rgba(255,255,255,0.15)' }}
+        animate={{
+          boxShadow:
+            el && moving
+              ? [`0 0 14px ${el.color}88`, `0 0 34px ${el.color}`, `0 0 14px ${el.color}88`]
+              : el
+                ? `0 0 22px ${el.color}44`
+                : 'none',
         }}
+        transition={moving ? { repeat: Infinity, duration: 1.2 } : { duration: 0.3 }}
       >
         <div className="h-[5.5rem] w-[5.5rem] shrink-0 border-white/10">
           {entrant ? (
@@ -204,13 +228,16 @@ export function BrawlerHud({
                 <p className="font-display truncate text-xs font-bold tracking-wider">{fighter.name.toUpperCase()}</p>
               </div>
               <GPower value={g} color={el.color} glow={el.glow} right={right} />
-              <p className="text-[10px] tracking-wider text-white/45">
-                {d
-                  ? `BASE ${fighter.g}${boost ? ` · BOSS +${boost}` : ''}`
-                  : state.phase === 'throw'
-                    ? 'READY TO THROW'
-                    : `${fighter.g} G`}
-              </p>
+              {d ? (
+                <LeadTag duel={d} side={side} />
+              ) : (
+                <p className="text-[10px] tracking-wider text-white/45">
+                  {state.phase === 'throw' ? 'ON THE GATE CARD' : `${fighter.g} G`}
+                </p>
+              )}
+              {d && (
+                <p className="text-[9px] tracking-wider text-white/40">{`BASE ${fighter.g}${boost ? ` · BOSS +${boost}` : ''}`}</p>
+              )}
             </>
           ) : (
             <p className="font-display text-[10px] tracking-[0.3em] text-white/45">
@@ -218,7 +245,14 @@ export function BrawlerHud({
             </p>
           )}
         </div>
-      </div>
+        {moving && (
+          <span
+            className={`font-display absolute top-1 rounded-sm bg-white px-1.5 text-[9px] font-black tracking-[0.2em] text-black ${right ? 'left-1' : 'right-1'}`}
+          >
+            MOVE
+          </span>
+        )}
+      </motion.div>
 
       <div className={`flex items-baseline gap-2 ${right ? 'flex-row-reverse' : ''}`}>
         <span className="font-display rounded-sm bg-white/90 px-1.5 text-[10px] font-black tracking-widest text-black">HSP</span>
@@ -227,6 +261,21 @@ export function BrawlerHud({
 
       {d && <EffectChips effects={d.effects.filter((e) => e.side === side)} state={state} side={side} right={right} />}
     </div>
+  )
+}
+
+/** Under the G-Power: ahead or behind, by how much, or defeated at 0 G. */
+function LeadTag({ duel, side }: { duel: Duel; side: SideIndex }) {
+  const gap = Math.abs(gapOf(duel, side))
+  const ahead = leaderOf(duel) === side
+  let text = ahead ? `▲ AHEAD +${gap} G` : `▼ BEHIND −${gap} G`
+  if (gap === 0) text = ahead ? '▲ TIED · WINS TIES' : '▼ TIED · LOSES TIES'
+  if (powerOf(duel, side) === 0) text = '✕ 0 G · DEFEATED'
+  else if (duel.done) text = duel.winner === side ? '★ WINS THE BATTLE' : '✕ LOSES THE BATTLE'
+  return (
+    <p className="font-display text-[11px] font-black tracking-wider" style={{ color: ahead ? AHEAD : BEHIND }}>
+      {text}
+    </p>
   )
 }
 
@@ -282,7 +331,7 @@ function GPower({ value, color, glow, right }: { value: number; color: string; g
   )
 }
 
-/** What a side did in this battle: its cards (crossed out when nullified), its opened gate and its strike. */
+/** What a side did in this battle: its cards (crossed out when nullified) and its opened gate. */
 function EffectChips({
   effects,
   state,
@@ -304,8 +353,7 @@ function EffectChips({
           .filter(Boolean)
           .join(' · ')
         let label = ''
-        if (e.kind === 'strike') label = `⚔ ATTACK ${theirs}G`
-        else if (e.kind === 'gate') label = `▣ ${state.duel?.gate?.card.name ?? 'GATE'} ${amount}`
+        if (e.kind === 'gate') label = `▣ ${state.duel?.gate?.card.name ?? 'GATE'} ${amount}`
         else if (e.card) {
           const a = e.card.ability
           label = a.type === 'shield' ? `⊘ ${a.name}` : `${TYPE_ICON[a.type]} ${a.name} ${a.type === 'finisher' ? 'KO' : amount}`
@@ -316,10 +364,7 @@ function EffectChips({
             initial={{ opacity: 0, scale: 1.4 }}
             animate={{ opacity: 1, scale: 1 }}
             className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${e.nullified ? 'text-white/35 line-through' : ''}`}
-            style={{
-              borderColor: e.kind === 'strike' ? '#ff4a3d88' : 'rgba(255,255,255,0.25)',
-              background: 'rgba(0,0,0,0.6)',
-            }}
+            style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(0,0,0,0.6)' }}
             title={e.nullified ? 'Nullified' : (e.card?.ability.description ?? '')}
           >
             {label}
@@ -390,5 +435,125 @@ function OpenGate({ card, nullified, ownerName }: { card: GateCard; nullified: b
         </motion.span>
       )}
     </motion.div>
+  )
+}
+
+/** What the battle status says: whose move, and in plain words what is going on. */
+function statusOf(d: Duel, you: boolean, names: [string, string]) {
+  const p: [number, number] = [powerOf(d, 0), powerOf(d, 1)]
+  const bakugan = [d.fighters[0].name, d.fighters[1].name]
+  const loud = bakugan.map((n) => n.toUpperCase())
+  const lead = leaderOf(d)
+  const gap = Math.abs(p[0] - p[1])
+  if (d.done) {
+    const w = d.winner ?? lead
+    const l = other(w)
+    const score = `${bakugan[w]} wins, ${p[w]} G to ${p[l]} G`
+    switch (d.end) {
+      case 'ko':
+        return { head: `${loud[l]} HAS 0 G — DEFEATED`, hint: `${bakugan[w]} wins the battle`, side: w }
+      case 'finisher':
+        return { head: `${loud[w]} WINS OUTRIGHT`, hint: 'A finisher decides the battle', side: w }
+      case 'gaveUp':
+        return { head: `${names[l]} GIVES UP`, hint: score, side: w }
+      case 'noAnswer':
+        return { head: `${names[l]} HAS NO ANSWER`, hint: score, side: w }
+      default:
+        return { head: 'NO MOVES LEFT', hint: score, side: w }
+    }
+  }
+  const t = d.turn
+  const foe = other(t)
+  const mine = you && t === 0
+  const head = mine ? 'YOUR MOVE' : `${names[t]}'S MOVE`
+  const tied = gap === 0
+  let hint: string
+  if (mine) {
+    const way = canOpenGate(d, 0) ? 'play a card or open your Gate Card' : 'play a card'
+    if (lead === 0)
+      hint = tied ? 'Tied, and you win ties: hold, or add more power' : `You're ${gap} G ahead: hold, or add more power`
+    else hint = tied ? `Tied, and ties go to ${bakugan[1]}: ${way} to get ahead` : `You're ${gap} G behind: ${way} to get ahead`
+  } else if (you) {
+    hint =
+      lead === 0
+        ? `You're ${tied ? 'ahead on the tie' : `${gap} G ahead`}: ${names[t]} has to answer`
+        : `${names[t]} is ${tied ? 'ahead on the tie' : `${gap} G ahead`} and may hold`
+  } else
+    hint =
+      lead === t
+        ? `${names[t]} is ${tied ? 'ahead on the tie' : `${gap} G ahead`}: hold, or add more power`
+        : `${names[t]} is ${tied ? 'behind on the tie' : `${gap} G behind`} and has to answer ${names[foe]}`
+  return { head, hint, side: t }
+}
+
+/**
+ * Under the Gate Card: whose move it is, a bar of the two G-Powers (the leader's colour past the middle) with the gap,
+ * and one plain line on what is going on ("You're 150 G behind: play a card or open your Gate Card to get ahead").
+ */
+export function BattleStatus({
+  state,
+  you,
+  names,
+  colors,
+}: {
+  state: BattleState
+  /** The player brawls on side 0 (else both are watched). */
+  you: boolean
+  names: [string, string]
+  /** The colour of each Bakugan on the field. */
+  colors: [string, string]
+}) {
+  const d = state.duel
+  if (!d) return null
+  const p: [number, number] = [powerOf(d, 0), powerOf(d, 1)]
+  const share = p[0] + p[1] > 0 ? p[0] / (p[0] + p[1]) : 0.5
+  const lead = leaderOf(d)
+  const gap = Math.abs(p[0] - p[1])
+  const { head, hint, side } = statusOf(d, you, [names[0].toUpperCase(), names[1].toUpperCase()] as [string, string])
+  const pointer = d.done ? '' : side === 0 ? '◀ ' : ''
+  const after = d.done ? '' : side === 1 ? ' ▶' : ''
+  return (
+    <div className="mt-2 flex w-[23rem] flex-col items-center rounded-lg border border-white/15 bg-black/70 px-3 py-2 backdrop-blur">
+      <motion.p
+        key={`${head}-${d.moves}`}
+        className="font-display text-sm font-black tracking-[0.25em]"
+        style={{ color: d.done && d.end === 'ko' ? BEHIND : '#fff', textShadow: `0 0 14px ${colors[side]}` }}
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        {pointer}
+        {head}
+        {after}
+      </motion.p>
+      <div className="mt-1.5 flex w-full items-center gap-2">
+        <span className="font-display w-12 text-right text-xs font-black tabular-nums" style={{ color: colors[0] }}>
+          {p[0]}
+        </span>
+        <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
+          <motion.div
+            className="absolute inset-y-0 left-0"
+            style={{ background: colors[0] }}
+            animate={{ width: `${share * 100}%` }}
+            transition={{ duration: 0.7 }}
+          />
+          <motion.div
+            className="absolute inset-y-0 right-0"
+            style={{ background: colors[1] }}
+            animate={{ width: `${(1 - share) * 100}%` }}
+            transition={{ duration: 0.7 }}
+          />
+          <div className="absolute inset-y-[-2px] left-1/2 w-0.5 -translate-x-1/2 bg-white" />
+        </div>
+        <span className="font-display w-12 text-left text-xs font-black tabular-nums" style={{ color: colors[1] }}>
+          {p[1]}
+        </span>
+      </div>
+      <p className="font-display mt-1 text-[10px] tracking-[0.25em] text-white/75">
+        {gap
+          ? `${d.fighters[lead].name.toUpperCase()} AHEAD BY ${gap} G`
+          : `TIED · ${d.fighters[lead].name.toUpperCase()} WINS TIES (THROWN FIRST)`}
+      </p>
+      <p className="mt-0.5 text-center text-xs leading-snug text-white/85">{hint}</p>
+    </div>
   )
 }

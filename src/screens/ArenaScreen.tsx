@@ -6,23 +6,25 @@ import type { SpeakerVoice } from '../audio/voices'
 import {
   act,
   aiForTier,
+  canAct,
   canOpenGate,
   cardLock,
   chooseAction,
-  gateDelta,
   chooseGate,
   chooseThrow,
+  gapOf,
+  gateDelta,
   gatesLeft,
+  leaderOf,
   LIVES,
   nextBattle,
   nullifyTargets,
   other,
-  playsLeft,
   powerOf,
+  previewMove,
   resolveBattle,
   setGate,
   startBattle,
-  strikeOf,
   throwBakugan,
   throwerOf,
   type AiLevel,
@@ -30,6 +32,8 @@ import {
   type BattleResult,
   type BattleState,
   type Card,
+  type Duel,
+  type DuelEnd,
   type Effect,
   type Move,
   type SideIndex,
@@ -56,7 +60,7 @@ import { ACTION_DURATION, ArenaScene, IMPACT_AT, type BrawlerInfo } from '../thr
 import type { BrawlerCall, BrawlerGesture } from '../three/Brawler'
 import { preloadModels } from '../three/BakuganModels'
 import { announce, crowd } from '../three/stadium'
-import { BrawlerHud, GateSlot, TurnCounter } from './BattleHud'
+import { AHEAD, BattleStatus, BEHIND, BrawlerHud, GateSlot, TurnCounter } from './BattleHud'
 import { TagArena } from './TagArena'
 
 const INTRO_MS = 2600
@@ -64,11 +68,13 @@ const INTRO_MS = 2600
 const BATTLE_MS = 1300
 /** The Gate Card lands on the field before the throws. */
 const SET_MS = 1500
-/** A CPU brawler's pick shows a moment before the other side picks. */
-const PICK_MS = 900
-/** Both brawlers throw; the balls open and the Bakugan stand. */
-const THROW_MS = 2600
+/** A CPU brawler picks its Bakugan for a moment before it throws. */
+const PICK_MS = 700
+/** One brawler's throw: the call, the ball's flight, and the Bakugan standing on the card. */
+const THROW_MS = 2400
 const AI_DELAY_MS = 800
+/** A pass: the brawler's call shows before the next move. */
+const PASS_MS = 1100
 /** The Gate Card flips over before its effect lands. */
 const GATE_FLIP_MS = 900
 const GATE_HOLD_MS = 2300
@@ -81,12 +87,10 @@ const AFTER_STRIKE_MS = 2800
 const FINISHER_HOLD_MS = 1600
 /** How long a nullify card's shield flashes round its Bakugan. */
 const NULLIFY_FLASH_MS = 1400
-/** The announcer's lines come at least this far apart. */
-const ANNOUNCE_GAP = 2600
+/** The flow waits at most this long for everyone to finish talking. */
+const QUIET_MAX_MS = 6000
 /** A battle won by this little is a close call. */
 const CLOSE = 60
-
-const clock = () => performance.now()
 
 /**
  * The CPU brawler's answer to a rematch, after a moment: it says yes most of the time, more readily after a win or
@@ -97,14 +101,22 @@ function rematchAnswer(botWon: boolean, margin: number) {
   return { accept: Math.random() < Math.min(0.95, Math.max(0.2, yes)), after: 1500 + Math.random() * 1500 }
 }
 
+/** 0–1, the same for the same text. */
+function seedOf(seed: string) {
+  let h = 0
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) % 9973
+  return (h % 1000) / 1000
+}
+
 /** A CPU brawler's HSP: inside its rank's band, the same for the same character. */
 function botHsp(tier: number, seed: string) {
   const lo = TIERS[tier]?.min ?? 0
   const hi = TIERS[tier + 1]?.min ?? lo + 1500
-  let h = 0
-  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) % 9973
-  return lo + Math.round(((h % 1000) / 1000) * (hi - lo) * 0.8)
+  return lo + Math.round(seedOf(seed) * (hi - lo) * 0.8)
 }
+
+/** A ranked CPU opponent's HSP: close to the player's own score (within 150), the same for the same character. */
+const rankedHsp = (score: number, seed: string) => Math.max(0, score + Math.round((seedOf(seed) - 0.5) * 300))
 
 const toTeam = (members: TeamMember[]): Entrant[] =>
   members.map((m) => ({
@@ -198,7 +210,11 @@ function MatchArena({ setup }: { setup: ArenaSetup }) {
           ? { ...bot.voice, id: setup.bot.name ?? `cpu ${bot.name}` }
           : bot.voice,
       ai: aiForTier(setup.bot.tier),
-      hsp: botHsp(setup.bot.tier, setup.bot.name ?? bot.id),
+      // a ranked brawl is against someone on the player's level
+      hsp:
+        profile && setup.ranked && !setup.event
+          ? rankedHsp(rankScore(profile), setup.bot.name ?? bot.id)
+          : botHsp(setup.bot.tier, setup.bot.name ?? bot.id),
     }
     if (!profile) {
       const c = botCharacter(teams[0][0].bakugan.element)
@@ -302,6 +318,8 @@ interface Clash {
   names: [string, string]
   winner: SideIndex
   finisher: boolean
+  /** How it was decided. */
+  end: DuelEnd
   /** The loser's lives after this battle. */
   livesLeft: number
   /** 0 counting up · 1 winner shown · 2 the blow, a life lost */
@@ -377,7 +395,8 @@ export function Brawl({
   // What the HUD shows; lags `battle` until each card or strike lands.
   const [shown, setShown] = useState<BattleState>(battle)
   const [event, setEvent] = useState<{ event: BattleEvent; key: number } | null>(null)
-  const [throwKey, setThrowKey] = useState(0)
+  // each side's throws so far (the scene throws a side's Bakugan in when its count goes up)
+  const [throws, setThrows] = useState<[number, number]>([0, 0])
   const [defeated, setDefeated] = useState<[boolean, boolean]>([false, false])
   const [shields, setShields] = useState<[boolean, boolean]>([false, false])
   const [busy, setBusy] = useState(true)
@@ -396,9 +415,6 @@ export function Brawl({
   const timers = useRef<number[]>([])
   const stopWaits = useRef<(() => void)[]>([])
   const seq = useRef(1)
-  const lines = useRef<string[]>([])
-  const lineTimer = useRef(0)
-  const lastLine = useRef(-ANNOUNCE_GAP)
   const toastTimer = useRef(0)
   const hinted = useRef(false)
   // ability cards the player activated, for Season Pass challenges
@@ -411,40 +427,18 @@ export function Brawl({
   const nextKey = () => seq.current++
   const later = (ms: number, fn: () => void) => void timers.current.push(window.setTimeout(fn, ms))
   /** Continue once nobody is talking any more (at least `minMs` from now). */
-  const waitQuiet = (fn: () => void, minMs = 0) => stopWaits.current.push(afterSpeech(fn, 3500, minMs))
+  const waitQuiet = (fn: () => void, minMs = 0) => stopWaits.current.push(afterSpeech(fn, QUIET_MAX_MS, minMs))
   const say = (text: string, sub?: string, color?: string) => setBanner({ text, sub, color, key: nextKey() })
   const stopAll = () => {
     timers.current.forEach(clearTimeout)
     timers.current = []
     stopWaits.current.forEach((stop) => stop())
     stopWaits.current = []
-    clearTimeout(lineTimer.current)
-    lineTimer.current = 0
-    lines.current = []
     hush()
   }
 
-  /** The stadium announcer: lines wait their turn (two at most; a newer one pushes the oldest out). */
-  const call = (text: string) => {
-    lines.current.push(text)
-    while (lines.current.length > 2) lines.current.shift()
-    pumpLines()
-  }
-  const pumpLines = () => {
-    if (lineTimer.current || !lines.current.length) return
-    lineTimer.current = window.setTimeout(
-      () => {
-        lineTimer.current = 0
-        const line = lines.current.shift()
-        if (line) {
-          lastLine.current = clock()
-          announce(line)
-        }
-        pumpLines()
-      },
-      Math.max(0, lastLine.current + ANNOUNCE_GAP - clock()),
-    )
-  }
+  /** The stadium announcer (its lines wait their turn in the shared speech queue, after the brawlers' calls). */
+  const call = (text: string) => announce(text)
 
   const notify = (text: string) => {
     clearTimeout(toastTimer.current)
@@ -500,14 +494,15 @@ export function Brawl({
       host.intro.lines.forEach(call)
       started.current = host.battle.key
       const b = host.battle
-      return later(delay, () => battleStart(s, b))
+      return later(delay, () => waitQuiet(() => battleStart(s, b)))
     }
     const [l0, l1] = [s.sides[0].maxLives, s.sides[1].maxLives]
     const livesCall = l0 === l1 ? `${livesLine(l0)} each!` : `${nameOf(0)} has ${livesLine(l0)}, ${nameOf(1)} ${livesLine(l1)}!`
     call(`Welcome to the ${title ? spoken(title) : 'Bakugan Arena'}! ${nameOf(0)} versus ${nameOf(1)}! ${livesCall}`)
     if (boost) call(`Watch out! Every Bakugan of ${nameOf(1)} brawls with ${boost} extra G!`)
     call(`${nameOf(s.setter)} wins the coin toss and sets the first Gate Card!`)
-    later(delay, () => battleStart(s))
+    // the opening lines are said before the first battle starts
+    later(delay, () => waitQuiet(() => battleStart(s)))
   }
 
   /** A new battle: the setter sets a Gate Card face-down. A host's battle brings its own banner. */
@@ -540,68 +535,82 @@ export function Brawl({
     call(`${nameOf(side)} sets a Gate Card face-down! Only ${nameOf(side)} knows what it is!`)
     setBattle(next)
     setShown(next)
-    later(SET_MS, () => throwStep(next))
+    later(SET_MS, () => waitQuiet(() => throwStep(next)))
   }
 
-  /** The setter picks a Bakugan first, then the other brawler answers; then both throw. */
+  /** The brawlers throw in turn: the setter first, then the other brawler answers. Each throw is a beat of its own. */
   function throwStep(s: BattleState) {
     setBattle(s)
     setShown(s)
     const side = throwerOf(s)
-    if (side === null) return throwAll(s)
+    if (side === null) return battleReady(s)
     if (human(side) && s.sides[side].team.length > 1) {
       setPicking('throw')
       setBusy(false)
       return
     }
-    const pick = human(side) ? 0 : chooseThrow(s, side, levelOf(side))
-    const next = throwBakugan(s, side, pick)
-    // the first pick shows on its card a moment before the other side picks
-    if (next.duel) return throwStep(next)
-    setBattle(next)
-    setShown(next)
-    later(human(side) ? 0 : PICK_MS, () => throwStep(next))
+    if (human(side)) return throwOne(s, side, 0)
+    later(PICK_MS, () => throwOne(s, side, chooseThrow(s, side, levelOf(side))))
   }
 
   function pickThrow(s: BattleState, index: number) {
     setPicking(null)
     setBusy(true)
-    throwStep(throwBakugan(s, 0, index))
+    throwOne(s, 0, index)
   }
 
-  /** Both brawlers throw: "Bakugan, brawl!" and the Bakugan stand on the Gate Card. */
-  function throwAll(s: BattleState) {
+  /** One brawler throws: "Bakugan, brawl!", the ball flies, opens, and the Bakugan stands on the Gate Card. */
+  function throwOne(s: BattleState, side: SideIndex, index: number) {
     setBusy(true)
-    const d = s.duel!
-    const first = s.setter
-    const second = other(first)
-    const names = [d.fighters[0].name, d.fighters[1].name]
-    playSfx('brawl')
+    const next = throwBakugan(s, side, index)
+    const name = next.sides[side].team[next.thrown[side]!].name
+    // the first throw of a battle clears the field of the last one's result
+    if (s.thrown[0] === null && s.thrown[1] === null) setDefeated([false, false])
     // the scene gets the new Bakugan together with the throw
-    setShown(s)
-    setThrowKey((k) => k + 1)
-    setDefeated([false, false])
-    cue(first, 'point', 'BAKUGAN, BRAWL!', `${names[first]}, stand!`, `Bakugan, brawl! ${names[first]}, stand!`)
-    later(800, () =>
-      cue(second, 'point', 'BAKUGAN, BRAWL!', `${names[second]}, stand!`, `Bakugan, brawl! ${names[second]}, stand!`),
+    setBattle(next)
+    setShown(next)
+    setThrows((t) => (side === 0 ? [t[0] + 1, t[1]] : [t[0], t[1] + 1]))
+    playSfx('brawl')
+    cue(side, 'throw', 'BAKUGAN, BRAWL!', `${name}, stand!`, `Bakugan, brawl! ${name}, stand!`)
+    later(THROW_MS, () => waitQuiet(() => throwStep(next)))
+  }
+
+  /** Both Bakugan stand: the announcer gives their G-Powers and who has to answer. */
+  function battleReady(s: BattleState) {
+    const d = s.duel!
+    const names = [d.fighters[0].name, d.fighters[1].name]
+    hinted.current = false
+    if (d.done) return waitQuiet(() => nextMove(s))
+    const mover = d.turn
+    const gap = Math.abs(gapOf(d, mover))
+    const ahead = leaderOf(d) === mover
+    call(
+      `${names[0]}, ${d.fighters[0].g} G! ${names[1]}, ${d.fighters[1].g} G! ` +
+        (ahead
+          ? `${nameOf(mover)} moves first, ${gap ? `${gap} G ahead` : 'ahead on the tie'}!`
+          : `${nameOf(mover)} moves first and has to answer${gap ? `: ${gap} G behind` : ''}!`),
     )
-    call(`${nameOf(first)} throws ${names[first]}! ${nameOf(second)} answers with ${names[second]}!`)
-    call(`${names[0]}, ${d.fighters[0].g} G! ${names[1]}, ${d.fighters[1].g} G! ${nameOf(second)} moves first!`)
-    later(THROW_MS, () => waitQuiet(() => nextMove(s)))
+    waitQuiet(() => nextMove(s), 500)
   }
 
   function nextMove(s: BattleState) {
     setBattle(s)
     if (s.phase === 'clash') return battleEnd(s)
-    const side = s.duel!.turn
-    if (!human(side)) later(AI_DELAY_MS, () => run(s, chooseAction(s, levelOf(side))))
-    else {
-      if (!hinted.current) {
-        hinted.current = true
-        say('YOUR MOVE', 'Play an ability card, open your Gate Card, or ATTACK')
-      }
-      setBusy(false)
+    const d = s.duel!
+    const side = d.turn
+    if (!human(side)) return later(AI_DELAY_MS, () => run(s, chooseAction(s, levelOf(side))))
+    // ahead with nothing left to play: the player can only hold
+    if (!canAct(d, side)) {
+      say('NOTHING LEFT TO PLAY', `You hold at ${powerOf(d, side)} G`)
+      return later(PASS_MS, () => run(s, { kind: 'pass' }))
     }
+    if (!hinted.current) {
+      hinted.current = true
+      const gap = Math.abs(gapOf(d, side))
+      if (leaderOf(d) === side) say('YOUR MOVE', `You're ${gap ? `${gap} G ahead` : 'ahead on the tie'}: hold, or add more power`)
+      else say('YOUR MOVE', `You're ${gap ? `${gap} G behind` : 'tied, and lose ties'}: play a card to get ahead`, BEHIND)
+    }
+    setBusy(false)
   }
 
   function run(s: BattleState, move: Move) {
@@ -610,8 +619,26 @@ export function Brawl({
     // the card leaves the hand at once; the HUD (`shown`) catches up when the move lands
     setBattle(step.state)
     if (move.kind === 'gate') return openGate(s, step)
-    if (move.kind === 'attack') return strike(s, step)
+    if (move.kind === 'pass') return pass(s, step)
     playCard(s, step, move.card)
+  }
+
+  /** A pass: ahead, the brawler holds ("beat that!"); behind, they give the battle up. */
+  function pass(s: BattleState, step: Step) {
+    const d = s.duel!
+    const side = d.turn
+    const foe = other(side)
+    const g = powerOf(d, side)
+    if (step.state.duel!.end === 'gaveUp') {
+      cue(side, 'slump', "I CAN'T BEAT THAT…", undefined, "I can't beat that...")
+      call(`${nameOf(side)} can't get past ${powerOf(d, foe)} G and gives up the battle!`)
+      crowd('gasp')
+    } else {
+      cue(side, 'point', 'HOLD!', `Beat ${g} G!`, HOLD_LINES[d.moves % HOLD_LINES.length])
+      call(`${nameOf(side)} holds at ${g} G! ${nameOf(foe)} has to beat it!`)
+    }
+    setShown(step.state)
+    later(PASS_MS, () => waitQuiet(() => nextMove(step.state)))
   }
 
   /** "Ability activate!": the card's effect plays on the field, then the G-Powers change. */
@@ -624,18 +651,18 @@ export function Brawl({
     if (human(side)) playerCards.current++
     playSfx('ability')
     cue(side, 'card', a.type === 'shield' ? 'NULLIFY!' : 'ABILITY ACTIVATE!', a.name, `Ability activate! ${a.name}!`)
-    // the announcer calls every card, whoever plays it
-    call(cardLine(step, card, bakugan, d.fighters[foe].name, nameOf(side), nameOf(foe)))
     if (a.type === 'shield') {
       crowd('gasp')
       if (step.cancelled) say('NULLIFY!', `${a.name} cancels ${effectName(step.cancelled, step.state)}`, '#ff4a3d')
     } else if (a.type === 'finisher') crowd('gasp')
     else if (a.amount >= 150 || a.type === 'drain') crowd('roar', side)
-    waitQuiet(() => perform(step, a), 700)
+    // the announcer calls the card as it lands
+    const line = cardLine(step, card, bakugan, d.fighters[foe].name, nameOf(side), nameOf(foe))
+    waitQuiet(() => perform(step, a, line), 700)
   }
 
-  /** The Bakugan acts on the field: animation, then the G-Power changes on the HUD. */
-  function perform(step: Step, a: Ability) {
+  /** The Bakugan acts on the field: animation, then the G-Power changes on the HUD and the announcer calls it. */
+  function perform(step: Step, a: Ability, line: string) {
     const ev = step.event!
     const side = ev.actor
     setEvent({ event: ev, key: nextKey() })
@@ -651,9 +678,16 @@ export function Brawl({
       }
       if (ev.actorG || ev.targetG) playSfx('gPower')
       setShown(step.state)
-      if (a.type === 'finisher') setDefeated(ev.target === 0 ? [true, false] : [false, true])
+      call(line)
+      // a finisher, or a Bakugan down to 0 G: it falls at once
+      const end = step.state.duel!.end
+      if (end === 'finisher' || end === 'ko') {
+        const loser = other(step.state.duel!.winner!)
+        setDefeated(loser === 0 ? [true, false] : [false, true])
+      }
     })
     const hold = a.type === 'finisher' ? FINISHER_HOLD_MS : 0
+    // the next move waits for the announcer's call
     later(ACTION_DURATION * 1000 + hold, () => waitQuiet(() => nextMove(step.state)))
   }
 
@@ -665,39 +699,21 @@ export function Brawl({
     playSfx('gateCard')
     cue(side, 'card', 'GATE CARD, OPEN!', gate.name, `Gate card, open! ${gate.name}!`)
     say('GATE CARD, OPEN!', `${gate.name}: ${gate.text}`, ELEMENT_BY_ID[gateElementOf(gate)].color)
-    call(`Gate Card open! ${nameOf(side)} reveals ${gate.name}! ${gateOutcome(step.state, e)}`)
     crowd('roar', side)
     later(GATE_FLIP_MS, () => {
       setShown(step.state)
       if (e.delta[0] || e.delta[1]) playSfx('gPower')
+      call(`${nameOf(side)} reveals ${gate.name}! ${gateOutcome(step.state, e)}`)
+      const end = step.state.duel!.end
+      if (end === 'ko') {
+        const loser = other(step.state.duel!.winner!)
+        setDefeated(loser === 0 ? [true, false] : [false, true])
+      }
     })
     later(GATE_HOLD_MS, () => waitQuiet(() => nextMove(step.state)))
   }
 
-  /** "<Bakugan>, attack!": the strike flies and the opponent's G-Power drops. Its part in the battle is over. */
-  function strike(s: BattleState, step: Step) {
-    const d = s.duel!
-    const side = d.turn
-    const foe = other(side)
-    const ev = step.event!
-    const bakugan = d.fighters[side].name
-    playSfx('ability')
-    cue(side, 'point', 'ATTACK!', `${bakugan}, attack!`, `${bakugan}, attack!`)
-    const answer = !step.state.duel!.attacked[foe] && !step.state.duel!.done
-    call(`${bakugan} attacks! ${d.fighters[foe].name} loses ${ev.damage} G!${answer ? ` ${nameOf(foe)} has one last move!` : ''}`)
-    waitQuiet(() => {
-      setEvent({ event: ev, key: nextKey() })
-      later(IMPACT_AT * 1000, () => {
-        playSfx('hit')
-        cue(foe, 'flinch')
-        setShown(step.state)
-        playSfx('gPower')
-      })
-      later(ACTION_DURATION * 1000, () => waitQuiet(() => nextMove(step.state)))
-    }, 500)
-  }
-
-  /** Both have struck (or a finisher won it): the G-Powers count up, the winner deals the final blow, a life is lost. */
+  /** The battle is decided: the G-Powers count up, the winner deals the final blow, a life is lost. */
   function battleEnd(s: BattleState) {
     setBusy(true)
     const { state: next, event: ev, result } = resolveBattle(s)
@@ -713,20 +729,23 @@ export function Brawl({
       names: [d.fighters[0].name, d.fighters[1].name],
       winner,
       finisher: result.finisher,
+      end: result.end,
       livesLeft,
       step: 0,
       hosted: !!host,
     })
-    if (!result.finisher) call(`Both Bakugan have attacked! ${result.power[0]} G against ${result.power[1]} G!`)
+    const endCall = endLine(result.end, nameOf(loser), d.fighters[loser].name, result.power)
+    if (endCall) call(endCall)
     later(COUNT_MS, () => {
       setClash((c) => c && { ...c, step: 1 })
       if (diff <= CLOSE) crowd('gasp')
     })
     later(COUNT_MS + WINNER_MS, () => {
       setClash((c) => c && { ...c, step: 2 })
-      // the finisher's beam already struck
-      if (!result.finisher) setEvent({ event: ev, key: nextKey() })
-      later(result.finisher ? 0 : IMPACT_AT * 1000, () => {
+      // the finisher's beam already struck, and a Bakugan at 0 G is already down
+      const struck = result.finisher || result.end === 'ko'
+      if (!struck) setEvent({ event: ev, key: nextKey() })
+      later(struck ? 0 : IMPACT_AT * 1000, () => {
         playSfx('hit')
         cue(loser, 'flinch')
         cue(winner, 'cheer', 'YES!', undefined, `Yes! Way to go, ${d.fighters[winner].name}!`)
@@ -734,7 +753,7 @@ export function Brawl({
         setDefeated(loser === 0 ? [true, false] : [false, true])
         const tie = diff === 0 && !result.finisher
         const line = `${d.fighters[winner].name} wins the battle${tie ? ' on the tie: it was thrown first' : ''}! ${nameOf(loser)} loses a life!`
-        call(diff <= CLOSE && !result.finisher ? `What a close call! ${line}` : line)
+        call(diff <= CLOSE && !struck ? `What a close call! ${line}` : line)
         if (livesLeft === 1 && !host) {
           call(`Match point for ${nameOf(winner)}! ${nameOf(loser)} has one life left!`)
           crowd('chant', winner)
@@ -777,6 +796,7 @@ export function Brawl({
           kos,
           abilities: playerCards.current,
           flawless: s.sides[0].lives === s.sides[0].maxLives,
+          foe: brawlers[1].hsp,
         }),
       )
     }
@@ -844,18 +864,24 @@ export function Brawl({
   const fieldGate = shown.duel?.gate
   const over = !host && battle.winner !== null && battle.phase === 'over' && !clash
   const gateOwner = shown.duel?.gate?.owner ?? shown.setter
+  // the Bakugan on the field: this battle's once thrown (the other side's last one waits in its ball till then)
+  const onCard = (side: SideIndex) => (shown.duel ? shown.sides[side].active : (shown.thrown[side] ?? shown.sides[side].active))
+  const fighterColors = [0, 1].map((i) => ELEMENT_BY_ID[cast.teams[i][onCard(i as SideIndex)].bakugan.element].color) as [
+    string,
+    string,
+  ]
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Canvas shadows camera={{ position: [0, 11, 46], fov: 50 }} dpr={[1, 2]}>
         <ArenaScene
-          fighters={[cast.teams[0][shown.sides[0].active], cast.teams[1][shown.sides[1].active]]}
+          fighters={[cast.teams[0][onCard(0)], cast.teams[1][onCard(1)]]}
           // a face-down Gate Card shows no attribute; it lights up once opened (and goes dark again if nullified)
           gate={fieldGate?.open && !fieldGate.nullified ? gateElementOf(fieldGate.card) : null}
           event={event}
           shields={shields}
           defeated={defeated}
-          throwKey={throwKey}
+          throws={throws}
           partners={partners}
           brawlers={[
             { parts: cast.brawlers[0].parts, model: cast.brawlers[0].model, gesture: cues[0].gesture },
@@ -894,7 +920,11 @@ export function Brawl({
           )}
           <TurnCounter turn={shown.turn + (shown.phase === 'battle' ? 1 : 0)} battle={shown.battle} label={host?.counter} />
           <GateSlot state={shown} ownerName={shownName(gateOwner)} mine={onField && gateOwner === 0} />
-          <PhaseLabel state={battle} busy={busy} controls={onField} picking={picking} names={[shownName(0), shownName(1)]} />
+          {shown.duel && (battle.phase === 'battle' || battle.phase === 'clash') ? (
+            <BattleStatus state={shown} you={onField} names={[shownName(0), shownName(1)]} colors={fighterColors} />
+          ) : (
+            <PhaseLabel state={battle} busy={busy} controls={onField} picking={picking} names={[shownName(0), shownName(1)]} />
+          )}
         </div>
         <BrawlerHud state={shown} side={1} brawler={cast.brawlers[1]} teams={cast.teams} color={colors[1]} boost={boost} />
       </div>
@@ -912,12 +942,13 @@ export function Brawl({
       {picking === 'gate' && !busy && <GatePicker gates={gatesLeft(battle.sides[0])} onPick={(i) => gateSet(battle, i)} />}
       {picking === 'throw' && !busy && <ThrowPicker state={battle} teams={cast.teams} onPick={(i) => pickThrow(battle, i)} />}
 
-      {/* the player's moves: the cards in hand, the Gate Card and ATTACK */}
+      {/* the player's moves: the cards in hand, the Gate Card and PASS (hold, or give up) */}
       {onField && battle.phase === 'battle' && duel && (
         <MoveBar
           state={battle}
           myTurn={myTurn}
           color={ELEMENT_BY_ID[duel.fighters[0].bakugan.element].color}
+          foeName={shownName(1)}
           onMove={(m) => run(battle, m)}
         />
       )}
@@ -1033,6 +1064,18 @@ function effectName(e: Effect, s: BattleState) {
   return e.kind === 'gate' ? `the Gate Card (${s.duel?.gate?.card.name ?? ''})` : (e.card?.ability.name ?? 'the card')
 }
 
+/** What the brawler calls out when holding the lead. */
+const HOLD_LINES = ['Beat that if you can!', 'Your move!', "Let's see what you've got!", 'Go ahead, top that!']
+
+/** After a move, the state of the race: who has to answer now (or how the battle ended). */
+function raceLine(d: Duel, names: [string, string]) {
+  if (d.done) return ''
+  const lead = leaderOf(d)
+  const gap = Math.abs(gapOf(d, lead))
+  if (d.turn === lead) return `${names[lead]} leads by ${gap} G!`
+  return gap ? `${names[d.turn]} is ${gap} G behind and has to answer!` : `It's a tie! ${names[d.turn]} has to answer!`
+}
+
 /** The announcer on a card, whoever plays it. */
 function cardLine(step: Step, card: Card, bakugan: string, foeBakugan: string, brawler: string, foeBrawler: string) {
   const a = card.ability
@@ -1040,21 +1083,41 @@ function cardLine(step: Step, card: Card, bakugan: string, foeBakugan: string, b
   const side = step.event!.actor
   const foe = other(side)
   const e = step.effect!
+  const names: [string, string] = side === 0 ? [brawler, foeBrawler] : [foeBrawler, brawler]
+  const next = raceLine(d, names)
+  const ko = d.end === 'ko' ? `${foeBakugan} is down to 0 G!` : ''
   switch (a.type) {
     case 'boost':
-      return `${brawler} activates ${a.name}! ${bakugan} powers up to ${powerOf(d, side)} G!`
+      return `${brawler} activates ${a.name}! ${bakugan} powers up to ${powerOf(d, side)} G! ${next}`
     case 'attack':
-      return `${bakugan} strikes with ${a.name}! ${foeBakugan} drops to ${powerOf(d, foe)} G!`
+      return `${bakugan} strikes with ${a.name}! ${ko || `${foeBakugan} drops to ${powerOf(d, foe)} G! ${next}`}`
     case 'weaken':
-      return `${brawler} activates ${a.name}! ${foeBakugan} is weakened to ${powerOf(d, foe)} G!`
+      return `${brawler} activates ${a.name}! ${ko || `${foeBakugan} is weakened to ${powerOf(d, foe)} G! ${next}`}`
     case 'drain':
-      return `${a.name}! ${bakugan} steals ${e.delta[side]} G from ${foeBakugan}!`
+      return `${a.name}! ${bakugan} steals ${e.delta[side]} G from ${foeBakugan}! ${ko || next}`
     case 'shield':
       return step.cancelled
-        ? `${brawler} activates ${a.name}! ${foeBrawler}'s ${effectName(step.cancelled, step.state)} is nullified!`
+        ? `${brawler} activates ${a.name}! ${foeBrawler}'s ${effectName(step.cancelled, step.state)} is nullified! ${next}`
         : `${brawler} activates ${a.name}!`
     case 'finisher':
       return `${bakugan} unleashes ${a.name}! ${foeBakugan} is wiped out!`
+  }
+}
+
+/** The announcer as a battle is decided (the finisher's own line already said it). */
+function endLine(end: DuelEnd, loser: string, loserBakugan: string, power: [number, number]) {
+  const score = `${Math.max(...power)} G against ${Math.min(...power)} G!`
+  switch (end) {
+    case 'ko':
+      return `${loserBakugan} has no G-Power left! It's defeated!`
+    case 'finisher':
+      return ''
+    case 'gaveUp':
+      return `${loser} gives up! ${score}`
+    case 'noAnswer':
+      return `${loser} has nothing left to answer with! ${score}`
+    case 'standoff':
+      return `Neither side can play any more! ${score}`
   }
 }
 
@@ -1064,7 +1127,8 @@ function gateOutcome(s: BattleState, e: Effect) {
   const parts = ([0, 1] as const)
     .filter((i) => e.delta[i])
     .map((i) => `${d.fighters[i].name} ${e.delta[i] > 0 ? 'rises' : 'drops'} to ${powerOf(d, i)} G`)
-  return parts.length ? `${parts.join(', ')}!` : 'But nothing happens!'
+  const next = raceLine(d, [d.fighters[0].name, d.fighters[1].name])
+  return parts.length ? `${parts.join(', ')}! ${next}` : `But nothing happens! ${next}`
 }
 
 // ---------------------------------------------------------------- the player's controls
@@ -1100,24 +1164,41 @@ function PhaseLabel({
   )
 }
 
-/** The player's moves in battle: each card in hand, opening the Gate Card, and ATTACK. */
+/** What a move would leave on the field, on its button: both G-Powers and whether the player would be ahead. */
+function previewText(d: Duel, move: Move): { text: string; color: string } {
+  const p = previewMove(d, move)
+  if (p.winner === 0) return { text: p.end === 'ko' ? 'KNOCKS IT OUT: YOU WIN THE BATTLE' : 'WINS THE BATTLE', color: AHEAD }
+  if (p.winner === 1) return { text: 'YOU WOULD LOSE THE BATTLE', color: BEHIND }
+  const gap = p.power[0] - p.power[1]
+  const ahead = gap > 0 || (gap === 0 && d.first === 0)
+  return {
+    text: `${p.power[0]} VS ${p.power[1]} · ${ahead ? (gap ? `AHEAD BY ${gap}` : 'AHEAD ON THE TIE') : gap ? `STILL ${-gap} BEHIND` : 'TIED, STILL BEHIND'}`,
+    color: ahead ? AHEAD : BEHIND,
+  }
+}
+
+/** The player's moves in battle: each card in hand, opening the Gate Card, and PASS (hold the lead, or give up). */
 function MoveBar({
   state,
   myTurn,
   color,
+  foeName,
   onMove,
 }: {
   state: BattleState
   myTurn: boolean
   color: string
+  foeName: string
   onMove: (move: Move) => void
 }) {
   const d = state.duel!
-  const left = playsLeft(d, 0)
-  const answering = d.attacked[1] && !d.attacked[0]
   const gate = d.gate?.owner === 0 && !d.gate.open ? d.gate.card : null
-  const mustAttack = !d.attacked[0] && left === 0
   const owner = d.fighters[0]
+  const ahead = leaderOf(d) === 0
+  const gap = Math.abs(gapOf(d, 0))
+  const mine = powerOf(d, 0)
+  const theirs = powerOf(d, 1)
+  const live = myTurn && !d.done
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-center gap-3 px-24 pb-5 *:pointer-events-auto">
       {d.hands[0].map((card) => {
@@ -1135,6 +1216,7 @@ function MoveBar({
             tag={cardTag(card.ability)}
             text={target ? `Cancels ${target}` : card.ability.description}
             effect={battleEffect(card.ability)}
+            preview={live && !lock ? previewText(d, { kind: 'ability', card }) : undefined}
           />
         )
       })}
@@ -1142,36 +1224,36 @@ function MoveBar({
         <GateButton
           gate={gate}
           preview={gateDelta(d, gate, 0)}
+          result={live && canOpenGate(d, 0) ? previewText(d, { kind: 'gate' }) : undefined}
           disabled={!myTurn || !canOpenGate(d, 0)}
-          lock={d.attacked[1] ? 'Too late: they attacked' : left === 0 ? 'No moves left' : undefined}
           onClick={() => onMove({ kind: 'gate' })}
         />
       )}
-      <div className="flex w-44 shrink-0 flex-col items-stretch gap-2 self-center">
+      <div className="flex w-52 shrink-0 flex-col items-stretch gap-1.5 self-center">
         <p className="font-display text-center text-[10px] tracking-[0.3em] text-white/60">
-          {d.attacked[0]
-            ? 'YOU HAVE ATTACKED'
-            : answering
-              ? left
-                ? 'LAST MOVE · THEN STRIKE BACK'
-                : 'STRIKE BACK!'
-              : `MOVES ${d.plays[0]}/${d.limit[0]}`}
+          {myTurn ? 'YOUR MOVE' : `${foeName.toUpperCase()}'S MOVE…`}
+        </p>
+        <p className="font-display text-center text-lg leading-none font-black" style={{ color: ahead ? AHEAD : BEHIND }}>
+          {gap ? `${gap} G ${ahead ? 'AHEAD' : 'BEHIND'}` : ahead ? 'TIED · YOU WIN TIES' : 'TIED · THEY WIN TIES'}
+        </p>
+        <p className="text-center text-[11px] leading-snug text-white/70">
+          {ahead
+            ? `${foeName} has to beat ${mine} G. Hold, or add more power.`
+            : `Get past ${theirs} G: play a card${gate && canOpenGate(d, 0) ? ' or open your Gate Card' : ''}.`}
         </p>
         <motion.button
-          disabled={!myTurn || d.attacked[0]}
-          onClick={() => onMove({ kind: 'attack' })}
-          whileHover={myTurn ? { scale: 1.05 } : undefined}
-          whileTap={myTurn ? { scale: 0.95 } : undefined}
-          animate={
-            myTurn && mustAttack ? { boxShadow: [`0 0 10px ${color}`, `0 0 34px ${color}`, `0 0 10px ${color}`] } : undefined
-          }
-          transition={myTurn && mustAttack ? { repeat: Infinity, duration: 1 } : undefined}
-          className="font-display rounded-lg border-2 border-[#ff6a4a] bg-[#ff3b2f]/20 py-4 text-xl font-black tracking-[0.25em] backdrop-blur transition disabled:opacity-35"
-          style={{ boxShadow: myTurn ? `0 0 22px ${color}88` : 'none' }}
+          disabled={!myTurn}
+          onClick={() => onMove({ kind: 'pass' })}
+          whileHover={myTurn ? { scale: 1.04 } : undefined}
+          whileTap={myTurn ? { scale: 0.96 } : undefined}
+          className={`font-display rounded-lg border-2 py-2.5 text-lg font-black tracking-[0.25em] backdrop-blur transition disabled:opacity-35 ${
+            ahead ? 'border-[#3ee07a] bg-[#3ee07a]/15' : 'border-white/30 bg-black/50 text-white/80'
+          }`}
+          style={{ boxShadow: myTurn && ahead ? `0 0 22px ${color}88` : 'none' }}
         >
-          ATTACK!
-          <span className="mt-1 block text-[10px] font-normal tracking-[0.2em] text-white/70">
-            −{strikeOf(d, 0)}G · ENDS YOUR PART
+          {ahead ? 'HOLD' : 'GIVE UP'}
+          <span className="mt-0.5 block text-[10px] font-normal tracking-[0.15em] text-white/70">
+            {ahead ? `PASS · ${foeName.toUpperCase()} MUST ANSWER` : 'PASS · LOSE THIS BATTLE'}
           </span>
         </motion.button>
       </div>
@@ -1193,15 +1275,16 @@ const signed = (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}G`
 function GateButton({
   gate,
   preview,
+  result,
   disabled,
-  lock,
   onClick,
 }: {
   gate: GateCard
   /** What opening it would do right now (G for the player, for the opponent). */
   preview: [number, number]
+  /** Where that would leave the battle. */
+  result?: { text: string; color: string }
   disabled: boolean
-  lock?: string
   onClick: () => void
 }) {
   const el = ELEMENT_BY_ID[gateElementOf(gate)]
@@ -1236,21 +1319,17 @@ function GateButton({
             ? `NOW: ${[preview[0] && `YOU ${signed(preview[0])}`, preview[1] && `FOE ${signed(preview[1])}`].filter(Boolean).join(' · ')}`
             : 'NO EFFECT RIGHT NOW'}
         </span>
-        <span className="mt-1 line-clamp-1 text-xs leading-snug text-white/55 [@media(min-height:720px)]:line-clamp-3">
+        <span className="mt-1 line-clamp-1 text-xs leading-snug text-white/55 [@media(min-height:720px)]:line-clamp-2">
           {gate.text}
         </span>
-        {lock && disabled && (
-          <span className="font-display absolute inset-x-0 bottom-2 px-2 text-center text-[10px] leading-tight tracking-widest text-white/80">
-            {lock.toUpperCase()}
-          </span>
-        )}
+        {result && <ResultLine result={result} />}
       </motion.button>
       <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-4 w-64 -translate-x-1/2 rounded-lg border border-[#ffc94a]/70 bg-black/90 p-4 opacity-0 shadow-2xl backdrop-blur transition group-hover:opacity-100">
         <p className="font-display text-[11px] font-bold tracking-wider text-[#ffc94a]">YOUR GATE CARD · FACE-DOWN</p>
         <p className="font-display mt-1 text-base font-bold">{gate.name}</p>
         <p className="mt-2 text-sm leading-snug text-white/80">{gate.text}</p>
         <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-snug text-white/60">
-          Opening it takes a move. Your opponent gets a move to answer it and may nullify it.
+          Opening it takes your turn. Your opponent can then answer it, or nullify it.
         </p>
       </div>
     </div>
@@ -1407,13 +1486,7 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
           >
             {clash.names[clash.winner].toUpperCase()} WINS!
           </p>
-          <p className="font-display mt-1 text-sm tracking-[0.3em] text-white/70">
-            {clash.finisher
-              ? 'WON OUTRIGHT BY ITS FINISHER'
-              : tie
-                ? 'A TIE: IT WAS THROWN FIRST'
-                : `BY ${Math.abs(clash.power[0] - clash.power[1])} G`}
-          </p>
+          <p className="font-display mt-1 text-sm tracking-[0.3em] text-white/70">{clashReason(clash, brawlerNames, tie)}</p>
         </motion.div>
       )}
       {clash.step >= 2 && (
@@ -1436,6 +1509,24 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
       )}
     </motion.div>
   )
+}
+
+/** Why the battle was won, under the winner's name. */
+function clashReason(clash: Clash, brawlers: [string, string], tie: boolean) {
+  const loser = other(clash.winner)
+  const by = tie ? 'ON THE TIE: THROWN FIRST' : `BY ${Math.abs(clash.power[0] - clash.power[1])} G`
+  switch (clash.end) {
+    case 'finisher':
+      return 'WON OUTRIGHT BY ITS FINISHER'
+    case 'ko':
+      return `${clash.names[loser].toUpperCase()} HAS 0 G — DEFEATED`
+    case 'gaveUp':
+      return `${by} · ${brawlers[loser].toUpperCase()} GAVE UP`
+    case 'noAnswer':
+      return `${by} · ${brawlers[loser].toUpperCase()} HAD NO ANSWER`
+    case 'standoff':
+      return `${by} · NO MOVES LEFT`
+  }
 }
 
 /** Counts up from zero with the G-Power tick. */
@@ -1481,7 +1572,7 @@ export function RewardList({ reward }: { reward: BattleReward }) {
     },
     ...reward.challengesDone.map((c, i) => ({ id: `ch-${i}`, color: '#3ee07a', text: 'CHALLENGE DONE', extra: c })),
     ...(reward.rankUp
-      ? [{ id: 'rank', color: '#ffffff', text: `RANK UP: ${reward.rankUp.toUpperCase()}`, extra: 'new tier reached' }]
+      ? [{ id: 'rank', color: '#ffffff', text: `RANK UP: ${reward.rankUp.toUpperCase()}`, extra: 'new rank reached' }]
       : []),
     ...Object.entries(reward.xp).map(([id, xp]) => {
       const b = bakuganById(id)
@@ -1528,6 +1619,7 @@ function HandButton({
   disabled,
   locked,
   owner,
+  preview,
   onClick,
 }: {
   title: string
@@ -1541,6 +1633,8 @@ function HandButton({
   locked?: string
   /** Bakugan the card belongs to. */
   owner?: string
+  /** Where playing it now would leave the battle. */
+  preview?: { text: string; color: string }
   onClick: () => void
 }) {
   return (
@@ -1561,9 +1655,10 @@ function HandButton({
         </span>
         {owner && <span className="truncate text-[10px] tracking-wider text-white/45 uppercase">{owner}</span>}
         <span className="font-display mt-1 text-sm leading-tight font-bold">{title}</span>
-        <span className="mt-1.5 line-clamp-2 text-xs leading-snug text-white/65 [@media(min-height:720px)]:line-clamp-4">
+        <span className="mt-1.5 line-clamp-2 text-xs leading-snug text-white/65 [@media(min-height:720px)]:line-clamp-3">
           {text}
         </span>
+        {preview && <ResultLine result={preview} />}
         {locked && (
           <span className="font-display absolute inset-x-0 bottom-2 px-2 text-center text-[10px] leading-tight tracking-widest text-white/80">
             {locked.toUpperCase()}
@@ -1589,5 +1684,17 @@ function HandButton({
         )}
       </div>
     </div>
+  )
+}
+
+/** At the foot of a card: what playing it now would do to the race. */
+function ResultLine({ result }: { result: { text: string; color: string } }) {
+  return (
+    <span
+      className="font-display absolute inset-x-0 bottom-0 rounded-b-md border-t border-white/10 bg-black/70 px-2 py-1 text-center text-[9px] leading-tight font-bold tracking-wider"
+      style={{ color: result.color }}
+    >
+      → {result.text}
+    </span>
   )
 }

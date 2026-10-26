@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { aiForTier, LIVES, powerOf, type BattleResult, type BattleState, type SideIndex } from '../battle/engine'
+import { aiForTier, leaderOf, LIVES, powerOf, type BattleResult, type BattleState, type SideIndex } from '../battle/engine'
 import {
   aiStep,
   applyBattle,
@@ -418,6 +418,8 @@ export function TagArena({ setup, tag, onAgain }: { setup: ArenaSetup; tag: TagS
         kos,
         abilities: live.current.tools?.abilities() ?? 0,
         flawless: t.brawlers[0].lives === t.brawlers[0].maxLives,
+        // the opponents' rank: the average of the two
+        foe: Math.round(((cast.sides[2].hsp ?? 0) + (cast.sides[3].hsp ?? 0)) / 2),
       })
     }
     if (event) reportEventResult({ event, won, livesLeft: t.brawlers[0].lives, battles: t.results.length })
@@ -615,6 +617,9 @@ function DuelPanel({
     const el = entrant ? ELEMENT_BY_ID[entrant.bakugan.element] : null
     const won = mini.result?.winner === side
     const lost = !!mini.result && !won
+    // while the battle goes on: whose move it is, and who is ahead
+    const moving = !!d && !d.done && d.turn === side
+    const leads = !!d && !d.done && leaderOf(d) === side
     return (
       <div className={`flex items-center gap-2 ${lost ? 'opacity-50' : ''}`}>
         <BrawlerFace
@@ -624,7 +629,10 @@ function DuelPanel({
           size={expanded ? 44 : 30}
         />
         <div className="flex min-w-0 flex-1 flex-col">
-          <p className="font-display truncate text-[10px] font-bold tracking-wider">{cast.short[slot].toUpperCase()}</p>
+          <p className="font-display truncate text-[10px] font-bold tracking-wider">
+            {cast.short[slot].toUpperCase()}
+            {moving && <span className="ml-1 rounded-sm bg-white px-1 text-[8px] text-black">MOVE</span>}
+          </p>
           <LifeBalls lives={s.sides[side].lives} max={s.sides[side].maxLives} color={cast.colors[slot]} small />
         </div>
         <div className="flex items-center gap-1.5">
@@ -642,6 +650,7 @@ function DuelPanel({
               <span className="text-[10px]">G</span>
             </span>
             {won && <span className="font-display text-[9px] font-bold tracking-widest text-[#3ee07a]">WINS</span>}
+            {leads && <span className="font-display text-[9px] font-bold tracking-widest text-[#3ee07a]">▲ AHEAD</span>}
           </div>
         </div>
       </div>
@@ -738,7 +747,8 @@ function RoundPanel({
               <span className="font-bold" style={{ color: cast.colors[w] }}>
                 {cast.short[w]}
               </span>{' '}
-              beat {cast.short[l]} · {Math.max(...r.power)}G to {Math.min(...r.power)}G{r.finisher ? ' (finisher)' : ''}
+              beat {cast.short[l]} · {Math.max(...r.power)}G to {Math.min(...r.power)}G
+              {r.end === 'ko' ? ' (0 G: defeated)' : r.finisher ? ' (finisher)' : ''}
             </p>
           )
         })}

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { aiForTier, LIVES, matchedOpponent, PLAYS, TEAM_SIZE } from '../battle/engine'
+import { aiForTier, LIVES, matchedOpponent, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
 import { isReleased, released } from '../season/release'
@@ -20,7 +20,7 @@ import {
   type OwnedBakugan,
 } from '../profile/useProfiles'
 import { botCharacter, opponentCharacter } from '../profile/avatar'
-import { useGame } from '../store/useGame'
+import { useGame, type Screen } from '../store/useGame'
 import { TagFaceOff } from './TagFaceOff'
 
 /** Fills a team up to `size` with Bakugan not already in it. */
@@ -48,6 +48,13 @@ function fillOwn(start: Entrant[], collection: OwnedBakugan[], size = TEAM_SIZE)
   }
   return team
 }
+
+/** Where the face-off was opened from (the main menu's BRAWL, a Bakugan's FACE-OFF…): BACK returns there. */
+let openedFrom: Screen = 'viewer'
+// coming back from a brawl or a live match keeps where it was first opened from
+useGame.subscribe((s, prev) => {
+  if (s.screen === 'compare' && !['compare', 'arena', 'live'].includes(prev.screen)) openedFrom = prev.screen
+})
 
 export function CompareScreen() {
   const bakuganId = useGame((s) => s.bakuganId)
@@ -116,7 +123,7 @@ export function CompareScreen() {
       exit={{ opacity: 0 }}
     >
       <button
-        onClick={() => go('viewer')}
+        onClick={() => go(openedFrom)}
         className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
       >
         ← BACK
@@ -125,9 +132,10 @@ export function CompareScreen() {
       <p className="mt-1 max-w-3xl text-white/50">
         Pick your team. The system matches you with an opponent on your level: as many Bakugan as you bring, the same forms and
         the same number of ability cards. Each brawler has {LIVES} lives. Every battle one brawler sets a Gate Card face-down and
-        both throw a Bakugan onto it. Take turns: play an ability card, open your Gate Card, or ATTACK (at most {PLAYS} cards or
-        gate openings, then you must attack). When both have attacked, the higher G-Power wins and the loser loses a life. Lose{' '}
-        {LIVES} battles and you are defeated.
+        both throw a Bakugan onto it, one after the other. Take turns: play an ability card, open your Gate Card, or pass. The
+        higher G-Power is winning, so whoever is behind has to answer and get ahead; whoever is ahead can pass and hold. A Bakugan
+        at 0 G is defeated at once, and a brawler behind who passes or has nothing left loses the battle and a life. Lose {LIVES}{' '}
+        battles and you are defeated.
       </p>
 
       {profile && (
@@ -148,11 +156,11 @@ export function CompareScreen() {
                 setRanked(m === 'ranked')
                 setRight(opponent(own))
               }}
-              className="font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition"
-              style={{
-                borderColor: (m === 'ranked') === ranked ? '#fff' : 'rgba(255,255,255,0.15)',
-                color: (m === 'ranked') === ranked ? '#fff' : 'rgba(255,255,255,0.5)',
-              }}
+              className={`font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition hover:bg-white/10 ${
+                (m === 'ranked') === ranked
+                  ? 'border-white text-white'
+                  : 'border-white/15 text-white/50 hover:border-white/60 hover:text-white'
+              }`}
             >
               {m === 'ranked' ? 'RANKED' : 'FREE PLAY'}
             </button>
@@ -168,11 +176,11 @@ export function CompareScreen() {
             disabled={n > most}
             title={n > most ? `Own ${n} Bakugan to brawl ${n} vs ${n}` : undefined}
             onClick={() => resize(n)}
-            className="font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition disabled:opacity-30"
-            style={{
-              borderColor: left.length === n ? '#fff' : 'rgba(255,255,255,0.15)',
-              color: left.length === n ? '#fff' : 'rgba(255,255,255,0.5)',
-            }}
+            className={`font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-30 ${
+              left.length === n
+                ? 'border-white text-white'
+                : 'border-white/15 text-white/50 enabled:hover:border-white/60 enabled:hover:text-white'
+            }`}
           >
             {n} VS {n}
           </button>
@@ -320,7 +328,7 @@ function TeamCard({
               key={i}
               onClick={() => setSlot(i)}
               disabled={!onChange}
-              className="flex flex-col items-center rounded-lg border-2 bg-black/40 p-3 transition"
+              className="flex flex-col items-center rounded-lg border-2 bg-black/40 p-3 transition enabled:hover:-translate-y-0.5 enabled:hover:bg-white/10"
               style={{
                 borderColor: on ? el.color : 'rgba(255,255,255,0.1)',
                 boxShadow: on ? `0 0 18px ${el.color}55` : 'none',
@@ -355,8 +363,10 @@ function TeamCard({
                 key={b.id}
                 title={b.name}
                 onClick={() => replace({ bakugan: b, form: ownedOf(b.id)?.form ?? 0 })}
-                className={`flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition ${
-                  b.id === current.bakugan.id ? 'border-white/60 bg-white/10' : 'border-white/10 opacity-50 hover:opacity-90'
+                className={`flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition hover:bg-white/15 ${
+                  b.id === current.bakugan.id
+                    ? 'border-white/60 bg-white/10'
+                    : 'border-white/10 opacity-50 hover:border-white/40 hover:opacity-100'
                 }`}
               >
                 <img src={ELEMENT_BY_ID[b.element].icon} alt="" className="h-6 w-6" />
@@ -376,12 +386,12 @@ function TeamCard({
                   disabled={locked}
                   title={locked ? 'Evolve this Bakugan in your profile to unlock this form' : undefined}
                   onClick={() => replace({ bakugan: current.bakugan, form: i })}
-                  className="rounded-md border px-3 py-1.5 text-left text-sm transition disabled:opacity-30"
-                  style={{
-                    borderColor: on ? element.color : 'rgba(255,255,255,0.15)',
-                    background: on ? `${element.color}33` : 'transparent',
-                    color: on ? '#fff' : 'rgba(255,255,255,0.6)',
-                  }}
+                  className={`rounded-md border px-3 py-1.5 text-left text-sm transition disabled:opacity-30 ${
+                    on
+                      ? 'text-white'
+                      : 'border-white/15 text-white/60 enabled:hover:border-white/50 enabled:hover:bg-white/10 enabled:hover:text-white'
+                  }`}
+                  style={on ? { borderColor: element.color, background: `${element.color}33` } : undefined}
                 >
                   <span className="font-semibold">
                     {locked && '🔒 '}
