@@ -5,6 +5,28 @@
   --font-body: 'Rajdhani', sans-serif;
 }
 
+/*
+ * Tailwind v4's preflight gives buttons the default arrow; everything clickable shows the hand again,
+ * and disabled buttons a no-entry sign. In the base layer, so a cursor-* class still wins.
+ */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  a[href],
+  select:not(:disabled),
+  summary,
+  label:has(input[type='checkbox'], input[type='radio'], input[type='file']),
+  input:is([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color']):not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role='button'][aria-disabled='true'],
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+}
+
 html,
 body,
 #root {
@@ -107,4 +129,142 @@ body,
 }
 *::-webkit-scrollbar {
   display: none;
+}
+
+/* ---------------------------------------------------------------- main menu */
+
+/* attribute-coloured light drifting behind the menu */
+@keyframes menu-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(6%, -4%) scale(1.12);
+  }
+  66% {
+    transform: translate(-5%, 5%) scale(0.94);
+  }
+}
+.menu-drift {
+  animation: menu-drift 18s ease-in-out infinite;
+}
+
+/* slow-turning rays and emblem behind the lead Bakugan */
+@keyframes menu-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.menu-spin {
+  animation: menu-spin 60s linear infinite;
+}
+.menu-spin-rev {
+  animation: menu-spin 90s linear infinite reverse;
+}
+
+/* the floor grid rolling towards the player */
+@keyframes menu-floor {
+  to {
+    background-position:
+      0 64px,
+      0 0;
+  }
+}
+.menu-floor {
+  background-image:
+    linear-gradient(var(--menu-line) 1.5px, transparent 1.5px), linear-gradient(90deg, var(--menu-line) 1.5px, transparent 1.5px);
+  background-size: 64px 64px;
+  transform: perspective(520px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  mask-image: linear-gradient(to top, #000 0%, transparent 85%);
+  animation: menu-floor 3s linear infinite;
+}
+
+/* energy motes rising */
+@keyframes menu-rise {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-85vh) scale(1.1);
+    opacity: 0;
+  }
+}
+.menu-mote {
+  position: absolute;
+  bottom: -2vh;
+  border-radius: 9999px;
+  animation: menu-rise linear infinite;
+}
+
+/* light sweeping across the logo and the BRAWL button */
+@keyframes menu-shine {
+  0%,
+  55% {
+    background-position: 160% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+.menu-logo {
+  background-image:
+    linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%),
+    linear-gradient(180deg, #fff 0%, #fff 38%, var(--menu-accent) 100%);
+  background-size:
+    250% 100%,
+    100% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: menu-shine 5s ease-in-out infinite;
+}
+.menu-sweep {
+  background-image: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%);
+  background-size: 250% 100%;
+  background-repeat: no-repeat;
+  animation: menu-shine 3.2s ease-in-out infinite;
+}
+
+/* the BRAWL button breathes */
+@keyframes menu-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 24px var(--menu-glow),
+      inset 0 0 18px rgba(255, 255, 255, 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 48px var(--menu-glow),
+      inset 0 0 26px rgba(255, 255, 255, 0.22);
+  }
+}
+.menu-pulse {
+  animation: menu-pulse 2.2s ease-in-out infinite;
+}
+
+/* keyboard focus on menu tiles */
+.menu-item:focus-visible {
+  outline: 2px solid var(--menu-accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-drift,
+  .menu-spin,
+  .menu-spin-rev,
+  .menu-floor,
+  .menu-mote,
+  .menu-logo,
+  .menu-sweep,
+  .menu-pulse {
+    animation: none;
+  }
 }

@@ -2,13 +2,10 @@ import { useEffect, useRef } from 'react'
 import { useUnread } from '../profile/useFriendChat'
 import { openEvents } from '../events/nav'
 import { useActiveProfile } from '../profile/useProfiles'
-import { useGame, type PageScreen } from '../store/useGame'
+import { pageBack, useGame, type PageScreen } from '../store/useGame'
 import { centreInStrip } from './strip'
 
-/** The events page is a tab too, though it is not one of the store's PageScreens. */
-type Tab = PageScreen | 'events'
-
-const TABS: [Tab, string][] = [
+const TABS: [PageScreen, string][] = [
   ['profile', 'PROFILE'],
   ['inventory', 'INVENTORY'],
   ['pass', 'SEASON PASS'],
@@ -22,8 +19,8 @@ const TABS: [Tab, string][] = [
   ['characters', 'CHARACTERS'],
 ]
 
-/** Back button plus tabs between the player pages. */
-export function PageNav({ current, children }: { current: Tab; children?: React.ReactNode }) {
+/** Back and main-menu buttons plus tabs between the player pages. */
+export function PageNav({ current, children }: { current: PageScreen; children?: React.ReactNode }) {
   const back = useGame((s) => s.back)
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
@@ -36,29 +33,20 @@ export function PageNav({ current, children }: { current: Tab; children?: React.
   // the open page's tab, brought into view when the page changes (not on every render)
   const active = useRef<HTMLButtonElement>(null)
   useEffect(() => centreInStrip(nav.current, active.current), [current])
-  const target = [
-    'profile',
-    'inventory',
-    'pass',
-    'shop',
-    'rankings',
-    'clans',
-    'friends',
-    'encyclopedia',
-    'showroom',
-    'characters',
-    'profileEdit',
-    'events',
-  ].includes(back)
-    ? 'hub'
-    : back
   return (
     <div className="flex items-center gap-4">
       <button
-        onClick={() => go(useGame.getState().element ? target : 'wheel')}
+        onClick={() => go(pageBack(back))}
         className="font-display shrink-0 text-xs tracking-[0.4em] whitespace-nowrap text-white/50 transition hover:text-white"
       >
         ← BACK
+      </button>
+      <button
+        onClick={() => go('menu')}
+        title="Main menu"
+        className="font-display flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-black/40 px-3 text-[10px] tracking-[0.3em] whitespace-nowrap text-white/60 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
+      >
+        <span className="text-sm leading-none tracking-normal">⌂</span> MENU
       </button>
       {/* the tabs scroll sideways when the window is too narrow for all of them */}
       <div className="flex min-w-0 flex-1 items-center gap-1">
@@ -71,10 +59,7 @@ export function PageNav({ current, children }: { current: Tab; children?: React.
             <button
               key={id}
               ref={id === current ? active : undefined}
-              onClick={() =>
-                // from the events page another tab keeps where BACK goes
-                id === 'events' ? openEvents() : current === 'events' ? useGame.setState({ screen: id }) : openPage(id)
-              }
+              onClick={() => (id === 'events' ? openEvents() : openPage(id))}
               className={`font-display shrink-0 rounded-full px-4 py-1.5 text-xs tracking-[0.3em] whitespace-nowrap transition ${
                 id === current ? 'bg-white/15 text-white' : 'text-white/45 hover:text-white'
               }`}

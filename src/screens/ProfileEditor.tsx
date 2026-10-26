@@ -157,7 +157,7 @@ export function ProfileEditor() {
               <button
                 key={t}
                 onClick={() => openTab(t)}
-                className="font-display -mb-px border-b-2 px-4 py-2 text-xs tracking-[0.3em] transition"
+                className="font-display -mb-px border-b-2 px-4 py-2 text-xs tracking-[0.3em] transition hover:bg-white/5"
                 style={{ borderColor: tab === t ? color : 'transparent', color: tab === t ? '#fff' : 'rgba(255,255,255,0.45)' }}
               >
                 {t === 'characters' ? 'SERIES CHARACTERS' : t === 'build' ? 'BUILD YOUR OWN' : 'PHOTO'}
@@ -299,25 +299,39 @@ export function ProfileEditor() {
           </div>
 
           <p className="font-display mt-6 text-xs tracking-[0.4em] text-white/40">ATTRIBUTE</p>
-          <div className="mt-2 grid grid-cols-6 gap-2">
-            {ELEMENTS.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => {
-                  playSfx('tick')
-                  setElement(e.id)
-                }}
-                className="flex flex-col items-center rounded-lg border-2 py-2 transition"
-                style={{
-                  borderColor: element === e.id ? e.color : 'rgba(255,255,255,0.08)',
-                  background: element === e.id ? `${e.color}22` : 'transparent',
-                }}
-              >
-                <img src={e.icon} alt="" className="h-10 w-10" />
-                <span className="mt-1 text-xs">{e.name}</span>
-              </button>
-            ))}
-          </div>
+          {/* the attribute is chosen once, when the profile is made */}
+          {existing ? (
+            <div
+              className="mt-2 flex items-center gap-3 rounded-lg border-2 px-3 py-2"
+              style={{ borderColor: color, background: `${color}22` }}
+            >
+              <img src={ELEMENT_BY_ID[element].icon} alt="" className="h-10 w-10" />
+              <span className="font-display tracking-widest" style={{ color }}>
+                {ELEMENT_BY_ID[element].name.toUpperCase()}
+              </span>
+              <span className="ml-auto text-xs text-white/45">Chosen when the profile was made; it cannot be changed.</span>
+            </div>
+          ) : (
+            <div className="mt-2 grid grid-cols-6 gap-2">
+              {ELEMENTS.map((e) => (
+                <button
+                  key={e.id}
+                  onClick={() => {
+                    playSfx('tick')
+                    setElement(e.id)
+                  }}
+                  className="flex flex-col items-center rounded-lg border-2 py-2 transition hover:-translate-y-0.5 hover:brightness-125"
+                  style={{
+                    borderColor: element === e.id ? e.color : 'rgba(255,255,255,0.08)',
+                    background: element === e.id ? `${e.color}22` : 'transparent',
+                  }}
+                >
+                  <img src={e.icon} alt="" className="h-10 w-10" />
+                  <span className="mt-1 text-xs">{e.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {!existing && (
             <p className="mt-2 text-xs text-white/45">
               You start with one Bakugan: {bakuganById(starterFor(element)).name}. Win Battle Points to get more from the shop.
@@ -461,7 +475,7 @@ function Choices<T extends string>({
             disabled={locked.includes(o)}
             title={locked.includes(o) ? 'Earn it in the Season Pass' : undefined}
             onClick={() => onPick(o)}
-            className="rounded-md border px-2.5 py-1 text-xs capitalize transition disabled:opacity-35"
+            className="rounded-md border px-2.5 py-1 text-xs capitalize transition enabled:hover:bg-white/10 disabled:opacity-35"
             style={{
               borderColor: value === o ? '#fff' : 'rgba(255,255,255,0.15)',
               color: value === o ? '#fff' : 'rgba(255,255,255,0.6)',

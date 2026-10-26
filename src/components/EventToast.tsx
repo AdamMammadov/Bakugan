@@ -33,7 +33,7 @@ export function EventToast() {
           <motion.button
             key={toast.key}
             onClick={() => dismiss(toast.key)}
-            className="pointer-events-auto flex max-w-xl items-center gap-4 rounded-2xl border-2 bg-black/90 px-5 py-4 text-left backdrop-blur"
+            className="pointer-events-auto flex max-w-xl items-center gap-4 rounded-2xl border-2 bg-black/90 px-5 py-4 text-left backdrop-blur transition-[filter] hover:brightness-125"
             style={{
               borderColor: TONE[toast.tone],
               boxShadow: `0 0 30px ${TONE[toast.tone]}55, inset 0 0 40px ${ELEMENT_BY_ID[toast.element].color}22`,

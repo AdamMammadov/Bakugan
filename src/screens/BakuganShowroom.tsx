@@ -220,7 +220,7 @@ export function BakuganShowroom() {
           <span className="mx-2 h-6 w-px bg-white/15" />
           <button
             onClick={() => setElement(null)}
-            className={`rounded-full border px-3 py-1 text-xs ${element ? 'border-white/15 text-white/50' : 'border-white text-white'}`}
+            className={`rounded-full border px-3 py-1 text-xs transition hover:bg-white/10 ${element ? 'border-white/15 text-white/50 hover:text-white' : 'border-white text-white'}`}
           >
             ALL
           </button>

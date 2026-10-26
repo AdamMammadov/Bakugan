@@ -4,6 +4,9 @@ import type { ElementId } from '../data/elements'
 
 export type Screen =
   | 'intro'
+  /** The main menu: home of every player with a profile. */
+  | 'menu'
+  /** Choosing an attribute, only while creating a new profile. */
   | 'wheel'
   | 'hub'
   | 'viewer'
@@ -29,6 +32,7 @@ export type PageScreen =
   | 'profile'
   | 'inventory'
   | 'pass'
+  | 'events'
   | 'shop'
   | 'rankings'
   | 'clans'
@@ -36,10 +40,11 @@ export type PageScreen =
   | 'encyclopedia'
   | 'showroom'
   | 'characters'
-const PAGES: PageScreen[] = [
+export const PAGES: PageScreen[] = [
   'profile',
   'inventory',
   'pass',
+  'events',
   'shop',
   'rankings',
   'clans',
@@ -48,6 +53,9 @@ const PAGES: PageScreen[] = [
   'showroom',
   'characters',
 ]
+
+/** Where BACK on a player page leads: the hub, viewer or face-off it was opened from, else the main menu. */
+export const pageBack = (back: Screen): Screen => (back === 'hub' || back === 'viewer' || back === 'compare' ? back : 'menu')
 
 export interface TeamMember {
   id: string
@@ -130,7 +138,12 @@ interface GameState {
   /** Where the profile editor/screen returns to. */
   back: Screen
   go: (screen: Screen) => void
+  /** Shows an attribute's Bakugan: the hub for a player with a profile, else a new profile of that attribute. */
   chooseElement: (element: ElementId) => void
+  /** Starts a new profile: the attribute wheel, then the profile editor, then the main menu. */
+  newProfile: () => void
+  /** The attribute picked on the wheel for the new profile. */
+  pickAttribute: (element: ElementId) => void
   openBakugan: (id: string) => void
   /** Opens the compare screen with `id` on the player's side. */
   compareWith: (id: string, form?: number) => void
@@ -142,6 +155,7 @@ interface GameState {
   openProfile: () => void
   /** Opens one of the player pages (profile, rankings, clans), remembering where to go back to. */
   openPage: (screen: PageScreen) => void
+  /** Edits a profile; null starts a new one (see newProfile). */
   editProfile: (id: string | null) => void
 }
 
@@ -155,15 +169,13 @@ export const useGame = create<GameState>((set) => ({
   music: true,
   toggleMusic: () => set((s) => ({ music: !s.music })),
   editProfileId: null,
-  back: 'wheel',
+  back: 'menu',
   go: (screen) => set({ screen }),
-  // a new player creates a profile right after picking an attribute
   chooseElement: (element) =>
-    set(
-      useProfiles.getState().activeId
-        ? { element, screen: 'hub' }
-        : { element, screen: 'profileEdit', editProfileId: null, back: 'hub' },
-    ),
+    useProfiles.getState().activeId ? set({ element, screen: 'hub' }) : useGame.getState().pickAttribute(element),
+  newProfile: () => set({ screen: 'wheel' }),
+  // the profile editor comes next; saving it lands on the main menu
+  pickAttribute: (element) => set({ element, screen: 'profileEdit', editProfileId: null, back: 'menu' }),
   openBakugan: (bakuganId) => set({ bakuganId, screen: 'viewer' }),
   compareWith: (bakuganId, compareForm = 0) => set({ bakuganId, compareForm, screen: 'compare' }),
   enterArena: (arena) => set({ arena, screen: 'arena' }),
@@ -174,9 +186,11 @@ export const useGame = create<GameState>((set) => ({
   openPage: (screen) =>
     set((s) => ({ screen, back: PAGES.includes(s.screen as PageScreen) || s.screen === 'profileEdit' ? s.back : s.screen })),
   editProfile: (editProfileId) =>
-    set((s) => ({
-      screen: 'profileEdit',
-      editProfileId,
-      back: PAGES.includes(s.screen as PageScreen) ? s.screen : s.screen === 'profileEdit' ? s.back : s.screen,
-    })),
+    editProfileId === null
+      ? useGame.getState().newProfile()
+      : set((s) => ({
+          screen: 'profileEdit',
+          editProfileId,
+          back: PAGES.includes(s.screen as PageScreen) ? s.screen : s.screen === 'profileEdit' ? s.back : s.screen,
+        })),
 }))

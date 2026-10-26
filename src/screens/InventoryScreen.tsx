@@ -276,7 +276,7 @@ function AvatarItems({ profile }: { profile: Profile }) {
               <button
                 key={t ?? 'none'}
                 onClick={() => equip('title', t)}
-                className="rounded-full border px-3 py-1.5 text-xs"
+                className="rounded-full border px-3 py-1.5 text-xs transition hover:bg-white/10"
                 style={{ borderColor: profile.cosmetics?.title === t ? '#fde68a' : 'rgba(255,255,255,0.15)' }}
               >
                 {t ?? 'No title'}
@@ -392,8 +392,10 @@ function BoostsAndKeys({ profile }: { profile: Profile }) {
         <button
           disabled={boosts === 0}
           onClick={() => setBoostsOn(!on)}
-          className={`font-display mt-4 w-full rounded-lg border-2 py-2 text-xs tracking-[0.3em] transition disabled:opacity-40 ${
-            on ? 'border-sky-300 bg-sky-300/15 text-sky-200' : 'border-white/25 text-white/60'
+          className={`font-display mt-4 w-full rounded-lg border-2 py-2 text-xs tracking-[0.3em] transition enabled:hover:brightness-125 disabled:opacity-40 ${
+            on
+              ? 'border-sky-300 bg-sky-300/15 text-sky-200'
+              : 'border-white/25 text-white/60 enabled:hover:bg-white/10 enabled:hover:text-white'
           }`}
         >
           {on ? 'ON · USING ONE PER BRAWL' : 'OFF · SAVING THEM'}

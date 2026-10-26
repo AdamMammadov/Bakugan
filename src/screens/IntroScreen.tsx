@@ -12,9 +12,9 @@ export function IntroScreen() {
     const start = () => {
       unlockAudio()
       playSfx('start')
-      // returning players go straight to their attribute's main page
+      // returning players land on the main menu; a new player picks an attribute first
       const profile = useProfiles.getState().profiles.find((p) => p.id === useProfiles.getState().activeId)
-      if (profile) useGame.setState({ element: profile.element, screen: 'hub' })
+      if (profile) useGame.setState({ element: profile.element, screen: 'menu' })
       else go('wheel')
     }
     window.addEventListener('keydown', start)

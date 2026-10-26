@@ -10,6 +10,7 @@ import { CompareScreen } from './screens/CompareScreen'
 import { ElementHub } from './screens/ElementHub'
 import { ElementWheel } from './screens/ElementWheel'
 import { IntroScreen } from './screens/IntroScreen'
+import { MainMenu } from './screens/MainMenu'
 import { ProfileEditor } from './screens/ProfileEditor'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ClansScreen } from './screens/ClansScreen'
@@ -34,6 +35,7 @@ const EventsScreen = lazy(() => import('./screens/EventsScreen').then((m) => ({ 
 
 /** Which song plays where: every page has its own, and the arena picks one of the battle songs. */
 const TRACK_FOR: Partial<Record<Screen, Track>> = {
+  menu: 'menu',
   wheel: 'menu',
   profileEdit: 'workshop',
   hub: 'home',
@@ -73,6 +75,7 @@ export default function App() {
       <Suspense fallback={null}>
         <AnimatePresence mode="wait">
           {screen === 'intro' && <IntroScreen key="intro" />}
+          {screen === 'menu' && <MainMenu key="menu" />}
           {screen === 'wheel' && <ElementWheel key="wheel" />}
           {screen === 'hub' && <ElementHub key="hub" />}
           {screen === 'viewer' && <Viewer key="viewer" />}
@@ -99,23 +102,8 @@ export default function App() {
       {/* the corner buttons share one row, so they line up whatever their widths */}
       {screen !== 'intro' && (
         <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">
-          {![
-            'arena',
-            'live',
-            'viewer',
-            'profile',
-            'profileEdit',
-            'rankings',
-            'clans',
-            'friends',
-            'encyclopedia',
-            'showroom',
-            'shop',
-            'inventory',
-            'characters',
-            'pass',
-            'events',
-          ].includes(screen) && <ProfileButton />}
+          {/* the way back to the main menu where there is no PageNav or BACK to it (pages have ⌂ MENU) */}
+          {(screen === 'hub' || screen === 'viewer' || screen === 'compare') && <ProfileButton />}
           <MuteButton />
         </div>
       )}

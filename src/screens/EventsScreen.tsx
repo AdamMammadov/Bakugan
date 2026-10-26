@@ -231,7 +231,7 @@ function TeamBar({ profile }: { profile: Profile }) {
                   <button
                     key={o.id}
                     onClick={() => toggle(o.id)}
-                    className="flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition"
+                    className="flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition hover:-translate-y-0.5 hover:brightness-125"
                     style={{
                       borderColor: on ? el.color : 'rgba(255,255,255,0.12)',
                       background: on ? `${el.color}22` : 'transparent',
@@ -987,7 +987,7 @@ function BossPanel({ profile, boss, events, now }: { profile: Profile; boss: Bos
                 playSfx('tick')
                 setPicked(d.id)
               }}
-              className="rounded-2xl border-2 bg-black/55 p-4 text-left backdrop-blur transition disabled:opacity-40"
+              className="rounded-2xl border-2 bg-black/55 p-4 text-left backdrop-blur transition enabled:hover:-translate-y-0.5 enabled:hover:bg-white/[0.06] disabled:opacity-40"
               style={{ borderColor: on ? d.color : 'rgba(255,255,255,0.12)', boxShadow: on ? `0 0 20px ${d.color}44` : 'none' }}
             >
               <div className="flex items-center justify-between">

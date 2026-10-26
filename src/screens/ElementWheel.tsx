@@ -21,10 +21,12 @@ function elementAt(angle: number): ElementInfo {
   )
 }
 
+/** Choosing the attribute of a new profile (it cannot be changed later). */
 export function ElementWheel() {
-  const chooseElement = useGame((s) => s.chooseElement)
+  const pickAttribute = useGame((s) => s.pickAttribute)
+  const go = useGame((s) => s.go)
   const wheelRef = useRef<HTMLDivElement>(null)
-  // a returning player's wheel starts on their own attribute
+  // a player making another profile starts on their current attribute, and can cancel back to the menu
   const profile = useActiveProfile()
   const start = profile ? ELEMENT_BY_ID[profile.element] : ELEMENTS[0]
   const [hovered, setHovered] = useState<ElementInfo>(start)
@@ -97,7 +99,7 @@ export function ElementWheel() {
     if (chosen) return
     setChosen(element)
     playSfx('select')
-    window.setTimeout(() => chooseElement(element.id), 1800)
+    window.setTimeout(() => pickAttribute(element.id), 1800)
   }
 
   const scale = size / ART
@@ -115,6 +117,14 @@ export function ElementWheel() {
         backgroundSize: `100% 100%, ${GRID_SIZE}`,
       }}
     >
+      {profile && !chosen && (
+        <button
+          onClick={() => go('menu')}
+          className="font-display absolute top-10 left-12 z-10 text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+        >
+          ← CANCEL
+        </button>
+      )}
       <InfoPanel element={active} />
 
       <div
@@ -249,6 +259,7 @@ function InfoPanel({ element }: { element: ElementInfo }) {
         </motion.div>
       </AnimatePresence>
       <p className="mt-6 text-xs tracking-widest text-white/35">MOVE THE MOUSE TO ROTATE · CLICK TO CHOOSE</p>
+      <p className="mt-1 text-xs text-white/35">Your attribute is for good: it cannot be changed later.</p>
     </div>
   )
 }
