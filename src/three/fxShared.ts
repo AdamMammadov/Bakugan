@@ -10,11 +10,6 @@ export const FxFade = createContext<{ current: number } | null>(null)
 export const GATE_GOLD = '#ffc94a'
 export const GATE_GOLD_GLOW = '#fff0b0'
 
-/** When the bus last played an ability: the older action effects step aside for it. */
-let lastAbility = -1e9
-export const markAbility = () => void (lastAbility = performance.now())
-export const busAbilityRecently = () => performance.now() - lastAbility < 2500
-
 export const GLSL_NOISE = /* glsl */ `
 float fxHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float fxNoise(vec2 p) {

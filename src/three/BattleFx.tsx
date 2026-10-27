@@ -6,7 +6,7 @@ import type { SideIndex } from '../battle/engine'
 import { ELEMENTS, ELEMENT_BY_ID, type ElementId, type ElementInfo } from '../data/elements'
 import { fx, listenFx, type FxCall } from './fx'
 import { Glare, GroundRing, Lightning, LightColumn, Shards, Sprites, Swirl } from './fxKit'
-import { FxFade, fxClock, fxScale, GATE_GOLD, GATE_GOLD_GLOW, GLSL_NOISE, glareTexture, markAbility } from './fxShared'
+import { FxFade, fxClock, fxScale, GATE_GOLD, GATE_GOLD_GLOW, GLSL_NOISE, glareTexture } from './fxShared'
 import { crowd } from './stadium'
 
 /**
@@ -111,7 +111,6 @@ export function BattleFx({
         const item: Item = { id: nextId++, call, fade: { current: 1 } }
         switch (call.kind) {
           case 'ability': {
-            markAbility()
             flash(call.side, ELEMENT_BY_ID[call.element].glow, 520, 0.9)
             const foe = (1 - call.side) as SideIndex
             if (call.delta[foe] < 0)

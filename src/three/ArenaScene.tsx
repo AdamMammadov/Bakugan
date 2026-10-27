@@ -1,16 +1,15 @@
 import { OrbitControls, Sparkles } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { BattleEvent, SideIndex } from '../battle/engine'
 import { formModels, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
-import { AbilityEffect } from './AbilityEffect'
 import { BattleFx, type FxFighter } from './BattleFx'
 import { BodyAura, type AuraKind } from './BodyAura'
 import { listenFx } from './fx'
-import { AURA_LIFE, busAbilityRecently, FxFade, fxClock, fxScale } from './fxShared'
+import { AURA_LIFE, FxFade, fxClock, fxScale } from './fxShared'
 import { LiftDrag } from './LiftDrag'
 import { ChaosBeam, Impact, Projectile, ShieldDome } from './ArenaFx'
 import { BrawlerFocus, ViewLimits } from './ArenaView'
@@ -194,17 +193,20 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
   // a battle that starts before its first throw keeps the field empty until the balls land
   const [waitThrow] = useState(throw0 === 0 && throw1 === 0)
   const throwing = [throw0 !== firstThrow[0], throw1 !== firstThrow[1]]
-  // clock time each side's latest throw started
+  // clock time each side's latest throw started: noted as the throw is committed (after a Fighter that mounts with
+  // it has noted the throw before), so every Fighter sees each throw change, however long the next frame takes
+  const clock = useThree((s) => s.clock)
   const throwAt = useRef<[number | null, number | null]>([null, null])
-  const seenThrow = useRef<[number, number]>([...firstThrow])
-  useFrame(({ clock }) => {
+  // each side's throws so far, as the Fighters see them (a count, so two throws are never taken for one)
+  const throwCount = useRef<[number, number]>([...firstThrow])
+  useLayoutEffect(() => {
     const now: [number, number] = [throw0, throw1]
     for (const i of [0, 1] as const) {
-      if (seenThrow.current[i] === now[i]) continue
-      seenThrow.current[i] = now[i]
+      if (throwCount.current[i] === now[i]) continue
+      throwCount.current[i] = now[i]
       throwAt.current[i] = clock.elapsedTime
     }
-  })
+  }, [throw0, throw1, clock])
 
   // the crowd follows the battle on its own too: a cheer for a hit, a gasp at a block, a roar for a knockout
   useEffect(() => {
@@ -304,6 +306,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
           over={defeated[0] || defeated[1]}
           onShieldReach={onShieldReach}
           throwAt={throwAt}
+          throwCount={throwCount}
           waitThrow={waitThrow}
           ground={GROUND * k}
           // next to a giant the view pulls back: the others grow a little so they still read
@@ -527,6 +530,7 @@ function Fighter({
   defeated,
   onShieldReach,
   throwAt,
+  throwCount,
   waitThrow,
   ground,
   presence,
@@ -542,6 +546,8 @@ function Fighter({
   onShieldReach: (side: SideIndex, entrant: Entrant, reach: number) => void
   /** Clock time each side's latest throw started, or null before its first. */
   throwAt: React.RefObject<[number | null, number | null]>
+  /** Each side's throws so far. */
+  throwCount: React.RefObject<[number, number]>
   /** The battle starts with an empty field: stay hidden until the first throw lands. */
   waitThrow: boolean
   /** Height of the card's top (world units). */
@@ -574,7 +580,11 @@ function Fighter({
   const x = xOf(side, entrant)
   // a throw: the Bakugan goes back into its ball at once, and comes out of the thrown one when it lands
   const recalled = useRef(-99)
-  const seenThrow = useRef<number | null>(null)
+  // how many of the side's throws it has dealt with: those before it came onto the field are not its own
+  const seenThrow = useRef(0)
+  useLayoutEffect(() => {
+    seenThrow.current = throwCount.current[side]
+  }, [throwCount, side])
   // the light pillar it rises in: played on entry, and again when a thrown ball lands (key -1: none yet)
   const [pillar, setPillar] = useState({ key: -1, delay: 0 })
   // how it stands (known once the model is in), how far it is turned now, and how high it is lifted off the card
@@ -795,14 +805,16 @@ function Fighter({
       born.current = now
       setPillar({ key: 0, delay: 0 })
     }
-    if (ta !== seenThrow.current) {
-      seenThrow.current = ta
-      if (ta !== null && now - ta < THROW_LAND) {
-        // out again when the ball lands
+    const thrown = throwCount.current[side]
+    if (thrown !== seenThrow.current) {
+      seenThrow.current = thrown
+      // a new throw: out again when the ball lands (at once if a slow frame or a hidden tab let that moment pass;
+      // a throw is never missed, or the Bakugan would stay in its ball for the whole battle)
+      if (ta !== null) {
         recalled.current = now
         recallFrom.current = shown.current
-        born.current = ta + THROW_LAND - 0.25
-        setPillar((p) => ({ key: p.key + 1, delay: ta + THROW_LAND - 0.1 - now }))
+        born.current = Math.max(ta + THROW_LAND - 0.25, now - 0.4)
+        setPillar((p) => ({ key: p.key + 1, delay: Math.max(0, ta + THROW_LAND - 0.1 - now) }))
         down.current = defeated
         parked.current = false
         fallen.current = defeated ? 1 : 0
@@ -970,8 +982,6 @@ function ActionFx({
   const ax = xOf(actor, fighters[actor])
   const tx = xOf(target, fighters[target])
   const reach = shieldReach[target]
-  // the effects bus already played this card's show (BattleFx): only the strike itself is drawn here
-  const [shown] = useState(busAbilityRecently)
   const from = useMemo(() => new THREE.Vector3(ax * 0.75, CHEST_Y, 0), [ax])
   const to = useMemo(() => {
     // a blocked hit stops on the front of the shield
@@ -1008,27 +1018,9 @@ function ActionFx({
       </>
     )
   }
-  if (type === 'weaken') {
-    return (
-      <>
-        <Projectile from={from} to={to} preset={preset} color={me.color} glow={me.glow} />
-        {!blocked && !shown && (
-          <group position={[tx, 0, 0]} scale={0.8}>
-            <AbilityEffect effect="shadowOrb" color={me.color} glow={me.glow} />
-          </group>
-        )}
-      </>
-    )
-  }
-  if (type === 'boost') {
-    if (shown) return null
-    return (
-      <group position={[ax, 0, 0]} scale={0.8}>
-        <AbilityEffect effect="aura" color={me.color} glow={me.glow} />
-      </group>
-    )
-  }
-  // shield: the dome itself is driven by fighter state; add a short burst
-  if (shown) return null
-  return <Impact at={new THREE.Vector3(ax, CHEST_Y, 0)} color={me.glow} delay={0.1} />
+  // a weakening card strikes the opponent; the power going down (red sparks) and a power-up's show are the effects
+  // bus's (BattleFx), played when the G-Powers change: the small swirls this drew under the Bakugan are gone
+  if (type === 'weaken') return <Projectile from={from} to={to} preset={preset} color={me.color} glow={me.glow} />
+  // a power-up, and a nullify (its shield flashes up, the glass shatters on the cancelled card: BattleFx)
+  return null
 }
