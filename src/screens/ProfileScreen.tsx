@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState, type CSSProperties } from 'react'
 import { playSfx } from '../audio/sfx'
+import { AbilityBrowser } from '../components/AbilityBrowser'
 import { Avatar } from '../components/Avatar'
 import { BakuganDrawer } from '../components/BakuganDrawer'
 import { BakuganThumb } from '../components/BakuganThumb'
@@ -12,19 +13,10 @@ import { PageNav } from '../components/PageNav'
 import { rankColor } from '../profile/brawlers'
 import { clanOf, useClans } from '../profile/useClans'
 import { useFriendChat } from '../profile/useFriendChat'
-import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG } from '../data/bakugan'
+import { formBrawlG } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
-import {
-  cardCount,
-  cardXpFor,
-  rankScore,
-  teamEntrants,
-  tierOf,
-  useActiveProfile,
-  useProfiles,
-  type Profile,
-} from '../profile/useProfiles'
+import { rankScore, teamEntrants, tierOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 import { EventTrophies } from '../components/EventTrophies'
 import { BrawlerProfileModal, FriendsList } from './BrawlerProfile'
@@ -45,7 +37,8 @@ export function ProfileScreen() {
 
   return (
     <motion.div
-      className="absolute inset-0 overflow-y-auto px-16 py-10"
+      // no top padding on the scroller itself: Chrome would hold the sticky collection toolbar that far down
+      className="absolute inset-0 overflow-y-auto px-16 pb-10"
       style={{
         backgroundImage: `radial-gradient(circle at 15% 10%, ${profile ? ELEMENT_BY_ID[profile.element].color : '#9aa3b5'}30 0%, transparent 50%), ${GRID}`,
         backgroundSize: `100% 100%, ${GRID_SIZE}`,
@@ -54,32 +47,34 @@ export function ProfileScreen() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <PageNav current="profile">
-        {/* player switcher */}
-        <div className="flex items-center gap-3">
-          <span className="font-display text-[10px] tracking-[0.4em] text-white/40">PLAYERS</span>
-          {profiles.map((p) => (
+      <div className="pt-10">
+        <PageNav current="profile">
+          {/* player switcher */}
+          <div className="flex items-center gap-3">
+            <span className="font-display text-[10px] tracking-[0.4em] text-white/40">PLAYERS</span>
+            {profiles.map((p) => (
+              <button
+                key={p.id}
+                title={`${p.firstName} ${p.lastName}`}
+                onClick={() => {
+                  playSfx('tick')
+                  select(p.id)
+                }}
+                className={`rounded-full transition ${p.id === profile?.id ? '' : 'opacity-45 hover:opacity-90'}`}
+              >
+                <Avatar avatar={p.avatar} color={ELEMENT_BY_ID[p.element].color} size={40} />
+              </button>
+            ))}
             <button
-              key={p.id}
-              title={`${p.firstName} ${p.lastName}`}
-              onClick={() => {
-                playSfx('tick')
-                select(p.id)
-              }}
-              className={`rounded-full transition ${p.id === profile?.id ? '' : 'opacity-45 hover:opacity-90'}`}
+              onClick={() => editProfile(null)}
+              title="New player"
+              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-white/30 text-xl text-white/60 transition hover:border-white hover:text-white"
             >
-              <Avatar avatar={p.avatar} color={ELEMENT_BY_ID[p.element].color} size={40} />
+              +
             </button>
-          ))}
-          <button
-            onClick={() => editProfile(null)}
-            title="New player"
-            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-white/30 text-xl text-white/60 transition hover:border-white hover:text-white"
-          >
-            +
-          </button>
-        </div>
-      </PageNav>
+          </div>
+        </PageNav>
+      </div>
 
       {!profile ? (
         <div className="mt-24 text-center">
@@ -96,7 +91,7 @@ export function ProfileScreen() {
           <Team profile={profile} onOpen={openDetail} />
           <CollectionBrowser profile={profile} openId={detail?.id ?? null} onOpen={openDetail} />
           <Locker profile={profile} />
-          <Cards profile={profile} />
+          <AbilityBrowser profile={profile} onOpen={openDetail} />
           <BakuganDrawer profile={profile} open={detail} onNavigate={stepDetail} onClose={closeDetail} />
         </>
       )}
@@ -316,73 +311,5 @@ export function RankBadge({ profile, color }: { profile: Pick<Profile, 'rating' 
         </>
       )}
     </div>
-  )
-}
-
-/** Every Bakugan's ability cards in one long list, folded away until asked for (each Bakugan's details show its own). */
-function Cards({ profile }: { profile: Profile }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <section className="mt-10 pb-10">
-      <button
-        onClick={() => {
-          playSfx('tick')
-          setOpen(!open)
-        }}
-        aria-expanded={open}
-        className="group flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-6 py-4 text-left transition hover:border-white/25 hover:bg-white/[0.05]"
-      >
-        <h2 className="font-display text-xs tracking-[0.5em] text-white/40 transition group-hover:text-white/70">
-          ALL ABILITY CARDS
-        </h2>
-        <span className="text-sm text-white/40">
-          {profile.collection.reduce((n, o) => n + cardCount(o), 0)} unlocked across {profile.collection.length} Bakugan
-        </span>
-        <span className="font-display ml-auto text-xs tracking-[0.3em] text-white/50 transition group-hover:text-white">
-          {open ? 'HIDE ▴' : 'SHOW ▾'}
-        </span>
-      </button>
-      <div className={`mt-3 space-y-5 ${open ? '' : 'hidden'}`}>
-        {profile.collection.map((owned) => {
-          const bakugan = BAKUGAN.find((b) => b.id === owned.id)!
-          const element = ELEMENT_BY_ID[bakugan.element]
-          const n = cardCount(owned)
-          return (
-            <div key={owned.id}>
-              <p className="font-display text-sm font-bold" style={{ color: element.color }}>
-                {bakugan.name}{' '}
-                <span className="font-normal text-white/40">
-                  · {n}/{abilitiesOf(bakugan, owned.form).length}
-                </span>
-              </p>
-              <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2">
-                {abilitiesOf(bakugan, owned.form).map((a, i) => {
-                  const locked = i >= n
-                  return (
-                    <div
-                      key={a.id}
-                      className="rounded-lg border bg-black/40 p-3"
-                      style={{
-                        borderColor: locked ? 'rgba(255,255,255,0.08)' : `${element.color}77`,
-                        opacity: locked ? 0.45 : 1,
-                      }}
-                    >
-                      <p
-                        className="font-display text-[11px] font-bold tracking-wider"
-                        style={{ color: locked ? '#888' : element.color }}
-                      >
-                        {locked ? `🔒 UNLOCKS AT ${cardXpFor(owned, i)} XP` : abilityLabel(a)}
-                      </p>
-                      <p className="font-display mt-0.5 text-sm font-bold">{a.name}</p>
-                      <p className="mt-1 line-clamp-3 text-xs text-white/60">{a.description}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </section>
   )
 }

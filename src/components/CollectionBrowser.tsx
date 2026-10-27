@@ -12,6 +12,7 @@ import {
   QUICK,
   rowOf,
   savePrefs,
+  scrollParent,
   short,
   sortRows,
   SORTS,
@@ -44,6 +45,19 @@ export function CollectionBrowser({
   }
   const [query, setQuery] = useState('')
   const search = useRef<HTMLInputElement>(null)
+  // the toolbar gets its own opaque backing only while it is stuck to the top of the page
+  const sentinel = useRef<HTMLDivElement>(null)
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    const el = sentinel.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      ([e]) => setStuck(!e.isIntersecting && e.boundingClientRect.top < (e.rootBounds?.top ?? 0)),
+      { root: scrollParent(el) },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   const rows = useMemo(() => profile.collection.map((o, i) => rowOf(o, profile, i)), [profile])
   const present = ELEMENTS.filter((e) => rows.some((r) => r.bakugan.element === e.id))
@@ -93,133 +107,141 @@ export function CollectionBrowser({
         </button>
       </div>
 
-      {/* toolbar: stays in view while the grid scrolls */}
-      <div className="sticky top-2 z-20 mt-3 rounded-xl border border-white/10 bg-[#07080d]/85 p-3 shadow-[0_12px_30px_-12px_#000] backdrop-blur-md">
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="group relative flex h-9 w-60 items-center">
-            <span className="pointer-events-none absolute left-3 text-white/35 transition group-focus-within:text-white/80">
-              ⌕
-            </span>
-            <input
-              ref={search}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setQuery('')
-                  e.currentTarget.blur()
-                }
-              }}
-              placeholder="Search Bakugan…"
-              aria-label="Search Bakugan by name"
-              className="h-full w-full rounded-lg border border-white/15 bg-black/50 pr-14 pl-8 text-sm text-white transition outline-none placeholder:text-white/30 hover:border-white/35 focus:border-white/60 focus:bg-black/70"
-            />
-            {query ? (
-              <button
-                onClick={() => {
-                  setQuery('')
-                  search.current?.focus()
+      {/* toolbar: stays in view while the grid scrolls, on a full-width band (-mx-16: the page's side padding) that hides
+          the tiles passing under it */}
+      <div ref={sentinel} className="mt-3 h-px" />
+      <div
+        className={`sticky top-0 z-20 -mx-16 px-16 py-2.5 transition-[background-color,box-shadow] duration-200 ${
+          stuck ? 'bg-[#07080d]/95 shadow-[inset_0_-1px_0_rgba(255,255,255,0.08),0_16px_28px_-16px_#000] backdrop-blur-md' : ''
+        }`}
+      >
+        <div className="rounded-xl border border-white/10 bg-[#0b0d14] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="group relative flex h-9 w-60 items-center">
+              <span className="pointer-events-none absolute left-3 text-white/35 transition group-focus-within:text-white/80">
+                ⌕
+              </span>
+              <input
+                ref={search}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setQuery('')
+                    e.currentTarget.blur()
+                  }
                 }}
-                title="Clear the search"
-                className="absolute right-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded text-white/50 transition hover:bg-white/15 hover:text-white"
-              >
-                ✕
-              </button>
-            ) : (
-              <kbd className="pointer-events-none absolute right-2.5 rounded border border-white/15 px-1.5 text-[10px] text-white/35">
-                /
-              </kbd>
-            )}
-          </label>
+                placeholder="Search Bakugan…"
+                aria-label="Search Bakugan by name"
+                className="h-full w-full rounded-lg border border-white/15 bg-black/50 pr-14 pl-8 text-sm text-white transition outline-none placeholder:text-white/30 hover:border-white/35 focus:border-white/60 focus:bg-black/70"
+              />
+              {query ? (
+                <button
+                  onClick={() => {
+                    setQuery('')
+                    search.current?.focus()
+                  }}
+                  title="Clear the search"
+                  className="absolute right-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded text-white/50 transition hover:bg-white/15 hover:text-white"
+                >
+                  ✕
+                </button>
+              ) : (
+                <kbd className="pointer-events-none absolute right-2.5 rounded border border-white/15 px-1.5 text-[10px] text-white/35">
+                  /
+                </kbd>
+              )}
+            </label>
 
-          {/* attributes the player has, with how many of each */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Chip on={element === 'all'} onClick={() => set({ element: 'all' })} title="Every attribute">
-              ALL <Count n={rows.length} />
-            </Chip>
-            {present.map((e) => (
-              <Chip
-                key={e.id}
-                on={element === e.id}
-                color={e.color}
-                onClick={() => set({ element: element === e.id ? 'all' : e.id })}
-                title={element === e.id ? 'Show every attribute' : `Only ${e.name}`}
-              >
-                <img src={e.icon} alt="" className="h-4 w-4" />
-                {e.name.toUpperCase()}
-                <Count n={rows.filter((r) => r.bakugan.element === e.id).length} />
+            {/* attributes the player has, with how many of each */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Chip on={element === 'all'} onClick={() => set({ element: 'all' })} title="Every attribute">
+                ALL <Count n={rows.length} />
               </Chip>
-            ))}
+              {present.map((e) => (
+                <Chip
+                  key={e.id}
+                  on={element === e.id}
+                  color={e.color}
+                  onClick={() => set({ element: element === e.id ? 'all' : e.id })}
+                  title={element === e.id ? 'Show every attribute' : `Only ${e.name}`}
+                >
+                  <img src={e.icon} alt="" className="h-4 w-4" />
+                  {e.name.toUpperCase()}
+                  <Count n={rows.filter((r) => r.bakugan.element === e.id).length} />
+                </Chip>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          {QUICK.map((k) => {
-            const on = prefs.quick.includes(k.id)
-            return (
-              <Chip
-                key={k.id}
-                on={on}
-                color="#f5c542"
-                title={k.hint}
-                onClick={() => set({ quick: on ? prefs.quick.filter((q) => q !== k.id) : [...prefs.quick, k.id] })}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {QUICK.map((k) => {
+              const on = prefs.quick.includes(k.id)
+              return (
+                <Chip
+                  key={k.id}
+                  on={on}
+                  color="#f5c542"
+                  title={k.hint}
+                  onClick={() => set({ quick: on ? prefs.quick.filter((q) => q !== k.id) : [...prefs.quick, k.id] })}
+                >
+                  <span className="text-[11px] leading-none">{on ? '✓' : '+'}</span>
+                  {k.label}
+                  <Count n={rows.filter(k.test).length} />
+                </Chip>
+              )
+            })}
+            {filtered && (
+              <button
+                onClick={clear}
+                className="font-display cursor-pointer px-2 text-[10px] tracking-[0.25em] text-white/45 underline-offset-4 transition hover:text-white hover:underline"
               >
-                <span className="text-[11px] leading-none">{on ? '✓' : '+'}</span>
-                {k.label}
-                <Count n={rows.filter(k.test).length} />
-              </Chip>
-            )
-          })}
-          {filtered && (
-            <button
-              onClick={clear}
-              className="font-display cursor-pointer px-2 text-[10px] tracking-[0.25em] text-white/45 underline-offset-4 transition hover:text-white hover:underline"
-            >
-              CLEAR FILTERS
-            </button>
-          )}
+                CLEAR FILTERS
+              </button>
+            )}
 
-          <div className="ml-auto flex items-center gap-2">
-            <span className="font-display text-[10px] tracking-[0.3em] text-white/35">SORT</span>
-            <div className="flex flex-wrap items-center rounded-lg border border-white/15 bg-black/40 p-0.5">
-              {SORTS.map((s) => {
-                const on = prefs.sort === s.id
-                return (
+            <div className="ml-auto flex items-center gap-2">
+              <span className="font-display text-[10px] tracking-[0.3em] text-white/35">SORT</span>
+              <div className="flex flex-wrap items-center rounded-lg border border-white/15 bg-black/40 p-0.5">
+                {SORTS.map((s) => {
+                  const on = prefs.sort === s.id
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => pickSort(s.id)}
+                      title={on ? `${s.hint} · click again to reverse` : s.hint}
+                      aria-pressed={on}
+                      className={`font-display cursor-pointer rounded-md px-2.5 py-1.5 text-[10px] tracking-[0.2em] transition ${
+                        on ? 'bg-white/15 text-white' : 'text-white/45 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      {s.label}
+                      {on && <span className="ml-1 text-white/70">{prefs.reverse ? '↑' : '↓'}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="flex items-center rounded-lg border border-white/15 bg-black/40 p-0.5">
+                {(['grid', 'list'] as const).map((v) => (
                   <button
-                    key={s.id}
-                    onClick={() => pickSort(s.id)}
-                    title={on ? `${s.hint} · click again to reverse` : s.hint}
-                    aria-pressed={on}
-                    className={`font-display cursor-pointer rounded-md px-2.5 py-1.5 text-[10px] tracking-[0.2em] transition ${
-                      on ? 'bg-white/15 text-white' : 'text-white/45 hover:bg-white/5 hover:text-white'
+                    key={v}
+                    onClick={() => prefs.view !== v && set({ view: v })}
+                    title={v === 'grid' ? 'Pictures in a grid' : 'A detailed list'}
+                    aria-pressed={prefs.view === v}
+                    className={`font-display flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] tracking-[0.25em] transition ${
+                      prefs.view === v ? 'bg-white/15 text-white' : 'text-white/45 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    {s.label}
-                    {on && <span className="ml-1 text-white/70">{prefs.reverse ? '↑' : '↓'}</span>}
+                    <span className="text-sm leading-none">{v === 'grid' ? '▦' : '☰'}</span>
+                    {v.toUpperCase()}
                   </button>
-                )
-              })}
-            </div>
-            <div className="flex items-center rounded-lg border border-white/15 bg-black/40 p-0.5">
-              {(['grid', 'list'] as const).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => prefs.view !== v && set({ view: v })}
-                  title={v === 'grid' ? 'Pictures in a grid' : 'A detailed list'}
-                  aria-pressed={prefs.view === v}
-                  className={`font-display flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] tracking-[0.25em] transition ${
-                    prefs.view === v ? 'bg-white/15 text-white' : 'text-white/45 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  <span className="text-sm leading-none">{v === 'grid' ? '▦' : '☰'}</span>
-                  {v.toUpperCase()}
-                </button>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <p className="mt-2 mb-2 px-1 text-xs text-white/40">
+      <p className="mb-2 px-1 text-xs text-white/40">
         {filtered ? `Showing ${shown.length} of ${rows.length} Bakugan` : `${rows.length} Bakugan`} · click one for its details,
         team and skins
       </p>

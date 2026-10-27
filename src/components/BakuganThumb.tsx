@@ -2,15 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { BakuganPortrait } from './BakuganPortrait'
-
-/** The nearest scrolling ancestor, so pictures a little below the fold start early. */
-function scrollParent(el: HTMLElement | null): HTMLElement | null {
-  for (let p = el?.parentElement; p; p = p.parentElement) {
-    const { overflowY } = getComputedStyle(p)
-    if (overflowY === 'auto' || overflowY === 'scroll') return p
-  }
-  return null
-}
+import { scrollParent } from './collection'
 
 /**
  * A Bakugan's picture (current form and skin) that only asks for its 3D snapshot once it scrolls into view, so a big

@@ -188,6 +188,15 @@ export const leadTeam = (team: string[], id: string) => [id, ...team.filter((x) 
 /** The team without this Bakugan; a team keeps at least one. */
 export const leaveTeam = (team: string[], id: string) => (team.length > 1 ? team.filter((x) => x !== id) : team)
 
+/** The nearest scrolling ancestor (the page), for observers that watch what scrolls into view. */
+export function scrollParent(el: HTMLElement | null): HTMLElement | null {
+  for (let p = el?.parentElement; p; p = p.parentElement) {
+    const { overflowY } = getComputedStyle(p)
+    if (overflowY === 'auto' || overflowY === 'scroll') return p
+  }
+  return null
+}
+
 /** 12,900 → "12.9k" for the small labels. */
 export const short = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/, '')}k` : `${Math.round(n)}`
