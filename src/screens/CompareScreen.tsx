@@ -20,7 +20,7 @@ import {
   type OwnedBakugan,
 } from '../profile/useProfiles'
 import { botCharacter, opponentCharacter } from '../profile/avatar'
-import { useGame, type Screen } from '../store/useGame'
+import { backOf, useGame } from '../store/useGame'
 import { TagFaceOff } from './TagFaceOff'
 
 /** Fills a team up to `size` with Bakugan not already in it. */
@@ -48,13 +48,6 @@ function fillOwn(start: Entrant[], collection: OwnedBakugan[], size = TEAM_SIZE)
   }
   return team
 }
-
-/** Where the face-off was opened from (the main menu's BRAWL, a Bakugan's FACE-OFF…): BACK returns there. */
-let openedFrom: Screen = 'viewer'
-// coming back from a brawl or a live match keeps where it was first opened from
-useGame.subscribe((s, prev) => {
-  if (s.screen === 'compare' && !['compare', 'arena', 'live'].includes(prev.screen)) openedFrom = prev.screen
-})
 
 export function CompareScreen() {
   const bakuganId = useGame((s) => s.bakuganId)
@@ -123,7 +116,8 @@ export function CompareScreen() {
       exit={{ opacity: 0 }}
     >
       <button
-        onClick={() => go(openedFrom)}
+        // where the face-off was opened from (the menu's BRAWL, a Bakugan's FACE-OFF…), never a page or a match
+        onClick={() => go(backOf('compare'))}
         className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
       >
         ← BACK

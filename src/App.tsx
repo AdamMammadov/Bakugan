@@ -11,6 +11,8 @@ import { ElementHub } from './screens/ElementHub'
 import { ElementWheel } from './screens/ElementWheel'
 import { IntroScreen } from './screens/IntroScreen'
 import { MainMenu } from './screens/MainMenu'
+import { preloadActiveLead } from './components/menuLead'
+import { PageBackdrop } from './components/PageBackdrop'
 import { ProfileEditor } from './screens/ProfileEditor'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ClansScreen } from './screens/ClansScreen'
@@ -66,12 +68,15 @@ export default function App() {
   // download every Bakugan model in the background once the player is in, so the viewer,
   // showroom and arena show the real models straight away
   useEffect(() => {
-    const t = window.setTimeout(() => void import('./three/BakuganModels').then((m) => m.preloadAllModels()), 1500)
+    // the main menu's lead first, while the title screen waits
+    preloadActiveLead()
+    const t = window.setTimeout(() => void import('./three/BakuganModels').then((m) => m.preloadAllModels()), 5000)
     return () => clearTimeout(t)
   }, [])
 
   return (
     <div className="relative h-full w-full">
+      <PageBackdrop screen={screen} />
       <Suspense fallback={null}>
         <AnimatePresence mode="wait">
           {screen === 'intro' && <IntroScreen key="intro" />}
@@ -100,7 +105,8 @@ export default function App() {
       <EventToast />
       <InvitePopup />
       {/* the corner buttons share one row, so they line up whatever their widths */}
-      {screen !== 'intro' && (
+      {/* the main menu has the music and sound switches in its own layout */}
+      {screen !== 'intro' && screen !== 'menu' && (
         <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">
           {/* the way back to the main menu where there is no PageNav or BACK to it (pages have ⌂ MENU) */}
           {(screen === 'hub' || screen === 'viewer' || screen === 'compare') && <ProfileButton />}

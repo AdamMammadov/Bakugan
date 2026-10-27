@@ -54,8 +54,26 @@ export const PAGES: PageScreen[] = [
   'characters',
 ]
 
-/** Where BACK on a player page leads: the hub, viewer or face-off it was opened from, else the main menu. */
-export const pageBack = (back: Screen): Screen => (back === 'hub' || back === 'viewer' || back === 'compare' ? back : 'menu')
+/**
+ * How far each screen sits below the main menu. A screen remembers where it was opened from only when that
+ * screen is shallower, so BACK always climbs towards the menu and two screens can never send BACK to each other.
+ * Matches, the title and the attribute wheel (-1) are never gone back to.
+ */
+function depthOf(screen: Screen) {
+  if (screen === 'menu') return 0
+  if (screen === 'hub') return 1
+  if (screen === 'viewer') return 2
+  if (screen === 'compare') return 3
+  if (PAGES.includes(screen as PageScreen)) return 4
+  if (screen === 'profileEdit') return 5
+  return -1
+}
+
+/** The player pages share one way back: switching tabs keeps it. */
+const parentKey = (screen: Screen) => (PAGES.includes(screen as PageScreen) ? 'page' : screen)
+
+/** Where BACK on `screen` leads: the screen it was opened from (see depthOf), else the main menu. */
+export const backOf = (screen: Screen): Screen => useGame.getState().parents[parentKey(screen)] ?? 'menu'
 
 export interface TeamMember {
   id: string
@@ -135,8 +153,10 @@ interface GameState {
   toggleMusic: () => void
   /** Profile being edited; null while creating a new one. */
   editProfileId: string | null
-  /** Where the profile editor/screen returns to. */
+  /** Where the profile editor returns to. */
   back: Screen
+  /** Where each screen (the pages share 'page') was opened from: see backOf. */
+  parents: Partial<Record<string, Screen>>
   go: (screen: Screen) => void
   /** Shows an attribute's Bakugan: the hub for a player with a profile, else a new profile of that attribute. */
   chooseElement: (element: ElementId) => void
@@ -170,6 +190,7 @@ export const useGame = create<GameState>((set) => ({
   toggleMusic: () => set((s) => ({ music: !s.music })),
   editProfileId: null,
   back: 'menu',
+  parents: {},
   go: (screen) => set({ screen }),
   chooseElement: (element) =>
     useProfiles.getState().activeId ? set({ element, screen: 'hub' }) : useGame.getState().pickAttribute(element),
@@ -183,8 +204,7 @@ export const useGame = create<GameState>((set) => ({
   watchLive: () => set((s) => ({ screen: 'live', liveFrom: s.screen === 'live' ? s.liveFrom : s.screen })),
   toggleMute: () => set((s) => ({ muted: !s.muted })),
   openProfile: () => useGame.getState().openPage('profile'),
-  openPage: (screen) =>
-    set((s) => ({ screen, back: PAGES.includes(s.screen as PageScreen) || s.screen === 'profileEdit' ? s.back : s.screen })),
+  openPage: (screen) => set({ screen }),
   editProfile: (editProfileId) =>
     editProfileId === null
       ? useGame.getState().newProfile()
@@ -194,3 +214,10 @@ export const useGame = create<GameState>((set) => ({
           back: PAGES.includes(s.screen as PageScreen) ? s.screen : s.screen === 'profileEdit' ? s.back : s.screen,
         })),
 }))
+
+// a screen opened from a shallower one remembers it; returning (or coming out of a match) keeps what it had
+useGame.subscribe((s, prev) => {
+  if (s.screen === prev.screen) return
+  const from = depthOf(prev.screen)
+  if (from >= 0 && depthOf(s.screen) > from) useGame.setState({ parents: { ...s.parents, [parentKey(s.screen)]: prev.screen } })
+})

@@ -256,6 +256,130 @@ body,
   outline-offset: 3px;
 }
 
+/* ---------------------------------------------------------------- page backdrops (PageBackdrop) */
+
+/* a fine diagonal weave instead of the old squares */
+.bd-texture {
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 7px);
+}
+
+/* stadium beams swaying */
+@keyframes bd-beam {
+  0%,
+  100% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(14deg);
+  }
+}
+.bd-beam {
+  animation: bd-beam 10s ease-in-out infinite;
+}
+
+/* podium light breathing */
+@keyframes bd-pillar {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scaleY(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+.bd-pillar {
+  transform-origin: bottom;
+  animation: bd-pillar 5s ease-in-out infinite;
+}
+
+/* soft lights floating */
+@keyframes bd-float {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(18px, -28px);
+  }
+}
+.bd-float {
+  animation: bd-float 12s ease-in-out infinite;
+}
+
+/* thin lines gliding past */
+@keyframes bd-lines {
+  to {
+    background-position: 220px 0;
+  }
+}
+.bd-lines {
+  background-image: repeating-linear-gradient(115deg, currentColor 0 1px, transparent 1px 22px);
+  animation: bd-lines 14s linear infinite;
+}
+
+/* a streak of light crossing the page */
+@keyframes bd-streak {
+  0% {
+    transform: translateX(-45vw);
+    opacity: 0;
+  }
+  15%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(115vw);
+    opacity: 0;
+  }
+}
+.bd-streak {
+  left: 0;
+  animation: bd-streak 7s ease-in infinite;
+}
+
+@keyframes bd-pulse {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.bd-pulse {
+  animation: bd-pulse 4s ease-in-out infinite;
+}
+
+@keyframes bd-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+.bd-breathe {
+  animation: bd-breathe 6s ease-in-out infinite;
+}
+
+/* a honeycomb drifting slowly */
+@keyframes bd-hex {
+  to {
+    background-position: 0 -104px;
+    mask-position: 0 -104px;
+  }
+}
+.bd-hex {
+  background-color: currentColor;
+  --hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 2 58 18v32L30 66 2 50V18zM30 66v36M58 50l2 1M2 50l-2 1' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+  mask-image: var(--hex);
+  mask-size: 60px 104px;
+  animation: bd-hex 12s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .menu-drift,
   .menu-spin,
@@ -264,7 +388,15 @@ body,
   .menu-mote,
   .menu-logo,
   .menu-sweep,
-  .menu-pulse {
+  .menu-pulse,
+  .bd-beam,
+  .bd-pillar,
+  .bd-float,
+  .bd-lines,
+  .bd-streak,
+  .bd-pulse,
+  .bd-breathe,
+  .bd-hex {
     animation: none;
   }
 }

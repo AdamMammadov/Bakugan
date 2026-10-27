@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useUnread } from '../profile/useFriendChat'
 import { openEvents } from '../events/nav'
 import { useActiveProfile } from '../profile/useProfiles'
-import { pageBack, useGame, type PageScreen } from '../store/useGame'
+import { backOf, useGame, type PageScreen } from '../store/useGame'
 import { centreInStrip } from './strip'
 
 const TABS: [PageScreen, string][] = [
@@ -21,7 +21,6 @@ const TABS: [PageScreen, string][] = [
 
 /** Back and main-menu buttons plus tabs between the player pages. */
 export function PageNav({ current, children }: { current: PageScreen; children?: React.ReactNode }) {
-  const back = useGame((s) => s.back)
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
   const nav = useRef<HTMLElement>(null)
@@ -36,7 +35,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
   return (
     <div className="flex items-center gap-4">
       <button
-        onClick={() => go(pageBack(back))}
+        onClick={() => go(backOf(current))}
         className="font-display shrink-0 text-xs tracking-[0.4em] whitespace-nowrap text-white/50 transition hover:text-white"
       >
         ← BACK
