@@ -6,6 +6,7 @@ import { BOT_CLANS, botById, botClanMembers, isBot, type BotClan } from './bots'
 import { botLine, toEveryone, type Ask } from './chatBrain'
 import { addressee, asker, clanLang, clanLine, clanReply } from './clanChat'
 import { advance, CATCH_UP, freeBots, keepAway, MAX_MEMBERS, STEP, systemLine } from './clanLife'
+import { botXp } from './clanStats'
 import { useProfiles } from './useProfiles'
 
 /**
@@ -48,7 +49,21 @@ export interface Clan {
   since?: Record<string, number>
   /** CPU brawlers who lately left, were removed or turned down, and when: they keep away for a few days. */
   away?: Record<string, number>
+  /** Clan XP banked: the players' brawls, and what members who left earned (CPU members' own is worked out). */
+  xp?: number
+  /** Members the leader made officers (CPU clans: their two longest-standing members when unset). */
+  officers?: string[]
+  /** The badge's look; the attribute's colour and a hexagon when unset. */
+  emblem?: { shape?: 'hex' | 'shield' | 'circle' | 'star' | 'crown'; color?: string }
 }
+
+export type ClanRole = 'leader' | 'officer' | 'member'
+
+export const officersOf = (c: Clan) =>
+  c.officers ?? (c.cpu ? c.members.filter((m) => m !== c.leaderId && isBot(m)).slice(0, 2) : [])
+
+export const roleOf = (c: Clan, id: string): ClanRole =>
+  c.leaderId === id ? 'leader' : officersOf(c).includes(id) ? 'officer' : 'member'
 
 export type ClanInput = Pick<Clan, 'name' | 'tag' | 'element' | 'motto'>
 
@@ -75,6 +90,10 @@ interface ClansState {
   simulate: (now: number) => void
   /** Now and then lets a CPU member say something on their own (called while the clan chat is open). */
   chatter: (clanId: string) => void
+  /** The leader makes a member an officer, or an officer a member again. */
+  setRole: (clanId: string, memberId: string, role: 'officer' | 'member') => void
+  /** The leader changes the badge or the motto. */
+  customise: (clanId: string, patch: Pick<Clan, 'emblem'> | Pick<Clan, 'motto'>) => void
 }
 
 const playersIn = (c: Clan) => c.members.filter((m) => !isBot(m))
@@ -188,7 +207,7 @@ function answer(clanId: string, author: string, text: string) {
 
 /** A line a bot says by itself, in the language the players write in. */
 const own =
-  (key: 'chatter' | 'welcome' | 'recruited' | 'joined', botId: string, name: string) =>
+  (key: 'chatter' | 'welcome' | 'recruited' | 'joined' | 'promoted', botId: string, name: string) =>
   (clan: Clan, recent: string[]): Said =>
     clanLine(key, clan, botId, name, recent, clanLang(clan, useClans.getState().clans))
 
@@ -244,7 +263,7 @@ function withCpuClans(saved: Clan[]): Clan[] {
     const old = saved.find((c) => c.id === fresh.id)
     const members = (old?.members ?? fresh.members).filter(once)
     const leaderId = members.includes(old?.leaderId ?? '') ? old!.leaderId : (members.find(isBot) ?? fresh.leaderId)
-    const clan = { ...fresh, members, leaderId, since: old?.since }
+    const clan = { ...fresh, members, leaderId, since: old?.since, xp: old?.xp, officers: old?.officers, emblem: old?.emblem }
     return { ...clan, messages: old?.messages.length ? old.messages : seedChat(clan) }
   })
   const own = saved.filter((c) => !c.cpu).map((c) => ({ ...c, members: c.members.filter(once) }))
@@ -285,7 +304,17 @@ export const useClans = create<ClansState>()(
             c.id !== clanId
               ? c
               : postTo(
-                  keepAway({ ...c, members: c.members.filter((m) => m !== memberId) }, memberId, Date.now()),
+                  keepAway(
+                    {
+                      ...c,
+                      members: c.members.filter((m) => m !== memberId),
+                      officers: officersOf(c).filter((m) => m !== memberId),
+                      // what they earned for the clan stays with it
+                      xp: (c.xp ?? 0) + (isBot(memberId) ? botXp(c, memberId, Date.now()) : 0),
+                    },
+                    memberId,
+                    Date.now(),
+                  ),
                   systemLine(
                     memberId,
                     `${botById(memberId)?.name ?? firstName(memberId)} was removed from the clan.`,
@@ -370,16 +399,37 @@ export const useClans = create<ClansState>()(
         const bot = randomBot(clan, last?.author)
         if (bot) botSays(clanId, bot, own('chatter', bot, firstName(useProfiles.getState().activeId)), 2000)
       },
+      setRole: (clanId, memberId, role) => {
+        const now = Date.now()
+        set((s) => ({
+          clans: s.clans.map((c) => {
+            if (c.id !== clanId || !c.members.includes(memberId) || c.leaderId === memberId) return c
+            const officers = officersOf(c).filter((m) => m !== memberId)
+            const name = botById(memberId)?.name ?? firstName(memberId)
+            return postTo(
+              { ...c, officers: role === 'officer' ? [...officers, memberId] : officers },
+              systemLine(memberId, role === 'officer' ? `${name} was made an officer.` : `${name} is a member again.`, now),
+            )
+          }),
+        }))
+        // a CPU member thanks the leader for the trust
+        const clan = get().clans.find((c) => c.id === clanId)
+        if (clan && role === 'officer' && isBot(memberId))
+          botSays(clanId, memberId, own('promoted', memberId, firstName(clan.leaderId)), 1800)
+      },
+      customise: (clanId, patch) => set((s) => ({ clans: s.clans.map((c) => (c.id === clanId ? { ...c, ...patch } : c)) })),
     }),
     {
       name: 'bakugan-clans',
-      version: 4,
+      version: 5,
       partialize: (s) => ({ clans: s.clans, simAt: s.simAt }),
       // v2: cleared together with the profiles their members belonged to
       // v3: the CPU clans joined the list (rebuilt from bots.ts on every load, see merge)
       // v4: CPU clans' members are saved too (they come and go), plus join requests, the open setting, who
       //     keeps away and the time clan life was played to; v3 saves already hold the members, so they carry over
       // (a message's optional `ask` came later: older messages simply have none, so no new version)
+      // v5: clan XP, officers and the badge's look (all optional: older clans start at their CPU members' XP, with
+      //     no officers and the attribute's badge), so the v4 save carries over as it is
       migrate: (state, version) => (version < 2 ? { clans: [], simAt: 0 } : (state as { clans: Clan[]; simAt?: number })),
       merge: (saved, current) => {
         const s = saved as { clans?: Clan[]; simAt?: number } | undefined

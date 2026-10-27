@@ -742,7 +742,17 @@ function someoneElse(input: ChatInput) {
 
 /** Something a bot says by itself (`key`: chatter, welcome, joined…), in `lang`. */
 export function botLine(
-  key: 'chatter' | 'welcome' | 'recruited' | 'joined' | 'friendHello' | 'inviteNo' | 'inviteBusy' | 'inviteLate' | 'inviteOk',
+  key:
+    | 'chatter'
+    | 'welcome'
+    | 'recruited'
+    | 'joined'
+    | 'promoted'
+    | 'friendHello'
+    | 'inviteNo'
+    | 'inviteBusy'
+    | 'inviteLate'
+    | 'inviteOk',
   input: Omit<ChatInput, 'text' | 'history'> & { recent?: string[]; name?: string },
   lang: Lang,
 ): ChatReply {

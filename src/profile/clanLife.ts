@@ -1,6 +1,7 @@
 import { BOTS, botById, isBot } from './bots'
 import { roll } from './botProgress'
 import { leaveReason } from './clanChat'
+import { botXp } from './clanStats'
 import type { Clan, ClanMessage } from './useClans'
 
 /**
@@ -105,7 +106,10 @@ export function advance(start: Clan[], from: number, to: number, post: (c: Clan,
   const dropMember = (c: Clan, botId: string, at: number): Clan => {
     const since = { ...c.since }
     delete since[botId]
-    return keepAway({ ...c, members: c.members.filter((m) => m !== botId), since }, botId, at)
+    // what they earned for the clan stays with it
+    const xp = (c.xp ?? 0) + botXp(c, botId, at)
+    const officers = c.officers?.filter((m) => m !== botId)
+    return keepAway({ ...c, members: c.members.filter((m) => m !== botId), since, xp, officers }, botId, at)
   }
   const settled = (c: Clan, m: string, at: number) => isBot(m) && (c.since?.[m] ?? 0) + SETTLE <= at
   // a leaver sometimes moves to a CPU clan with room, else becomes a free brawler for a while
