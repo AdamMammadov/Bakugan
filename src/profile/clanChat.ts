@@ -81,7 +81,7 @@ export function asker(clan: ClanChatView) {
 
 /** Something a CPU member says on their own, in the players' language. */
 export function clanLine(
-  key: 'chatter' | 'welcome' | 'recruited' | 'joined' | 'promoted',
+  key: 'chatter' | 'welcome' | 'recruited' | 'joined' | 'promoted' | 'back',
   clan: ClanChatView,
   botId: string,
   name: string,

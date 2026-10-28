@@ -32,7 +32,7 @@ import {
   type WarRow,
 } from '../profile/clanProgress'
 import { botTally, CLAN_XP, joinedAt } from '../profile/clanStats'
-import { presenceOf } from '../profile/presence'
+import { isAvailable, statusOf, type PresenceState } from '../profile/presence'
 import { clanOf, freeBots, MAX_MEMBERS, roleOf, useClanLife, useClans, type Clan, type ClanRole } from '../profile/useClans'
 import { rewardLabel, type Reward } from '../season/season'
 import { friendStatus, tierOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
@@ -163,7 +163,7 @@ function MemberRow({
   me,
   onOpen,
   week,
-  online,
+  presence,
   children,
 }: {
   m: BrawlerView
@@ -172,7 +172,8 @@ function MemberRow({
   onOpen: (id: string) => void
   /** Wins this week, when shown. */
   week?: number
-  online?: boolean
+  /** Online, in a match or offline, when shown. */
+  presence?: PresenceState
   /** Role buttons. */
   children?: React.ReactNode
 }) {
@@ -193,7 +194,7 @@ function MemberRow({
     >
       <span className="relative shrink-0">
         <Avatar avatar={m.avatar} color={el.color} size={40} frame={m.frame} />
-        {online !== undefined && <PresenceDot state={online ? 'online' : 'offline'} size={11} />}
+        {presence && <PresenceDot state={presence} size={11} />}
       </span>
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1.5 truncate font-semibold">
@@ -441,7 +442,12 @@ function ClanPage({
   )
   const war = useMemo(() => warStandings(clans, weekStart(now), now, log), [clans, now, log])
   const goals = useMemo(() => weeklyGoals(clan, me.id, now, log), [clan, me.id, now, log])
-  const online = new Set(members.filter((m) => m.id === me.id || (m.cpu && presenceOf(m.id, now).online)).map((m) => m.id))
+  // who can talk now: the player and CPU members online and not in a brawl (only they answer in the chat)
+  const presence = new Map<string, PresenceState>(
+    members.map((m) => [m.id, m.id === me.id ? 'online' : m.cpu ? statusOf(m.id, now).state : 'offline']),
+  )
+  const online = new Set(members.filter((m) => presence.get(m.id) === 'online').map((m) => m.id))
+  const inMatch = members.filter((m) => presence.get(m.id) === 'match').length
   const week = weekId(weekStart(now))
   const has = (key: string) => !!claimed?.includes(`${week}:${key}`)
   const toClaim =
@@ -497,13 +503,13 @@ function ClanPage({
             {tab === 'overview' && (
               <Overview clan={clan} me={me} now={now} level={level} members={members} war={war} goals={goals} onOpen={onOpen} />
             )}
-            {tab === 'members' && <Members clan={clan} me={me} now={now} members={members} online={online} onOpen={onOpen} />}
+            {tab === 'members' && <Members clan={clan} me={me} now={now} members={members} presence={presence} onOpen={onOpen} />}
             {tab === 'war' && <War clan={clan} me={me} now={now} war={war} />}
             {tab === 'goals' && <Goals clan={clan} me={me} level={level.level} goals={goals} has={has} week={week} />}
             {tab === 'activity' && <Activity clan={clan} me={me} now={now} onOpen={onOpen} />}
           </div>
         </section>
-        <ClanChat clan={clan} me={me} now={now} online={online.size} onOpen={onOpen} />
+        <ClanChat clan={clan} me={me} now={now} online={online.size} inMatch={inMatch} onOpen={onOpen} />
       </div>
     </div>
   )
@@ -791,14 +797,14 @@ function Members({
   me,
   now,
   members,
-  online,
+  presence,
   onOpen,
 }: {
   clan: Clan
   me: Profile
   now: number
   members: BrawlerView[]
-  online: Set<string>
+  presence: Map<string, PresenceState>
   onOpen: (id: string) => void
 }) {
   const profiles = useProfiles((s) => s.profiles)
@@ -864,7 +870,7 @@ function Members({
           ).wins
           const canKick = manage && m.id !== me.id && (role === 'leader' ? r !== 'leader' : r === 'member')
           return (
-            <MemberRow key={m.id} m={m} clan={clan} me={me} onOpen={onOpen} week={week} online={online.has(m.id)}>
+            <MemberRow key={m.id} m={m} clan={clan} me={me} onOpen={onOpen} week={week} presence={presence.get(m.id)}>
               {role === 'leader' && !clan.cpu && r === 'member' && (
                 <button
                   onClick={() => {
@@ -1133,21 +1139,29 @@ function ClanChat({
   me,
   now,
   online,
+  inMatch,
   onOpen,
 }: {
   clan: Clan
   me: Profile
   now: number
+  /** The player and the members who can answer now. */
   online: number
+  inMatch: number
   onOpen: (id: string) => void
 }) {
   const profiles = useProfiles((s) => s.profiles)
   const clans = useClans((s) => s.clans)
   const typing = useClans((s) => s.typing[clan.id])
+  const waiting = useClans((s) => s.waiting[clan.id])
   const { send, chatter } = useClans.getState()
   const [text, setText] = useState('')
   const log = useRef<HTMLDivElement>(null)
-  const typingNames = (typing ?? []).map((id) => brawlerOf(id, profiles, now)?.firstName).filter(Boolean)
+  // only members online type (the store only lets them), never one shown offline
+  const typingNames = (typing ?? [])
+    .filter((id) => isAvailable(id, now))
+    .map((id) => brawlerOf(id, profiles, now)?.firstName)
+    .filter(Boolean)
   const cpuMembers = clan.members.filter(isBot).length
   const free = freeBots(clans).length
 
@@ -1172,7 +1186,10 @@ function ClanChat({
     <section className={`flex min-h-0 flex-col overflow-hidden ${PANEL}`} data-testid="clan-chat">
       <h3 className="font-display flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 text-xs tracking-[0.5em] text-white/40">
         CLAN CHAT
-        <span className="text-[10px] tracking-[0.2em] text-emerald-300/80">● {online} ONLINE</span>
+        <span className="text-[10px] tracking-[0.2em] text-emerald-300/80" data-testid="chat-online">
+          ● {online} ONLINE
+          {inMatch > 0 && <span className="text-amber-300/80"> · {inMatch} IN A MATCH</span>}
+        </span>
       </h3>
       <div ref={log} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {clan.messages.length === 0 && <p className="text-sm text-white/40">No messages yet. Say hi to your clan!</p>}
@@ -1215,6 +1232,13 @@ function ClanChat({
         {typingNames.length > 0 && (
           <p className="animate-pulse text-xs text-white/40">
             {typingNames.join(' and ')} {typingNames.length > 1 ? 'are' : 'is'} typing…
+          </p>
+        )}
+        {cpuMembers > 0 && online <= 1 && (
+          <p className="text-center text-xs text-white/40" data-testid="chat-nobody">
+            {waiting
+              ? 'Nobody else is online right now. Your message waits: the next member to come on reads it.'
+              : 'Nobody else is online right now: messages wait for the next member to come on.'}
           </p>
         )}
         {cpuMembers === 0 && (

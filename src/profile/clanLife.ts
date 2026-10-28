@@ -2,11 +2,12 @@ import { BOTS, botById, isBot } from './bots'
 import { roll } from './botProgress'
 import { leaveReason } from './clanChat'
 import { botXp } from './clanStats'
+import { isAvailable } from './presence'
 import type { Clan, ClanMessage } from './useClans'
 
 /**
  * Clan life without a server: CPU brawlers ask to join players' clans, now and then a CPU member leaves,
- * and the CPU clans swap a member here and there. Time moves in short steps; what happens in a step is
+ * and the CPU clans swap a member here and there, always while the brawler is online. Time moves in short steps; what happens in a step is
  * rolled from the step's number and the clan, and played forward from where the save left off (catching
  * up on the time away, up to a limit) and live while the clans are on screen.
  */
@@ -43,6 +44,14 @@ const CPU_LEAVE = 1 / (25 * 24)
 const cpuJoinRate = (bots: number) => (bots < 6 ? 1 / 12 : bots < CPU_MAX ? 1 / 96 : 0)
 /** Chance per step for a rate per hour. */
 const perStep = (rate: number) => (rate * STEP) / HOUR
+/**
+ * Brawlers only join, leave or ask while online (presence.ts), about a third of the time: a leave is rolled this
+ * much more often and then taken by a member who is on, so a member still leaves about as often as before.
+ */
+const ONLINE_SHARE = 1 / 3
+/** Of `ids`, those online (and not in a brawl) at `at`. */
+const onAt = <T extends { id: string } | string>(ids: T[], at: number) =>
+  ids.filter((x) => isAvailable(typeof x === 'string' ? x : x.id, at))
 
 const nameOf = (botId: string) => botById(botId)?.name ?? 'A brawler'
 
@@ -141,13 +150,17 @@ export function advance(start: Clan[], from: number, to: number, post: (c: Clan,
         if (requests.length !== (clan.requests ?? []).length) patch(id, (c) => ({ ...c, requests }))
         // a CPU member leaves
         const leavers = clan.members.filter((m) => settled(clan, m, at))
-        if (leavers.length && r(1) < perStep(leavers.length * OWN_LEAVE)) {
-          move(clan, leavers[Math.floor(r(2) * leavers.length)], at, r(3), r(5))
+        const leaving = leavers.length && r(1) < perStep(leavers.length * OWN_LEAVE) / ONLINE_SHARE ? onAt(leavers, at) : []
+        if (leaving.length) {
+          move(clan, leaving[Math.floor(r(2) * leaving.length)], at, r(3), r(5))
           continue
         }
         // a free brawler asks to join (shown on the clan page), or joins right away when the clan is open
         if (requests.length < MAX_REQUESTS && r(4) < perStep(requestRate(clan.members.length))) {
-          const pool = willing(clans, clan, at).filter((b) => !requests.some((x) => x.id === b.id))
+          const pool = onAt(
+            willing(clans, clan, at).filter((b) => !requests.some((x) => x.id === b.id)),
+            at,
+          )
           if (!pool.length) continue
           const bot = pick(pool, clan, r(6)).id
           if (clan.open) {
@@ -161,13 +174,17 @@ export function advance(start: Clan[], from: number, to: number, post: (c: Clan,
       // CPU clans: a member (never the leader) leaves now and then…
       const bots = clan.members.filter(isBot)
       const leavers = bots.filter((m) => m !== clan.leaderId && settled(clan, m, at))
-      if (bots.length > CPU_MIN && leavers.length && r(1) < perStep(leavers.length * CPU_LEAVE)) {
-        move(clan, leavers[Math.floor(r(2) * leavers.length)], at, r(3), r(5))
+      const leaving =
+        bots.length > CPU_MIN && leavers.length && r(1) < perStep(leavers.length * CPU_LEAVE) / ONLINE_SHARE
+          ? onAt(leavers, at)
+          : []
+      if (leaving.length) {
+        move(clan, leaving[Math.floor(r(2) * leaving.length)], at, r(3), r(5))
         continue
       }
       // …and free brawlers join the ones with room
       if (r(4) < perStep(cpuJoinRate(bots.length))) {
-        const pool = willing(clans, clan, at)
+        const pool = onAt(willing(clans, clan, at), at)
         if (!pool.length) continue
         const bot = pick(pool, clan, r(6)).id
         patch(id, (c) => post(addMember(c, bot, at), systemLine(bot, `${nameOf(bot)} joined the clan.`, at)))

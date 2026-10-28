@@ -748,6 +748,7 @@ export function botLine(
     | 'recruited'
     | 'joined'
     | 'promoted'
+    | 'back'
     | 'friendHello'
     | 'inviteNo'
     | 'inviteBusy'

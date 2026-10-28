@@ -96,6 +96,7 @@ export type LineKey =
   | 'inviteLate'
   | 'inviteOk'
   | 'promoted'
+  | 'back'
 
 type Lines = Record<LineKey, string[]>
 
@@ -257,6 +258,7 @@ const en: Lines = {
   inviteLate: ['Sorry, I was mid-brawl! Invite me again 🙂', 'Just saw your invite, I was in a match. Next time!'],
   inviteOk: ['ok, next time 🙂', 'No worries, next time!'],
   promoted: ['Officer? Thanks for the trust, {me}! 💪', 'Thanks, {me}! I’ll look after the clan.'],
+  back: ['Hey all, just got on! 👋', 'Back online. Who’s up for a brawl?'],
 }
 
 const az: Lines = {
@@ -427,6 +429,7 @@ const az: Lines = {
   inviteLate: ['Bağışla, döyüşdə idim! Yenə dəvət et 🙂', 'Dəvətini indi gördüm, matçda idim. Növbəti dəfə!'],
   inviteOk: ['yaxşı, növbəti dəfə 🙂', 'Problem deyil, sonra!'],
   promoted: ['Zabit? Etimad üçün sağ ol, {me}! 💪', 'Sağ ol, {me}! Klana yaxşı baxacağam.'],
+  back: ['Salam hamıya, indicə gəldim! 👋', 'Yenə buradayam. Kim döyüşə hazırdır?'],
 }
 
 const tr: Lines = {
@@ -559,6 +562,7 @@ const tr: Lines = {
   inviteLate: ['Kusura bakma, maçtaydım! Tekrar davet et 🙂', 'Davetini şimdi gördüm, maçtaydım. Bir dahaki sefere!'],
   inviteOk: ['tamam, bir dahaki sefere 🙂', 'Sorun değil, sonra!'],
   promoted: ['Subay mı? Güvenin için sağ ol, {me}! 💪', 'Sağ ol, {me}! Klana iyi bakacağım.'],
+  back: ['Selam millet, yeni geldim! 👋', 'Geri döndüm. Kim kapışmaya hazır?'],
 }
 
 const ru: Lines = {
@@ -664,6 +668,7 @@ const ru: Lines = {
   inviteLate: ['Прости, был в бою! Позови ещё раз 🙂', 'Только увидел приглашение, был в матче. В следующий раз!'],
   inviteOk: ['ок, в следующий раз 🙂', 'Без проблем, потом!'],
   promoted: ['Офицер? Спасибо за доверие, {me}! 💪', 'Спасибо, {me}! Присмотрю за кланом.'],
+  back: ['Всем привет, я тут! 👋', 'Я снова онлайн. Кто на бой?'],
 }
 
 export const LINES: Record<Lang, Lines> = { en, az, tr, ru }
