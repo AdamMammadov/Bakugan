@@ -380,6 +380,217 @@ body,
   animation: bd-hex 12s linear infinite;
 }
 
+/* page art (backdropArt.tsx) */
+@keyframes bd-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(115vh) rotate(540deg);
+  }
+}
+.bd-fall {
+  animation: bd-fall 9s linear infinite;
+}
+@keyframes bd-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+.bd-bob {
+  animation: bd-bob 6s ease-in-out infinite;
+}
+@keyframes bd-fan {
+  0%,
+  100% {
+    transform: translateX(-50%) rotate(var(--fan));
+  }
+  50% {
+    transform: translateX(-50%) rotate(calc(var(--fan) * 1.3));
+  }
+}
+.bd-fan {
+  animation: bd-fan 7s ease-in-out infinite;
+}
+@keyframes bd-spot {
+  0%,
+  100% {
+    transform: rotate(-16deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+.bd-spot {
+  animation: bd-spot 8s ease-in-out infinite;
+}
+@keyframes bd-sway {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+.bd-sway {
+  animation: bd-sway 5s ease-in-out infinite;
+}
+@keyframes bd-dash {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+.bd-dash {
+  animation: bd-dash 3s linear infinite;
+}
+@keyframes bd-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+.bd-twinkle {
+  animation: bd-twinkle 3.2s ease-in-out infinite;
+}
+@keyframes bd-chevrons {
+  to {
+    background-position: 12vh 0;
+  }
+}
+.bd-chevrons {
+  animation: bd-chevrons 2.5s linear infinite;
+}
+@keyframes bd-flicker {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  8% {
+    opacity: 1;
+  }
+  12% {
+    opacity: 0.3;
+  }
+  16% {
+    opacity: 0.9;
+  }
+  30% {
+    opacity: 0.2;
+  }
+}
+.bd-flicker {
+  animation: bd-flicker 3.6s steps(1, end) infinite;
+}
+
+/* ---------------------------------------------------------------- mouse parallax (parallax.ts) */
+
+.parallax-far,
+.parallax-mid,
+.parallax-near {
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+  will-change: transform;
+}
+.parallax-far {
+  transform: translate3d(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -7px), 0) scale(1.03);
+}
+.parallax-mid {
+  transform: translate3d(calc(var(--px, 0) * -22px), calc(var(--py, 0) * -14px), 0);
+}
+.parallax-near {
+  transform: translate3d(calc(var(--px, 0) * -38px), calc(var(--py, 0) * -24px), 0);
+}
+
+/* ---------------------------------------------------------------- title screen */
+
+/* the name's dark edge and warm glow, drawn behind the letters (a text-shadow would paint over gradient text) */
+.title-name {
+  filter: drop-shadow(0 0.06em 0 #000000b3) drop-shadow(0 0 0.3em #ff8a3d80);
+}
+/* the game's name: white into gold into fire, with a light sweeping across the whole word now and again (the
+   sweep is fixed to the window, so it runs across all the letters as one) */
+@keyframes title-shine {
+  0%,
+  55% {
+    background-position:
+      120vw 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      -60vw 0,
+      0 0;
+  }
+}
+.title-letter {
+  display: inline-block;
+  padding: 0 0.02em;
+  background-image:
+    linear-gradient(105deg, transparent 44%, rgba(255, 255, 255, 0.95) 50%, transparent 56%),
+    linear-gradient(180deg, #fff 0%, #fff 36%, #ffd27a 62%, #ff7a2f 100%);
+  background-size:
+    60vw 100vh,
+    100% 100%;
+  background-repeat: no-repeat;
+  background-attachment: fixed, scroll;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.02em;
+  animation: title-shine 5s ease-in-out 1.5s infinite;
+}
+@keyframes title-chevron {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+.title-chevron {
+  display: inline-block;
+  font-size: 1.6em;
+  line-height: 1;
+  animation: title-chevron 1.1s ease-in-out infinite;
+}
+
+/* the emblems' ring, tilted back, turning; each emblem turns back to face the player */
+.title-orbit {
+  transform: perspective(1600px) rotateX(72deg);
+  transform-style: preserve-3d;
+}
+@keyframes title-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.title-orbit-spin {
+  transform-style: preserve-3d;
+  animation: title-spin 40s linear infinite;
+}
+.title-orbit-spin > div {
+  transform-style: preserve-3d;
+}
+@keyframes title-face {
+  from {
+    transform: rotate(0deg) rotateX(-72deg);
+  }
+  to {
+    transform: rotate(-360deg) rotateX(-72deg);
+  }
+}
+.title-orbit-face {
+  animation: title-face 40s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .menu-drift,
   .menu-spin,
@@ -396,7 +607,23 @@ body,
   .bd-streak,
   .bd-pulse,
   .bd-breathe,
-  .bd-hex {
+  .bd-hex,
+  .bd-fall,
+  .bd-bob,
+  .bd-fan,
+  .bd-spot,
+  .bd-sway,
+  .bd-dash,
+  .bd-twinkle,
+  .bd-chevrons,
+  .bd-flicker,
+  .parallax-far,
+  .parallax-mid,
+  .parallax-near,
+  .title-letter,
+  .title-chevron,
+  .title-orbit-spin,
+  .title-orbit-face {
     animation: none;
   }
 }

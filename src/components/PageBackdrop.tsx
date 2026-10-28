@@ -1,34 +1,65 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import type { CSSProperties } from 'react'
+import { useRef, type CSSProperties } from 'react'
 import { ELEMENT_BY_ID, type ElementInfo } from '../data/elements'
+import {
+  Banners,
+  Blueprint,
+  CardFan,
+  Confetti,
+  Crates,
+  Floor,
+  Lightning,
+  Network,
+  PassRibbon,
+  Podium,
+  Reticle,
+  ShopCounter,
+  Trophies,
+} from './backdropArt'
+import { useParallax } from './parallax'
 import { useActiveProfile } from '../profile/useProfiles'
 import { useGame, type Screen } from '../store/useGame'
 
-/** What moves behind a page. */
+/** What moves behind a page (the middle layer). */
 type Motif = 'rays' | 'beams' | 'pillars' | 'bokeh' | 'streaks' | 'spot' | 'split' | 'hex' | 'rings'
+/** The page's own piece of art (the near layer, see backdropArt.tsx). */
+type Art =
+  | 'trophies'
+  | 'cards'
+  | 'podium'
+  | 'counter'
+  | 'banners'
+  | 'network'
+  | 'reticle'
+  | 'crates'
+  | 'ribbon'
+  | 'lightning'
+  | 'blueprint'
+  | 'floor'
 
 interface Theme {
   /** Main and second colour; 'el' / 'glow' are the player's attribute colours. */
   a: string
   b: string
   motif: Motif
+  art?: Art
   /** The attribute emblem turning slowly at the side. */
   emblem?: boolean
 }
 
 const THEMES: Partial<Record<Screen, Theme>> = {
-  hub: { a: 'el', b: 'glow', motif: 'rays', emblem: true },
-  compare: { a: 'el', b: '#ef4444', motif: 'split' },
-  profileEdit: { a: 'el', b: '#94a3b8', motif: 'streaks' },
-  profile: { a: 'el', b: 'glow', motif: 'rings', emblem: true },
-  inventory: { a: '#38bdf8', b: 'el', motif: 'hex' },
-  pass: { a: '#fcd34d', b: 'el', motif: 'rays' },
-  events: { a: '#a78bfa', b: '#fcd34d', motif: 'beams' },
-  shop: { a: '#34d399', b: '#fcd34d', motif: 'bokeh' },
-  rankings: { a: '#f5c518', b: 'el', motif: 'pillars' },
-  clans: { a: 'el', b: '#ef4444', motif: 'hex', emblem: true },
-  friends: { a: '#f472b6', b: '#fb923c', motif: 'bokeh' },
-  encyclopedia: { a: '#60a5fa', b: '#22d3ee', motif: 'streaks' },
+  hub: { a: 'el', b: 'glow', motif: 'rays', art: 'floor', emblem: true },
+  compare: { a: 'el', b: '#ef4444', motif: 'split', art: 'lightning' },
+  profileEdit: { a: 'el', b: '#94a3b8', motif: 'streaks', art: 'blueprint' },
+  profile: { a: 'el', b: 'glow', motif: 'rings', art: 'reticle', emblem: true },
+  inventory: { a: '#38bdf8', b: 'el', motif: 'hex', art: 'crates' },
+  pass: { a: '#fcd34d', b: 'el', motif: 'rays', art: 'ribbon' },
+  events: { a: '#a78bfa', b: '#fcd34d', motif: 'beams', art: 'trophies' },
+  shop: { a: '#34d399', b: '#fcd34d', motif: 'bokeh', art: 'counter' },
+  rankings: { a: '#f5c518', b: 'el', motif: 'spot', art: 'podium' },
+  clans: { a: 'el', b: '#ef4444', motif: 'hex', art: 'banners' },
+  friends: { a: '#f472b6', b: '#fb923c', motif: 'bokeh', art: 'network' },
+  encyclopedia: { a: '#60a5fa', b: '#22d3ee', motif: 'streaks', art: 'cards' },
 }
 
 const pick = (c: string, el: ElementInfo) => (c === 'el' ? el.color : c === 'glow' ? el.glow : c)
@@ -43,8 +74,11 @@ export function PageBackdrop({ screen }: { screen: Screen }) {
   const chosen = useGame((s) => s.element)
   const theme = THEMES[screen]
   const el = ELEMENT_BY_ID[profile?.element ?? chosen ?? 'pyrus']
+  // the layers drift with the mouse, the nearer ones more
+  const root = useRef<HTMLDivElement>(null)
+  useParallax(root)
   return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden bg-[#05060a]" aria-hidden>
+    <div ref={root} className="pointer-events-none fixed inset-0 overflow-hidden bg-[#05060a]" aria-hidden>
       <AnimatePresence>
         {theme && (
           <motion.div
@@ -66,38 +100,90 @@ export function PageBackdrop({ screen }: { screen: Screen }) {
 function Layers({ theme, el }: { theme: Theme; el: ElementInfo }) {
   const a = pick(theme.a, el)
   const b = pick(theme.b, el)
-  const vars = { '--bd-a': a, '--bd-b': b } as CSSProperties
+  const vars = { '--bd-a': a, '--bd-b': b, '--menu-line': `${a}40` } as CSSProperties
   return (
     <div className="absolute inset-0" style={vars}>
-      {/* base: the two colours washing in from opposite corners */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse at 12% -5%, ${a}38, transparent 55%), radial-gradient(ellipse at 105% 105%, ${b}2e, transparent 55%), linear-gradient(180deg, #090b14, #05060a 70%)`,
-        }}
-      />
-      <div
-        className="menu-drift absolute -top-1/3 left-1/4 h-[75vh] w-[75vh] rounded-full opacity-[0.2] blur-3xl"
-        style={{ background: `radial-gradient(circle, ${a}, transparent 65%)` }}
-      />
-      <div
-        className="menu-drift absolute -right-1/4 bottom-[-30%] h-[80vh] w-[80vh] rounded-full opacity-[0.16] blur-3xl"
-        style={{ background: `radial-gradient(circle, ${b}, transparent 65%)`, animationDelay: '-8s' }}
-      />
-      <Motif motif={theme.motif} a={a} b={b} />
-      {theme.emblem && (
-        <img
-          src={el.icon}
-          alt=""
-          draggable={false}
-          className="menu-spin-rev absolute top-1/2 -right-[12vh] h-[78vh] w-[78vh] -translate-y-1/2 opacity-[0.05]"
+      {/* far: the two colours washing in from opposite corners, drifting light, the player's attribute shining down */}
+      <div className="parallax-far absolute inset-[-3%]">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse at 12% -5%, ${a}4d, transparent 55%), radial-gradient(ellipse at 105% 105%, ${b}3d, transparent 55%), radial-gradient(ellipse at 60% 120%, ${el.color}26, transparent 50%), linear-gradient(180deg, #0a0c16, #05060a 75%)`,
+          }}
         />
+        <div
+          className="menu-drift absolute -top-1/3 left-1/4 h-[80vh] w-[80vh] rounded-full opacity-[0.26] blur-3xl"
+          style={{ background: `radial-gradient(circle, ${a}, transparent 65%)` }}
+        />
+        <div
+          className="menu-drift absolute -right-1/4 bottom-[-30%] h-[85vh] w-[85vh] rounded-full opacity-[0.2] blur-3xl"
+          style={{ background: `radial-gradient(circle, ${b}, transparent 65%)`, animationDelay: '-8s' }}
+        />
+        <div
+          className="bd-pulse absolute top-[-30vh] left-[-10vw] h-[120vh] w-[60vw] -rotate-[24deg] opacity-[0.1]"
+          style={{
+            background: `linear-gradient(to bottom, ${el.glow}, transparent 75%)`,
+            clipPath: 'polygon(40% 0, 60% 0, 100% 100%, 0 100%)',
+          }}
+        />
+      </div>
+      {/* middle: the page's motif */}
+      <div className="parallax-mid absolute inset-0">
+        <Motif motif={theme.motif} a={a} b={b} />
+        {theme.emblem && (
+          <img
+            src={el.icon}
+            alt=""
+            draggable={false}
+            className="menu-spin-rev absolute top-1/2 -right-[12vh] h-[78vh] w-[78vh] -translate-y-1/2 opacity-[0.06]"
+          />
+        )}
+      </div>
+      {/* near: the page's own art */}
+      {theme.art && (
+        <div className="parallax-near absolute inset-0">
+          <PageArt art={theme.art} a={a} b={b} el={el} />
+        </div>
       )}
-      {/* a fine diagonal texture instead of squares, and darker edges */}
+      {/* a fine diagonal texture instead of squares, and darker edges for reading */}
       <div className="bd-texture absolute inset-0" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,#05060ab3_100%)]" />
     </div>
   )
+}
+
+function PageArt({ art, a, b, el }: { art: Art; a: string; b: string; el: ElementInfo }) {
+  switch (art) {
+    case 'trophies':
+      return (
+        <>
+          <Confetti colors={[a, b, '#ffffff', el.color]} />
+          <Trophies />
+        </>
+      )
+    case 'cards':
+      return <CardFan accent={a} />
+    case 'podium':
+      return <Podium gold={a} />
+    case 'counter':
+      return <ShopCounter a={a} b={b} />
+    case 'banners':
+      return <Banners first={el} />
+    case 'network':
+      return <Network a={a} b={b} />
+    case 'reticle':
+      return <Reticle a={a} />
+    case 'crates':
+      return <Crates a={a} />
+    case 'ribbon':
+      return <PassRibbon a={a} />
+    case 'lightning':
+      return <Lightning a={a} b={b} />
+    case 'blueprint':
+      return <Blueprint a={a} />
+    case 'floor':
+      return <Floor />
+  }
 }
 
 function Motif({ motif, a, b }: { motif: Motif; a: string; b: string }) {

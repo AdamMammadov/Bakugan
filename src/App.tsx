@@ -23,6 +23,7 @@ import { ShopScreen } from './screens/ShopScreen'
 import { InventoryScreen } from './screens/InventoryScreen'
 import { SeasonPassScreen } from './screens/SeasonPassScreen'
 import { useGame, type Screen } from './store/useGame'
+import { GAME_SUBTITLE, GAME_TITLE } from './brand'
 // pays out event matches whichever screen is open
 import './events/progress'
 
@@ -64,6 +65,9 @@ export default function App() {
   useEffect(() => {
     if (screen !== 'intro') playMusic(TRACK_FOR[screen] ?? 'menu')
   }, [screen])
+
+  // the browser tab carries the game's name (src/brand.ts)
+  useEffect(() => void (document.title = `${GAME_TITLE} ${GAME_SUBTITLE}`), [])
 
   // download every Bakugan model in the background once the player is in, so the viewer,
   // showroom and arena show the real models straight away

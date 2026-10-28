@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { playSfx } from '../audio/sfx'
+import { GAME_SUBTITLE, GAME_TITLE } from '../brand'
 import { Trophy } from '../components/EventArt'
 import { useEventsLine } from '../components/eventsLine'
 import { leadKey, leadOf, leadPicture, preloadLead } from '../components/menuLead'
@@ -203,13 +204,8 @@ export function MainMenu() {
               delay={0.28}
             />
           </div>
-          <div className="mt-auto flex items-end justify-between gap-3">
-            <p className="hidden max-w-[13rem] text-[10px] leading-snug text-white/25 lg:block">
-              Non-commercial fan project. Bakugan is a trademark of Spin Master Ltd. and Sega Toys.
-            </p>
-            <div className="shrink-0">
-              <MuteButton />
-            </div>
+          <div className="mt-auto flex justify-end">
+            <MuteButton />
           </div>
         </motion.div>
 
@@ -492,18 +488,24 @@ function Logo({ element }: { element: ElementInfo }) {
         animate={{ scale: [1, 1.06, 1] }}
         transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
       />
-      <div className="min-w-0">
+      {/* the name shrinks to fit the column, whatever the brand name's length */}
+      <div className="@container min-w-0 flex-1">
         <h1
-          className="menu-logo font-display pr-2 text-[3rem] leading-none font-black tracking-[0.04em] italic 2xl:text-[3.75rem]"
-          style={{ filter: `drop-shadow(0 3px 0 #000) drop-shadow(0 0 22px ${element.color}aa)` }}
+          className="menu-logo font-display pr-2 leading-none font-black tracking-[0.04em] whitespace-nowrap italic"
+          style={{
+            fontSize: `min(3.75rem, ${(100 / (GAME_TITLE.length * 0.9 + 0.4)).toFixed(2)}cqw)`,
+            filter: `drop-shadow(0 3px 0 #000) drop-shadow(0 0 22px ${element.color}aa)`,
+          }}
         >
-          BAKUGAN
+          {GAME_TITLE.toUpperCase()}
         </h1>
         <div
           className="mt-2 inline-block skew-x-[-14deg] px-3 py-0.5"
           style={{ background: element.color, color: ink(element.color) }}
         >
-          <span className="font-display block skew-x-[14deg] text-[11px] font-bold tracking-[0.6em]">BRAWL VAULT</span>
+          <span className="font-display block skew-x-[14deg] text-[11px] font-bold tracking-[0.6em]">
+            {GAME_SUBTITLE.toUpperCase()}
+          </span>
         </div>
       </div>
     </div>
