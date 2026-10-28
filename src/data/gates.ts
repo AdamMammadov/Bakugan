@@ -3,8 +3,7 @@ import { ROSTER } from './roster'
 import type { ElementId } from './elements'
 
 /**
- * Gate Cards, after the Battle Brawlers anime and the season-1 card game (BakuProject card database,
- * https://bakuproject.info/cards, and the Bakugan Wiki). A Gate Card is set face-down and does nothing until its
+ * Gate Cards, after the Battle Brawlers anime and the season-1 card game (the card database and the Bakugan Wiki). A Gate Card is set face-down and does nothing until its
  * owner opens it ("Gate Card, open!"). It always works in the favour of the brawler it is open for: its owner, or the
  * opponent who closed it and opened it for themselves (engine gateDelta):
  * - Attribute Gate Cards give that brawler's Bakugan extra G's: in full if it has the card's attribute, half otherwise;

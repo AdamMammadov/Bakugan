@@ -1,7 +1,7 @@
 import { asset } from '../asset'
 import type { ElementId } from './elements'
 
-/** One card of the BakuProject card database (public/data/cards.json, built by tools/data/cards.py). */
+/** One card of the card database (public/data/cards.json, built by tools/data/cards.py). */
 export interface DbCard {
   id: string
   name: string
@@ -10,12 +10,12 @@ export interface DbCard {
   /** Who can play it: a Bakugan ("Pyrus Neo Dragonoid") or an attribute ("Haos"); null for anyone. */
   user: string | null
   text: string
-  /** Deck-building cost in BakuProject. */
+  /** Deck-building cost. */
   hsp: number
   /** Copies allowed in one deck. */
   limit: number
   catalogue: string
-  /** Not yet released in BakuProject. */
+  /** Not released yet. */
   pending?: boolean
 }
 

@@ -3,7 +3,7 @@ few more added since: Preyas Diablo and Trox).
 
 Facts (brawler, evolutions, story) come from the series as summarised on Wikipedia's
 "List of Bakugan" and "List of Bakugan Battle Brawlers characters". Each Bakugan's ability cards
-are its own: first its character cards from the BakuProject card database (public/data/cards.json),
+are its own: first its character cards from the card database (public/data/cards.json),
 then the abilities it uses in the anime and the video games, base form first, then its evolutions
 (tools/data/anime_abilities.json, from each Bakugan's page on the Bakugan Wiki,
 https://bakugan.fandom.com). Only a Bakugan with too few of those gets normal ability cards of its

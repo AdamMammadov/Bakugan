@@ -122,8 +122,7 @@ export interface Bakugan {
 }
 
 /**
- * Each Bakugan's ability cards are its own: its character cards from the BakuProject card database
- * (https://bakuproject.info/cards), then the abilities it uses in the anime and the video games, from its
+ * Each Bakugan's ability cards are its own: its character cards from the card database, then the abilities it uses in the anime and the video games, from its
  * page on the Bakugan Wiki (https://bakugan.fandom.com), with their G values halved to the card game's
  * scale. Only a Bakugan with too few of those gets normal ability cards of its attribute. All are picked
  * by tools/data/roster.py (the original six's into ORIGINAL_ABILITIES). `estimated: true` marks cards
@@ -167,7 +166,7 @@ export const BAKUGAN: Bakugan[] = [
         name: 'Neo Dragonoid',
         series: 'New Vestroia',
         gPower: 500,
-        // made with TRELLIS.2 from an anime picture (sent by the player), cut into parts by where they lie (the tail
+        // made from an anime picture (sent by the player), cut into parts by where they lie (the tail
         // curls round in front of the legs) and skinned, its loose spikes and ribs riding with the spot they sit on;
         // left without an ink outline, which broke up into dark blotches over the ribs
         models: { monster: 'models/dragonoid/neo.glb', scale: 1.15 },
@@ -269,7 +268,7 @@ export const BAKUGAN: Bakugan[] = [
         name: 'Alpha Hydranoid',
         series: 'Battle Brawlers',
         gPower: 550,
-        // made with TRELLIS.2 from an AI redraw of the anime art (sent by the player); its third tail, which came out
+        // made from an AI redraw of the anime art (sent by the player); its third tail, which came out
         // short and broken off, grown again from a copy of another (tools/ai/regrow_tail.py), its near-black colours
         // matched to the picture, skinned and inked
         models: { monster: 'models/hydranoid/alpha.glb', scale: 0.95 },
@@ -293,32 +292,32 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   howlkor: { monster: 'models/howlkor/monster.glb', scale: 1.15 },
   manion: { monster: 'models/manion/monster.glb', scale: 1.1 },
   pegatrix: { monster: 'models/pegatrix/monster.glb', scale: 1.15 },
-  // made from a game render with TRELLIS.2, its face and white armour fixed up from the render, inked and rigged
+  // made from a game render, its face and white armour fixed up from the render, inked and rigged
   nemus: { ball: 'models/nemus/ball.glb', monster: 'models/nemus/monster.glb', scale: 1.1 },
-  // made from a picture with TRELLIS.2 (image to 3D), tinted towards the art and rigged like the others
+  // made from a picture, tinted towards the art and rigged like the others
   hades: { monster: 'models/hades/monster.glb', scale: 1.15 },
   elfin: { ball: 'models/elfin/ball.glb', monster: 'models/elfin/monster.glb', fly: true, scale: 1.1 },
-  // shape made with Hunyuan3D-2mini from an anime frame (tail shortened), painted from the same frame, with a
+  // shape made from an anime frame (tail shortened), painted from the same frame, with a
   // drawn face; inked and rigged
   ingram: { ball: 'models/ingram/ball.glb', monster: 'models/ingram/monster.glb', fly: true, scale: 0.8 },
-  // made from a picture with Hunyuan3D-2.1, its tail mace lifted off the wing it was fused into, inked and rigged
+  // made from a picture, its tail mace lifted off the wing it was fused into, inked and rigged
   leonidas: { monster: 'models/leonidas/monster.glb', scale: 1.15 },
-  // made with TRELLIS.2 from the Wii game's render (lower legs drawn in after the anime), its face painted
+  // made from the Wii game's render (lower legs drawn in after the anime), its face painted
   // back from the render, recoloured towards it, inked and rigged
   brontes: { monster: 'models/brontes/monster.glb', scale: 1.05, fill: 1.12 },
-  // made with TRELLIS.2 from the Wii game's render (recoloured Aquos, a foot and a blade tip drawn in), its
+  // made from the Wii game's render (recoloured Aquos, a foot and a blade tip drawn in), its
   // face painted back from the render, the armour brightened towards it, inked and rigged
   elico: { monster: 'models/elico/monster.glb', scale: 1, fill: 1 },
-  // made with TRELLIS.2 from the Wii game's render (a fin tip drawn in), which it turned into a front-facing
+  // made from the Wii game's render (a fin tip drawn in), which it turned into a front-facing
   // flyer with both wings spread; inked and rigged
   altair: { monster: 'models/altair/monster.glb', fly: true, scale: 0.85 },
   wilda: { monster: 'models/wilda/monster.glb', scale: 1.15 },
-  // made with TRELLIS.2 from an anime picture (a tail blade it left floating removed); the orange spots on the
+  // made from an anime picture (a tail blade it left floating removed); the orange spots on the
   // armour it lost painted back after the picture, the nose horn and eyes repainted, inked and rigged
   helios: { monster: 'models/helios/monster.glb', fly: true, length: 1.6, fill: 0.66 },
   // ripped from Bakugan Battle Brawlers (Xbox 360); its T-posed arms bent down, skinned and inked
   vladitor: { ball: 'models/vladitor/ball.glb', monster: 'models/vladitor/monster.glb', scale: 1.1 },
-  // made with TRELLIS.2 from a picture (sent by the player), recoloured to the art's browns and near-black armour,
+  // made from a picture (sent by the player), recoloured to the art's browns and near-black armour,
   // its eye visor repainted; skinned and inked (inkThin keeps the outline from specking through its bumpy surface)
   'premo-vulcan': { monster: 'models/premo-vulcan/monster.glb', scale: 1.1 },
   // ripped from Bakugan Battle Brawlers (Xbox 360) in the game's own Pyrus colours; skinned and inked
@@ -336,13 +335,13 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // ripped from Bakugan Battle Brawlers (Xbox 360) with the game's Haos textures (the rip's material points at its
   // Darkus ones); its T-posed arms bent down, skinned and inked, with its ball
   laserman: { ball: 'models/laserman/ball.glb', monster: 'models/laserman/monster.glb' },
-  // made with TRELLIS.2 from an AI picture after two anime frames (sent by the player); a hole in its back capped,
+  // made from an AI picture after two anime frames (sent by the player); a hole in its back capped,
   // the brown lifted and the leg armour turned bronze after the picture; skinned and inked
   baliton: { monster: 'models/baliton/monster.glb', scale: 0.85 },
-  // the game owner's own Bakugan: made with TRELLIS.2 from an AI picture after the anime (sent by the owner); the
+  // the game owner's own Bakugan: made from an AI picture after the anime (sent by the owner); the
   // glowing wing markings brightened to the picture's green; skinned and inked (inkThin for the thin wings)
   dharak: { monster: 'models/dharak/monster.glb', fly: true, scale: 2.3, length: 1.7, stage: 1.6 },
-  // made with TRELLIS.2 from an anime picture (sent by the player); its wings are crystal sheets, so the outline
+  // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
 }
@@ -351,15 +350,15 @@ const magma = ROSTER.find((b) => b.id === 'wilda')?.evolutions.find((e) => e.nam
 const angelo = ROSTER.find((b) => b.id === 'preyas-diablo')?.evolutions.find((e) => e.name === 'Preyas Angelo')
 if (angelo) angelo.models = { monster: 'models/preyas-diablo/angelo.glb' }
 if (magma)
-  // made from a picture with TRELLIS.2 (image to 3D), recoloured to the art and rigged like the others
+  // made from a picture, recoloured to the art and rigged like the others
   magma.models = { monster: 'models/wilda/magma.glb', ball: 'models/wilda/magma-ball.glb', scale: 1.2 }
 const saint = ROSTER.find((b) => b.id === 'nemus')?.evolutions.find((e) => e.name === 'Saint Nemus')
 if (saint) saint.models = { ...ROSTER_MODELS.nemus, ball: 'models/nemus/saint-ball.glb', scale: 1.2 }
 const alto = ROSTER.find((b) => b.id === 'brontes')?.evolutions.find((e) => e.name === 'Alto Brontes')
-// made with TRELLIS.2 from an anime still (lower legs drawn in), its face painted back from it
+// made from an anime still (lower legs drawn in), its face painted back from it
 if (alto) alto.models = { monster: 'models/brontes/alto.glb', scale: 0.95, fill: 1.12 }
 const master = ROSTER.find((b) => b.id === 'ingram')?.evolutions.find((e) => e.name === 'Master Ingram')
-// made with TRELLIS.2 from the Wii game's render, its visor and red eyes painted back on, inked and rigged; it
+// made from the Wii game's render, its visor and red eyes painted back on, inked and rigged; it
 // keeps Ingram's ball and stands rather than flies
 if (master) master.models = { ...ROSTER_MODELS.ingram, monster: 'models/ingram/master.glb', fly: false, fill: 1.12, scale: 0.95 }
 const knight = ROSTER.find((b) => b.id === 'percival')?.evolutions.find((e) => e.name === 'Knight Percival')
@@ -376,12 +375,12 @@ const battleAx = ROSTER.find((b) => b.id === 'vladitor')?.evolutions.find((e) =>
 if (battleAx)
   battleAx.models = { monster: 'models/vladitor/battle-ax.glb', ball: 'models/vladitor/battle-ax-ball.glb', scale: 1.25 }
 const minx = ROSTER.find((b) => b.id === 'elfin')?.evolutions.find((e) => e.name === 'Minx Elfin')
-// made with TRELLIS.2 from an anime picture (sent by the player), the bits floating loose round it dropped, skinned
+// made from an anime picture (sent by the player), the bits floating loose round it dropped, skinned
 // (small pieces riding with the spot they sit on) and left without an ink outline, which broke up over it; it keeps
 // Elfin's ball. Caught mid-leap, so it stands on its toes rather than hovering (floating put its head off the screen)
 if (minx) minx.models = { ...ROSTER_MODELS.elfin, monster: 'models/elfin/minx.glb', fly: false, scale: 1 }
 const phantom = ROSTER.find((b) => b.id === 'dharak')?.evolutions.find((e) => e.name === 'Phantom Dharak')
-// made with TRELLIS.2 from an AI picture after the anime (sent by the owner), its wing markings brightened, cut into
+// made from an AI picture after the anime (sent by the owner), its wing markings brightened, cut into
 // parts by where they lie (the arms reach in front of the wings) and skinned; its ball is an unused model from
 // Bakugan: Defenders of the Core (DS). A giant like Dharak, standing on its legs
 if (phantom)

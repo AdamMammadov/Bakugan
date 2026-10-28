@@ -102,13 +102,10 @@ export const ELEMENTS: ElementInfo[] = [
   },
 ]
 
-export const ELEMENT_BY_ID = Object.fromEntries(ELEMENTS.map((e) => [e.id, e])) as Record<
-  ElementId,
-  ElementInfo
->
+export const ELEMENT_BY_ID = Object.fromEntries(ELEMENTS.map((e) => [e.id, e])) as Record<ElementId, ElementInfo>
 
 /**
- * Attribute relationships from the Ability Card set (BakuProject): "Correlation" cards
+ * Attribute relationships from the Ability Card set: "Correlation" cards
  * pair neighbouring attributes, "Diagonal Link" cards pair opposite ones.
  */
 export const CORRELATIONS: Record<ElementId, ElementId[]> = {

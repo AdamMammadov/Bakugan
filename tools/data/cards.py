@@ -1,21 +1,22 @@
-"""Builds public/data/cards.json from the BakuProject card database.
+"""Builds public/data/cards.json from a card database export.
 
-Usage: python3 tools/data/cards.py [path-to-cards.json]
-Without a path the database is downloaded from https://bakuproject.info/json/cards.json
+Usage: python3 tools/data/cards.py <path-or-url-of-cards.json>
 """
 import json
 import re
 import sys
 import urllib.request
 
-SOURCE = 'https://bakuproject.info/json/cards.json?=v5'
 TYPES = {'sac': 'character', 'nac': 'ability', 'agc': 'attribute-gate', 'chgc': 'character-gate', 'cogc': 'command-gate'}
 
 
 def load():
-    if len(sys.argv) > 1:
-        return json.load(open(sys.argv[1]))
-    with urllib.request.urlopen(SOURCE) as r:
+    if len(sys.argv) < 2:
+        sys.exit('usage: python3 tools/data/cards.py <path-or-url-of-cards.json>')
+    source = sys.argv[1]
+    if not source.startswith('http'):
+        return json.load(open(source))
+    with urllib.request.urlopen(source) as r:
         return json.load(r)
 
 
