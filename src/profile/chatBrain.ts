@@ -1,6 +1,7 @@
 import { abilitiesOf, abilityLabel, BAKUGAN, type Bakugan } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { currentSeason } from '../season/current'
+import { OWNER_ONLY } from '../season/release'
 import { botById, botNow, BOTS, botTeam } from './bots'
 import { ATTR_WORD, azOrdinal, DAY_WORD, hourPhrase, LINES, type Lang, type LineKey } from './chatLines'
 import { PRICES, rankScore, tierOf, type Profile } from './useProfiles'
@@ -328,7 +329,7 @@ const PERSONAS: Persona[] = ['hype', 'chill', 'pro', 'kind']
 
 const formName = (b: Bakugan, form: number) => b.evolutions[form]?.name ?? b.name
 const strongestOf = (element: ElementId) =>
-  BAKUGAN.filter((b) => b.element === element && b.id !== 'dharak').reduce((a, b) => (b.baseG > a.baseG ? b : a))
+  BAKUGAN.filter((b) => b.element === element && !OWNER_ONLY.includes(b.id)).reduce((a, b) => (b.baseG > a.baseG ? b : a))
 
 function botInfo(input: ChatInput): BotInfo {
   const base = botById(input.botId)!

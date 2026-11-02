@@ -3504,6 +3504,88 @@ export const ROSTER: Bakugan[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "embral",
+    "name": "Embral",
+    "element": "pyrus",
+    "brawler": "Game Owner",
+    "series": "Original",
+    "baseG": 750,
+    "brawlG": 850,
+    "description": "A fire dragon clad in obsidian armour split by glowing lava cracks, with a crown of flame on its head and a tail that ends in fire. When it spreads its wings, veins of magma light up across them.",
+    "abilities": [
+      {
+        "id": "crownfire-surge",
+        "name": "Crownfire Surge",
+        "type": "boost",
+        "amount": 350,
+        "effect": "aura",
+        "description": "The crown of flame on Embral's head blazes up: adds 350 G to Embral.",
+        "estimated": true
+      },
+      {
+        "id": "obsidian-lavaguard",
+        "name": "Obsidian Lavaguard",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Embral closes its lava-cracked armour round itself: cancels the opponent's last ability card.",
+        "estimated": true
+      },
+      {
+        "id": "ashwing-smother",
+        "name": "Ashwing Smother",
+        "type": "weaken",
+        "amount": 300,
+        "effect": "fireball",
+        "description": "One beat of Embral's wings drops a rain of hot ash on the opponent: subtracts 300 G from the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "cinderheart-siphon",
+        "name": "Cinderheart Siphon",
+        "type": "drain",
+        "amount": 300,
+        "effect": "flameWave",
+        "description": "The flame on Embral's tail draws the heat out of the opponent: transfers 300 G from the opponent to Embral.",
+        "estimated": true
+      },
+      {
+        "id": "gatemelt-blaze",
+        "name": "Gatemelt Blaze",
+        "type": "boost",
+        "amount": 250,
+        "effect": "aura",
+        "description": "Embral melts the Gate Card under it into glowing magma and rises on its heat: adds 250 G to Embral.",
+        "estimated": true
+      },
+      {
+        "id": "veinflare-burst",
+        "name": "Veinflare Burst",
+        "type": "attack",
+        "amount": 400,
+        "effect": "flameWave",
+        "description": "The magma veins in Embral's wings flare white-hot and burst over the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "ember-cataclysm",
+        "name": "Ember Cataclysm",
+        "type": "finisher",
+        "amount": 0,
+        "effect": "chaosBeam",
+        "description": "Embral gathers every ember of its power into one blast of white fire: defeats the opponent's Bakugan at once, whatever its G-Power, through any shield.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Embral",
+        "series": "Original",
+        "gPower": 750
+      }
+    ]
   }
 ]
 

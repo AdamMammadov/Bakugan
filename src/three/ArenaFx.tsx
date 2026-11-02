@@ -227,22 +227,32 @@ export function ShieldDome({
   )
 }
 
+/** The finisher beam's colours: Darkus (black core, violet glow) or Pyrus (ember core, orange fire). */
+const BEAM = {
+  dark: { core: '#12001c', glow: '#a23cff', beam: '#9b35ff', heart: '#e6c8ff', ring: '#c77dff', pillar: '#8a2be2' },
+  fire: { core: '#2b0600', glow: '#ff6a1a', beam: '#ff7b22', heart: '#fff0b0', ring: '#ffb347', pillar: '#e8430c' },
+}
+
 /**
  * Chaos Magnalia: a dark orb gathers at the user's mouth, a thick Darkus beam (black core, violet glow) crosses
  * the field, and a pillar of darkness swallows the opponent where it lands. Hits at about `hitAt` seconds.
+ * With `fire` it burns orange instead (a Pyrus finisher).
  */
 export function ChaosBeam({
   from,
   to,
   size = 1,
   hitAt = 0.6,
+  fire = false,
 }: {
   from: THREE.Vector3
   to: THREE.Vector3
   /** The user's size (a giant's beam and orb are thicker). */
   size?: number
   hitAt?: number
+  fire?: boolean
 }) {
+  const c = fire ? BEAM.fire : BEAM.dark
   const orb = useRef<THREE.Group>(null)
   const beam = useRef<THREE.Group>(null)
   const blast = useRef<THREE.Group>(null)
@@ -301,11 +311,11 @@ export function ChaosBeam({
       <group ref={orb} position={from}>
         <mesh>
           <sphereGeometry args={[1, 24, 16]} />
-          <meshBasicMaterial color="#12001c" {...glow} opacity={0.95} />
+          <meshBasicMaterial color={c.core} {...glow} opacity={0.95} />
         </mesh>
         <mesh scale={1.35}>
           <sphereGeometry args={[1, 24, 16]} />
-          <meshBasicMaterial color="#a23cff" {...glow} opacity={0.6} blending={THREE.AdditiveBlending} />
+          <meshBasicMaterial color={c.glow} {...glow} opacity={0.6} blending={THREE.AdditiveBlending} />
         </mesh>
       </group>
       <group ref={beam} quaternion={turn} position={mid} visible={false}>
@@ -313,12 +323,12 @@ export function ChaosBeam({
         <group scale={[1, length, 1]}>
           <mesh position={[0, 0, 0]}>
             <cylinderGeometry args={[1.5, 1.5, 1, 24, 1, true]} />
-            <meshBasicMaterial color="#12001c" {...glow} opacity={0.9} side={THREE.DoubleSide} />
+            <meshBasicMaterial color={c.core} {...glow} opacity={0.9} side={THREE.DoubleSide} />
           </mesh>
           <mesh>
             <cylinderGeometry args={[2.4, 2.4, 1, 24, 1, true]} />
             <meshBasicMaterial
-              color="#9b35ff"
+              color={c.beam}
               {...glow}
               opacity={0.55}
               blending={THREE.AdditiveBlending}
@@ -327,36 +337,36 @@ export function ChaosBeam({
           </mesh>
           <mesh>
             <cylinderGeometry args={[0.45, 0.45, 1, 12, 1, true]} />
-            <meshBasicMaterial color="#e6c8ff" {...glow} opacity={0.9} blending={THREE.AdditiveBlending} />
+            <meshBasicMaterial color={c.heart} {...glow} opacity={0.9} blending={THREE.AdditiveBlending} />
           </mesh>
         </group>
       </group>
       <group ref={blast} position={to} visible={false}>
         <mesh userData={{ o: 0.9 }}>
           <sphereGeometry args={[1, 32, 20]} />
-          <meshBasicMaterial color="#12001c" {...glow} />
+          <meshBasicMaterial color={c.core} {...glow} />
         </mesh>
         <mesh scale={1.25} userData={{ o: 0.7 }}>
           <sphereGeometry args={[1, 32, 20]} />
-          <meshBasicMaterial color="#a23cff" {...glow} blending={THREE.AdditiveBlending} />
+          <meshBasicMaterial color={c.glow} {...glow} blending={THREE.AdditiveBlending} />
         </mesh>
         <mesh rotation={[-Math.PI / 2, 0, 0]} scale={1.8} userData={{ o: 0.9 }}>
           <ringGeometry args={[0.8, 1, 64]} />
-          <meshBasicMaterial color="#c77dff" {...glow} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
+          <meshBasicMaterial color={c.ring} {...glow} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
         </mesh>
       </group>
       {/* the pillar of darkness that swallows the opponent */}
       <group ref={pillar} position={[to.x, 0, to.z]} visible={false}>
         <mesh position={[0, 20, 0]} userData={{ o: 0.75 }}>
           <cylinderGeometry args={[6, 8, 40, 32, 1, true]} />
-          <meshBasicMaterial color="#12001c" {...glow} side={THREE.DoubleSide} />
+          <meshBasicMaterial color={c.core} {...glow} side={THREE.DoubleSide} />
         </mesh>
         <mesh position={[0, 20, 0]} userData={{ o: 0.5 }}>
           <cylinderGeometry args={[7.5, 9.5, 40, 32, 1, true]} />
-          <meshBasicMaterial color="#8a2be2" {...glow} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
+          <meshBasicMaterial color={c.pillar} {...glow} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
         </mesh>
       </group>
-      <pointLight position={to} color="#a23cff" intensity={0} distance={60} ref={light} />
+      <pointLight position={to} color={c.glow} intensity={0} distance={60} ref={light} />
     </>
   )
 }

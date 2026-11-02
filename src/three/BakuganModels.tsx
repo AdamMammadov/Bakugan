@@ -1,13 +1,13 @@
 import { Sparkles, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { Suspense, useRef, type ComponentType, type RefObject } from 'react'
+import { Suspense, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { formModels, type Bakugan, type Entrant } from '../data/bakugan'
 import { viewable } from '../season/release'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { asset } from '../asset'
 import { BakuganBall } from './BakuganBall'
-import { HydranoidBall } from './balls/HydranoidBall'
+import { PROCEDURAL_BALLS } from './balls/procedural'
 import { NormalizedModel } from './NormalizedModel'
 import { SKIN_BY_ID } from '../season/season'
 import { PlaceholderMonster } from './PlaceholderMonster'
@@ -15,11 +15,6 @@ import type { PoseRef } from './pose'
 
 export const MONSTER_HEIGHT = 3
 export const BALL_SIZE = 1
-
-/** Hand-built ball forms (with their own opening animation), keyed by Bakugan id. */
-const PROCEDURAL_BALLS: Record<string, ComponentType<{ openRef: RefObject<boolean> }>> = {
-  hydranoid: HydranoidBall,
-}
 
 /**
  * The monster form: the form's (or Bakugan's) .glb when provided, otherwise the procedural

@@ -996,7 +996,9 @@ function ActionFx({
     // a giant fires from its mouth, high above the field, with a beam to match its size
     const big = Math.max(1, sizeOf(fighters[actor]))
     const mouth = new THREE.Vector3(ax * 0.6, CHEST_Y * (big > GIANT ? big * 1.5 : 1), 0)
-    return <ChaosBeam from={mouth} to={to} size={big} hitAt={IMPACT_AT - 0.1} />
+    return (
+      <ChaosBeam from={mouth} to={to} size={big} hitAt={IMPACT_AT - 0.1} fire={fighters[actor].bakugan.element === 'pyrus'} />
+    )
   }
   if (type === 'attack') {
     return (

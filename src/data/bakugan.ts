@@ -341,6 +341,10 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // the game owner's own Bakugan: made from an AI picture after the anime (sent by the owner); the
   // glowing wing markings brightened to the picture's green; skinned and inked (inkThin for the thin wings)
   dharak: { monster: 'models/dharak/monster.glb', fly: true, scale: 2.3, length: 1.7, stage: 1.6 },
+  // the game owner's own design, from the owner's own model: its broken wing replaced by a mirror of the good one,
+  // fire painted on its crown and tail flame and lava cracks on its armour (they glow), skinned and inked. A winged
+  // giant standing on its legs
+  embral: { monster: 'models/embral/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },

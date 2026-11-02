@@ -11,6 +11,7 @@ import { cardCount, EVOLVE_XP, ownedForm, unlockHint, useActiveProfile } from '.
 import { viewable } from '../season/release'
 import { useGame } from '../store/useGame'
 import { BallModel, MonsterModel, preloadModels } from '../three/BakuganModels'
+import { hasBallModel } from '../three/balls/procedural'
 import { LiftDrag } from '../three/LiftDrag'
 import { BlobShadow } from '../three/BlobShadow'
 import { env, type Move, type Pose } from '../three/pose'
@@ -115,9 +116,7 @@ export function BakuganShowroom() {
 
   const el = ELEMENT_BY_ID[bakugan?.element ?? element ?? 'pyrus']
   const evo = bakugan?.evolutions[form]
-  const hasModel =
-    bakugan &&
-    (view === 'ball' ? (bakugan.evolutions[form]?.models?.ball ?? bakugan.models?.ball) : formModels({ bakugan, form })?.monster)
+  const hasModel = bakugan && (view === 'ball' ? hasBallModel(bakugan, form) : formModels({ bakugan, form })?.monster)
   const showing = !!bakugan && !!evo
   useLayoutEffect(() => {
     const measure = () => {

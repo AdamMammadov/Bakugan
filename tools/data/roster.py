@@ -116,6 +116,9 @@ ROSTER = [
      'The final foe of the first Bakugan video game, a towering Darkus warlord. As Battle Ax Vladitor his power is immense.'),
     ('dharak', 'Dharak', 'darkus', 'Emperor Barodius', 800, [('Phantom Dharak', 'Gundalian Invaders', 2800)],
      'Emperor Barodius\'s Guardian and the Darkus pair of the Twelve Orders of Gundalia, from the same ancient lineage as Drago. He blasts dark energy from his mouth, and few Bakugan have ever stood against him.'),
+    # ---- the game owner's own design
+    ('embral', 'Embral', 'pyrus', 'Game Owner', 750, [],
+     'A fire dragon clad in obsidian armour split by glowing lava cracks, with a crown of flame on its head and a tail that ends in fire. When it spreads its wings, veins of magma light up across them.'),
 ]
 
 # brawlers who appear from New Vestroia (season 2) on
@@ -124,10 +127,10 @@ NEW_VESTROIA = {'Spectra Phantom', 'Mylene Farrow', 'Gus Grav', 'Mira Fermin', '
 
 # Bakugan from a later series than the brawler sets above show
 SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet', 'pegatrix': 'Battle Planet',
-          'rubanoid': 'Gundalian Invaders', 'dharak': 'Gundalian Invaders'}
+          'rubanoid': 'Gundalian Invaders', 'dharak': 'Gundalian Invaders', 'embral': 'Original'}
 # added after launch: they pick their filler cards after everyone else, so adding one does not
 # change the cards of the Bakugan already in players' collections
-ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix', 'rubanoid', 'dharak']
+ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix', 'rubanoid', 'dharak', 'embral']
 # the game owner's own Bakugan (src/season/release.ts OWNER_ONLY): its anime abilities (Bakugan Wiki), stronger
 # than any other Bakugan's cards; the wiki gives no G values, so they are the owner's choice
 OWNER_DECKS = {'dharak': [
@@ -148,6 +151,16 @@ OWNER_DECKS = {'dharak': [
     ('Photon Gladiator', 'attack', 500, 'The strike that defeated every Castle Knight, and Hawktor.'),
     ('Thunder Gladiator', 'attack', 600, 'The strike that broke Neathia\'s Third Shield in one blow.'),
     ('Chaos Magnalia', 'finisher', 0, 'The blast that wiped out Dragonoid Colossus, Stoica\'s Lythirus and Gill\'s ship: defeats the opponent\'s Bakugan at once, whatever its G-Power, through any shield.'),
+],
+    # Embral is the owner's own design, so its cards are new: none comes from the anime or a game
+    'embral': [
+    ('Crownfire Surge', 'boost', 350, 'The crown of flame on Embral\'s head blazes up: adds 350 G to Embral.'),
+    ('Obsidian Lavaguard', 'shield', 0, 'Embral closes its lava-cracked armour round itself: cancels the opponent\'s last ability card.'),
+    ('Ashwing Smother', 'weaken', 300, 'One beat of Embral\'s wings drops a rain of hot ash on the opponent: subtracts 300 G from the opponent.'),
+    ('Cinderheart Siphon', 'drain', 300, 'The flame on Embral\'s tail draws the heat out of the opponent: transfers 300 G from the opponent to Embral.'),
+    ('Gatemelt Blaze', 'boost', 250, 'Embral melts the Gate Card under it into glowing magma and rises on its heat: adds 250 G to Embral.'),
+    ('Veinflare Burst', 'attack', 400, 'The magma veins in Embral\'s wings flare white-hot and burst over the opponent.'),
+    ('Ember Cataclysm', 'finisher', 0, 'Embral gathers every ember of its power into one blast of white fire: defeats the opponent\'s Bakugan at once, whatever its G-Power, through any shield.'),
 ]}
 # the original six (src/data/bakugan.ts) and how many cards each has
 ORIGINAL = [('dragonoid', 'Dragonoid', 'pyrus', 8), ('preyas', 'Preyas', 'aquos', 7), ('gorem', 'Gorem', 'subterra', 7),
@@ -337,11 +350,12 @@ def main():
     original = {bid: deck(cards, attr_cards, used, bid, name, element, n) for bid, name, element, n in ORIGINAL}
     order = [r for r in ROSTER if r[0] not in ADDED] + sorted((r for r in ROSTER if r[0] in ADDED), key=lambda r: ADDED.index(r[0]))
     decks = {r[0]: deck(cards, attr_cards, used, r[0], r[1], r[2], CARDS) for r in order if r[0] not in OWNER_DECKS}
-    owner_card = lambda i, n, k, a, d: {'id': slug(n), 'name': n, 'type': k, 'amount': a, 'effect': effect(k, 'darkus', i),
+    element_of = {r[0]: r[2] for r in ROSTER}
+    owner_card = lambda el, i, n, k, a, d: {'id': slug(n), 'name': n, 'type': k, 'amount': a, 'effect': effect(k, el, i),
                                         'description': d, 'estimated': True}
     for bid, owner in OWNER_DECKS.items():
         if '~' not in bid:
-            decks[bid] = [owner_card(i, *c) for i, c in enumerate(owner)]
+            decks[bid] = [owner_card(element_of[bid], i, *c) for i, c in enumerate(owner)]
 
     out = []
     for bid, name, element, brawler, g, evos, desc in ROSTER:
@@ -350,7 +364,7 @@ def main():
         # an evolution with cards of its own (OWNER_DECKS '<id>~<form>')
         for form, evo in enumerate(evolutions):
             if f'{bid}~{form}' in OWNER_DECKS:
-                evo['abilities'] = [owner_card(i, *c) for i, c in enumerate(OWNER_DECKS[f'{bid}~{form}'])]
+                evo['abilities'] = [owner_card(element, i, *c) for i, c in enumerate(OWNER_DECKS[f'{bid}~{form}'])]
         out.append({
             'id': bid, 'name': name, 'element': element, 'brawler': brawler,
             'series': series,
