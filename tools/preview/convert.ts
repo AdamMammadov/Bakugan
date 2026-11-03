@@ -352,14 +352,16 @@ root.traverse((o) => {
 
 // ink=<share of the height>: a black inverted hull round every mesh, the inked edge the game
 // models have. The hull is the mesh pushed out along smooth normals and turned inside out, so only
-// its far side shows, as a rim round the silhouette and along creases.
+// its far side shows, as a rim round the silhouette and along creases. noInk=<mesh,…>: no hull round these
+// meshes (fire painted on thin sheets, where the hull shows through as dark lines)
 if (q.get('ink')) {
   root.updateMatrixWorld(true)
   const box = new THREE.Box3().setFromObject(root)
   const width = Number(q.get('ink')) * (box.max.y - box.min.y)
   const ink = new THREE.MeshBasicMaterial({ color: new THREE.Color('#' + (q.get('inkColor') ?? '140f1c')) })
   const meshes: THREE.Mesh[] = []
-  root.traverse((o) => (o as THREE.Mesh).isMesh && meshes.push(o as THREE.Mesh))
+  const noInk = (q.get('noInk') ?? '').split(',')
+  root.traverse((o) => (o as THREE.Mesh).isMesh && !noInk.includes(o.name) && meshes.push(o as THREE.Mesh))
   for (const m of meshes) {
     const base = new THREE.BufferGeometry()
     base.setAttribute('position', m.geometry.attributes.position.clone())
@@ -427,7 +429,8 @@ if (q.get('ink')) {
 // skin=<radius>: skin the parts instead of cutting them off: one mesh, a bone per part at its pivot, every
 // vertex of a part on its bone and the body round it (within radius, model units) bending partly with it, so
 // joints stretch instead of opening cracks as the parts turn; stick=<triangles> makes loose bits smaller than
-// that ride along with the spot they sit on
+// that ride along with the spot they sit on; family=1 lets a part's vertices bend only with its parent and children,
+// not with any part that merely lies close by (a tail curled past the feet stretched as the legs moved)
 if (q.get('rig')) {
   type Part = {
     name: string
@@ -659,11 +662,14 @@ if (q.get('rig')) {
     // up to four bones per vertex position: a part's own vertices go wholly with it, others within the
     // radius of a part partly (smoothly less with distance), and what is left goes with the body
     const weights = new Map<string, [number, number][]>()
+    const kin = (a: number, b: number) => a === b || parts[a].parent === parts[b].name || parts[b].parent === parts[a].name
     for (const [id, set] of touches) {
       const [x, y, z] = id.split(',').map(Number)
       let pull: [number, number][] = []
+      const own = [...set].filter((k) => k >= 0)
       parts.forEach((_, k) => {
         if (!live[k]) return
+        if (q.get('family') && own.length && !own.some((o) => kin(o, k))) return
         const a = set.has(k) ? 1 : THREE.MathUtils.smoothstep(1 - nearest(k, x, y, z) / radius, 0, 1)
         if (a > 0) pull.push([index[k], a])
       })

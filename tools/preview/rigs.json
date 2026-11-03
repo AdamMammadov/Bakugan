@@ -3503,7 +3503,7 @@
         0.115,
         0.37
       ],
-      "test": "mesh === 'head'",
+      "test": "mesh === 'head' || mesh === 'head_fire'",
       "swing": 0.5
     },
     {
@@ -3574,18 +3574,18 @@
         0.17
       ],
       "test": "mesh === 'tail'",
-      "swing": 0.15
+      "swing": 0.3
     },
     {
       "name": "tail_tip",
       "parent": "tail",
       "pivot": [
-        -0.03,
+        0.0,
         -0.3,
-        0.47
+        0.51
       ],
-      "test": "mesh === 'tail_tip'",
-      "swing": 0.35
+      "test": "mesh === 'tail_tip' || mesh === 'tail_fire'",
+      "swing": 0.4
     }
   ]
 }
