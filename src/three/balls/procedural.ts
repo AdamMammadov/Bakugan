@@ -2,11 +2,13 @@ import type { ComponentType, RefObject } from 'react'
 import type { Bakugan } from '../../data/bakugan'
 import { EmbralBall } from './EmbralBall'
 import { HydranoidBall } from './HydranoidBall'
+import { TidevaneBall } from './TidevaneBall'
 
 /** Hand-built ball forms (with their own opening animation), keyed by Bakugan id. */
 export const PROCEDURAL_BALLS: Record<string, ComponentType<{ openRef: RefObject<boolean> }>> = {
   hydranoid: HydranoidBall,
   embral: EmbralBall,
+  tidevane: TidevaneBall,
 }
 
 /** Whether a Bakugan's ball form has a model of its own (a .glb or a hand-built one), not the plain stand-in. */

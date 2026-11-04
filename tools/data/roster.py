@@ -119,6 +119,8 @@ ROSTER = [
     # ---- the game owner's own design
     ('embral', 'Embral', 'pyrus', 'Game Owner', 470, [],
      'A fire dragon clad in obsidian armour split by glowing lava cracks, with a crown of flame on its head and a tail that ends in fire. When it spreads its wings, veins of magma light up across them.'),
+    ('tidevane', 'Tidevane', 'aquos', 'Game Owner', 470, [],
+     'A sea dragon knight from the deep, its navy hide dotted with pale spots like stars over night water. It wears blue-steel armour lit by glowing tide-lines, spreads wings like a manta ray\'s and holds a golden trident whose prongs burn with blue water-fire.'),
 ]
 
 # brawlers who appear from New Vestroia (season 2) on
@@ -127,10 +129,11 @@ NEW_VESTROIA = {'Spectra Phantom', 'Mylene Farrow', 'Gus Grav', 'Mira Fermin', '
 
 # Bakugan from a later series than the brawler sets above show
 SERIES = {'trox': 'Battle Planet', 'hydorous': 'Battle Planet', 'howlkor': 'Battle Planet', 'pegatrix': 'Battle Planet',
-          'rubanoid': 'Gundalian Invaders', 'dharak': 'Gundalian Invaders', 'embral': 'Original'}
+          'rubanoid': 'Gundalian Invaders', 'dharak': 'Gundalian Invaders', 'embral': 'Original',
+          'tidevane': 'Original'}
 # added after launch: they pick their filler cards after everyone else, so adding one does not
 # change the cards of the Bakugan already in players' collections
-ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix', 'rubanoid', 'dharak', 'embral']
+ADDED = ['preyas-diablo', 'trox', 'hydorous', 'howlkor', 'manion', 'pegatrix', 'rubanoid', 'dharak', 'embral', 'tidevane']
 # the game owner's own Bakugan (src/season/release.ts OWNER_ONLY): its anime abilities (Bakugan Wiki), stronger
 # than any other Bakugan's cards; the wiki gives no G values, so they are the owner's choice
 OWNER_DECKS = {'dharak': [
@@ -161,6 +164,16 @@ OWNER_DECKS = {'dharak': [
     ('Gatemelt Blaze', 'boost', 150, 'Embral melts the Gate Card under it into glowing magma and rises on its heat: adds 150 G to Embral.'),
     ('Veinflare Burst', 'attack', 150, 'The magma veins in Embral\'s wings flare white-hot and burst over the opponent.'),
     ('Ember Cataclysm', 'attack', 200, 'Embral gathers every ember of its power into one blast of white fire over the opponent.'),
+],
+    # Tidevane is the owner's own design too, so its cards are new as well
+    'tidevane': [
+    ('Riptide Rising', 'boost', 200, 'The sea rises in a wall behind Tidevane and lifts it up: adds 200 G to Tidevane.'),
+    ('Pearlsteel Bulwark', 'shield', 0, 'Tidevane closes its blue-steel armour round itself: cancels the opponent\'s last ability card.'),
+    ('Undertow Snare', 'weaken', 150, 'A cold undertow wraps the opponent\'s legs and drags at it: subtracts 150 G from the opponent.'),
+    ('Mantawing Siphon', 'drain', 150, 'Tidevane\'s manta wings draw the opponent\'s strength away like an ebbing tide: transfers 150 G from the opponent to Tidevane.'),
+    ('Abyssal Current', 'boost', 150, 'Tidevane rides a current up from the deep sea: adds 150 G to Tidevane.'),
+    ('Trident Torrent', 'attack', 150, 'Tidevane levels its trident and a torrent bursts from its three burning prongs at the opponent.'),
+    ('Maelstrom Crown', 'attack', 200, 'Tidevane spins its trident over its head into a whirlpool that crashes down on the opponent.'),
 ]}
 # the original six (src/data/bakugan.ts) and how many cards each has
 ORIGINAL = [('dragonoid', 'Dragonoid', 'pyrus', 8), ('preyas', 'Preyas', 'aquos', 7), ('gorem', 'Gorem', 'subterra', 7),

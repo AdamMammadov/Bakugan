@@ -3586,6 +3586,88 @@ export const ROSTER: Bakugan[] = [
         "gPower": 470
       }
     ]
+  },
+  {
+    "id": "tidevane",
+    "name": "Tidevane",
+    "element": "aquos",
+    "brawler": "Game Owner",
+    "series": "Original",
+    "baseG": 470,
+    "brawlG": 570,
+    "description": "A sea dragon knight from the deep, its navy hide dotted with pale spots like stars over night water. It wears blue-steel armour lit by glowing tide-lines, spreads wings like a manta ray's and holds a golden trident whose prongs burn with blue water-fire.",
+    "abilities": [
+      {
+        "id": "riptide-rising",
+        "name": "Riptide Rising",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "The sea rises in a wall behind Tidevane and lifts it up: adds 200 G to Tidevane.",
+        "estimated": true
+      },
+      {
+        "id": "pearlsteel-bulwark",
+        "name": "Pearlsteel Bulwark",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Tidevane closes its blue-steel armour round itself: cancels the opponent's last ability card.",
+        "estimated": true
+      },
+      {
+        "id": "undertow-snare",
+        "name": "Undertow Snare",
+        "type": "weaken",
+        "amount": 150,
+        "effect": "waterJet",
+        "description": "A cold undertow wraps the opponent's legs and drags at it: subtracts 150 G from the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "mantawing-siphon",
+        "name": "Mantawing Siphon",
+        "type": "drain",
+        "amount": 150,
+        "effect": "waterSphere",
+        "description": "Tidevane's manta wings draw the opponent's strength away like an ebbing tide: transfers 150 G from the opponent to Tidevane.",
+        "estimated": true
+      },
+      {
+        "id": "abyssal-current",
+        "name": "Abyssal Current",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Tidevane rides a current up from the deep sea: adds 150 G to Tidevane.",
+        "estimated": true
+      },
+      {
+        "id": "trident-torrent",
+        "name": "Trident Torrent",
+        "type": "attack",
+        "amount": 150,
+        "effect": "waterSphere",
+        "description": "Tidevane levels its trident and a torrent bursts from its three burning prongs at the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "maelstrom-crown",
+        "name": "Maelstrom Crown",
+        "type": "attack",
+        "amount": 200,
+        "effect": "waterJet",
+        "description": "Tidevane spins its trident over its head into a whirlpool that crashes down on the opponent.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Tidevane",
+        "series": "Original",
+        "gPower": 470
+      }
+    ]
   }
 ]
 

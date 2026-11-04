@@ -3,13 +3,13 @@ import { devView } from '../profile/devView'
 import { currentSeason, seasonOfBakugan } from './current'
 
 /**
- * The launch Bakugan: 4 of each attribute, there from the start, plus Embral, the game's own first Bakugan. A new
- * player gets the weakest of their attribute's (listed first); the others are bought or earned. Every other Bakugan
- * comes with a season.
+ * The launch Bakugan: 4 of each attribute, there from the start, plus the game's own Bakugan (Embral, Tidevane). A
+ * new player gets the weakest of their attribute's (listed first); the others are bought or earned. Every other
+ * Bakugan comes with a season.
  */
 export const LAUNCH = [
   ...['saurus', 'dragonoid', 'falconeer', 'rubanoid', 'embral'],
-  ...['robotallion', 'preyas', 'preyas-diablo', 'sirenoid'],
+  ...['robotallion', 'preyas', 'preyas-diablo', 'sirenoid', 'tidevane'],
   ...['baliton', 'gorem', 'cycloid', 'manion'],
   ...['monarus', 'skyress', 'harpus', 'ravenoid'],
   ...['tigrerra', 'tentaclear', 'pegatrix', 'laserman'],
