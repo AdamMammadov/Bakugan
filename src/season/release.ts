@@ -3,11 +3,12 @@ import { devView } from '../profile/devView'
 import { currentSeason, seasonOfBakugan } from './current'
 
 /**
- * The launch Bakugan: 4 of each attribute, there from the start. A new player gets the weakest of their
- * attribute's four (listed first); the other three are bought or earned. Every other Bakugan comes with a season.
+ * The launch Bakugan: 4 of each attribute, there from the start, plus Embral, the game's own first Bakugan. A new
+ * player gets the weakest of their attribute's (listed first); the others are bought or earned. Every other Bakugan
+ * comes with a season.
  */
 export const LAUNCH = [
-  ...['saurus', 'dragonoid', 'falconeer', 'rubanoid'],
+  ...['saurus', 'dragonoid', 'falconeer', 'rubanoid', 'embral'],
   ...['robotallion', 'preyas', 'preyas-diablo', 'sirenoid'],
   ...['baliton', 'gorem', 'cycloid', 'manion'],
   ...['monarus', 'skyress', 'harpus', 'ravenoid'],
@@ -19,7 +20,7 @@ export const LAUNCH = [
  * The game owner's own Bakugan: never released to players; the owner's browser (devView) shows them and gives
  * them to its profiles with every card unlocked.
  */
-export const OWNER_ONLY = ['dharak', 'embral']
+export const OWNER_ONLY = ['dharak']
 
 /**
  * Whether players can see and get a Bakugan: the launch ones always, a season's from the day that season

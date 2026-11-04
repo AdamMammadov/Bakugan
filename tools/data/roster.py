@@ -117,7 +117,7 @@ ROSTER = [
     ('dharak', 'Dharak', 'darkus', 'Emperor Barodius', 800, [('Phantom Dharak', 'Gundalian Invaders', 2800)],
      'Emperor Barodius\'s Guardian and the Darkus pair of the Twelve Orders of Gundalia, from the same ancient lineage as Drago. He blasts dark energy from his mouth, and few Bakugan have ever stood against him.'),
     # ---- the game owner's own design
-    ('embral', 'Embral', 'pyrus', 'Game Owner', 750, [],
+    ('embral', 'Embral', 'pyrus', 'Game Owner', 470, [],
      'A fire dragon clad in obsidian armour split by glowing lava cracks, with a crown of flame on its head and a tail that ends in fire. When it spreads its wings, veins of magma light up across them.'),
 ]
 
@@ -154,13 +154,13 @@ OWNER_DECKS = {'dharak': [
 ],
     # Embral is the owner's own design, so its cards are new: none comes from the anime or a game
     'embral': [
-    ('Crownfire Surge', 'boost', 350, 'The crown of flame on Embral\'s head blazes up: adds 350 G to Embral.'),
+    ('Crownfire Surge', 'boost', 200, 'The crown of flame on Embral\'s head blazes up: adds 200 G to Embral.'),
     ('Obsidian Lavaguard', 'shield', 0, 'Embral closes its lava-cracked armour round itself: cancels the opponent\'s last ability card.'),
-    ('Ashwing Smother', 'weaken', 300, 'One beat of Embral\'s wings drops a rain of hot ash on the opponent: subtracts 300 G from the opponent.'),
-    ('Cinderheart Siphon', 'drain', 300, 'The flame on Embral\'s tail draws the heat out of the opponent: transfers 300 G from the opponent to Embral.'),
-    ('Gatemelt Blaze', 'boost', 250, 'Embral melts the Gate Card under it into glowing magma and rises on its heat: adds 250 G to Embral.'),
-    ('Veinflare Burst', 'attack', 400, 'The magma veins in Embral\'s wings flare white-hot and burst over the opponent.'),
-    ('Ember Cataclysm', 'finisher', 0, 'Embral gathers every ember of its power into one blast of white fire: defeats the opponent\'s Bakugan at once, whatever its G-Power, through any shield.'),
+    ('Ashwing Smother', 'weaken', 150, 'One beat of Embral\'s wings drops a rain of hot ash on the opponent: subtracts 150 G from the opponent.'),
+    ('Cinderheart Siphon', 'drain', 150, 'The flame on Embral\'s tail draws the heat out of the opponent: transfers 150 G from the opponent to Embral.'),
+    ('Gatemelt Blaze', 'boost', 150, 'Embral melts the Gate Card under it into glowing magma and rises on its heat: adds 150 G to Embral.'),
+    ('Veinflare Burst', 'attack', 150, 'The magma veins in Embral\'s wings flare white-hot and burst over the opponent.'),
+    ('Ember Cataclysm', 'attack', 200, 'Embral gathers every ember of its power into one blast of white fire over the opponent.'),
 ]}
 # the original six (src/data/bakugan.ts) and how many cards each has
 ORIGINAL = [('dragonoid', 'Dragonoid', 'pyrus', 8), ('preyas', 'Preyas', 'aquos', 7), ('gorem', 'Gorem', 'subterra', 7),
