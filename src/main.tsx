@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { devView, readDevSwitch } from './profile/devView'
 import { useProfiles } from './profile/useProfiles'
 import { startScoreLog } from './profile/scoreLog'
+import { reloadForUpdate } from './lazyPage'
 
 // the old admin panel's browser data is no longer used
 try {
@@ -13,6 +14,11 @@ try {
 } catch {
   // storage unavailable (private mode): nothing to clean
 }
+
+// a page's code that is gone after an update of the game (this tab has the old version): load the new one
+window.addEventListener('vite:preloadError', (e) => {
+  if (reloadForUpdate()) e.preventDefault()
+})
 
 // an address with ?dev= switches the owner's view and reloads without it
 void readDevSwitch().then((reloading) => {

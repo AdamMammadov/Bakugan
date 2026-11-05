@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { lazyPage } from '../lazyPage'
 import { playSfx } from '../audio/sfx'
 import { GAME_SUBTITLE, GAME_TITLE } from '../brand'
 import { Trophy } from '../components/EventArt'
@@ -17,7 +18,7 @@ import { LEVEL_XP, PASS_LEVELS, passLevel, timeLeft } from '../season/season'
 import { useGame } from '../store/useGame'
 
 // the 3D stage pulls in three.js: the menu shows at once, with a saved picture of the lead until its model is in
-const MenuStage = lazy(() => import('../components/MenuStage'))
+const MenuStage = lazyPage(() => import('../components/MenuStage'))
 
 const EVENTS_COLOR = '#a78bfa'
 const PASS_COLOR = '#fcd34d'

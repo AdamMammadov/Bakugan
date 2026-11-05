@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { lazyPage } from '../lazyPage'
 import { playSfx, unlockAudio } from '../audio/sfx'
 import { GAME_SUBTITLE, GAME_TITLE } from '../brand'
 import { leadOf } from '../components/menuLead'
@@ -9,7 +10,7 @@ import { useProfiles } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 
 // the 3D scene pulls in three.js: the 2D title is up at once and the Bakugan fades in when it is ready
-const TitleStage = lazy(() => import('../components/TitleStage'))
+const TitleStage = lazyPage(() => import('../components/TitleStage'))
 
 /** The six attribute colours, round a circle. */
 const RAINBOW = ELEMENTS.map((e) => e.color)

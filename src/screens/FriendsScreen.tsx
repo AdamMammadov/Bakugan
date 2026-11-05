@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazyPage } from '../lazyPage'
 import { playSfx } from '../audio/sfx'
 import { Avatar } from '../components/Avatar'
 import { ClanEmblem } from '../components/ClanEmblem'
@@ -23,7 +24,7 @@ import { FriendButton } from './BrawlerProfile'
 import { RankBadge } from './ProfileScreen'
 
 // the 3D stage pulls in three.js, so it loads with the first profile shown
-const FriendStage = lazy(() => import('../components/FriendStage'))
+const FriendStage = lazyPage(() => import('../components/FriendStage'))
 
 /** Friends online first, then those in a match, players here, and the ones offline. */
 const ORDER: Record<PresenceState, number> = { online: 0, match: 1, local: 2, offline: 3 }

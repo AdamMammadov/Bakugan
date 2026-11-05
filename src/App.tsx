@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import { lazy, Suspense, useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { playMusic, type Track } from './audio/music'
 import { EventToast } from './components/EventToast'
 import { InvitePopup } from './components/InvitePopup'
@@ -13,6 +13,8 @@ import { IntroScreen } from './screens/IntroScreen'
 import { MainMenu } from './screens/MainMenu'
 import { preloadActiveLead } from './components/menuLead'
 import { PageBackdrop } from './components/PageBackdrop'
+import { PageErrorBoundary } from './components/PageErrorBoundary'
+import { lazyPage } from './lazyPage'
 import { ProfileEditor } from './screens/ProfileEditor'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ClansScreen } from './screens/ClansScreen'
@@ -28,13 +30,13 @@ import { GAME_SUBTITLE, GAME_TITLE } from './brand'
 import './events/progress'
 
 // The 3D viewer pulls in three.js, so load it only when needed.
-const Viewer = lazy(() => import('./screens/Viewer').then((m) => ({ default: m.Viewer })))
-const BakuganShowroom = lazy(() => import('./screens/BakuganShowroom').then((m) => ({ default: m.BakuganShowroom })))
-const CharacterShowroom = lazy(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
-const ArenaScreen = lazy(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
-const LiveScreen = lazy(() => import('./screens/LiveScreen').then((m) => ({ default: m.LiveScreen })))
+const Viewer = lazyPage(() => import('./screens/Viewer').then((m) => ({ default: m.Viewer })))
+const BakuganShowroom = lazyPage(() => import('./screens/BakuganShowroom').then((m) => ({ default: m.BakuganShowroom })))
+const CharacterShowroom = lazyPage(() => import('./screens/CharacterShowroom').then((m) => ({ default: m.CharacterShowroom })))
+const ArenaScreen = lazyPage(() => import('./screens/ArenaScreen').then((m) => ({ default: m.ArenaScreen })))
+const LiveScreen = lazyPage(() => import('./screens/LiveScreen').then((m) => ({ default: m.LiveScreen })))
 // boss cards draw Bakugan portraits with three.js
-const EventsScreen = lazy(() => import('./screens/EventsScreen').then((m) => ({ default: m.EventsScreen })))
+const EventsScreen = lazyPage(() => import('./screens/EventsScreen').then((m) => ({ default: m.EventsScreen })))
 
 /** Which song plays where: every page has its own, and the arena picks one of the battle songs. */
 const TRACK_FOR: Partial<Record<Screen, Track>> = {
@@ -81,30 +83,34 @@ export default function App() {
   return (
     <div className="relative h-full w-full">
       <PageBackdrop screen={screen} />
-      <Suspense fallback={null}>
-        <AnimatePresence mode="wait">
-          {screen === 'intro' && <IntroScreen key="intro" />}
-          {screen === 'menu' && <MainMenu key="menu" />}
-          {screen === 'wheel' && <ElementWheel key="wheel" />}
-          {screen === 'hub' && <ElementHub key="hub" />}
-          {screen === 'viewer' && <Viewer key="viewer" />}
-          {screen === 'compare' && <CompareScreen key="compare" />}
-          {screen === 'arena' && <ArenaScreen key="arena" />}
-          {screen === 'live' && <LiveScreen key="live" />}
-          {screen === 'profile' && <ProfileScreen key="profile" />}
-          {screen === 'profileEdit' && <ProfileEditor key="profileEdit" />}
-          {screen === 'rankings' && <RankingsScreen key="rankings" />}
-          {screen === 'clans' && <ClansScreen key="clans" />}
-          {screen === 'friends' && <FriendsScreen key="friends" />}
-          {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
-          {screen === 'pass' && <SeasonPassScreen key="pass" />}
-          {screen === 'shop' && <ShopScreen key="shop" />}
-          {screen === 'inventory' && <InventoryScreen key="inventory" />}
-          {screen === 'showroom' && <BakuganShowroom key="showroom" />}
-          {screen === 'characters' && <CharacterShowroom key="characters" />}
-          {screen === 'events' && <EventsScreen key="events" />}
-        </AnimatePresence>
-      </Suspense>
+      {/* a page that crashes shows a way out instead of leaving the game blank (and one left behind by an update
+          reloads the game) */}
+      <PageErrorBoundary screen={screen} onMenu={() => useGame.setState({ screen: 'menu' })}>
+        <Suspense fallback={null}>
+          <AnimatePresence mode="wait">
+            {screen === 'intro' && <IntroScreen key="intro" />}
+            {screen === 'menu' && <MainMenu key="menu" />}
+            {screen === 'wheel' && <ElementWheel key="wheel" />}
+            {screen === 'hub' && <ElementHub key="hub" />}
+            {screen === 'viewer' && <Viewer key="viewer" />}
+            {screen === 'compare' && <CompareScreen key="compare" />}
+            {screen === 'arena' && <ArenaScreen key="arena" />}
+            {screen === 'live' && <LiveScreen key="live" />}
+            {screen === 'profile' && <ProfileScreen key="profile" />}
+            {screen === 'profileEdit' && <ProfileEditor key="profileEdit" />}
+            {screen === 'rankings' && <RankingsScreen key="rankings" />}
+            {screen === 'clans' && <ClansScreen key="clans" />}
+            {screen === 'friends' && <FriendsScreen key="friends" />}
+            {screen === 'encyclopedia' && <EncyclopediaScreen key="encyclopedia" />}
+            {screen === 'pass' && <SeasonPassScreen key="pass" />}
+            {screen === 'shop' && <ShopScreen key="shop" />}
+            {screen === 'inventory' && <InventoryScreen key="inventory" />}
+            {screen === 'showroom' && <BakuganShowroom key="showroom" />}
+            {screen === 'characters' && <CharacterShowroom key="characters" />}
+            {screen === 'events' && <EventsScreen key="events" />}
+          </AnimatePresence>
+        </Suspense>
+      </PageErrorBoundary>
       <SeasonNotice />
       <EventToast />
       <InvitePopup />
