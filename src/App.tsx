@@ -3,7 +3,7 @@ import { Suspense, useEffect } from 'react'
 import { playMusic, type Track } from './audio/music'
 import { EventToast } from './components/EventToast'
 import { InvitePopup } from './components/InvitePopup'
-import { MuteButton } from './components/MuteButton'
+import { SettingsButton, SettingsPanel } from './components/SettingsPanel'
 import { ProfileButton } from './components/ProfileButton'
 import { SeasonNotice } from './components/SeasonNotice'
 import { CompareScreen } from './screens/CompareScreen'
@@ -114,13 +114,14 @@ export default function App() {
       <SeasonNotice />
       <EventToast />
       <InvitePopup />
+      <SettingsPanel />
       {/* the corner buttons share one row, so they line up whatever their widths */}
       {/* the main menu has the music and sound switches in its own layout */}
       {screen !== 'intro' && screen !== 'menu' && (
         <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">
           {/* the way back to the main menu where there is no PageNav or BACK to it (pages have ⌂ MENU) */}
           {(screen === 'hub' || screen === 'viewer' || screen === 'compare') && <ProfileButton />}
-          <MuteButton />
+          <SettingsButton />
         </div>
       )}
     </div>

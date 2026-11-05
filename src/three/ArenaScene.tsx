@@ -37,6 +37,7 @@ import {
 import { crowd } from './stadium'
 import { FIELD_RADIUS, Stadium } from './Stadium'
 import { THROW_LAND, ThrownBall } from './ThrowIn'
+import { useQuality } from '../store/useSettings'
 
 /** Bakugan tower over the field: about 21 units, so a brawler (≈4 units) reaches their ankles. */
 const FIGHTER_SCALE = 7
@@ -135,6 +136,8 @@ const partnerSpot = (side: SideIndex, k: number) => {
 }
 
 export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers, throws = [0, 0], partners }: Props) {
+  // glow and vignette, unless the graphics are set to low
+  const { effects } = useQuality()
   const gateElement = gate ? ELEMENT_BY_ID[gate] : null
   const pull = pullFor(fighters)
   // the stadium, the card and the brawlers grow with the view when a giant is on the field
@@ -397,10 +400,12 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
       <BrawlerFocus spots={focusSpots} home={home} />
       <LiftDrag max={30} />
       <PullBack k={pull} />
-      <EffectComposer>
-        <Bloom luminanceThreshold={1} luminanceSmoothing={0.15} intensity={0.65} mipmapBlur />
-        <Vignette offset={0.25} darkness={0.7} />
-      </EffectComposer>
+      {effects && (
+        <EffectComposer>
+          <Bloom luminanceThreshold={1} luminanceSmoothing={0.15} intensity={0.65} mipmapBlur />
+          <Vignette offset={0.25} darkness={0.7} />
+        </EffectComposer>
+      )}
     </>
   )
 }

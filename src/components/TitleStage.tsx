@@ -8,6 +8,7 @@ import { BakuganBall } from '../three/BakuganBall'
 import { MonsterModel } from '../three/BakuganModels'
 import { LightPillar } from '../three/LightPillar'
 import { StageFit } from '../three/StageFit'
+import { useQuality } from '../store/useSettings'
 
 /** When the ball opens, and when the Bakugan bursts out of it (seconds after the scene starts). */
 const OPEN_AT = 1.4
@@ -96,8 +97,9 @@ function Start() {
 
 /** The title screen's 3D layer: the hero Bakugan bursting out of its ball. Loaded after the 2D title is up. */
 export default function TitleStage(props: { id: string; form: number; skin?: string; onReady: () => void }) {
+  const quality = useQuality(1.75)
   return (
-    <Canvas camera={{ position: [0, 2.6, 12], fov: 32 }} dpr={[1, 1.75]} gl={{ alpha: true, antialias: true }}>
+    <Canvas camera={{ position: [0, 2.6, 12], fov: 32 }} dpr={quality.dpr} gl={{ alpha: true, antialias: true }}>
       <OrbitControls makeDefault target={[0, 1.2, 0]} enableRotate={false} enableZoom={false} enablePan={false} />
       <Start />
       <ambientLight intensity={0.9} />

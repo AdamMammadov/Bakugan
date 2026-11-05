@@ -2,6 +2,7 @@ import { Howl } from 'howler'
 import { asset } from '../asset'
 import { DEFAULT_VOICE } from '../profile/avatar'
 import { useGame } from '../store/useGame'
+import { useSettings } from '../store/useSettings'
 import { ANNOUNCER, deliveryFor, speakerOf, type Delivery, type SpeakerVoice } from './voices'
 
 /**
@@ -34,7 +35,12 @@ function fileFor(name: SfxName): Howl | null {
   return howl && howl.state() === 'loaded' ? howl : null
 }
 
+/** The sound-effects volume setting. */
+const fxVolume = () => useSettings.getState().sfxVolume
+
 function tone(freq: number, dur: number, type: OscillatorType, gain: number, at = 0, slideTo?: number) {
+  gain *= fxVolume()
+  if (gain <= 0.0002) return
   const a = audio()
   const t = a.currentTime + at
   const osc = a.createOscillator()
@@ -51,6 +57,8 @@ function tone(freq: number, dur: number, type: OscillatorType, gain: number, at 
 }
 
 function noise(dur: number, gain: number, from: number, to: number, at = 0) {
+  gain *= fxVolume()
+  if (gain <= 0.0002) return
   const a = audio()
   const t = a.currentTime + at
   const buf = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate)
@@ -113,10 +121,12 @@ const synth: Record<SfxName, () => void> = {
 }
 
 export function playSfx(name: SfxName) {
-  if (useGame.getState().muted) return
+  if (useGame.getState().muted || fxVolume() <= 0) return
   const file = fileFor(name)
-  if (file) file.play()
-  else synth[name]()
+  if (file) {
+    file.volume(fxVolume())
+    file.play()
+  } else synth[name]()
 }
 
 // ---------------------------------------------------------------- speech
@@ -148,7 +158,7 @@ const queue: Line[] = []
 let talking: { u: SpeechSynthesisUtterance; timer: number } | null = null
 
 const hasSpeech = () => typeof speechSynthesis !== 'undefined'
-const silent = () => useGame.getState().muted || !hasSpeech()
+const silent = () => useGame.getState().muted || !hasSpeech() || useSettings.getState().voiceVolume <= 0
 
 /** About how long a line takes to say (ms), for when a voice never reports that it ended. */
 const lengthOf = (text: string, rate: number) => (text.split(/\s+/).length / (2.6 * rate)) * 1000 + 800
@@ -173,7 +183,7 @@ function pump() {
   }
   u.pitch = d.pitch
   u.rate = d.rate
-  u.volume = 1
+  u.volume = useSettings.getState().voiceVolume
   const done = () => {
     if (talking?.u !== u) return
     clearTimeout(talking.timer)

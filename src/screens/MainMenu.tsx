@@ -8,7 +8,7 @@ import { useEventsLine } from '../components/eventsLine'
 import { leadKey, leadOf, leadPicture, preloadLead } from '../components/menuLead'
 import { MenuIcon, type MenuIconName } from '../components/MenuIcon'
 import { MenuSide } from '../components/MenuSide'
-import { MuteButton } from '../components/MuteButton'
+import { SettingsButton } from '../components/SettingsPanel'
 import { BpIcon } from '../components/RewardIcon'
 import { ELEMENT_BY_ID, type ElementInfo } from '../data/elements'
 import { openEvents } from '../events/nav'
@@ -206,7 +206,7 @@ export function MainMenu() {
             />
           </div>
           <div className="mt-auto flex justify-end">
-            <MuteButton />
+            <SettingsButton />
           </div>
         </motion.div>
 

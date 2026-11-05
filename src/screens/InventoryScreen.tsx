@@ -24,6 +24,7 @@ import { BlobShadow } from '../three/BlobShadow'
 import { LiftDrag } from '../three/LiftDrag'
 import { MonsterModel } from '../three/BakuganModels'
 import { RewardIcon } from '../components/RewardIcon'
+import { useQuality } from '../store/useSettings'
 
 type Tab = 'skins' | 'avatar' | 'boosts' | 'equipment'
 const TABS: [Tab, string][] = [
@@ -111,6 +112,7 @@ function Empty({ text }: { text: string }) {
 // ---------------------------------------------------------------- skins
 
 function Skins({ profile }: { profile: Profile }) {
+  const quality = useQuality()
   const setSkin = useProfiles((s) => s.setSkin)
   const [bakuganId, setBakuganId] = useState(profile.collection[0]?.id)
   const owned = profile.collection.find((o) => o.id === bakuganId) ?? profile.collection[0]
@@ -180,7 +182,7 @@ function Skins({ profile }: { profile: Profile }) {
       {/* try-on preview */}
       <div className="flex flex-col">
         <div className="relative h-[26rem] overflow-hidden rounded-2xl border border-white/10 bg-black/50">
-          <Canvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={[1, 2]}>
+          <Canvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={quality.dpr}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[3, 6, 4]} intensity={2.2} />
             <pointLight position={[-3, 2.5, -2]} intensity={20} color={trying ? SKIN_BY_ID[trying].glow : element.glow} />

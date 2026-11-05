@@ -1,37 +1,11 @@
-import { useEffect, useRef } from 'react'
-import { useUnread } from '../profile/useFriendChat'
-import { openEvents } from '../events/nav'
-import { useActiveProfile } from '../profile/useProfiles'
 import { backOf, useGame, type PageScreen } from '../store/useGame'
-import { centreInStrip } from './strip'
 
-const TABS: [PageScreen, string][] = [
-  ['profile', 'PROFILE'],
-  ['inventory', 'INVENTORY'],
-  ['pass', 'SEASON PASS'],
-  ['events', 'EVENTS'],
-  ['shop', 'SHOP'],
-  ['rankings', 'RANKINGS'],
-  ['clans', 'CLANS'],
-  ['friends', 'FRIENDS'],
-  ['encyclopedia', 'ENCYCLOPEDIA'],
-  ['showroom', 'BAKUGAN'],
-  ['characters', 'CHARACTERS'],
-]
-
-/** Back and main-menu buttons plus tabs between the player pages. */
+/**
+ * The page's way out: back to where it was opened from, and the main menu (where every page has its tile, so the
+ * pages no longer carry a bar of tabs to each other).
+ */
 export function PageNav({ current, children }: { current: PageScreen; children?: React.ReactNode }) {
   const go = useGame((s) => s.go)
-  const openPage = useGame((s) => s.openPage)
-  const nav = useRef<HTMLElement>(null)
-  const me = useActiveProfile()
-  const unread = useUnread(
-    me?.id,
-    (me?.friends ?? []).map((f) => f.id),
-  )
-  // the open page's tab, brought into view when the page changes (not on every render)
-  const active = useRef<HTMLButtonElement>(null)
-  useEffect(() => centreInStrip(nav.current, active.current), [current])
   return (
     <div className="flex items-center gap-4">
       <button
@@ -47,43 +21,8 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
       >
         <span className="text-sm leading-none tracking-normal">⌂</span> MENU
       </button>
-      {/* the tabs scroll sideways when the window is too narrow for all of them */}
-      <div className="flex min-w-0 flex-1 items-center gap-1">
-        <ScrollButton label="◀" onClick={() => nav.current?.scrollBy({ left: -240, behavior: 'smooth' })} />
-        <nav
-          ref={nav}
-          className="no-scrollbar flex min-w-0 gap-1 overflow-x-auto rounded-full border border-white/10 bg-black/40 p-1"
-        >
-          {TABS.map(([id, label]) => (
-            <button
-              key={id}
-              ref={id === current ? active : undefined}
-              onClick={() => (id === 'events' ? openEvents() : openPage(id))}
-              className={`font-display shrink-0 rounded-full px-4 py-1.5 text-xs tracking-[0.3em] whitespace-nowrap transition ${
-                id === current ? 'bg-white/15 text-white' : 'text-white/45 hover:text-white'
-              }`}
-            >
-              {label}
-              {id === 'friends' && unread > 0 && (
-                <span className="ml-1.5 rounded-full bg-amber-400 px-1.5 text-[10px] tracking-normal text-black">{unread}</span>
-              )}
-            </button>
-          ))}
-        </nav>
-        <ScrollButton label="▶" onClick={() => nav.current?.scrollBy({ left: 240, behavior: 'smooth' })} />
-      </div>
+      <div className="min-w-0 flex-1" />
       {children && <div className="shrink-0">{children}</div>}
     </div>
-  )
-}
-
-function ScrollButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/40 text-[10px] text-white/60 transition hover:bg-white/10 hover:text-white"
-    >
-      {label}
-    </button>
   )
 }

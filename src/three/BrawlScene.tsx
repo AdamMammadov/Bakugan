@@ -13,6 +13,7 @@ import { BlobShadow } from './BlobShadow'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
 import { moveFor, type Pose } from './pose'
+import { useQuality } from '../store/useSettings'
 
 export type Phase = 'ball' | 'gate' | 'brawling' | 'monster'
 
@@ -44,6 +45,8 @@ interface Props {
 }
 
 export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbility, skin }: Props) {
+  // glow and vignette, unless the graphics are set to low
+  const { effects } = useQuality()
   // Clock time at which the brawl sequence started; drives the ball → monster timeline.
   const brawlStart = useRef<number | null>(null)
   useFrame(({ clock }) => {
@@ -102,10 +105,12 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
 
       <CameraRig phase={phase} size={(formModels({ bakugan, form })?.scale ?? 1) * (1 + form * 0.12)} />
 
-      <EffectComposer multisampling={0}>
-        <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
-        <Vignette offset={0.25} darkness={0.75} />
-      </EffectComposer>
+      {effects && (
+        <EffectComposer multisampling={0}>
+          <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
+          <Vignette offset={0.25} darkness={0.75} />
+        </EffectComposer>
+      )}
     </>
   )
 }

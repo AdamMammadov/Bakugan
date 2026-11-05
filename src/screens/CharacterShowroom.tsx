@@ -11,9 +11,11 @@ import { ELEMENT_BY_ID } from '../data/elements'
 import { CHARACTERS } from '../profile/avatar'
 import { Brawler, type BrawlerGesture } from '../three/Brawler'
 import { LiftDrag } from '../three/LiftDrag'
+import { useQuality } from '../store/useSettings'
 
 /** Browse the series' brawlers: turn their 3D model around and read their profile. */
 export function CharacterShowroom() {
+  const quality = useQuality()
   const [index, setIndex] = useState(0)
   const [gesture, setGesture] = useState<{ kind: BrawlerGesture; key: number }>({ kind: null, key: 0 })
   const c = CHARACTERS[index]
@@ -44,7 +46,7 @@ export function CharacterShowroom() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Canvas shadows camera={{ position: [0, 1.25, 3.6], fov: 40 }} dpr={[1, 2]}>
+      <Canvas shadows={quality.shadows} camera={{ position: [0, 1.25, 3.6], fov: 40 }} dpr={quality.dpr}>
         <ambientLight intensity={0.9} />
         <directionalLight position={[2, 4, 3]} intensity={2.2} castShadow />
         <pointLight position={[-2, 2, -2]} intensity={12} color={element.glow} />

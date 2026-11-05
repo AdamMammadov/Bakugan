@@ -17,12 +17,14 @@ import { BlobShadow } from '../three/BlobShadow'
 import { env, type Move, type Pose } from '../three/pose'
 import { StageFit, type Stage, type Sweep } from '../three/StageFit'
 import * as THREE from 'three'
+import { useQuality } from '../store/useSettings'
 
 type Shelf = 'mine' | 'all'
 type View = 'monster' | 'ball'
 
 /** Browse every Bakugan and every evolution in 3D: the player's own collection or the whole game. */
 export function BakuganShowroom() {
+  const quality = useQuality()
   const profile = useActiveProfile()
   const openBakugan = useGame((s) => s.openBakugan)
   const chooseElement = useGame((s) => s.chooseElement)
@@ -147,7 +149,7 @@ export function BakuganShowroom() {
     >
       {/* looking a little down at the floor's middle; StageFit then moves in and up to the Bakugan, keeping the angle */}
       {bakugan && (
-        <Canvas camera={{ position: [0, 0.7, 6], fov: 24 }} dpr={[1, 2]}>
+        <Canvas camera={{ position: [0, 0.7, 6], fov: 24 }} dpr={quality.dpr}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 6, 4]} intensity={2.2} />
           <pointLight position={[-3, 2.5, -2]} intensity={20} color={el.glow} />

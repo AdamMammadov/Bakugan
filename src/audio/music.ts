@@ -1,4 +1,5 @@
 import { useGame } from '../store/useGame'
+import { useSettings } from '../store/useSettings'
 import { audio } from './sfx'
 
 /**
@@ -1219,7 +1220,7 @@ function tick() {
   const now = a.currentTime
   // music level: off when muted, quieter while someone is talking
   const { muted, music } = useGame.getState()
-  const level = muted || !music ? 0 : (speaking() ? 0.12 : 0.32) * (p.song.gain ?? 1)
+  const level = muted || !music ? 0 : (speaking() ? 0.12 : 0.32) * (p.song.gain ?? 1) * useSettings.getState().musicVolume
   if (level !== p.level) {
     p.bus.gain.setTargetAtTime(level, now, 0.3)
     p.level = level

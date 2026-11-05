@@ -7,6 +7,7 @@ import { ELEMENT_BY_ID } from '../data/elements'
 import { MonsterModel } from '../three/BakuganModels'
 import { StageFit, type Sweep } from '../three/StageFit'
 import { leadKey, saveLeadPicture } from './menuLead'
+import { useQuality } from '../store/useSettings'
 
 /** Tallest the saved picture is kept, in pixels. */
 const PICTURE_H = 420
@@ -121,6 +122,7 @@ function Fit({
 
 /** The player's lead Bakugan on a glowing stand, turning slowly: the main menu's centrepiece. */
 export default function MenuStage({ id, form, skin, onReady }: { id: string; form: number; skin?: string; onReady: () => void }) {
+  const quality = useQuality(1.75)
   const bakugan = BAKUGAN.find((b) => b.id === id) ?? BAKUGAN[0]
   const entrant = { bakugan, form, skin }
   const el = ELEMENT_BY_ID[bakugan.element]
@@ -134,7 +136,7 @@ export default function MenuStage({ id, form, skin, onReady }: { id: string; for
     return r
   }
   return (
-    <Canvas camera={{ position: [0, 3, 12.5], fov: 30 }} dpr={[1, 1.75]} gl={{ alpha: true, antialias: true }}>
+    <Canvas camera={{ position: [0, 3, 12.5], fov: 30 }} dpr={quality.dpr} gl={{ alpha: true, antialias: true }}>
       <OrbitControls makeDefault enableRotate={false} enableZoom={false} enablePan={false} />
       <ambientLight intensity={0.85} />
       <directionalLight position={[3, 5, 4]} intensity={2.4} />

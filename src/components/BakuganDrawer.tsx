@@ -13,6 +13,7 @@ import { MonsterModel } from '../three/BakuganModels'
 import { BakuganThumb } from './BakuganThumb'
 import { entrantOf, joinTeam, leadTeam, leaveTeam, rowOf, short, type Row } from './collection'
 import { RewardIcon } from './RewardIcon'
+import { useQuality } from '../store/useSettings'
 
 /**
  * A Bakugan's details, sliding in from the right: the Bakugan in 3D, its team place, evolution path, XP, ability
@@ -131,6 +132,7 @@ function NavButton({
 
 /** The Bakugan in 3D, turning slowly (drag to turn it), as the inventory's try-on shows it. */
 function Stage({ row }: { row: Row }) {
+  const quality = useQuality(1.5)
   const { entrant, element: el } = row
   const models = formModels(entrant)
   const skin = row.owned.skin ? SKIN_BY_ID[row.owned.skin] : undefined
@@ -140,7 +142,7 @@ function Stage({ row }: { row: Row }) {
       className="relative h-72 cursor-grab overflow-hidden active:cursor-grabbing"
       style={{ background: `radial-gradient(circle at 50% 45%, ${el.color}66, #07080d 72%)` }}
     >
-      <Canvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={[1, 1.5]}>
+      <Canvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={quality.dpr}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 6, 4]} intensity={2.2} />
         <pointLight position={[-3, 2.5, -2]} intensity={20} color={skin?.glow ?? el.glow} />

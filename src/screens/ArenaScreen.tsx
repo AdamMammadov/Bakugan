@@ -65,6 +65,7 @@ import { fx } from '../three/fx'
 import { announce, crowd } from '../three/stadium'
 import { AHEAD, BEHIND, BrawlerHud, GateSlot, TurnCounter } from './BattleHud'
 import { TagArena } from './TagArena'
+import { useQuality } from '../store/useSettings'
 
 const INTRO_MS = 2600
 /** "BATTLE n" before the Gate Card is set. */
@@ -381,6 +382,7 @@ export function Brawl({
   callInset,
   partners,
 }: BrawlProps) {
+  const quality = useQuality()
   useEffect(() => teams.flat().forEach((e) => preloadModels(e.bakugan)), [teams])
 
   // a coin toss decides who sets the first Gate Card
@@ -887,7 +889,7 @@ export function Brawl({
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows camera={{ position: [0, 11, 46], fov: 50 }} dpr={[1, 2]}>
+      <Canvas shadows={quality.shadows} camera={{ position: [0, 11, 46], fov: 50 }} dpr={quality.dpr}>
         <ArenaScene
           fighters={[cast.teams[0][onCard(0)], cast.teams[1][onCard(1)]]}
           // a face-down Gate Card shows no attribute; it lights up while open (and goes dark again when closed)

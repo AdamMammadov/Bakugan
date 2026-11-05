@@ -12,10 +12,12 @@ import { savePhoto } from '../photo'
 import { BrawlScene, type Phase } from '../three/BrawlScene'
 import { PhotoCapture } from '../three/PhotoCapture'
 import { preloadModels } from '../three/BakuganModels'
+import { useQuality } from '../store/useSettings'
 
 const BRAWL_SEQUENCE_MS = 3000
 
 export function Viewer() {
+  const quality = useQuality()
   const bakuganId = useGame((s) => s.bakuganId)
   const go = useGame((s) => s.go)
   const compareWith = useGame((s) => s.compareWith)
@@ -100,7 +102,7 @@ export function Viewer() {
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={[1, 2]}>
+      <Canvas shadows={quality.shadows} camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={quality.dpr}>
         <BrawlScene
           bakugan={bakugan}
           element={element}

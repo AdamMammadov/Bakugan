@@ -1,5 +1,6 @@
 import type { CrowdMood } from '../three/stadium'
 import { useGame } from '../store/useGame'
+import { useSettings } from '../store/useSettings'
 import { audio } from './sfx'
 
 /**
@@ -45,7 +46,7 @@ function out() {
 function level() {
   if (!bus) return
   const a = audio()
-  const want = users > 0 && !muted() ? LEVEL * (talking() ? 0.55 : 1) : 0
+  const want = users > 0 && !muted() ? LEVEL * useSettings.getState().crowdVolume * (talking() ? 0.55 : 1) : 0
   bus.gain.setTargetAtTime(want, a.currentTime, 0.15)
   // a tense battle: the stands buzz louder
   murmur?.swell.gain.setTargetAtTime(1 + tension * 0.9, a.currentTime, 0.6)
@@ -200,8 +201,15 @@ function whistle(at: number, peak: number) {
 }
 
 /** Opens the arena's crowd: the murmur fades in. Returns the way to close it again. */
+let watching = false
+
 export function startCrowd() {
   users++
+  // the crowd volume setting takes effect at once (watched from the first time the crowd is heard)
+  if (!watching) {
+    watching = true
+    useSettings.subscribe((s, prev) => void (s.crowdVolume !== prev.crowdVolume && level()))
+  }
   const a = audio()
   if (!murmur) {
     // babble of thousands of voices: noise through a few voice bands, swaying slowly

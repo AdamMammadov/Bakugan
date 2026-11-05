@@ -6,6 +6,7 @@ import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { CHARACTER_BY_ID, DEFAULT_PARTS, lookOf, type Avatar } from '../profile/avatar'
 import { MonsterModel } from '../three/BakuganModels'
 import { Brawler } from '../three/Brawler'
+import { useQuality } from '../store/useSettings'
 
 /** Standing still: the stage has no gestures. */
 const IDLE = { kind: null, key: 0 }
@@ -23,6 +24,7 @@ export default function FriendStage({
   element: ElementId
   lead?: { id: string; form: number }
 }) {
+  const quality = useQuality()
   const look = lookOf(avatar, element)
   const character = look.kind === 'preset' ? CHARACTER_BY_ID[look.id] : undefined
   const parts = look.kind === 'custom' ? look.parts : (character?.parts ?? DEFAULT_PARTS)
@@ -32,7 +34,7 @@ export default function FriendStage({
   const size = entrant ? (1 + entrant.form * 0.12) * (formModels(entrant)?.scale ?? 1) : 1
   const fly = entrant ? !!formModels(entrant)?.fly : false
   return (
-    <Canvas camera={{ position: [0, 1.6, 5.4], fov: 36 }} dpr={[1, 2]}>
+    <Canvas camera={{ position: [0, 1.6, 5.4], fov: 36 }} dpr={quality.dpr}>
       <ambientLight intensity={0.9} />
       <directionalLight position={[2, 4, 3]} intensity={2.2} />
       <pointLight position={[-2, 2.5, -2]} intensity={14} color={el.glow} />
