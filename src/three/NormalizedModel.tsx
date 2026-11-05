@@ -1,8 +1,9 @@
 import { useAnimations, useGLTF } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
-import { type RefObject, useEffect, useMemo, useRef } from 'react'
+import { createPortal, useFrame } from '@react-three/fiber'
+import { Fragment, type RefObject, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js'
+import { LiveFlame } from './LiveFlame'
 import { rigPose, type Pose, type PoseRef } from './pose'
 
 /**
@@ -135,6 +136,17 @@ export function NormalizedModel({
     }
   })
 
+  // fires burning on the model (its glTF extras say where: { flame: { height, width } } on an empty node that rides
+  // on a bone), drawn live by the game
+  const flames = useMemo(() => {
+    const out: { node: THREE.Object3D; height: number; width: number }[] = []
+    scene.traverse((o) => {
+      const f = o.userData.flame as { height?: number; width?: number } | undefined
+      if (f?.height && f.width) out.push({ node: o, height: f.height, width: f.width })
+    })
+    return out
+  }, [scene])
+
   const fit = useMemo(() => {
     // bones placed first, so a skinned mesh is measured where it is drawn
     scene.updateMatrixWorld(true)
@@ -217,6 +229,9 @@ export function NormalizedModel({
       <group position={fit.offset} scale={fit.scale}>
         <group ref={root}>
           <primitive object={scene} />
+          {flames.map((f, i) => (
+            <Fragment key={i}>{createPortal(<LiveFlame height={f.height} width={f.width} />, f.node)}</Fragment>
+          ))}
         </group>
       </group>
     </group>

@@ -3584,6 +3584,76 @@ export const ROSTER: Bakugan[] = [
         "name": "Embral",
         "series": "Original",
         "gPower": 470
+      },
+      {
+        "name": "Pyroclast Embral",
+        "series": "Original",
+        "gPower": 750,
+        "abilities": [
+          {
+            "id": "pyroclast-crown",
+            "name": "Pyroclast Crown",
+            "type": "boost",
+            "amount": 250,
+            "effect": "aura",
+            "description": "The crown of fire on Pyroclast Embral's helmet roars up white-hot: adds 250 G to Pyroclast Embral.",
+            "estimated": true
+          },
+          {
+            "id": "obsidian-bastion",
+            "name": "Obsidian Bastion",
+            "type": "shield",
+            "amount": 0,
+            "effect": "shieldDome",
+            "description": "Pyroclast Embral locks its spiked obsidian plates together: cancels the opponent's last ability card.",
+            "estimated": true
+          },
+          {
+            "id": "ashstorm-wings",
+            "name": "Ashstorm Wings",
+            "type": "weaken",
+            "amount": 200,
+            "effect": "fireball",
+            "description": "Its great wings beat a storm of burning ash over the opponent: subtracts 200 G from the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "magma-heart-siphon",
+            "name": "Magma Heart Siphon",
+            "type": "drain",
+            "amount": 200,
+            "effect": "flameWave",
+            "description": "The magma heart in its chest draws the opponent's heat into it: transfers 200 G from the opponent to Pyroclast Embral.",
+            "estimated": true
+          },
+          {
+            "id": "caldera-rising",
+            "name": "Caldera Rising",
+            "type": "boost",
+            "amount": 200,
+            "effect": "aura",
+            "description": "The ground under Pyroclast Embral cracks open into a glowing caldera and lifts it on its heat: adds 200 G to Pyroclast Embral.",
+            "estimated": true
+          },
+          {
+            "id": "lava-vein-lash",
+            "name": "Lava Vein Lash",
+            "type": "attack",
+            "amount": 200,
+            "effect": "flameWave",
+            "description": "The glowing veins in its wings burst into whips of lava that lash the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "pyroclastic-surge",
+            "name": "Pyroclastic Surge",
+            "type": "attack",
+            "amount": 250,
+            "effect": "fireball",
+            "description": "Pyroclast Embral looses a rolling avalanche of fire, ash and molten rock over the opponent.",
+            "estimated": true
+          }
+        ]
       }
     ]
   },

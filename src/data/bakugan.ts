@@ -401,6 +401,12 @@ if (phantom)
     stage: 1.25,
   }
 
+const pyroclast = ROSTER.find((b) => b.id === 'embral')?.evolutions.find((e) => e.name === 'Pyroclast Embral')
+// Embral evolved, from the owner's own model: its unpainted flames taken off (the game draws live fire on its crown and
+// tail instead), its armour turned to obsidian split by glowing lava cracks, embers in its scales, the magma heart in
+// its chest and its eyes aglow; welded so no seam opens, skinned and inked. It keeps Embral's ball
+if (pyroclast) pyroclast.models = { ...ROSTER_MODELS.embral, monster: 'models/embral/pyroclast.glb', scale: 2.2, stage: 1.25 }
+
 BAKUGAN.push(...ROSTER)
 
 export const bakuganForElement = (element: ElementId) => BAKUGAN.filter((b) => b.element === element)

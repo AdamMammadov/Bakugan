@@ -3669,5 +3669,98 @@
       "test": "mesh === 'tail'",
       "swing": 0.3
     }
+  ],
+  "pyroclast-embral": [
+    {
+      "name": "head",
+      "pivot": [
+        0.0,
+        0.235,
+        0.02
+      ],
+      "test": "mesh === 'head'",
+      "swing": 0.5
+    },
+    {
+      "name": "wing_l",
+      "pivot": [
+        0.12,
+        0.12,
+        -0.018
+      ],
+      "test": "mesh === 'wing_l'",
+      "swing": 0.4
+    },
+    {
+      "name": "wing_r",
+      "pivot": [
+        -0.12,
+        0.12,
+        -0.018
+      ],
+      "test": "mesh === 'wing_r'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        0.172,
+        0.085,
+        0.035
+      ],
+      "test": "mesh === 'arm_l'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -0.14,
+        0.085,
+        0.033
+      ],
+      "test": "mesh === 'arm_r'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        0.068,
+        -0.09,
+        0.04
+      ],
+      "test": "mesh === 'leg_l'",
+      "swing": 0.35
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -0.06,
+        -0.09,
+        0.035
+      ],
+      "test": "mesh === 'leg_r'",
+      "swing": 0.35
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0.03,
+        0.0,
+        -0.06
+      ],
+      "test": "mesh === 'tail'",
+      "swing": 0.3
+    },
+    {
+      "name": "tail_tip",
+      "parent": "tail",
+      "pivot": [
+        -0.24,
+        -0.39,
+        -0.12
+      ],
+      "test": "mesh === 'tail_tip'",
+      "swing": 0.4
+    }
   ]
 }

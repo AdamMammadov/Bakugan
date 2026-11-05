@@ -117,7 +117,7 @@ ROSTER = [
     ('dharak', 'Dharak', 'darkus', 'Emperor Barodius', 800, [('Phantom Dharak', 'Gundalian Invaders', 2800)],
      'Emperor Barodius\'s Guardian and the Darkus pair of the Twelve Orders of Gundalia, from the same ancient lineage as Drago. He blasts dark energy from his mouth, and few Bakugan have ever stood against him.'),
     # ---- the game owner's own design
-    ('embral', 'Embral', 'pyrus', 'Game Owner', 470, [],
+    ('embral', 'Embral', 'pyrus', 'Game Owner', 470, [('Pyroclast Embral', 'Original', 750)],
      'A fire dragon clad in obsidian armour split by glowing lava cracks, with a crown of flame on its head and a tail that ends in fire. When it spreads its wings, veins of magma light up across them.'),
     ('tidevane', 'Tidevane', 'aquos', 'Game Owner', 470, [],
      'A sea dragon knight from the deep, its navy hide dotted with pale spots like stars over night water. It wears blue-steel armour lit by glowing tide-lines, spreads wings like a manta ray\'s and holds a golden trident whose prongs burn with blue water-fire.'),
@@ -164,6 +164,16 @@ OWNER_DECKS = {'dharak': [
     ('Gatemelt Blaze', 'boost', 150, 'Embral melts the Gate Card under it into glowing magma and rises on its heat: adds 150 G to Embral.'),
     ('Veinflare Burst', 'attack', 150, 'The magma veins in Embral\'s wings flare white-hot and burst over the opponent.'),
     ('Ember Cataclysm', 'attack', 200, 'Embral gathers every ember of its power into one blast of white fire over the opponent.'),
+],
+    # Embral evolved: bigger, armoured in spiked obsidian, a magma heart in its chest; its cards are its own too
+    'embral~1': [
+    ('Pyroclast Crown', 'boost', 250, 'The crown of fire on Pyroclast Embral\'s helmet roars up white-hot: adds 250 G to Pyroclast Embral.'),
+    ('Obsidian Bastion', 'shield', 0, 'Pyroclast Embral locks its spiked obsidian plates together: cancels the opponent\'s last ability card.'),
+    ('Ashstorm Wings', 'weaken', 200, 'Its great wings beat a storm of burning ash over the opponent: subtracts 200 G from the opponent.'),
+    ('Magma Heart Siphon', 'drain', 200, 'The magma heart in its chest draws the opponent\'s heat into it: transfers 200 G from the opponent to Pyroclast Embral.'),
+    ('Caldera Rising', 'boost', 200, 'The ground under Pyroclast Embral cracks open into a glowing caldera and lifts it on its heat: adds 200 G to Pyroclast Embral.'),
+    ('Lava Vein Lash', 'attack', 200, 'The glowing veins in its wings burst into whips of lava that lash the opponent.'),
+    ('Pyroclastic Surge', 'attack', 250, 'Pyroclast Embral looses a rolling avalanche of fire, ash and molten rock over the opponent.'),
 ],
     # Tidevane is the owner's own design too, so its cards are new as well
     'tidevane': [
