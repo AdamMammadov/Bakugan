@@ -344,12 +344,12 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // the game owner's own design, from the owner's own model: its broken wing replaced by a mirror of the good one,
   // its flaming tail end (grown into its left foot) swung out clear of it, fire painted on its crown and tail flame
   // and lava cracks on its armour (they glow), skinned and inked. A winged giant standing on its legs
-  embral: { monster: 'models/embral/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
+  embral: { ball: 'models/embral/ball.glb', monster: 'models/embral/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
   // the game owner's own design, from the owner's own model: a claw lying loose on the floor dropped, the wings (in
   // pieces in the model) rebuilt whole and set behind the shoulder pads, welded so no seam opens, repainted after the
   // owner's picture (deep navy skin with pale spots, blue-steel armour, gold claws and trident; the tide-lines, eyes
   // and trident tips glow), skinned and inked. A winged giant standing on its legs, its trident in its right hand
-  tidevane: { monster: 'models/tidevane/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
+  tidevane: { ball: 'models/tidevane/ball.glb', monster: 'models/tidevane/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
