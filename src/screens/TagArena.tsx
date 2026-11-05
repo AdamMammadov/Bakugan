@@ -608,7 +608,10 @@ function DuelPanel({
   const s = mini.state
   const d = s.duel
   const log = useRef<HTMLDivElement>(null)
-  useEffect(() => log.current?.scrollTo({ top: log.current.scrollHeight }), [mini.log.length, expanded])
+  // (in braces: Chrome's scrollTo now returns a promise, and an effect that returns one crashes the page)
+  useEffect(() => {
+    log.current?.scrollTo({ top: log.current.scrollHeight })
+  }, [mini.log.length, expanded])
   const row = (side: SideIndex) => {
     const slot = mini.pair[side]
     const pick = d ? s.sides[side].active : s.thrown[side]
