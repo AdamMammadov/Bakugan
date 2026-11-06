@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
+import { RankedSeason } from '../components/RankedSeason'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import type { Avatar as AvatarValue } from '../profile/avatar'
 import { BOTS, botNow } from '../profile/bots'
@@ -36,7 +37,7 @@ export function RankingsScreen() {
   const profiles = useProfiles((s) => s.profiles)
   const activeId = useProfiles((s) => s.activeId)
   const clans = useClans((s) => s.clans)
-  const [tab, setTab] = useState<'players' | 'clans'>('players')
+  const [tab, setTab] = useState<'players' | 'clans' | 'season'>('players')
   // CPU brawlers keep brawling (and moving clans) while the rankings are open
   useClanLife()
   const now = useMinute()
@@ -111,12 +112,12 @@ export function RankingsScreen() {
         win gives and the more a loss takes (friendly brawls don’t count). CPU brawlers keep brawling around the clock.
       </p>
 
-      {/* rank ladder: each tier's divisions III → II → I, then the top rank */}
+      {/* rank ladder: each tier's divisions V → I, then the top rank */}
       <div className="mt-6 flex flex-wrap gap-2">
         {TIERS.map((t, i) => {
           const swing = ratingSwing(t.min)
           return (
-            <div key={t.name} className="min-w-[10.5rem] flex-1 rounded-md border border-white/10 bg-black/40 px-3 py-2">
+            <div key={t.name} className="min-w-[13rem] flex-1 rounded-md border border-white/10 bg-black/40 px-3 py-2">
               <p className="font-display text-sm font-bold" style={{ color: TIER_COLORS[i] }}>
                 {t.name}
               </p>
@@ -165,13 +166,13 @@ export function RankingsScreen() {
       </div>
 
       <div className="mt-8 flex gap-2">
-        {(['players', 'clans'] as const).map((t) => (
+        {(['players', 'clans', 'season'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`font-display rounded border px-4 py-1.5 text-xs tracking-[0.3em] ${tab === t ? 'border-white text-white' : 'border-white/15 text-white/50'}`}
           >
-            {t.toUpperCase()}
+            {t === 'season' ? 'SEASON & GLORY' : t.toUpperCase()}
           </button>
         ))}
         {/* where the player stands on the shown list: themselves among brawlers, their clan among clans */}
@@ -189,7 +190,9 @@ export function RankingsScreen() {
         )}
       </div>
 
-      {tab === 'players' ? (
+      {tab === 'season' ? (
+        <RankedSeason now={now} />
+      ) : tab === 'players' ? (
         <table className="mt-4 w-full border-separate border-spacing-y-1.5 text-left">
           <thead className="font-display text-[10px] tracking-[0.3em] text-white/40">
             <tr>

@@ -538,7 +538,7 @@ function RulesTab() {
         `A win gives each of your Bakugan ${XP.winMin}–${XP.winMax} XP (+${XP.ko} per battle it wins), ${BP.win} Battle Points (+${BP.streakBonus} per win streak) and about +${RATING.win} rating at Rookie against an equal brawler, more against a stronger one and less the higher your rank. A loss gives ${XP.lossMin}–${XP.lossMax} XP and ${BP.loss} BP, and costs about −${RATING.loss} rating at Rookie, more the higher your rank.`,
         `Evolving takes ${EVOLVE_XP.map((x) => x.toLocaleString('en')).join(' / ')} XP for the 2nd / 3rd / 4th form. A new ability card unlocks every 1,500 XP.`,
         `New Bakugan cost ${PRICES.ownElement.toLocaleString('en')} BP (your attribute) or ${PRICES.otherElement.toLocaleString('en')} BP (other attributes), or unlock with ${PRICES.ownElementXp.toLocaleString('en')} / ${PRICES.otherElementXp.toLocaleString('en')} player XP.`,
-        `Ranks: ${TIERS.map((t) => t.name).join(', ')}, each with divisions III → II → I, then ${TOP_RANK.name} (${TOP_RANK.min.toLocaleString('en')}+). Rank score = rating + 1 per ${RANK_XP.per} XP (at most ${RANK_XP.max}); the battle screen shows it as HSP under each brawler.`,
+        `Ranks: ${TIERS.map((t) => t.name).join(', ')}, each with divisions V → IV → III → II → I, then ${TOP_RANK.name} (${TOP_RANK.min.toLocaleString('en')}+). Rank score = rating + 1 per ${RANK_XP.per} XP (at most ${RANK_XP.max}); the battle screen shows it as HSP under each brawler.`,
       ],
     ],
   ]

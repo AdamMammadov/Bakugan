@@ -20,7 +20,12 @@ export function SeasonNotice() {
   return (
     <AnimatePresence>
       {notice && screen !== 'intro' && screen !== 'arena' && (
-        <motion.div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
           <motion.div
             className="w-[30rem] rounded-2xl border-2 border-amber-300/70 bg-[#0b0c12] p-8 text-center"
             initial={{ scale: 0.9 }}
@@ -30,9 +35,14 @@ export function SeasonNotice() {
             <h2 className="font-display mt-2 text-4xl font-black">NEW SEASON!</h2>
             <p className="mt-4 text-white/70">
               You finished the pass at level {notice.level} and earned the title{' '}
-              <span className="font-bold text-amber-200">“{notice.title}”</span>. Your rating was softly reset and a fresh pass with
-              new Bakugan is waiting.
+              <span className="font-bold text-amber-200">“{notice.title}”</span>. Your rating was softly reset and a fresh pass
+              with new Bakugan is waiting.
             </p>
+            {!!notice.glory && (
+              <p className="font-display mt-4 text-lg font-black text-amber-200">
+                BEST RANK {notice.peak?.toUpperCase()} · +{notice.glory.toLocaleString('en')} GLORY
+              </p>
+            )}
             <div className="mt-6 flex justify-center gap-3">
               <button
                 onClick={() => {
@@ -43,7 +53,10 @@ export function SeasonNotice() {
               >
                 OPEN PASS
               </button>
-              <button onClick={dismiss} className="font-display border border-white/30 px-6 py-2 tracking-[0.3em] hover:bg-white/10">
+              <button
+                onClick={dismiss}
+                className="font-display border border-white/30 px-6 py-2 tracking-[0.3em] hover:bg-white/10"
+              >
                 LATER
               </button>
             </div>

@@ -1,11 +1,11 @@
 import { useId } from 'react'
 import type { Division } from '../profile/useProfiles'
 
-/** Chevrons per division: III is the first step of a tier, I the last. */
-const CHEVRONS: Record<Division, number> = { III: 1, II: 2, I: 3 }
+/** Chevrons per division: V is the first step of a tier, I the last (I has the most). */
+const CHEVRONS: Record<Division, number> = { V: 1, IV: 2, III: 3, II: 4, I: 5 }
 
 /**
- * A rank's badge: a shield in the tier's colour with one to three chevrons for the division, and a crown for the
+ * A rank's badge: a shield in the tier's colour with one to five chevrons for the division, and a crown for the
  * top rank. `tier` (0–5) adds wings from Ace Brawler up.
  */
 export function RankEmblem({
@@ -51,10 +51,10 @@ export function RankEmblem({
         Array.from({ length: chevrons }, (_, i) => (
           <path
             key={i}
-            d={`M22 ${24 + i * 8}l10 6 10-6`}
+            d={`M23 ${(chevrons > 3 ? 19 : 24) + i * (chevrons > 3 ? 6 : 8)}l9 ${chevrons > 3 ? 5 : 6} 9-${chevrons > 3 ? 5 : 6}`}
             fill="none"
             stroke="#fff"
-            strokeWidth="3.2"
+            strokeWidth={chevrons > 3 ? 2.6 : 3.2}
             strokeLinecap="round"
             strokeLinejoin="round"
           />

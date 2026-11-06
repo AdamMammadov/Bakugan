@@ -6,6 +6,7 @@ import { normalizeAvatar, type Avatar } from './avatar'
 import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
 import { isReleased, LAUNCH, OWNER_ONLY } from '../season/release'
 import { cosmeticsOnSale, PACKS } from '../shop/shop'
+import { gloryItem } from '../season/glory'
 import {
   challengeRequirement,
   PASS_BAKUGAN_PRICE,
@@ -54,7 +55,7 @@ export const PRICES = {
   otherElementXp: 30000,
 }
 
-/** The six major tiers (index 0–5 sets CPU strength and matchmaking); each has divisions III → II → I. */
+/** The six major tiers (index 0–5 sets CPU strength and matchmaking); each has divisions V → IV → III → II → I. */
 export const TIERS = [
   { name: 'Rookie', min: 0 },
   { name: 'Brawler', min: 600 },
@@ -64,10 +65,12 @@ export const TIERS = [
   { name: 'Legendary Brawler', min: 4050 },
 ]
 
-/** Score each division of a major tier takes: the higher the tier, the wider. */
-const DIVISION_SIZE = [200, 250, 250, 300, 350, 400]
+/** Divisions of a major tier, lowest first. */
+export const DIVISIONS = ['V', 'IV', 'III', 'II', 'I'] as const
+/** Score each division of a major tier takes: the tier's span split evenly (the last tier ends at the top rank). */
+const DIVISION_SIZE = [120, 150, 150, 180, 210, 250]
 
-export type Division = 'III' | 'II' | 'I'
+export type Division = (typeof DIVISIONS)[number]
 
 export interface Rank {
   /** E.g. "Battle Brawler II"; the top rank has no division. */
@@ -81,10 +84,10 @@ export interface Rank {
 /** The rank above Legendary Brawler I that only very few reach. */
 export const TOP_RANK = { name: 'Legend of Vestroia', min: 5300 }
 
-/** Every rank, lowest first: 6 tiers × 3 divisions, then the top rank. */
+/** Every rank, lowest first: 6 tiers × 5 divisions, then the top rank. */
 export const RANKS: Rank[] = [
   ...TIERS.flatMap((t, tier) =>
-    (['III', 'II', 'I'] as const).map((division, k) => ({
+    DIVISIONS.map((division, k) => ({
       name: `${t.name} ${division}`,
       tier,
       division,
@@ -154,6 +157,8 @@ interface ChallengeProgress {
 export interface SeasonProgress {
   id: number
   passXp: number
+  /** The best rank score reached this season: Glory is paid for it when the season ends. */
+  peak?: number
   premium: boolean
   /** Pass levels whose reward was collected. */
   claimed: number[]
@@ -194,7 +199,9 @@ export interface Profile {
   cardKeys?: number
   seasonHistory?: { season: number; level: number; tier: string; score: number }[]
   /** Shown once after a season ends. */
-  seasonNotice?: { ended: number; title: string; level: number } | null
+  seasonNotice?: { ended: number; title: string; level: number; glory?: number; peak?: string } | null
+  /** Glory: paid at the end of each season for the best rank reached in it, spent in the Glory store. */
+  glory?: number
   /** Friends (profile or bot ids). A CPU brawler accepts a few seconds after the request: until `since` it is pending. */
   friends?: Friend[]
 }
@@ -432,14 +439,33 @@ function rollSeason(p: Profile, now = Date.now()): Profile {
   const title = `Season ${old.id} ${tier}`
   const owned = new Set(p.cosmetics?.owned ?? [])
   owned.add(`title:${title}`)
+  // Glory for the best rank of the season (only for a season played in: a ranked battle sets the peak)
+  const best = Math.max(old.peak ?? 0, old.wins > 0 ? rankScore(p) : 0)
+  const glory = old.wins > 0 || old.peak ? gloryFor(best) : 0
   return {
     ...p,
     rating: Math.floor(p.rating * 0.6),
     season: emptySeason(id, now),
+    glory: (p.glory ?? 0) + glory,
     cosmetics: { ...p.cosmetics, owned: [...owned] },
     seasonHistory: [...(p.seasonHistory ?? []), { season: old.id, level: passLevel(old.passXp), tier, score: rankScore(p) }],
-    seasonNotice: { ended: old.id, title, level: passLevel(old.passXp) },
+    seasonNotice: { ended: old.id, title, level: passLevel(old.passXp), glory, peak: tierOf(best).rank },
   }
+}
+
+/**
+ * Glory paid at the end of a season for the best rank reached in it: more for every rank up the ladder, and a big
+ * bonus for the top rank.
+ */
+/** The highest major tier the player has reached: in a past season, or this one so far. */
+export function bestTier(p: Profile) {
+  const scores = [rankScore(p), p.season?.peak ?? 0, ...(p.seasonHistory ?? []).map((h) => h.score)]
+  return tierOf(Math.max(...scores)).index
+}
+
+export function gloryFor(score: number) {
+  const t = tierOf(score)
+  return 100 + t.step * 60 + (t.top ? 1000 : 0)
 }
 
 /** Gives a pass reward to the profile. Returns null when it cannot be given yet. */
@@ -517,6 +543,8 @@ interface ProfilesState {
   applyCardKey: (bakuganId: string) => void
   /** Buys a BP-priced shop item (cosmetic or pack). Money items wait for the online version. */
   buyShopItem: (key: string) => boolean
+  /** Buys from the Glory store with Glory (see season/glory.ts). */
+  buyGlory: (key: string) => boolean
   equip: (slot: 'title' | 'frame', value: string | undefined) => void
   /** Turns the automatic use of XP Boosts on or off. */
   setBoostsOn: (on: boolean) => void
@@ -691,6 +719,7 @@ export const useProfiles = create<ProfilesState>()(
         reward.boosted = boosted
         const nextSeason: SeasonProgress = {
           ...season,
+          peak: Math.max(season.peak ?? 0, rankScore({ rating, xp })),
           passXp: season.passXp + reward.passXp,
           battleXp: season.battleXp + battlePass,
           wins: season.wins + (report.won ? 1 : 0),
@@ -715,6 +744,17 @@ export const useProfiles = create<ProfilesState>()(
       },
       syncSeason: () => set((s) => patchActive(s, (p) => rollSeason(p))),
       dismissSeasonNotice: () => set((s) => patchActive(s, (p) => ({ ...p, seasonNotice: null }))),
+      buyGlory: (key) => {
+        const p = get().profiles.find((x) => x.id === get().activeId)
+        const item = gloryItem(key)
+        if (!p || !item || (p.glory ?? 0) < item.price) return false
+        if (!item.repeat && p.cosmetics?.owned.includes(key)) return false
+        if (item.tier !== undefined && bestTier(p) < item.tier) return false
+        const next = grant(p, item.reward, currentSeason().id)
+        if (!next) return false
+        set((s) => patchActive(s, () => ({ ...next, glory: (p.glory ?? 0) - item.price })))
+        return true
+      },
       grantRewards: (rewards) => {
         const p = get().profiles.find((x) => x.id === get().activeId)
         if (!p) return false

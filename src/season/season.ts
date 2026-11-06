@@ -123,6 +123,9 @@ export const SKINS: Skin[] = [
   { id: 'aurora', name: 'Aurora', color: '#1b6b73', glow: '#9cffd9', rarity: 'epic', from: SHOP },
   { id: 'void', name: 'Void', color: '#0a0612', glow: '#b066ff', rarity: 'legendary', from: SHOP },
   { id: 'prism', name: 'Prism', color: '#d9e6ff', glow: '#ff9cf5', rarity: 'legendary', from: SHOP },
+  // the Glory store (ranked seasons): earned only
+  { id: 'victor', name: 'Victor', color: '#e8e2d0', glow: '#ffd76a', rarity: 'epic', from: EARNED },
+  { id: 'eclipse', name: 'Eclipse', color: '#0d0a14', glow: '#ff8a3d', rarity: 'legendary', from: EARNED },
   // model skins
   {
     id: 'titanium-trox',
@@ -176,6 +179,14 @@ export const FRAMES: Record<string, CosmeticBase & { ring: string }> = {
   champion: {
     name: 'Champion Frame',
     ring: 'conic-gradient(#fff1a8,#d4af37,#fff,#d4af37,#fff1a8)',
+    rarity: 'legendary',
+    from: EARNED,
+  },
+  // the Glory store (ranked seasons): earned only
+  valor: { name: 'Valor Frame', ring: 'linear-gradient(135deg,#5a1a10,#e8b04a,#fff2c4,#5a1a10)', rarity: 'epic', from: EARNED },
+  conqueror: {
+    name: 'Conqueror Frame',
+    ring: 'conic-gradient(#ffd76a,#ff3b2f,#1a0a10,#ff3b2f,#ffd76a)',
     rarity: 'legendary',
     from: EARNED,
   },
