@@ -3,7 +3,7 @@ import { ORIGINAL_ABILITIES, ROSTER } from './roster'
 
 /**
  * How an ability works in battle (a card counts for the battle it is played in; playing one is a move). The higher
- * G-Power wins the clash, and a Bakugan that drops to 0 G is defeated at once:
+ * G-Power wins the clash, and a Bakugan knocked down to a quarter of its G-Power or less is defeated at once:
  * - attack: the Bakugan strikes with it: the opponent's G-Power drops by its amount at once
  * - boost:  raises the user's G-Power
  * - weaken: lowers the opponent's G-Power
@@ -437,11 +437,11 @@ export const abilitySelfBonus = (a: Ability) =>
 export function battleEffect(a: Ability) {
   switch (a.type) {
     case 'attack':
-      return `Strikes the opponent at once: its G-Power drops by ${a.amount} for this battle. At 0 G it is defeated.`
+      return `Strikes the opponent at once: its G-Power drops by ${a.amount} for this battle. Knocked down to a quarter of its G or less, it is defeated.`
     case 'boost':
       return `Raises your G-Power by ${a.amount} for this battle.`
     case 'weaken':
-      return `Cuts the opponent's G-Power by ${a.amount} for this battle. At 0 G it is defeated.`
+      return `Cuts the opponent's G-Power by ${a.amount} for this battle. Knocked down to a quarter of its G or less, it is defeated.`
     case 'drain':
       return `Steals ${a.amount}G from the opponent for this battle: they lose it, you gain it.`
     case 'shield':

@@ -753,7 +753,7 @@ function RoundPanel({
                 {cast.short[w]}
               </span>{' '}
               beat {cast.short[l]} · {Math.max(...r.power)}G to {Math.min(...r.power)}G
-              {r.end === 'ko' ? ' (0 G: defeated)' : r.finisher ? ' (finisher)' : ''}
+              {r.end === 'ko' ? ' (knocked out)' : r.finisher ? ' (finisher)' : ''}
             </p>
           )
         })}

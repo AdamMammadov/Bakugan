@@ -1,5 +1,5 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { motion } from 'framer-motion'
 import { Suspense, useState } from 'react'
 import { playSfx } from '../audio/sfx'
@@ -182,7 +182,7 @@ function Skins({ profile }: { profile: Profile }) {
       {/* try-on preview */}
       <div className="flex flex-col">
         <div className="relative h-[26rem] overflow-hidden rounded-2xl border border-white/10 bg-black/50">
-          <Canvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={quality.dpr}>
+          <GameCanvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={quality.dpr}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[3, 6, 4]} intensity={2.2} />
             <pointLight position={[-3, 2.5, -2]} intensity={20} color={trying ? SKIN_BY_ID[trying].glow : element.glow} />
@@ -209,7 +209,7 @@ function Skins({ profile }: { profile: Profile }) {
               base={formModels({ bakugan, form: owned.form })?.fly ? 2.3 : 1.4}
               resetKey={`${owned.id}-${trying}`}
             />
-          </Canvas>
+          </GameCanvas>
           <p className="font-display absolute top-4 left-5 text-xs tracking-[0.3em] text-white/60">
             {bakugan.evolutions[owned.form]?.name ?? bakugan.name} · {trying ? SKIN_BY_ID[trying].name : 'Original'}
           </p>

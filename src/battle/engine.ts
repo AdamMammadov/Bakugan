@@ -22,8 +22,9 @@ import { released } from '../season/release'
  *   close it again. Each brawler opens it at most once and closes it at most once; each action costs a move.
  * - Nullify cards cancel the opponent's last ability card (its G change is undone).
  * - Clash: once both brawlers have used their moves (or neither can move), the higher G-Power wins; a tie goes to the
- *   Bakugan thrown first. The battle ends sooner when a Bakugan drops to 0 G (it is defeated at once) or when a
- *   finisher is played (charged by FINISHER_CHARGE other ability cards in the battle).
+ *   Bakugan thrown first. The battle ends sooner when a Bakugan is knocked out (down to KO_SHARE of the G it came
+ *   into the battle with, or less: it is defeated at once) or when a finisher is played (charged by FINISHER_CHARGE
+ *   other ability cards in the battle).
  */
 
 export const LIVES = 3
@@ -34,6 +35,17 @@ export const MOVES = 3
 export const HAND_SIZE = 4
 /** Other ability cards a Bakugan must play in the battle before its finisher (it gathers its power first). */
 export const FINISHER_CHARGE = 2
+/**
+ * A Bakugan knocked down to this share of the G-Power it came into the battle with (or less) is defeated at once: a
+ * 617 G Bakugan struck down to 17 G, or a 550 G one to 100 G, cannot fight on.
+ */
+export const KO_SHARE = 0.25
+
+/** The G-Power at or below which a side's Bakugan is knocked out in this duel. */
+export const koLineOf = (d: Duel, side: SideIndex) => Math.floor(d.fighters[side].g * KO_SHARE)
+
+/** Whether a side's Bakugan is knocked out (see KO_SHARE). */
+export const knockedOut = (d: Duel, side: SideIndex) => powerOf(d, side) <= koLineOf(d, side)
 
 export type SideIndex = 0 | 1
 export const other = (side: SideIndex): SideIndex => (side === 0 ? 1 : 0)
@@ -87,7 +99,10 @@ export interface Effect {
   cancels?: string
 }
 
-/** Why a battle ended. ko: a Bakugan dropped to 0 G · finisher: won outright · clash: the moves were made, the higher G won. */
+/**
+ * Why a battle ended. ko: a Bakugan was knocked out (see KO_SHARE) · finisher: won outright · clash: the moves were made,
+ * the higher G won.
+ */
 export type DuelEnd = 'ko' | 'finisher' | 'clash'
 
 /** One battle: one Bakugan against one on a Gate Card. Knows nothing of lives or teams. */
@@ -573,9 +588,9 @@ export function duelStep(
   d.moves++
   d.left[actor]--
 
-  // a Bakugan down to 0 G is defeated at once
+  // a Bakugan knocked out (down to a quarter of its G or less) is defeated at once
   if (!d.done) {
-    const zero = SIDES.filter((s) => powerOf(d, s) <= 0)
+    const zero = SIDES.filter((s) => knockedOut(d, s))
     if (zero.length) {
       finish(d, zero.length === 2 ? actor : other(zero[0]), 'ko')
       event.ko = zero.includes(target)
@@ -680,7 +695,7 @@ function endLine(state: BattleState, winner: SideIndex, power: [number, number],
   const l = nameOf(state, loser)
   switch (end) {
     case 'ko':
-      return `${l} is down to 0G: ${w} wins the battle!`
+      return `${l} is knocked out at ${power[loser]}G: ${w} wins the battle!`
     case 'finisher':
       return `${w} wins the battle outright!`
     case 'clash':

@@ -1,5 +1,5 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
@@ -142,7 +142,7 @@ function Stage({ row }: { row: Row }) {
       className="relative h-72 cursor-grab overflow-hidden active:cursor-grabbing"
       style={{ background: `radial-gradient(circle at 50% 45%, ${el.color}66, #07080d 72%)` }}
     >
-      <Canvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={quality.dpr}>
+      <GameCanvas camera={{ position: [0, 2.1, 5.8], fov: 40 }} dpr={quality.dpr}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 6, 4]} intensity={2.2} />
         <pointLight position={[-3, 2.5, -2]} intensity={20} color={skin?.glow ?? el.glow} />
@@ -163,7 +163,7 @@ function Stage({ row }: { row: Row }) {
           autoRotate
           autoRotateSpeed={1.5}
         />
-      </Canvas>
+      </GameCanvas>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#07080d] to-transparent" />
       <div className="pointer-events-none absolute top-3 left-4 flex items-center gap-2">
         <img src={el.icon} alt="" className="h-7 w-7" style={{ filter: `drop-shadow(0 0 8px ${el.glow})` }} />

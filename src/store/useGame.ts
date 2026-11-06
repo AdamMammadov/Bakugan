@@ -75,6 +75,9 @@ const parentKey = (screen: Screen) => (PAGES.includes(screen as PageScreen) ? 'p
 /** Where BACK on `screen` leads: the screen it was opened from (see depthOf), else the main menu. */
 export const backOf = (screen: Screen): Screen => useGame.getState().parents[parentKey(screen)] ?? 'menu'
 
+/** backOf as a hook: follows the screen's way back as it is recorded (it is set just after the screen opens). */
+export const useBackOf = (screen: Screen): Screen => useGame((s) => s.parents[parentKey(screen)] ?? 'menu')
+
 export interface TeamMember {
   id: string
   form: number

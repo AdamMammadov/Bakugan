@@ -1,5 +1,6 @@
 import { OrbitControls, Sparkles } from '@react-three/drei'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { BAKUGAN } from '../data/bakugan'
@@ -99,12 +100,12 @@ function Start() {
 export default function TitleStage(props: { id: string; form: number; skin?: string; onReady: () => void }) {
   const quality = useQuality(1.75)
   return (
-    <Canvas camera={{ position: [0, 2.6, 12], fov: 32 }} dpr={quality.dpr} gl={{ alpha: true, antialias: true }}>
+    <GameCanvas camera={{ position: [0, 2.6, 12], fov: 32 }} dpr={quality.dpr} gl={{ alpha: true, antialias: true }}>
       <OrbitControls makeDefault target={[0, 1.2, 0]} enableRotate={false} enableZoom={false} enablePan={false} />
       <Start />
       <ambientLight intensity={0.9} />
       <directionalLight position={[3, 5, 4]} intensity={2.4} />
       <Show {...props} />
-    </Canvas>
+    </GameCanvas>
   )
 }

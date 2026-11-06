@@ -28,7 +28,7 @@ import {
  * keeps their own lives, Bakugan, ability cards and gate deck for the whole match; a brawler out of lives is out.
  * - Round: while all four are in, two battles at once, each brawler against one opponent (0 v 2 and 1 v 3, or
  *   crossed: 0 v 3 and 1 v 2). Each is a normal battle: a Gate Card, a throw each in turn, the moves each in turn,
- *   then the clash (or a Bakugan down to 0 G), and the loser loses a life.
+ *   then the clash (or a Bakugan knocked out), and the loser loses a life.
  * - Between rounds, while all four are in, either team may swap opponents.
  * - A team down to one brawler: the survivor takes on both opponents in turn, one battle per round (the opponent who
  *   did not face them last steps in). Two survivors fight each other.

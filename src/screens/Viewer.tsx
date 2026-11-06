@@ -1,4 +1,4 @@
-import { Canvas } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { playSfx } from '../audio/sfx'
@@ -6,7 +6,7 @@ import { GPowerCounter } from '../components/GPowerCounter'
 import { abilitiesOf, abilityLabel, abilitySelfBonus, BAKUGAN, type Ability } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { EVOLVE_XP, ownedForm, useActiveProfile } from '../profile/useProfiles'
-import { useGame } from '../store/useGame'
+import { useBackOf, useGame } from '../store/useGame'
 import { EFFECT_DURATION } from '../three/AbilityEffect'
 import { savePhoto } from '../photo'
 import { BrawlScene, type Phase } from '../three/BrawlScene'
@@ -17,6 +17,8 @@ import { useQuality } from '../store/useSettings'
 const BRAWL_SEQUENCE_MS = 3000
 
 export function Viewer() {
+  // where it was opened from: the attribute's page, or the main menu (its lead's INSPECT)
+  const back = useBackOf('viewer')
   const quality = useQuality()
   const bakuganId = useGame((s) => s.bakuganId)
   const go = useGame((s) => s.go)
@@ -102,7 +104,7 @@ export function Viewer() {
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows={quality.shadows} camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={quality.dpr}>
+      <GameCanvas shadows={quality.shadows} camera={{ position: [0, 1.4, 5], fov: 45 }} dpr={quality.dpr}>
         <BrawlScene
           bakugan={bakugan}
           element={element}
@@ -116,16 +118,16 @@ export function Viewer() {
           request={photoRequest}
           onCapture={(url) => void savePhoto(url, { name: evo.name, brawler: bakugan.brawler, gPower, element })}
         />
-      </Canvas>
+      </GameCanvas>
 
       {/* header */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-8">
         <div className="pointer-events-auto">
           <button
-            onClick={() => go('hub')}
+            onClick={() => go(back)}
             className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
           >
-            ← BACK
+            {back === 'menu' ? '← MAIN MENU' : '← BACK'}
           </button>
           <p className="font-display mt-6 text-xs tracking-[0.5em]" style={{ color: element.color }}>
             {element.name.toUpperCase()} · {evo.series.toUpperCase()}

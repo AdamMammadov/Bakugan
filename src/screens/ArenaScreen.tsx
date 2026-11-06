@@ -1,4 +1,4 @@
-import { Canvas } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { animate, AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { afterSpeech, hush, playSfx, shout as callOut } from '../audio/sfx'
@@ -634,7 +634,7 @@ export function Brawl({
     waitQuiet(() => perform(step, a, line), 700)
   }
 
-  /** A Bakugan is down to 0 G, or beaten by a finisher: it falls at once. */
+  /** A Bakugan is knocked out, or beaten by a finisher: it falls at once. */
   function fallen(step: Step) {
     const d = step.state.duel!
     if (d.end !== 'finisher' && d.end !== 'ko') return
@@ -889,7 +889,7 @@ export function Brawl({
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Canvas shadows={quality.shadows} camera={{ position: [0, 11, 46], fov: 50 }} dpr={quality.dpr}>
+      <GameCanvas shadows={quality.shadows} camera={{ position: [0, 11, 46], fov: 50 }} dpr={quality.dpr}>
         <ArenaScene
           fighters={[cast.teams[0][onCard(0)], cast.teams[1][onCard(1)]]}
           // a face-down Gate Card shows no attribute; it lights up while open (and goes dark again when closed)
@@ -904,7 +904,7 @@ export function Brawl({
             { parts: cast.brawlers[1].parts, model: cast.brawlers[1].model, gesture: cues[1].gesture },
           ]}
         />
-      </Canvas>
+      </GameCanvas>
 
       {/* the big battle moments over the field (fx.ts), under the HUD */}
       <FxOverlay />
@@ -1085,7 +1085,7 @@ function cardLine(step: Step, card: Card, bakugan: string, foeBakugan: string, b
   const foe = other(side)
   const e = step.effect!
   const next = raceLine(d)
-  const ko = d.end === 'ko' ? `${foeBakugan} has 0 G — defeated!` : ''
+  const ko = d.end === 'ko' ? `${foeBakugan} is knocked out at ${powerOf(d, foe)} G — defeated!` : ''
   switch (a.type) {
     case 'boost':
       return `${brawler} activates ${a.name}! ${bakugan} powers up to ${powerOf(d, side)} G! ${next}`
@@ -1104,7 +1104,7 @@ function cardLine(step: Step, card: Card, bakugan: string, foeBakugan: string, b
   }
 }
 
-/** The announcer as a battle is decided (the finisher's and the 0 G calls already said it). */
+/** The announcer as a battle is decided (the finisher's and the knockout calls already said it). */
 function endLine(end: DuelEnd, bakugan: [string, string], power: [number, number]) {
   switch (end) {
     case 'ko':
@@ -1120,7 +1120,10 @@ function gateOutcome(d: Duel, delta: [number, number]) {
   const parts = ([0, 1] as const)
     .filter((i) => delta[i])
     .map((i) => `${d.fighters[i].name} ${delta[i] > 0 ? 'rises' : 'drops'} to ${powerOf(d, i)} G`)
-  const ko = d.end === 'ko' ? `${d.fighters[other(d.winner!)].name} has 0 G — defeated!` : raceLine(d)
+  const ko =
+    d.end === 'ko'
+      ? `${d.fighters[other(d.winner!)].name} is knocked out at ${powerOf(d, other(d.winner!))} G — defeated!`
+      : raceLine(d)
   return parts.length ? `${parts.join(', ')}! ${ko}` : `But it does nothing here! ${ko}`
 }
 
@@ -1508,7 +1511,7 @@ function clashReason(clash: Clash, tie: boolean) {
     case 'finisher':
       return 'WON OUTRIGHT BY ITS FINISHER'
     case 'ko':
-      return `${clash.names[loser].toUpperCase()} HAS 0 G — DEFEATED`
+      return `${clash.names[loser].toUpperCase()} KNOCKED OUT AT ${clash.power[loser]} G`
     case 'clash':
       return tie ? 'CLASH · ON THE TIE: THROWN FIRST' : `CLASH · BY ${Math.abs(clash.power[0] - clash.power[1])} G`
   }

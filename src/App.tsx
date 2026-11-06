@@ -24,7 +24,7 @@ import { EncyclopediaScreen } from './screens/EncyclopediaScreen'
 import { ShopScreen } from './screens/ShopScreen'
 import { InventoryScreen } from './screens/InventoryScreen'
 import { SeasonPassScreen } from './screens/SeasonPassScreen'
-import { useGame, type Screen } from './store/useGame'
+import { useBackOf, useGame, type Screen } from './store/useGame'
 import { GAME_SUBTITLE, GAME_TITLE } from './brand'
 // pays out event matches whichever screen is open
 import './events/progress'
@@ -63,6 +63,8 @@ const TRACK_FOR: Partial<Record<Screen, Track>> = {
 
 export default function App() {
   const screen = useGame((s) => s.screen)
+  // the hub's, viewer's and face-off's own BACK: when it leads to the main menu, the corner's MENU is left out
+  const back = useBackOf(screen)
   // the battle theme in the arena, the calm theme everywhere else (after the first click)
   useEffect(() => {
     if (screen !== 'intro') playMusic(TRACK_FOR[screen] ?? 'menu')
@@ -120,7 +122,9 @@ export default function App() {
       {screen !== 'intro' && screen !== 'menu' && (
         <div className="fixed right-5 bottom-5 z-50 flex items-center gap-2">
           {/* the way back to the main menu where there is no PageNav or BACK to it (pages have ⌂ MENU) */}
-          {(screen === 'hub' || screen === 'viewer' || screen === 'compare') && <ProfileButton />}
+          {(screen === 'hub' || screen === 'viewer' || screen === 'compare') && (
+            <ProfileButton menu={screen !== 'hub' && back !== 'menu'} />
+          )}
           <SettingsButton />
         </div>
       )}

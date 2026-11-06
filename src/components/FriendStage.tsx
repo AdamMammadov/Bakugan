@@ -1,5 +1,5 @@
 import { ContactShadows, OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { Suspense } from 'react'
 import { BAKUGAN, formModels } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
@@ -34,7 +34,7 @@ export default function FriendStage({
   const size = entrant ? (1 + entrant.form * 0.12) * (formModels(entrant)?.scale ?? 1) : 1
   const fly = entrant ? !!formModels(entrant)?.fly : false
   return (
-    <Canvas camera={{ position: [0, 1.6, 5.4], fov: 36 }} dpr={quality.dpr}>
+    <GameCanvas camera={{ position: [0, 1.6, 5.4], fov: 36 }} dpr={quality.dpr}>
       <ambientLight intensity={0.9} />
       <directionalLight position={[2, 4, 3]} intensity={2.2} />
       <pointLight position={[-2, 2.5, -2]} intensity={14} color={el.glow} />
@@ -63,6 +63,6 @@ export default function FriendStage({
         autoRotate
         autoRotateSpeed={0.6}
       />
-    </Canvas>
+    </GameCanvas>
   )
 }

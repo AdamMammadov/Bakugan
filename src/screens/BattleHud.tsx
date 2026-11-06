@@ -6,6 +6,7 @@ import {
   LIVES,
   MOVES,
   other,
+  knockedOut,
   powerOf,
   type BattleState,
   type Duel,
@@ -286,13 +287,13 @@ export function BrawlerHud({
   )
 }
 
-/** Under the G-Power: ahead or behind, by how much, or defeated at 0 G. */
+/** Under the G-Power: ahead or behind, by how much, or knocked out. */
 function LeadTag({ duel, side }: { duel: Duel; side: SideIndex }) {
   const gap = Math.abs(gapOf(duel, side))
   const ahead = leaderOf(duel) === side
   let text = ahead ? `▲ AHEAD +${gap} G` : `▼ BEHIND −${gap} G`
   if (gap === 0) text = ahead ? '▲ TIED · WINS TIES' : '▼ TIED · LOSES TIES'
-  if (powerOf(duel, side) === 0) text = '✕ 0 G · DEFEATED'
+  if (duel.done && duel.end === 'ko' && knockedOut(duel, side)) text = '✕ KNOCKED OUT'
   else if (duel.done) text = duel.winner === side ? '★ WINS THE BATTLE' : '✕ LOSES THE BATTLE'
   return (
     <p className="font-display text-[11px] font-black tracking-wider" style={{ color: ahead ? AHEAD : BEHIND }}>

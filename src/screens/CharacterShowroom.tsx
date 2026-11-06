@@ -1,5 +1,5 @@
 import { ContactShadows, OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { playSfx } from '../audio/sfx'
@@ -46,7 +46,7 @@ export function CharacterShowroom() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Canvas shadows={quality.shadows} camera={{ position: [0, 1.25, 3.6], fov: 40 }} dpr={quality.dpr}>
+      <GameCanvas shadows={quality.shadows} camera={{ position: [0, 1.25, 3.6], fov: 40 }} dpr={quality.dpr}>
         <ambientLight intensity={0.9} />
         <directionalLight position={[2, 4, 3]} intensity={2.2} castShadow />
         <pointLight position={[-2, 2, -2]} intensity={12} color={element.glow} />
@@ -70,7 +70,7 @@ export function CharacterShowroom() {
           autoRotateSpeed={1.2}
         />
         <LiftDrag max={2.5} />
-      </Canvas>
+      </GameCanvas>
 
       <div className="pointer-events-none absolute inset-0 flex flex-col px-12 py-8">
         <div className="pointer-events-auto">

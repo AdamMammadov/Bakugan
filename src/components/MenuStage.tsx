@@ -1,5 +1,6 @@
 import { ContactShadows, OrbitControls } from '@react-three/drei'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { useRef, useState } from 'react'
 import * as THREE from 'three'
 import { BAKUGAN } from '../data/bakugan'
@@ -136,7 +137,7 @@ export default function MenuStage({ id, form, skin, onReady }: { id: string; for
     return r
   }
   return (
-    <Canvas camera={{ position: [0, 3, 12.5], fov: 30 }} dpr={quality.dpr} gl={{ alpha: true, antialias: true }}>
+    <GameCanvas camera={{ position: [0, 3, 12.5], fov: 30 }} dpr={quality.dpr} gl={{ alpha: true, antialias: true }}>
       <OrbitControls makeDefault enableRotate={false} enableZoom={false} enablePan={false} />
       <ambientLight intensity={0.85} />
       <directionalLight position={[3, 5, 4]} intensity={2.4} />
@@ -151,6 +152,6 @@ export default function MenuStage({ id, form, skin, onReady }: { id: string; for
       <Ready target={target} fitKey={key} onReady={onReady} />
       <Platform color={el.color} radius={radius} />
       <ContactShadows position={[0, 0.02, 0]} opacity={0.6} scale={radius * 3} blur={2.2} far={3} resolution={256} />
-    </Canvas>
+    </GameCanvas>
   )
 }

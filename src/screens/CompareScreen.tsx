@@ -20,7 +20,7 @@ import {
   type OwnedBakugan,
 } from '../profile/useProfiles'
 import { botCharacter, opponentCharacter } from '../profile/avatar'
-import { backOf, useGame } from '../store/useGame'
+import { useBackOf, useGame } from '../store/useGame'
 import { TagFaceOff } from './TagFaceOff'
 
 /** Fills a team up to `size` with Bakugan not already in it. */
@@ -53,6 +53,8 @@ export function CompareScreen() {
   const bakuganId = useGame((s) => s.bakuganId)
   const compareForm = useGame((s) => s.compareForm)
   const go = useGame((s) => s.go)
+  // where the face-off was opened from (the menu's BRAWL, a Bakugan's FACE-OFF…), never a page or a match
+  const back = useBackOf('compare')
   const enterArena = useGame((s) => s.enterArena)
   const watchLive = useGame((s) => s.watchLive)
   const mine = BAKUGAN.find((b) => b.id === bakuganId) ?? BAKUGAN[0]
@@ -116,19 +118,19 @@ export function CompareScreen() {
       exit={{ opacity: 0 }}
     >
       <button
-        // where the face-off was opened from (the menu's BRAWL, a Bakugan's FACE-OFF…), never a page or a match
-        onClick={() => go(backOf('compare'))}
+        onClick={() => go(back)}
         className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
       >
-        ← BACK
+        {back === 'menu' ? '← MAIN MENU' : '← BACK'}
       </button>
       <h1 className="font-display mt-4 text-4xl font-black tracking-wider">TEAM FACE-OFF</h1>
       <p className="mt-1 max-w-3xl text-white/50">
         Pick your team. The system matches you with an opponent on your level: as many Bakugan as you bring, the same forms and
         the same number of ability cards. Each brawler has {LIVES} lives. Every battle one brawler sets a Gate Card face-down and
         both throw a Bakugan onto it, one after the other. Then each brawler makes {MOVES} moves, in turn: activate an ability
-        card, or open or close the Gate Card. Then the Bakugan clash and the higher G-Power wins; a Bakugan at 0 G is defeated at
-        once. The loser of a battle loses a life: lose {LIVES} battles and you are defeated.
+        card, or open or close the Gate Card. Then the Bakugan clash and the higher G-Power wins; a Bakugan knocked down to a
+        quarter of its G-Power or less is defeated at once. The loser of a battle loses a life: lose {LIVES} battles and you are
+        defeated.
       </p>
 
       {profile && (

@@ -1,5 +1,6 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
+import { GameCanvas } from '../three/GameCanvas'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { playSfx } from '../audio/sfx'
@@ -149,7 +150,7 @@ export function BakuganShowroom() {
     >
       {/* looking a little down at the floor's middle; StageFit then moves in and up to the Bakugan, keeping the angle */}
       {bakugan && (
-        <Canvas camera={{ position: [0, 0.7, 6], fov: 24 }} dpr={quality.dpr}>
+        <GameCanvas camera={{ position: [0, 0.7, 6], fov: 24 }} dpr={quality.dpr}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 6, 4]} intensity={2.2} />
           <pointLight position={[-3, 2.5, -2]} intensity={20} color={el.glow} />
@@ -186,7 +187,7 @@ export function BakuganShowroom() {
             fill={view === 'ball' ? 0.5 : 0.97 * (formModels({ bakugan, form })?.stage ?? 1)}
             onMeasure={onMeasure}
           />
-        </Canvas>
+        </GameCanvas>
       )}
 
       <motion.div
