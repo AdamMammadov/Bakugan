@@ -39,8 +39,13 @@ import { BrawlerFace, LifeBalls } from './BattleHud'
 const FIRST_START_MS = 3900
 /** A new round's banner before both battles start. */
 const NEXT_START_MS = 1300
-/** The partner's battle: pause before each kind of step (it runs beside the player's, at about its pace). */
-const PACE = { set: 3000, throw: 2000, battle: 3800, clash: 2600 }
+/**
+ * The partner's battle: pause before each kind of step. It runs beside the player's and never gets ahead of it: a
+ * move waits until the player's battle has made as many, and the clash until the player's battle is decided.
+ */
+const PACE = { set: 3000, throw: 2400, battle: 3800, clash: 2600 }
+/** A step held back for the player's battle tries again this often. */
+const HOLD_MS = 600
 /** The partner's battle once the player's is over: it plays out quickly. */
 const FAST_MS = 750
 /** Between rounds without a choice to make. */
@@ -229,6 +234,9 @@ export function TagArena({ setup, tag, onAgain }: { setup: ArenaSetup; tag: TagS
     tools: null as HostTools | null,
     timers: [] as number[],
     miniTimer: 0,
+    /** The player's battle: moves made so far, and whether it has reached its clash. */
+    mainMoves: 0,
+    mainDecided: false,
     key: 1,
     lineKey: 0,
     lives: match.tag.brawlers.map((b) => b.lives),
@@ -276,6 +284,15 @@ export function TagArena({ setup, tag, onAgain }: { setup: ArenaSetup; tag: TagS
     const m = l.mini
     if (!m || m.result) return
     const [x, y] = m.pair
+    // never ahead of the player's battle (unless that is over): no more moves than it has made, no clash before it
+    if (!l.mainEnd) {
+      const md = m.state.duel
+      const ahead = m.state.phase === 'battle' && md && (md.done || md.moves >= l.mainMoves)
+      if (ahead || (m.state.phase === 'clash' && !l.mainDecided)) {
+        l.miniTimer = window.setTimeout(miniTick, HOLD_MS)
+        return
+      }
+    }
     const step = aiStep(m.state, [levelOf(x), levelOf(y)])
     if (!step) return
     const s = step.state
@@ -380,6 +397,8 @@ export function TagArena({ setup, tag, onAgain }: { setup: ArenaSetup; tag: TagS
     l.round = round
     l.mainEnd = null
     l.miniEnd = null
+    l.mainMoves = 0
+    l.mainDecided = false
     l.mini = round.mini ? { pair: round.mini, state: round.miniState!, log: [], result: null } : null
     setMini(l.mini)
     setBetween(null)
@@ -457,6 +476,11 @@ export function TagArena({ setup, tag, onAgain }: { setup: ArenaSetup; tag: TagS
         live.current.tools = tools
       },
       onBattle: (end) => onMainBattle(end),
+      onStep: (state) => {
+        const l = live.current
+        l.mainMoves = state.duel?.moves ?? 0
+        l.mainDecided = state.phase === 'clash' || !!state.duel?.done
+      },
     }),
     // the intro and callbacks only matter at the start; a new battle comes with a new round
     // eslint-disable-next-line react-hooks/exhaustive-deps

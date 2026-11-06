@@ -4,6 +4,8 @@ import { useGame } from './useGame'
 
 /** How much the 3D scenes draw: low for slow computers, high for the sharpest picture. */
 export type Quality = 'low' | 'medium' | 'high'
+/** The announcer: every line, the first sentence of each (the battle never waits for it), or on screen only. */
+export type Commentary = 'full' | 'short' | 'off'
 
 interface SettingsState {
   /** Volumes, 0 to 1. */
@@ -13,6 +15,7 @@ interface SettingsState {
   voiceVolume: number
   crowdVolume: number
   quality: Quality
+  commentary: Commentary
   /** The settings panel is open (over whatever screen is showing). */
   open: boolean
   set: (part: Partial<Omit<SettingsState, 'set' | 'reset' | 'setOpen'>>) => void
@@ -20,7 +23,14 @@ interface SettingsState {
   reset: () => void
 }
 
-const DEFAULTS = { musicVolume: 0.8, sfxVolume: 1, voiceVolume: 1, crowdVolume: 0.8, quality: 'high' as Quality }
+const DEFAULTS = {
+  musicVolume: 0.8,
+  sfxVolume: 1,
+  voiceVolume: 1,
+  crowdVolume: 0.8,
+  quality: 'high' as Quality,
+  commentary: 'short' as Commentary,
+}
 
 /** The player's settings, kept in this browser. Music and sound on/off stay in useGame (the quick switches). */
 export const useSettings = create<SettingsState>()(
@@ -34,13 +44,7 @@ export const useSettings = create<SettingsState>()(
     }),
     {
       name: 'bakugan-settings',
-      partialize: ({ musicVolume, sfxVolume, voiceVolume, crowdVolume, quality }) => ({
-        musicVolume,
-        sfxVolume,
-        voiceVolume,
-        crowdVolume,
-        quality,
-      }),
+      partialize: ({ open: _open, set: _set, setOpen: _setOpen, reset: _reset, ...kept }) => kept,
     },
   ),
 )

@@ -215,11 +215,17 @@ export function BrawlerHud({
         }}
         transition={moving ? { repeat: Infinity, duration: 1.2 } : { duration: 0.3 }}
       >
-        <div className="h-[5.5rem] w-[5.5rem] shrink-0 border-white/10">
+        <div className="relative h-[5.5rem] w-[5.5rem] shrink-0 border-white/10">
           {entrant ? (
             <BakuganPortrait entrant={entrant} mirror={right} />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-white/5 text-3xl text-white/25">?</div>
+          )}
+          {/* whose move it is: a tag over the portrait (it used to sit on the name) */}
+          {moving && (
+            <span className="font-display absolute inset-x-0 bottom-0 bg-white py-0.5 text-center text-[9px] font-black tracking-[0.3em] text-black">
+              MOVE
+            </span>
           )}
         </div>
         <div className={`flex min-w-0 flex-1 flex-col justify-center px-3 py-1.5 ${right ? 'items-end' : ''}`}>
@@ -227,7 +233,12 @@ export function BrawlerHud({
             <>
               <div className={`flex w-full items-center gap-1.5 ${right ? 'flex-row-reverse' : ''}`}>
                 <img src={el.icon} alt={el.name} className="h-5 w-5" style={{ filter: `drop-shadow(0 0 6px ${el.glow})` }} />
-                <p className="font-display truncate text-xs font-bold tracking-wider">{fighter.name.toUpperCase()}</p>
+                <p
+                  className={`font-display min-w-0 truncate font-bold tracking-wider ${fighter.name.length > 13 ? 'text-[10.5px]' : 'text-xs'}`}
+                  title={fighter.name}
+                >
+                  {fighter.name.toUpperCase()}
+                </p>
               </div>
               <GPower value={g} color={el.color} glow={el.glow} right={right} />
               {d ? (
@@ -238,7 +249,30 @@ export function BrawlerHud({
                 </p>
               )}
               {d && (
-                <p className="text-[9px] tracking-wider text-white/40">{`BASE ${fighter.g}${boost ? ` · BOSS +${boost}` : ''}`}</p>
+                <div className={`mt-0.5 flex w-full items-center justify-between gap-2 ${right ? 'flex-row-reverse' : ''}`}>
+                  <p className="truncate text-[9px] tracking-wider text-white/40">{`BASE ${fighter.g}${boost ? ` · BOSS +${boost}` : ''}`}</p>
+                  {/* the moves left this battle, a pip each; the brawler to move has theirs lit */}
+                  <div
+                    className={`flex shrink-0 items-center gap-1 ${right ? 'flex-row-reverse' : ''}`}
+                    title={`${left} of ${MOVES} moves left`}
+                  >
+                    {Array.from({ length: MOVES }, (_, i) => {
+                      const on = i < left
+                      return (
+                        <motion.span
+                          key={i}
+                          className="h-2 w-2 rounded-full border"
+                          style={{
+                            borderColor: on ? '#fff' : 'rgba(255,255,255,0.3)',
+                            background: on ? el.color : 'transparent',
+                            boxShadow: on && moving ? `0 0 6px ${el.glow}` : 'none',
+                          }}
+                          animate={{ scale: on ? 1 : 0.75 }}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
               )}
             </>
           ) : (
@@ -247,34 +281,6 @@ export function BrawlerHud({
             </p>
           )}
         </div>
-        {/* the moves left this battle, a pip each; the brawler to move has theirs lit */}
-        {d && (
-          <div
-            className={`absolute top-1.5 flex items-center gap-1 ${right ? 'left-2 flex-row-reverse' : 'right-2'}`}
-            title={`${left} of ${MOVES} moves left`}
-          >
-            {moving && (
-              <span className="font-display rounded-sm bg-white px-1 text-[8px] font-black tracking-[0.2em] text-black">
-                MOVE
-              </span>
-            )}
-            {Array.from({ length: MOVES }, (_, i) => {
-              const on = i < left
-              return (
-                <motion.span
-                  key={i}
-                  className="h-2 w-2 rounded-full border"
-                  style={{
-                    borderColor: on ? '#fff' : 'rgba(255,255,255,0.3)',
-                    background: on ? (el?.color ?? '#fff') : 'transparent',
-                    boxShadow: on && moving ? `0 0 6px ${el?.glow ?? '#fff'}` : 'none',
-                  }}
-                  animate={{ scale: on ? 1 : 0.75 }}
-                />
-              )
-            })}
-          </div>
-        )}
       </motion.div>
 
       <div className={`flex items-baseline gap-2 ${right ? 'flex-row-reverse' : ''}`}>

@@ -155,7 +155,7 @@ const CALL_TTL = 3500
 const LINE_TTL = 5000
 
 const queue: Line[] = []
-let talking: { u: SpeechSynthesisUtterance; timer: number } | null = null
+let talking: { u: SpeechSynthesisUtterance; timer: number; minor: boolean } | null = null
 
 const hasSpeech = () => typeof speechSynthesis !== 'undefined'
 const silent = () => useGame.getState().muted || !hasSpeech() || useSettings.getState().voiceVolume <= 0
@@ -201,7 +201,7 @@ function pump() {
     },
     lengthOf(line.text, d.rate) * 1.5 + 1500,
   )
-  talking = { u, timer }
+  talking = { u, timer, minor: line.minor }
   line.onStart?.()
   speechSynthesis.speak(u)
 }
@@ -230,23 +230,31 @@ export function shout(text: string, voice: SpeakerVoice = DEFAULT_VOICE) {
 
 /** The announcer says a line in its own voice; `onStart` runs as it starts (or at once when the sound is off). */
 export function announceLine(text: string, onStart?: () => void) {
+  // an announcer line still waiting is old news once a newer one comes: only the newest waits
+  for (let i = queue.length - 1; i >= 0; i--) if (queue[i].minor) queue.splice(i, 1)[0].onStart?.()
   enqueue({ text, delivery: deliveryFor(ANNOUNCER), at: performance.now(), ttl: LINE_TTL, minor: true, onStart })
 }
 
-/** Someone is talking, or a fresh line is waiting to be said. */
-export function speaking() {
-  if (talking) return true
+/**
+ * Someone is talking, or a fresh line is waiting to be said. With `announcer` false only the brawlers' calls count
+ * (the announcer talks over the action and never holds it up).
+ */
+export function speaking(announcer = true) {
+  if (talking && (announcer || !talking.minor)) return true
   const now = performance.now()
-  return queue.some((l) => now - l.at <= l.ttl)
+  return queue.some((l) => (announcer || !l.minor) && now - l.at <= l.ttl)
 }
 
-/** Runs `fn` once everyone has finished talking (or after `maxMs` at the latest). */
-export function afterSpeech(fn: () => void, maxMs = 4000, minMs = 0): () => void {
+/**
+ * Runs `fn` once everyone has finished talking (or after `maxMs` at the latest); with `announcer` false it waits for
+ * the brawlers' calls only.
+ */
+export function afterSpeech(fn: () => void, maxMs = 4000, minMs = 0, announcer = true): () => void {
   const start = performance.now()
   let timer = 0
   const tick = () => {
     const t = performance.now() - start
-    if (t >= maxMs || (t >= minMs && !speaking())) fn()
+    if (t >= maxMs || (t >= minMs && !speaking(announcer))) fn()
     else timer = window.setTimeout(tick, 120)
   }
   timer = window.setTimeout(tick, Math.min(minMs, 150))

@@ -65,7 +65,7 @@ import { fx } from '../three/fx'
 import { announce, crowd } from '../three/stadium'
 import { AHEAD, BEHIND, BrawlerHud, GateSlot, TurnCounter } from './BattleHud'
 import { TagArena } from './TagArena'
-import { useQuality } from '../store/useSettings'
+import { useQuality, useSettings } from '../store/useSettings'
 
 const INTRO_MS = 2600
 /** "BATTLE n" before the Gate Card is set. */
@@ -85,12 +85,17 @@ const COUNT_MS = 1500
 const WINNER_MS = 1200
 /** After the winner's final blow, before the next battle. */
 const AFTER_STRIKE_MS = 2800
+/** A knockout: how long the result shows before the life is lost, and then before the next battle. */
+const KO_SHOW_MS = 900
+const AFTER_KO_MS = 2200
 /** Extra time a finisher's beam and pillar of darkness hold the field. */
 const FINISHER_HOLD_MS = 1600
 /** How long a nullify card's shield flashes round its Bakugan. */
 const NULLIFY_FLASH_MS = 1400
-/** The flow waits at most this long for everyone to finish talking. */
-const QUIET_MAX_MS = 6000
+/** The flow waits at most this long for everyone to finish talking (full commentary)… */
+const QUIET_MAX_MS = 4000
+/** …and this long for the brawlers' calls (the announcer then talks over the action). */
+const CALLS_MAX_MS = 2200
 /** A battle won by this little is a close call. */
 const CLOSE = 60
 
@@ -309,6 +314,8 @@ export interface BrawlHost {
   connect: (tools: HostTools) => void
   /** A battle is decided (its state after resolveBattle). */
   onBattle: (end: BattleState, result: BattleResult) => void
+  /** The battle moved on (a move made, or the moves done): a tag match keeps the other battle at its pace. */
+  onStep?: (state: BattleState) => void
   /** Under the turn counter: "ROUND". */
   counter?: string
 }
@@ -328,6 +335,8 @@ interface Clash {
   step: number
   /** A battle of a hosted (tag) match: a brawler out of lives is out, not the match lost. */
   hosted?: boolean
+  /** Knocked out or beaten by a finisher: it fell already, the G-Powers show as they are. */
+  struck?: boolean
 }
 
 interface BrawlProps {
@@ -431,7 +440,11 @@ export function Brawl({
   const nextKey = () => seq.current++
   const later = (ms: number, fn: () => void) => void timers.current.push(window.setTimeout(fn, ms))
   /** Continue once nobody is talking any more (at least `minMs` from now). */
-  const waitQuiet = (fn: () => void, minMs = 0) => stopWaits.current.push(afterSpeech(fn, QUIET_MAX_MS, minMs))
+  // the flow waits for the brawlers' calls; for the announcer too only with full commentary (then at most a while)
+  const waitQuiet = (fn: () => void, minMs = 0) => {
+    const full = useSettings.getState().commentary === 'full'
+    stopWaits.current.push(afterSpeech(fn, full ? QUIET_MAX_MS : CALLS_MAX_MS, minMs, full))
+  }
   const say = (text: string, sub?: string, color?: string) => setBanner({ text, sub, color, key: nextKey() })
   const stopAll = () => {
     timers.current.forEach(clearTimeout)
@@ -591,6 +604,7 @@ export function Brawl({
 
   function nextMove(s: BattleState) {
     setBattle(s)
+    host?.onStep?.(s)
     if (s.phase === 'clash') return battleEnd(s)
     const side = s.duel!.turn
     if (!human(side)) return later(AI_DELAY_MS, () => run(s, chooseAction(s, levelOf(side))))
@@ -735,7 +749,9 @@ export function Brawl({
     const loser = other(winner)
     const diff = Math.abs(result.power[0] - result.power[1])
     const livesLeft = next.sides[loser].lives
-    playSfx('brawl')
+    // knocked out or beaten by a finisher: it already fell, so no clash, no counting, no second blow
+    const struck = result.finisher || result.end === 'ko'
+    if (!struck) playSfx('brawl')
     setClash({
       key: nextKey(),
       power: result.power,
@@ -744,9 +760,24 @@ export function Brawl({
       finisher: result.finisher,
       end: result.end,
       livesLeft,
-      step: 0,
+      step: struck ? 1 : 0,
       hosted: !!host,
+      struck,
     })
+    if (struck) {
+      later(KO_SHOW_MS, () => {
+        setClash((c) => c && { ...c, step: 2 })
+        cue(winner, 'cheer', 'YES!', undefined, `Yes! Way to go, ${d.fighters[winner].name}!`)
+        setShown(next)
+        call(`${nameOf(loser)} loses a life!`)
+        if (livesLeft === 1 && !host) {
+          call(`Match point for ${nameOf(winner)}!`)
+          crowd('chant', winner)
+        } else crowd('roar', winner)
+      })
+      later(KO_SHOW_MS + AFTER_KO_MS, () => afterBattle(next))
+      return
+    }
     const endCall = endLine(result.end, [d.fighters[0].name, d.fighters[1].name], result.power)
     if (result.end === 'clash') {
       // both Bakugan go at each other: the higher G-Power wins
@@ -760,19 +791,17 @@ export function Brawl({
     })
     later(COUNT_MS + WINNER_MS, () => {
       setClash((c) => c && { ...c, step: 2 })
-      // the finisher's beam already struck, and a Bakugan at 0 G is already down
-      const struck = result.finisher || result.end === 'ko'
-      if (!struck) setEvent({ event: ev, key: nextKey() })
-      later(struck ? 0 : IMPACT_AT * 1000, () => {
+      setEvent({ event: ev, key: nextKey() })
+      later(IMPACT_AT * 1000, () => {
         playSfx('hit')
         cue(loser, 'flinch')
         cue(winner, 'cheer', 'YES!', undefined, `Yes! Way to go, ${d.fighters[winner].name}!`)
         setShown(next)
         setDefeated(loser === 0 ? [true, false] : [false, true])
-        if (!struck) fx({ kind: 'defeat', side: loser })
+        fx({ kind: 'defeat', side: loser })
         const tie = diff === 0 && !result.finisher
         const line = `${d.fighters[winner].name} wins the battle${tie ? ' on the tie: it was thrown first' : ''}! ${nameOf(loser)} loses a life!`
-        call(diff <= CLOSE && !struck ? `What a close call! ${line}` : line)
+        call(diff <= CLOSE ? `What a close call! ${line}` : line)
         if (livesLeft === 1 && !host) {
           call(`Match point for ${nameOf(winner)}! ${nameOf(loser)} has one life left!`)
           crowd('chant', winner)
@@ -1459,7 +1488,7 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
                   : { scale: 1, opacity: 1 }
               }
             >
-              <CountUp value={clash.power[i]} />
+              {clash.struck ? clash.power[i] : <CountUp value={clash.power[i]} />}
               <span className="text-3xl">G</span>
             </motion.span>
           </div>

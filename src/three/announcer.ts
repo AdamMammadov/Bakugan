@@ -1,5 +1,6 @@
 import { announceLine } from '../audio/sfx'
 import { useGame } from '../store/useGame'
+import { useSettings } from '../store/useSettings'
 
 /**
  * The stadium announcer: each line shows as a lower-third banner over the arena and is read out by the browser's
@@ -99,9 +100,11 @@ export function createAnnouncer(host: HTMLElement): Announcer {
 
   return {
     say: (msg: string, onShow?: () => void) => {
-      const clean = msg.trim()
+      const commentary = useSettings.getState().commentary
+      // short commentary: the first sentence (the numbers are on the screen anyway)
+      const clean = (commentary === 'full' ? msg : (msg.match(/^.*?[!?.](?=\s|$)/)?.[0] ?? msg)).trim()
       if (!clean) return
-      if (!useGame.getState().muted && typeof speechSynthesis !== 'undefined')
+      if (!useGame.getState().muted && commentary !== 'off' && typeof speechSynthesis !== 'undefined')
         return announceLine(clean, () => {
           if (!alive) return
           show(clean)
