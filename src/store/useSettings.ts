@@ -6,6 +6,8 @@ import { useGame } from './useGame'
 export type Quality = 'low' | 'medium' | 'high'
 /** The announcer: every line, the first sentence of each (the battle never waits for it), or on screen only. */
 export type Commentary = 'full' | 'short' | 'off'
+/** How full the arena's stands are (fewer fans draw faster). */
+export type CrowdSize = 'few' | 'normal' | 'packed'
 
 interface SettingsState {
   /** Volumes, 0 to 1. */
@@ -16,6 +18,15 @@ interface SettingsState {
   crowdVolume: number
   quality: Quality
   commentary: Commentary
+  /** The brawlers shout their moves ("Gate Card, open!"). */
+  brawlerCalls: boolean
+  crowdSize: CrowdSize
+  /** A frame-rate counter in the corner. */
+  showFps: boolean
+  /** Fewer screen animations (pages slide and pop less). */
+  reduceMotion: boolean
+  /** Silent while the game's tab is in the background. */
+  muteInBackground: boolean
   /** The settings panel is open (over whatever screen is showing). */
   open: boolean
   set: (part: Partial<Omit<SettingsState, 'set' | 'reset' | 'setOpen'>>) => void
@@ -30,6 +41,11 @@ const DEFAULTS = {
   crowdVolume: 0.8,
   quality: 'high' as Quality,
   commentary: 'short' as Commentary,
+  brawlerCalls: true,
+  crowdSize: 'packed' as CrowdSize,
+  showFps: false,
+  reduceMotion: false,
+  muteInBackground: true,
 }
 
 /** The player's settings, kept in this browser. Music and sound on/off stay in useGame (the quick switches). */

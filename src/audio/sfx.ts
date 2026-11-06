@@ -1,4 +1,4 @@
-import { Howl } from 'howler'
+import { Howl, Howler } from 'howler'
 import { asset } from '../asset'
 import { DEFAULT_VOICE } from '../profile/avatar'
 import { useGame } from '../store/useGame'
@@ -224,7 +224,7 @@ function enqueue(line: Line) {
  * list is recognised as that character; `id` or `name` on the voice names the speaker for anyone else.
  */
 export function shout(text: string, voice: SpeakerVoice = DEFAULT_VOICE) {
-  if (silent()) return
+  if (silent() || !useSettings.getState().brawlerCalls) return
   enqueue({ text, delivery: deliveryFor(speakerOf(voice), voice), at: performance.now(), ttl: CALL_TTL, minor: false })
 }
 
@@ -273,3 +273,18 @@ export function hush() {
 useGame.subscribe((s, prev) => {
   if (s.muted && !prev.muted) hush()
 })
+
+// the game's tab in the background: silent until it is back (a setting)
+if (typeof document !== 'undefined')
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return
+    if (document.hidden && useSettings.getState().muteInBackground) {
+      void ctx.suspend()
+      Howler.mute(true)
+      if (hasSpeech()) speechSynthesis.pause()
+    } else if (!document.hidden) {
+      void ctx.resume()
+      Howler.mute(false)
+      if (hasSpeech()) speechSynthesis.resume()
+    }
+  })

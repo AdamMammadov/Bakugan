@@ -19,6 +19,7 @@ import { createAnnouncer, type Announcer } from './announcer'
 import { Crowd, type CrowdLevels, type Seat } from './Crowd'
 import { listenFx } from './fx'
 import { listenStadium, type CrowdMood, type StadiumCall } from './stadium'
+import { useSettings } from '../store/useSettings'
 
 /**
  * The stadium round the field, like the brawl arenas of the anime: terraced stands all the way round, packed with
@@ -538,7 +539,13 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
     () => VIP_ANGLES.slice(0, CHARACTERS.filter((c) => c.image && !exclude.includes(c.model ?? '')).length),
     [exclude],
   )
-  const seats = useMemo(() => seatsFor(vipAngles), [vipAngles])
+  // the crowd size setting: every fan, three in four, or half of them (the same fans each time)
+  const crowdSize = useSettings((st) => st.crowdSize)
+  const seats = useMemo(() => {
+    const all = seatsFor(vipAngles)
+    const keep = crowdSize === 'packed' ? 1 : crowdSize === 'normal' ? 0.75 : 0.5
+    return keep === 1 ? all : all.filter((seat) => seat.seed < keep)
+  }, [vipAngles, crowdSize])
   const parts = useMemo(
     () => ({
       stands: standsGeometry(),
