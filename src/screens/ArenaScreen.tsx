@@ -79,7 +79,10 @@ const THROW_MS = 2400
 const AI_DELAY_MS = 800
 /** The Gate Card flips over (or closes) before its effect lands. */
 const GATE_FLIP_MS = 900
-const GATE_HOLD_MS = 2300
+/** A gate move, until its call-out (shown when the card flips) has left the screen. */
+const GATE_HOLD_MS = 2750
+/** An ability's call-out leaves the screen this long after the move starts (it shows at the impact). */
+const CALLOUT_CLEAR_MS = 2400
 /** The two G-Power counters count up before the winner shows. */
 const COUNT_MS = 1500
 const WINNER_MS = 1200
@@ -689,8 +692,8 @@ export function Brawl({
       fallen(step)
     })
     const hold = a.type === 'finisher' ? FINISHER_HOLD_MS : 0
-    // the next move waits for the announcer's call
-    later(ACTION_DURATION * 1000 + hold, () => waitQuiet(() => nextMove(step.state)))
+    // the next move (or the clash) waits for the move to play out and its call-out to leave the screen
+    later(Math.max(ACTION_DURATION * 1000, CALLOUT_CLEAR_MS) + hold, () => waitQuiet(() => nextMove(step.state)))
   }
 
   /**

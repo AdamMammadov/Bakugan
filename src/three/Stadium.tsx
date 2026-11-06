@@ -20,6 +20,7 @@ import { Crowd, type CrowdLevels, type Seat } from './Crowd'
 import { listenFx } from './fx'
 import { listenStadium, type CrowdMood, type StadiumCall } from './stadium'
 import { useSettings } from '../store/useSettings'
+import { ArenaLights } from './ArenaLights'
 
 /**
  * The stadium round the field, like the brawl arenas of the anime: terraced stands all the way round, packed with
@@ -94,7 +95,7 @@ function seatsFor(vips: number[]): Seat[] {
       // aisles every 30 degrees
       const aisle = Math.abs(((angle + Math.PI) % (Math.PI / 6)) - Math.PI / 12)
       if (aisle > Math.PI / 12 - 3 / r) continue
-      if (rand() > 0.84 - row * 0.012) continue
+      if (rand() > 0.93 - row * 0.01) continue
       if (row < 2 && vips.some((v) => Math.abs(v - angle) < 5.4 / r)) continue
       const p = at(angle, r + (rand() - 0.5) * 1.6, y)
       // fans of both brawlers everywhere, mixed at random
@@ -799,6 +800,8 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
           <meshBasicMaterial map={screen} color="#d8d8d8" />
         </mesh>
       </group>
+      {/* show lights sweeping the field, and sparks on the big moments */}
+      <ArenaLights colors={colors} />
       {/* the fans come in once their models have loaded */}
       <Suspense fallback={null}>
         <Crowd seats={seats} levels={levels} colors={colors} />

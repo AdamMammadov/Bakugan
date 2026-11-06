@@ -774,16 +774,17 @@ export interface AiLevel {
 export const AI_EASY: AiLevel = { noise: 80, depth: 1 }
 
 /**
- * Bots get sharper and a little stronger as the player climbs the ranks (index = tier, 0 = Rookie).
- * Tuned by simulation so a Rookie wins a bit over half of their brawls and higher ranks take real skill.
+ * Bots get sharper and a little stronger as the player climbs the ranks (index = tier, 0 = Rookie). Even a Rookie's
+ * bot looks a move ahead and seldom throws a battle away (players found them too easy); from Ace Brawler up they see
+ * most of the battle and spot every knockout.
  */
 const BOT_LEVELS: AiLevel[] = [
-  { noise: 90, depth: 1, edge: 0 },
-  { noise: 50, depth: 1, edge: 0.01 },
-  { noise: 40, depth: 2, edge: 0.02 },
-  { noise: 25, depth: 3, edge: 0.03 },
-  { noise: 12, depth: 4, edge: 0.045 },
-  { noise: 0, depth: 6, edge: 0.06 },
+  { noise: 45, depth: 2, edge: 0.02 },
+  { noise: 30, depth: 2, edge: 0.035 },
+  { noise: 18, depth: 3, edge: 0.055 },
+  { noise: 10, depth: 4, edge: 0.08 },
+  { noise: 5, depth: 5, edge: 0.105 },
+  { noise: 0, depth: 6, edge: 0.135 },
 ]
 export const aiForTier = (tier: number): AiLevel => BOT_LEVELS[Math.min(Math.max(tier, 0), BOT_LEVELS.length - 1)]
 
