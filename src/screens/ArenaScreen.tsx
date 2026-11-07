@@ -921,7 +921,8 @@ export function Brawl({
 
   return (
     <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <GameCanvas shadows={quality.shadows} camera={{ position: [0, 11, 46], fov: 50 }} dpr={quality.dpr}>
+      {/* the near limit at 0.5 (not 0.1): five times finer depth, so the field's flat layers never flicker seen from high up */}
+      <GameCanvas shadows={quality.shadows} camera={{ position: [0, 11, 46], fov: 50, near: 0.5, far: 1000 }} dpr={quality.dpr}>
         <ArenaScene
           fighters={[cast.teams[0][onCard(0)], cast.teams[1][onCard(1)]]}
           // a face-down Gate Card shows no attribute; it lights up while open (and goes dark again when closed)
