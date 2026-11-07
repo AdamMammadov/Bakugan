@@ -201,6 +201,9 @@ export function SettingsPanel() {
               >
                 ↺ DEFAULTS
               </button>
+              <span className="self-center text-[10px] tracking-[0.15em] text-white/30" title="The game's version">
+                VERSION {(import.meta.env.VITE_BUILD as string | undefined) ?? 'dev'}
+              </span>
               <button
                 onClick={() => setOpen(false)}
                 className="font-display skew-x-[-10deg] border-2 border-white/70 bg-white/10 px-8 py-2 text-sm font-black tracking-[0.3em] hover:bg-white/20"
