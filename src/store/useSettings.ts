@@ -27,6 +27,8 @@ interface SettingsState {
   reduceMotion: boolean
   /** Silent while the game's tab is in the background. */
   muteInBackground: boolean
+  /** A message for the player about the settings (e.g. the quality was lowered by itself); not kept. */
+  notice?: string | null
   /** The settings panel is open (over whatever screen is showing). */
   open: boolean
   set: (part: Partial<Omit<SettingsState, 'set' | 'reset' | 'setOpen'>>) => void
@@ -39,7 +41,7 @@ const DEFAULTS = {
   sfxVolume: 1,
   voiceVolume: 1,
   crowdVolume: 0.8,
-  quality: 'high' as Quality,
+  quality: 'medium' as Quality,
   commentary: 'short' as Commentary,
   brawlerCalls: true,
   crowdSize: 'packed' as CrowdSize,
@@ -60,7 +62,7 @@ export const useSettings = create<SettingsState>()(
     }),
     {
       name: 'bakugan-settings',
-      partialize: ({ open: _open, set: _set, setOpen: _setOpen, reset: _reset, ...kept }) => kept,
+      partialize: ({ open: _open, set: _set, setOpen: _setOpen, reset: _reset, notice: _notice, ...kept }) => kept,
     },
   ),
 )
@@ -82,14 +84,56 @@ useGame.subscribe((s, prev) => {
   }
 })
 
+/**
+ * Whether this computer's graphics can draw the glow (bloom): it needs colour buffers of half-float precision. Some
+ * graphics chips cannot, and the glow then left the screen black. Checked once.
+ */
+let floatBuffers: boolean | null = null
+function canGlow() {
+  if (floatBuffers !== null) return floatBuffers
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2')
+    floatBuffers = !!gl && !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'))
+    gl?.getExtension('WEBGL_lose_context')?.loseContext()
+  } catch {
+    floatBuffers = false
+  }
+  return floatBuffers
+}
+
+/**
+ * What a 3D canvas draws at each quality. LOW: a lighter picture (rendered at 80% and scaled up, no anti-aliasing,
+ * shadows, glow, sparkles or show lights, half the fans). MEDIUM: everything, at the screen's own size, without
+ * multisampling. HIGH: sharper on high-density screens (up to 1.5×) with smoother edges and finer shadows. The glow
+ * used 8× multisampled float buffers, which took 450–800 MB of video memory and left weaker computers black or crashed.
+ */
+const PRESETS = {
+  low: { scale: 0.8, maxDpr: 1, antialias: false, shadows: false, shadowMap: 512, effects: false, samples: 0, extras: false },
+  medium: { scale: 1, maxDpr: 1, antialias: true, shadows: true, shadowMap: 1024, effects: true, samples: 0, extras: true },
+  high: { scale: 1, maxDpr: 1.5, antialias: true, shadows: true, shadowMap: 2048, effects: true, samples: 2, extras: true },
+} satisfies Record<Quality, unknown>
+
 /** The drawing settings for a 3D canvas, from the quality setting; `maxDpr` is the canvas's own sharpest. */
 export function useQuality(maxDpr = 2) {
   const quality = useSettings((s) => s.quality)
-  const cap = quality === 'low' ? 1 : quality === 'medium' ? 1.5 : maxDpr
+  const q = PRESETS[quality]
+  const screen = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1
+  const dpr = Math.min(maxDpr, q.maxDpr, screen) * q.scale
   return {
-    dpr: [1, Math.min(maxDpr, cap)] as [number, number],
-    shadows: quality !== 'low',
+    quality,
+    dpr: [dpr, dpr] as [number, number],
+    /** The canvas's own options (anti-aliasing only takes effect when the canvas is made). */
+    gl: { antialias: q.antialias, powerPreference: 'high-performance' as const },
+    shadows: q.shadows,
+    shadowMapSize: [q.shadowMap, q.shadowMap] as [number, number],
     /** Glow (bloom) and other screen effects. */
-    effects: quality !== 'low',
+    effects: q.effects && canGlow(),
+    /** Multisampling of the screen effects' buffers. */
+    samples: q.samples,
+    /** Sparkles in the air, the arena's show lights and sparks. */
+    extras: q.extras,
   }
 }
+
+/** One step down (after the 3D failed at this quality); null at the lowest. */
+export const lowerQuality = (q: Quality): Quality | null => (q === 'high' ? 'medium' : q === 'medium' ? 'low' : null)

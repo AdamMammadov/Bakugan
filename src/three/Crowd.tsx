@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { asset } from '../asset'
 import { CHARACTERS } from '../profile/avatar'
+import { useSettings } from '../store/useSettings'
 
 /** One spectator's place in the stands. */
 export interface Seat {
@@ -181,7 +182,8 @@ function buildAtlas(gl: THREE.WebGLRenderer, scenes: THREE.Object3D[]): Atlas {
   const camera = new THREE.OrthographicCamera(0, COLS, ROWS * 2, 0, 0.1, 100)
   camera.position.set(0, 0, 50)
   const target = new THREE.WebGLRenderTarget(COLS * CELL_PX, ROWS * CELL_PX * 2, {
-    samples: 4,
+    // smoother outlines on HIGH only (the multisampled copy costs about 80 MB of video memory)
+    samples: useSettings.getState().quality === 'high' ? 2 : 0,
     colorSpace: THREE.SRGBColorSpace,
     generateMipmaps: true,
     minFilter: THREE.LinearMipmapLinearFilter,

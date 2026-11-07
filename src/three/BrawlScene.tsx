@@ -46,7 +46,7 @@ interface Props {
 
 export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbility, skin }: Props) {
   // glow and vignette, unless the graphics are set to low
-  const { effects } = useQuality()
+  const { effects, samples, shadowMapSize, extras } = useQuality()
   // Clock time at which the brawl sequence started; drives the ball → monster timeline.
   const brawlStart = useRef<number | null>(null)
   useFrame(({ clock }) => {
@@ -59,12 +59,12 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
       <color attach="background" args={['#05060a']} />
       <fog attach="fog" args={['#05060a', 40, 90]} />
       <ambientLight intensity={0.35} />
-      <directionalLight position={[4, 8, 5]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
+      <directionalLight position={[4, 8, 5]} intensity={2.2} castShadow shadow-mapSize={shadowMapSize} />
       <pointLight position={[-4, 3, -3]} intensity={30} color={element.glow} />
       <pointLight position={[0, 2, 6]} intensity={8} color="#ffffff" />
 
       <Field color={element.color} />
-      <Sparkles count={160} scale={[30, 14, 30]} position={[0, 6, 0]} size={3} speed={0.3} color={element.glow} />
+      {extras && <Sparkles count={160} scale={[30, 14, 30]} position={[0, 6, 0]} size={3} speed={0.3} color={element.glow} />}
 
       <Suspense fallback={null}>
         {phase !== 'ball' && (
@@ -106,7 +106,7 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
       <CameraRig phase={phase} size={(formModels({ bakugan, form })?.scale ?? 1) * (1 + form * 0.12)} />
 
       {effects && (
-        <EffectComposer multisampling={0}>
+        <EffectComposer multisampling={samples}>
           <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
           <Vignette offset={0.25} darkness={0.75} />
         </EffectComposer>

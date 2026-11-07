@@ -1,6 +1,6 @@
 import { Canvas, type CanvasProps, type RootState } from '@react-three/fiber'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSettings } from '../store/useSettings'
+import { lowerQuality, useQuality, useSettings } from '../store/useSettings'
 
 /** How long a lost drawing context may take to come back by itself before a new canvas replaces it. */
 const WAIT_MS = 1200
@@ -12,7 +12,8 @@ const MAX_TRIES = 3
  * heavy scene or when the graphics card resets: the scene would otherwise stay black for good. If it keeps happening,
  * it says so and offers a reload instead of a black screen.
  */
-export function GameCanvas({ onCreated, ...props }: CanvasProps) {
+export function GameCanvas({ onCreated, gl, ...props }: CanvasProps) {
+  const quality = useQuality()
   const [generation, setGeneration] = useState(0)
   const [failed, setFailed] = useState(false)
   const current = useRef<HTMLCanvasElement | null>(null)
@@ -38,7 +39,18 @@ export function GameCanvas({ onCreated, ...props }: CanvasProps) {
         e.preventDefault()
         clearTimeout(timer.current)
         timer.current = window.setTimeout(() => {
-          if (!mounted.current || canvas !== current.current) return
+          // (a canvas replaced on purpose, e.g. for another quality, has left the page by now)
+          if (!mounted.current || canvas !== current.current || !canvas.isConnected) return
+          // the graphics could not keep up: one quality step down (the new canvas comes with it), and say so
+          const settings = useSettings.getState()
+          const lower = lowerQuality(settings.quality)
+          if (lower) {
+            settings.set({
+              quality: lower,
+              notice: `The 3D stopped drawing at ${settings.quality.toUpperCase()} quality: switched to ${lower.toUpperCase()}.`,
+            })
+            return
+          }
           const now = Date.now()
           tries.current = [...tries.current.filter((t) => now - t < 60_000), now]
           if (tries.current.length > MAX_TRIES) setFailed(true)
@@ -52,7 +64,15 @@ export function GameCanvas({ onCreated, ...props }: CanvasProps) {
   )
 
   if (failed) return <Stopped />
-  return <Canvas key={generation} {...props} onCreated={created} />
+  // a new canvas for each quality: anti-aliasing is only set when a canvas is made
+  return (
+    <Canvas
+      key={`${generation}-${quality.quality}`}
+      {...props}
+      gl={{ ...quality.gl, ...(typeof gl === 'object' && gl ? gl : {}) }}
+      onCreated={created}
+    />
+  )
 }
 
 function Stopped() {

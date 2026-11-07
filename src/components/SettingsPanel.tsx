@@ -5,9 +5,9 @@ import { useGame } from '../store/useGame'
 import { useSettings, type Commentary, type CrowdSize, type Quality } from '../store/useSettings'
 
 const QUALITIES: { id: Quality; label: string; sub: string }[] = [
-  { id: 'low', label: 'LOW', sub: 'Fastest · no shadows or glow' },
-  { id: 'medium', label: 'MEDIUM', sub: 'Shadows and glow, a little softer' },
-  { id: 'high', label: 'HIGH', sub: 'Sharpest picture' },
+  { id: 'low', label: 'LOW', sub: 'Lightest: softer, no shadows, glow or lights' },
+  { id: 'medium', label: 'MEDIUM', sub: 'Everything, at your screen’s size' },
+  { id: 'high', label: 'HIGH', sub: 'Sharper and smoother; needs a good graphics card' },
 ]
 const CROWDS: { id: CrowdSize; label: string; sub: string }[] = [
   { id: 'few', label: 'FEW', sub: 'Half the fans' },
@@ -138,7 +138,7 @@ export function SettingsPanel() {
                   <Section>
                     <Choice
                       label="Quality"
-                      hint="If the game runs slowly, choose LOW."
+                      hint="If the game runs slowly or the 3D goes black, choose a lower quality. It also steps down by itself when the 3D fails."
                       options={QUALITIES}
                       value={s.quality}
                       onPick={(quality) => s.set({ quality })}

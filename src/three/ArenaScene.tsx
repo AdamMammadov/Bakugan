@@ -137,7 +137,7 @@ const partnerSpot = (side: SideIndex, k: number) => {
 
 export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers, throws = [0, 0], partners }: Props) {
   // glow and vignette, unless the graphics are set to low
-  const { effects } = useQuality()
+  const { effects, samples, shadowMapSize, extras } = useQuality()
   const gateElement = gate ? ELEMENT_BY_ID[gate] : null
   const pull = pullFor(fighters)
   // the stadium, the card and the brawlers grow with the view when a giant is on the field
@@ -256,7 +256,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
         position={[12 * pull, 40 * pull, 24 * pull]}
         intensity={2.2}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={shadowMapSize}
         shadow-camera-left={-45 * pull}
         shadow-camera-right={45 * pull}
         shadow-camera-top={45 * pull}
@@ -279,14 +279,16 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
         <circleGeometry args={[(FIELD_RADIUS + 2) * k, 96]} />
         <meshStandardMaterial color="#0b0c12" metalness={0.3} roughness={0.85} />
       </mesh>
-      <Sparkles
-        count={300}
-        scale={[70, 28, 44]}
-        position={[0, 11, 0]}
-        size={1.6}
-        speed={0.3}
-        color={gateElement?.glow ?? '#9aa3b5'}
-      />
+      {extras && (
+        <Sparkles
+          count={300}
+          scale={[70, 28, 44]}
+          position={[0, 11, 0]}
+          size={1.6}
+          speed={0.3}
+          color={gateElement?.glow ?? '#9aa3b5'}
+        />
+      )}
 
       <Stadium scale={k} colors={colors} names={names} exclude={onField} />
 
@@ -401,7 +403,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
       <LiftDrag max={30} />
       <PullBack k={pull} />
       {effects && (
-        <EffectComposer>
+        <EffectComposer multisampling={samples}>
           <Bloom luminanceThreshold={1} luminanceSmoothing={0.15} intensity={0.65} mipmapBlur />
           <Vignette offset={0.25} darkness={0.7} />
         </EffectComposer>

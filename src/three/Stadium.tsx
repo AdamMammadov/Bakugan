@@ -19,7 +19,7 @@ import { createAnnouncer, type Announcer } from './announcer'
 import { Crowd, type CrowdLevels, type Seat } from './Crowd'
 import { listenFx } from './fx'
 import { listenStadium, type CrowdMood, type StadiumCall } from './stadium'
-import { useSettings } from '../store/useSettings'
+import { useQuality, useSettings } from '../store/useSettings'
 import { ArenaLights } from './ArenaLights'
 
 /**
@@ -541,7 +541,8 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
     [exclude],
   )
   // the crowd size setting: every fan, three in four, or half of them (the same fans each time)
-  const crowdSize = useSettings((st) => st.crowdSize)
+  const crowdSize = useSettings((st) => (st.quality === 'low' ? 'few' : st.crowdSize))
+  const { extras } = useQuality()
   const seats = useMemo(() => {
     const all = seatsFor(vipAngles)
     const keep = crowdSize === 'packed' ? 1 : crowdSize === 'normal' ? 0.75 : 0.5
@@ -801,7 +802,7 @@ export function Stadium({ scale, colors, names, exclude }: Props) {
         </mesh>
       </group>
       {/* show lights sweeping the field, and sparks on the big moments */}
-      <ArenaLights colors={colors} />
+      {extras && <ArenaLights colors={colors} />}
       {/* the fans come in once their models have loaded */}
       <Suspense fallback={null}>
         <Crowd seats={seats} levels={levels} colors={colors} />

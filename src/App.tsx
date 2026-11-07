@@ -5,6 +5,7 @@ import { EventToast } from './components/EventToast'
 import { InvitePopup } from './components/InvitePopup'
 import { SettingsButton, SettingsPanel } from './components/SettingsPanel'
 import { FpsMeter } from './components/FpsMeter'
+import { SettingsNotice } from './components/SettingsNotice'
 import { useSettings } from './store/useSettings'
 import { ProfileButton } from './components/ProfileButton'
 import { SeasonNotice } from './components/SeasonNotice'
@@ -77,13 +78,10 @@ export default function App() {
   // the browser tab carries the game's name (src/brand.ts)
   useEffect(() => void (document.title = `${GAME_TITLE} ${GAME_SUBTITLE}`), [])
 
-  // download every Bakugan model in the background once the player is in, so the viewer,
-  // showroom and arena show the real models straight away
+  // the main menu's lead model first, while the title screen waits (the others load when they are shown: every model
+  // held in memory at once came to about 600 MB, too much for many computers)
   useEffect(() => {
-    // the main menu's lead first, while the title screen waits
     preloadActiveLead()
-    const t = window.setTimeout(() => void import('./three/BakuganModels').then((m) => m.preloadAllModels()), 5000)
-    return () => clearTimeout(t)
   }, [])
 
   return (
@@ -122,6 +120,7 @@ export default function App() {
         <EventToast />
         <InvitePopup />
         <SettingsPanel />
+        <SettingsNotice />
         {/* the corner buttons share one row, so they line up whatever their widths */}
         {/* the main menu has the music and sound switches in its own layout */}
         {screen !== 'intro' && screen !== 'menu' && (
