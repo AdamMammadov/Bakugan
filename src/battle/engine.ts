@@ -774,17 +774,19 @@ export interface AiLevel {
 export const AI_EASY: AiLevel = { noise: 80, depth: 1 }
 
 /**
- * Bots get sharper and a little stronger as the player climbs the ranks (index = tier, 0 = Rookie). Even a Rookie's
- * bot looks a move ahead and seldom throws a battle away (players found them too easy); from Ace Brawler up they see
- * most of the battle and spot every knockout.
+ * Bots get sharper as the player climbs the ranks (index = tier, 0 = Rookie). The `edge` is what decides most battles:
+ * a bot even a little ahead in G wins every battle both sides play alike, and new players lost match after match at
+ * level power. So the first ranks' bots come in a little under the player's G, the middle ones level, and only the top
+ * ones a little ahead. Simulated against players of three strengths: about 60–75% wins in the first two ranks, about
+ * half in the middle, 35–45% at the top.
  */
 const BOT_LEVELS: AiLevel[] = [
-  { noise: 45, depth: 2, edge: 0.02 },
-  { noise: 30, depth: 2, edge: 0.035 },
-  { noise: 18, depth: 3, edge: 0.055 },
-  { noise: 10, depth: 4, edge: 0.08 },
-  { noise: 5, depth: 5, edge: 0.105 },
-  { noise: 0, depth: 6, edge: 0.135 },
+  { noise: 70, depth: 1, edge: -0.04 },
+  { noise: 55, depth: 1, edge: -0.02 },
+  { noise: 40, depth: 2, edge: 0 },
+  { noise: 28, depth: 2, edge: 0.01 },
+  { noise: 15, depth: 3, edge: 0.015 },
+  { noise: 6, depth: 4, edge: 0.025 },
 ]
 export const aiForTier = (tier: number): AiLevel => BOT_LEVELS[Math.min(Math.max(tier, 0), BOT_LEVELS.length - 1)]
 
@@ -990,12 +992,20 @@ function strongest(form: number) {
  * An opponent on the player's level: as many Bakugan as the player brings, any attribute,
  * the same forms and the same number of ability cards. Bakugan differ in base power, so
  * each opponent gets a G adjustment that puts it level with the player's Bakugan in that slot,
- * plus the bot's `edge` for the player's rank.
+ * plus the bot's `edge` for the player's rank (below zero for the first ranks).
  */
-export function matchedOpponent(player: Entrant[], rng: () => number = Math.random, edge = 0): Entrant[] {
+export function matchedOpponent(
+  player: Entrant[],
+  rng: () => number = Math.random,
+  edge = 0,
+  /** The opponent's own Bakugan, brought first when they are out and not in the player's team. */
+  prefer: string[] = [],
+): Entrant[] {
   const mine = new Set(player.map((e) => e.bakugan.id))
   const others = released().filter((b) => !mine.has(b.id))
-  const pool = shuffle(others.length >= player.length ? others : released(), rng)
+  const own = prefer.map((id) => others.find((b) => b.id === id)).filter((b): b is (typeof others)[number] => !!b)
+  const rest = shuffle(others.length >= player.length ? others : released(), rng).filter((b) => !own.includes(b))
+  const pool = [...own, ...rest]
   return player.map((slot, i): Entrant => {
     const bakugan = pool[i % pool.length]
     const form = Math.min(slot.form, bakugan.evolutions.length - 1)

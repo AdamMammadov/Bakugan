@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { aiForTier, LIVES, matchedOpponent, MOVES, TEAM_SIZE } from '../battle/engine'
+import { aiForTier, LIVES, MOVES, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
 import { isReleased, released } from '../season/release'
@@ -9,6 +9,7 @@ import { ELEMENT_BY_ID } from '../data/elements'
 import { gateDeck } from '../data/gates'
 import { GateChip } from '../components/GateChip'
 import { Avatar } from '../components/Avatar'
+import { Matchmaking } from '../components/Matchmaking'
 import {
   rankScore,
   teamEntrants,
@@ -19,7 +20,8 @@ import {
   useProfiles,
   type OwnedBakugan,
 } from '../profile/useProfiles'
-import { botCharacter, opponentCharacter } from '../profile/avatar'
+import { botCharacter } from '../profile/avatar'
+import { findRival, type Rival } from '../profile/rivals'
 import { useBackOf, useGame } from '../store/useGame'
 import { TagFaceOff } from './TagFaceOff'
 
@@ -65,28 +67,35 @@ export function CompareScreen() {
   // Without a profile (guest) any Bakugan can be picked.
   const [ranked, setRanked] = useState(profile !== null)
   const [free, setFree] = useState<Entrant[]>(() => fillTeam([{ bakugan: mine, form: compareForm }]))
-  // the saved team, as many Bakugan as the player last brawled with
+  // the saved team, as many Bakugan as the player last brawled with, led by the Bakugan the face-off was opened
+  // with (the menu's lead, or the Bakugan whose page it came from) when the player owns it
   const [own, setOwn] = useState<Entrant[]>(() => {
     if (!profile) return []
     const saved = teamEntrants(profile)
-    return saved.length ? saved : fillOwn([], profile.collection, 1)
+    const team = saved.length ? saved : fillOwn([], profile.collection, 1)
+    const opened = profile.collection.find((o) => o.id === bakuganId)
+    if (!opened || team[0]?.bakugan.id === opened.id) return team
+    const lead = fillOwn([], [opened], 1)
+    return [...lead, ...team.filter((e) => e.bakugan.id !== opened.id)].slice(0, Math.max(1, team.length))
   })
   const left = profile ? own : free
-  const tier = profile ? tierOf(rankScore(profile)).index : 0
-  // the bot of the player's rank: its Bakugan get a small G edge on top of the level match
-  const opponent = (team: Entrant[]) => matchedOpponent(team, Math.random, aiForTier(tier).edge)
-  // the system always picks the opponent, on the player's level; nobody chooses their rival's forms
-  const [right, setRight] = useState<Entrant[]>(() => opponent(left))
+  const score = profile ? rankScore(profile) : 0
+  const tier = tierOf(score).index
+  const avoid = profile?.avatar.kind === 'preset' ? profile.avatar.id : undefined
+  // the opponent is a brawler from the rankings near the player's rank, their Bakugan levelled to the player's team
+  // (with the CPU's G edge for the player's rank); nobody chooses their rival
+  const rivalFor = (team: Entrant[]) => findRival(score, team, aiForTier(tier).edge ?? 0, avoid)
+  // free play shows its opponent at once; a ranked one is found by matchmaking (below) and then stays
+  const [rival, setRival] = useState<Rival>(() => rivalFor(left))
+  const [search, setSearch] = useState<{ rival: Rival; ms: number } | null>(null)
+  const isRanked = ranked && profile !== null
   // the tag battle face-off (a random CPU partner)
   const [tag, setTag] = useState(false)
-  const avoid = profile?.avatar.kind === 'preset' ? profile.avatar.id : undefined
-  // picked once per opponent team, not on every render
-  const bot = useMemo(() => opponentCharacter(right[0].bakugan, avoid), [right, avoid])
 
   const setLeft = (team: Entrant[]) => {
     if (profile) setOwn(team)
     else setFree(team)
-    setRight(opponent(team))
+    setRival(rivalFor(team))
   }
   // how many Bakugan each side brings: the player's choice, up to as many as they own
   const most = profile ? Math.min(TEAM_SIZE, profile.collection.length) : TEAM_SIZE
@@ -98,15 +107,21 @@ export function CompareScreen() {
   const pack = (team: Entrant[]) =>
     team.map((e) => ({ id: e.bakugan.id, form: e.form, cards: e.cards, bonusG: e.bonusG, skin: e.skin }))
 
-  function brawl() {
+  function enter(foe: Rival) {
     playSfx('brawl')
     if (profile) setTeam(own.map((e) => e.bakugan.id))
     enterArena({
       left: pack(left),
-      right: pack(right),
-      ranked: ranked && profile !== null,
-      bot: { characterId: bot.id, tier },
+      right: pack(foe.team),
+      ranked: isRanked,
+      bot: { characterId: foe.bot.characterId, tier, name: foe.bot.name },
     })
+  }
+  function brawl() {
+    if (!isRanked) return enter(rival)
+    // ranked: search for an opponent for a few seconds; the one found is the one played
+    playSfx('select')
+    setSearch({ rival: rivalFor(left), ms: 2500 + Math.random() * 3500 })
   }
 
   return (
@@ -141,15 +156,15 @@ export function CompareScreen() {
               {profile.firstName} {profile.lastName}
             </span>{' '}
             {ranked
-              ? `— ranked brawl with your own Bakugan against a ${TIERS[tier].name}-level bot. Wins earn XP, Battle Points and rating.`
-              : '— free play: practise with your own Bakugan, no rewards.'}
+              ? `— ranked brawl with your own Bakugan. Matchmaking finds a brawler near your rank (${TIERS[tier].name}). Wins earn XP, Battle Points and rating.`
+              : '— free play: practise with your own Bakugan against a CPU brawler, no rewards.'}
           </p>
           {(['ranked', 'free'] as const).map((m) => (
             <button
               key={m}
               onClick={() => {
+                playSfx('select')
                 setRanked(m === 'ranked')
-                setRight(opponent(own))
               }}
               className={`font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition hover:bg-white/10 ${
                 (m === 'ranked') === ranked
@@ -185,18 +200,18 @@ export function CompareScreen() {
       <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-start gap-8">
         <TeamCard team={left} onChange={setLeft} label="YOUR TEAM" owned={profile ? profile.collection : undefined} />
         <div className="font-display mt-40 text-5xl font-black text-white/30 italic">VS</div>
-        <TeamCard
-          team={right}
-          label={`OPPONENT · ${bot.name.toUpperCase()} (CPU)`}
-          onRandom={
-            ranked && profile
-              ? undefined
-              : () => {
-                  playSfx('select')
-                  setRight(opponent(left))
-                }
-          }
-        />
+        {isRanked ? (
+          <RankedSlot size={left.length} rank={tierOf(score).rank} />
+        ) : (
+          <TeamCard
+            team={rival.team}
+            label={`OPPONENT · ${rival.bot.name.toUpperCase()} (CPU)`}
+            onRandom={() => {
+              playSfx('select')
+              setRival(rivalFor(left))
+            }}
+          />
+        )}
       </div>
 
       <div className="mt-10 flex items-center justify-center gap-6">
@@ -206,7 +221,7 @@ export function CompareScreen() {
           whileTap={{ scale: 0.96 }}
           className="font-display skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.3em]"
         >
-          ENTER THE ARENA
+          {isRanked ? 'FIND MATCH' : 'ENTER THE ARENA'}
         </motion.button>
         {/* other brawlers' matches, as they happen */}
         <motion.button
@@ -236,6 +251,24 @@ export function CompareScreen() {
           ⚔⚔ RANDOM TAG BATTLE
         </motion.button>
       </div>
+      <AnimatePresence>
+        {search && profile && (
+          <Matchmaking
+            me={{
+              name: `${profile.firstName} ${profile.lastName}`,
+              avatar: profile.avatar,
+              element: profile.element,
+              score,
+              rating: profile.rating,
+              team: left,
+            }}
+            rival={search.rival}
+            searchMs={search.ms}
+            onCancel={() => setSearch(null)}
+            onReady={() => enter(search.rival)}
+          />
+        )}
+      </AnimatePresence>
       {tag && (
         <TagFaceOff
           me={
@@ -257,6 +290,24 @@ export function CompareScreen() {
         />
       )}
     </motion.div>
+  )
+}
+
+/** The ranked opponent's place before matchmaking: who it will be is found when the player searches. */
+function RankedSlot({ size, rank }: { size: number; rank: string }) {
+  return (
+    <div className="flex min-h-[18rem] flex-col rounded-xl border border-dashed border-white/20 bg-black/40 p-6 backdrop-blur">
+      <p className="font-display text-xs tracking-[0.5em] text-white/40">OPPONENT · RANKED MATCHMAKING</p>
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <div className="font-display flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/20 text-4xl font-black text-white/30">
+          ?
+        </div>
+        <p className="mt-4 max-w-sm text-sm text-white/60">
+          Press <span className="font-bold text-white">FIND MATCH</span>: the system finds a brawler from the rankings near your
+          rank ({rank}), bringing {size} Bakugan, levelled to your team.
+        </p>
+      </div>
+    </div>
   )
 }
 
