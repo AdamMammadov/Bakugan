@@ -1,11 +1,14 @@
 // Dev-only model preview used to compare Blender output with reference renders.
 // http://localhost:5173/tools/preview/?model=hydranoid/ball.glb&az=-0.6&el=0.1&d=3.85&open=1
+// ?bakugan=embral&open=1 shows the game's own ball of a Bakugan (with the creature rising out of a pod ball)
 import { useGLTF } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as THREE from 'three'
+import { BAKUGAN } from '../../src/data/bakugan'
+import { BallModel } from '../../src/three/BakuganModels'
 
 const q = new URLSearchParams(location.search)
 const model = q.get('model') ?? 'hydranoid/ball.glb'
@@ -38,6 +41,17 @@ function Model() {
   return <primitive object={scene} rotation-x={spin} />
 }
 
+/** The game's ball of `?bakugan=`, open or closed, twice its game size (about the size of a model shown here). */
+function GameBall({ id }: { id: string }) {
+  const bakugan = BAKUGAN.find((b) => b.id === id) ?? BAKUGAN[0]
+  const openRef = useRef(open)
+  return (
+    <group scale={2}>
+      <BallModel bakugan={bakugan} form={Number(q.get('form') ?? 0)} openRef={openRef} />
+    </group>
+  )
+}
+
 createRoot(document.getElementById('root')!).render(
   <Canvas
     camera={{ position: [Math.sin(az) * Math.cos(el) * d, ty + Math.sin(el) * d, Math.cos(az) * Math.cos(el) * d], fov: 30 }}
@@ -48,9 +62,7 @@ createRoot(document.getElementById('root')!).render(
     <ambientLight intensity={0.5} />
     <directionalLight position={[2, 4, 5]} intensity={2.2} />
     <directionalLight position={[-4, 2, -3]} intensity={0.8} color="#b48cff" />
-    <Suspense fallback={null}>
-      <Model />
-    </Suspense>
+    <Suspense fallback={null}>{q.get('bakugan') ? <GameBall id={q.get('bakugan')!} /> : <Model />}</Suspense>
     <EffectComposer>
       <Bloom luminanceThreshold={0.9} intensity={1} mipmapBlur />
     </EffectComposer>

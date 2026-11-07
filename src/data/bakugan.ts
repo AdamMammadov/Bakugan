@@ -100,6 +100,11 @@ export interface Bakugan {
      */
     fill?: number
     /**
+     * Balls that open like a pod (the game owner's own Bakugan): the creature itself rises out of the open ball and
+     * stands on it, this tall (in ball sizes).
+     */
+    figure?: number
+    /**
      * How big this Bakugan stands next to the others (1 = normal). A giant (well above 1.4) makes the arena's
      * view pull back so it fits, and the others look small beside it.
      */
@@ -344,12 +349,26 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // the game owner's own design, from the owner's own model: its broken wing replaced by a mirror of the good one,
   // its flaming tail end (grown into its left foot) swung out clear of it, fire painted on its crown and tail flame
   // and lava cracks on its armour (they glow), skinned and inked. A winged giant standing on its legs
-  embral: { ball: 'models/embral/ball.glb', monster: 'models/embral/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
+  embral: {
+    ball: 'models/embral/ball.glb',
+    monster: 'models/embral/monster.glb',
+    scale: 2,
+    length: 1.7,
+    stage: 1.3,
+    figure: 1.25,
+  },
   // the game owner's own design, from the owner's own model: a claw lying loose on the floor dropped, the wings (in
   // pieces in the model) rebuilt whole and set behind the shoulder pads, welded so no seam opens, repainted after the
   // owner's picture (deep navy skin with pale spots, blue-steel armour, gold claws and trident; the tide-lines, eyes
   // and trident tips glow), skinned and inked. A winged giant standing on its legs, its trident in its right hand
-  tidevane: { ball: 'models/tidevane/ball.glb', monster: 'models/tidevane/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
+  tidevane: {
+    ball: 'models/tidevane/ball.glb',
+    monster: 'models/tidevane/monster.glb',
+    scale: 2,
+    length: 1.7,
+    stage: 1.3,
+    figure: 1.25,
+  },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },

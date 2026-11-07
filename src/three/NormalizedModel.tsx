@@ -25,6 +25,33 @@ function smooth(mat: THREE.MeshStandardMaterial) {
   }
 }
 
+/**
+ * A vertex lying on degenerate faces only can come with no normal (zero length). Lighting turns that into "not a
+ * number", and the glow then spreads it over the screen as black. Such normals are pointed straight out from the
+ * model's middle instead. Checked once per geometry (clones share it).
+ */
+function mendNormals(geometry: THREE.BufferGeometry) {
+  if (geometry.userData.normalsMended) return
+  geometry.userData.normalsMended = true
+  const normal = geometry.getAttribute('normal') as THREE.BufferAttribute | undefined
+  const position = geometry.getAttribute('position') as THREE.BufferAttribute | undefined
+  if (!normal || !position) return
+  let mended = 0
+  for (let i = 0; i < normal.count; i++) {
+    const x = normal.getX(i)
+    const y = normal.getY(i)
+    const z = normal.getZ(i)
+    if (x * x + y * y + z * z > 0.25) continue
+    const px = position.getX(i)
+    const py = position.getY(i)
+    const pz = position.getZ(i)
+    const l = Math.hypot(px, py, pz) || 1
+    normal.setXYZ(i, l > 1e-6 ? px / l : 0, l > 1e-6 ? py / l : 1, l > 1e-6 ? pz / l : 0)
+    mended++
+  }
+  if (mended) normal.needsUpdate = true
+}
+
 /** Clip-name patterns tried for each pose, in order. */
 const POSE_CLIPS: Record<Pose['kind'], RegExp> = {
   lunge: /attack|bite|strike|punch|claw/i,
@@ -73,6 +100,7 @@ export function NormalizedModel({
     copy.traverse((o) => {
       const m = o as THREE.Mesh
       if (m.isMesh) {
+        mendNormals(m.geometry)
         // the ink outline (an unlit shell round the model) must not cast a shadow: it wraps the model, so its
         // shadow would fall over all of it and darken it in the arena, where shadows are on
         const unlit = (Array.isArray(m.material) ? m.material : [m.material]).every(
