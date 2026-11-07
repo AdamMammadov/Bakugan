@@ -13,6 +13,7 @@ import { AURA_LIFE, FxFade, fxClock, fxScale } from './fxShared'
 import { LiftDrag } from './LiftDrag'
 import { ChaosBeam, Impact, Projectile, ShieldDome } from './ArenaFx'
 import { BrawlerFocus, ViewLimits } from './ArenaView'
+import { CleanPicture } from './CleanPicture'
 import { MonsterModel } from './BakuganModels'
 import { BlobShadow } from './BlobShadow'
 import { Brawler, type BrawlerGesture } from './Brawler'
@@ -405,6 +406,7 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
       <PullBack k={pull} />
       {effects && (
         <EffectComposer multisampling={samples}>
+          <CleanPicture />
           <Bloom luminanceThreshold={1} luminanceSmoothing={0.15} intensity={0.65} mipmapBlur />
           <Vignette offset={0.25} darkness={0.7} />
         </EffectComposer>

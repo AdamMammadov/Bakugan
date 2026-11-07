@@ -10,6 +10,7 @@ import { AbilityEffect } from './AbilityEffect'
 import { LiftDrag } from './LiftDrag'
 import { BallModel, MonsterModel } from './BakuganModels'
 import { BlobShadow } from './BlobShadow'
+import { CleanPicture } from './CleanPicture'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
 import { moveFor, type Pose } from './pose'
@@ -108,6 +109,7 @@ export function BrawlScene({ bakugan, element, phase, form, ballOpen, activeAbil
 
       {effects && (
         <EffectComposer multisampling={samples}>
+          <CleanPicture />
           <Bloom luminanceThreshold={0.9} intensity={1.2} mipmapBlur />
           <Vignette offset={0.25} darkness={0.75} />
         </EffectComposer>

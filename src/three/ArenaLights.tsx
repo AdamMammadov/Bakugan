@@ -34,10 +34,11 @@ uniform vec3 uColor;
 uniform float uStrength;
 void main() {
   // bright at the lamp, fading towards the field; soft at the beam's edges
-  float along = pow(vH, 1.6);
-  float edge = pow(abs(dot(normalize(vN), vV)), 1.5);
-  float a = along * edge * uStrength;
-  if (a < 0.003) discard;
+  // (kept within 0 to 1: just past the cone's ends, some graphics cards give a power of a negative number as "not a number")
+  float along = pow(clamp(vH, 0.0, 1.0), 1.6);
+  float edge = pow(clamp(abs(dot(normalize(vN + 1e-5), vV)), 0.0, 1.0), 1.5);
+  float a = clamp(along * edge * uStrength, 0.0, 1.0);
+  if (!(a >= 0.003)) discard;
   gl_FragColor = vec4(uColor * uColor * a * 1.4, a);
 }
 `
