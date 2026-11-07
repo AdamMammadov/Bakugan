@@ -20,7 +20,8 @@ export function ViewLimits({ k, reach, height, target }: { k: number; reach: num
     const p = camera.position
     const r = Math.hypot(p.x, p.z)
     if (r > reach * k) p.multiply(new THREE.Vector3((reach * k) / r, 1, (reach * k) / r))
-    p.setY(THREE.MathUtils.clamp(p.y, 1.5, height * k))
+    // never down in the Gate Card lying on the field (its top is about 1.5k up)
+    p.setY(THREE.MathUtils.clamp(p.y, Math.max(1.5, 2.5 * k), height * k))
   })
   return null
 }

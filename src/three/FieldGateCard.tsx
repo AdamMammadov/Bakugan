@@ -258,6 +258,11 @@ export function FieldGateCard({ element, glow = 1 }: { element: ElementInfo | nu
           <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
             <planeGeometry args={[LONG - 0.04, SHORT - 0.04]} />
             <meshStandardMaterial
+              // the card's layers lie a hair apart: each is drawn a step nearer than the one under it, so from high up
+              // the dark plate can never show through (graphics cards with coarser depth flickered black there)
+              polygonOffset
+              polygonOffsetFactor={-1}
+              polygonOffsetUnits={-4}
               map={backTexture}
               // dim like the open face, so the Bakugan standing on it stay clear
               color={new THREE.Color().setScalar(0.35 + glow * 0.5)}
@@ -275,6 +280,9 @@ export function FieldGateCard({ element, glow = 1 }: { element: ElementInfo | nu
             <planeGeometry args={[LONG - 0.08, SHORT - 0.08]} />
             <meshStandardMaterial
               ref={border}
+              polygonOffset
+              polygonOffsetFactor={-1}
+              polygonOffsetUnits={-4}
               color={open?.color ?? '#9aa3b5'}
               emissive={open?.color ?? '#9aa3b5'}
               emissiveIntensity={1.4 * glow}
@@ -283,7 +291,14 @@ export function FieldGateCard({ element, glow = 1 }: { element: ElementInfo | nu
           </mesh>
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0004, 0]} receiveShadow>
             <planeGeometry args={[LONG - 0.24, SHORT - 0.24]} />
-            <meshStandardMaterial color="#111219" metalness={0.4} roughness={0.5} />
+            <meshStandardMaterial
+              color="#111219"
+              metalness={0.4}
+              roughness={0.5}
+              polygonOffset
+              polygonOffsetFactor={-2}
+              polygonOffsetUnits={-8}
+            />
           </mesh>
           {open && (
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0008, 0]}>
@@ -291,6 +306,10 @@ export function FieldGateCard({ element, glow = 1 }: { element: ElementInfo | nu
               <meshBasicMaterial
                 map={iconOf(open)}
                 transparent
+                depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-3}
+                polygonOffsetUnits={-12}
                 color={new THREE.Color().setScalar(glow >= 1 ? 1 : glow * 0.45)}
                 opacity={glow >= 1 ? 1 : 0.55 + glow}
                 toneMapped={glow < 1}
