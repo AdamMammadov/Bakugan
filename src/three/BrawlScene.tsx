@@ -1,4 +1,4 @@
-import { OrbitControls, Sparkles } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { type RefObject, Suspense, useEffect, useMemo, useRef } from 'react'
@@ -13,6 +13,7 @@ import { BlobShadow } from './BlobShadow'
 import { GateCard } from './GateCard'
 import { LightPillar } from './LightPillar'
 import { moveFor, type Pose } from './pose'
+import { Sparkles } from './Sparkles'
 import { useQuality } from '../store/useSettings'
 
 export type Phase = 'ball' | 'gate' | 'brawling' | 'monster'

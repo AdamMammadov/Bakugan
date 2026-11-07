@@ -1,4 +1,4 @@
-import { Sparkles, useGLTF } from '@react-three/drei'
+import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
@@ -11,6 +11,7 @@ import { NormalizedModel } from './NormalizedModel'
 import { SKIN_BY_ID } from '../season/season'
 import { PlaceholderMonster } from './PlaceholderMonster'
 import type { PoseRef } from './pose'
+import { Sparkles } from './Sparkles'
 
 export const MONSTER_HEIGHT = 3
 export const BALL_SIZE = 1

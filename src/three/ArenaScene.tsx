@@ -1,4 +1,4 @@
-import { OrbitControls, Sparkles } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -34,6 +34,7 @@ import {
   type Rig,
   type ShieldFit,
 } from './shieldFit'
+import { Sparkles } from './Sparkles'
 import { crowd } from './stadium'
 import { FIELD_RADIUS, Stadium } from './Stadium'
 import { THROW_LAND, ThrownBall } from './ThrowIn'

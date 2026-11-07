@@ -1,4 +1,4 @@
-import { OrbitControls, Sparkles } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { GameCanvas } from '../three/GameCanvas'
 import { useEffect, useRef, useState } from 'react'
@@ -8,6 +8,7 @@ import { ELEMENT_BY_ID } from '../data/elements'
 import { BakuganBall } from '../three/BakuganBall'
 import { MonsterModel } from '../three/BakuganModels'
 import { LightPillar } from '../three/LightPillar'
+import { Sparkles } from '../three/Sparkles'
 import { StageFit } from '../three/StageFit'
 import { useQuality } from '../store/useSettings'
 
