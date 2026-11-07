@@ -739,9 +739,9 @@ function VortexDisc({ radius, dur }: { radius: number; dur: number }) {
             float open = smoothstep(0.0, 0.3, life);
             float ang = atan(q.y, q.x + 1e-5);
             float arms = fract(ang / 6.2831 * 4.0 + log(d + 0.02) * 1.1 + uT * 0.9);
-            float arm = smoothstep(0.0, 0.2, arms) * smoothstep(0.7, 0.3, arms);
+            float arm = smoothstep(0.0, 0.2, arms) * (1.0 - smoothstep(0.3, 0.7, arms));
             float n = fxNoise(q * 6.0 + uT);
-            float disc = smoothstep(open, open * 0.6, d);
+            float disc = (1.0 - smoothstep(open * 0.6, open + 1e-4, d));
             float a = disc * (0.55 + 0.4 * arm) * (1.0 - smoothstep(0.7, 1.0, life)) * uFade;
             vec3 col = mix(vec3(0.02, 0.0, 0.05), vec3(0.75, 0.3, 1.6), arm * smoothstep(0.15, 0.8, d) * (0.5 + n));
             if (!(a >= 0.003)) discard;
@@ -1181,7 +1181,7 @@ void main() {
   float frame = exp(-abs(edge - 0.045) * 260.0) * 0.7;
   // the light pours in from the opener's end: the old colour gives way behind the front
   float along = q.x * uWipeDir;
-  float taken = smoothstep(uWipe + 0.06, uWipe - 0.06, -along);
+  float taken = (1.0 - smoothstep(uWipe - 0.06, uWipe + 0.06, -along));
   vec3 col = mix(uFrom, uColor, taken);
   float fw = (-along - uWipe) / 0.035;
   float front = exp(-fw * fw) * uWipeGlow;

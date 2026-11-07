@@ -20,8 +20,10 @@ uniform sampler2D inputBuffer;
 varying vec2 vUv;
 void main() {
   vec4 c = texture2D(inputBuffer, vUv);
-  // a broken value (not a number) becomes black
-  c = mix(c, vec4(0.0), isnan(c));
+  // a broken value (not a number) becomes black; found from its bits, since some graphics drivers drop a plain
+  // isnan() check as "impossible"
+  uvec4 bits = floatBitsToUint(c) & 0x7fffffffu;
+  c = mix(c, vec4(0.0), greaterThan(bits, uvec4(0x7f800000u)));
   // infinity, and anything brighter than the game draws, is capped; nothing is darker than black
   gl_FragColor = clamp(c, vec4(0.0), vec4(${BRIGHTEST.toFixed(1)}));
 }

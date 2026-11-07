@@ -52,19 +52,19 @@ void main() {
   } else if (uShape < 3.5) {
     // a leaf: a pointed oval with a lighter vein
     float w = 0.4 * (1.0 - q.y * q.y);
-    a = smoothstep(0.03, -0.03, abs(q.x) - w) * step(abs(q.y), 0.98);
-    col *= 0.75 + 0.45 * smoothstep(0.09, 0.0, abs(q.x)) + 0.2 * q.x;
+    a = (1.0 - smoothstep(-0.03, 0.03, abs(q.x) - w)) * step(abs(q.y), 0.98);
+    col *= 0.75 + 0.45 * (1.0 - smoothstep(0.0, 0.09, abs(q.x))) + 0.2 * q.x;
   } else if (uShape < 4.5) {
     // a droplet: clear middle, bright rim, a glint
     vec2 g = q - vec2(-0.32, 0.36);
-    a = smoothstep(1.0, 0.82, d) * (0.3 + 0.7 * smoothstep(0.45, 0.95, d)) + exp(-dot(g, g) * 26.0);
+    a = (1.0 - smoothstep(0.82, 1.0, d)) * (0.3 + 0.7 * smoothstep(0.45, 0.95, d)) + exp(-dot(g, g) * 26.0);
   } else if (uShape < 5.5) {
-    a = smoothstep(1.0, 0.0, d);
+    a = (1.0 - smoothstep(0.0, 1.0, d));
     a *= a;
   } else {
     // a chip of rock: hard edged, lit from above
     float poly = max(abs(q.x) * 0.9 + q.y * 0.35, abs(q.y) * 1.05 - q.x * 0.2);
-    a = smoothstep(0.82, 0.74, poly);
+    a = (1.0 - smoothstep(0.74, 0.82, poly));
     col *= 0.65 + 0.55 * clamp(q.y + 0.3, 0.0, 1.0);
   }
   a *= vCol.a;
@@ -272,8 +272,8 @@ void main() {
     body = smoothstep(0.15, 0.6, band) + 0.6 * pow(band, 6.0);
   }
   float reach = smoothstep(0.0, uRise, uT);
-  float top = smoothstep(reach * 1.1 + 0.02, reach * 1.1 - 0.25, y);
-  float ends = smoothstep(0.0, 0.1, y) * smoothstep(1.0, 0.75, y);
+  float top = (1.0 - smoothstep(reach * 1.1 - 0.25, reach * 1.1 + 0.02, y));
+  float ends = smoothstep(0.0, 0.1, y) * (1.0 - smoothstep(0.75, 1.0, y));
   float fade = 1.0 - smoothstep(0.6, 1.0, life);
   float rim = 0.4 + 0.6 * pow(clamp(1.0 - abs(dot(normalize(vN), vV)), 0.0, 1.0), 1.2);
   float a = body * top * ends * fade * rim * uAlpha * uFade;
@@ -500,8 +500,8 @@ void main() {
   float edge = pow(1.0 - facing, 3.0) * 0.6;
   float streak = 0.65 + 0.5 * fxNoise(vec2(vUv.x * 18.0, y * 3.0 - uT * 4.0));
   float reach = uCollapse > 0.5 ? 1.0 - smoothstep(0.0, uGrow, uT) : smoothstep(0.0, uGrow, uT);
-  float shown = smoothstep(reach + 0.02, reach - 0.15, y);
-  float a = (core + edge) * streak * shown * smoothstep(1.0, 0.55, y) * (1.0 - smoothstep(0.55, 1.0, life)) * uAlpha * uFade;
+  float shown = (1.0 - smoothstep(reach - 0.15, reach + 0.02, y));
+  float a = (core + edge) * streak * shown * (1.0 - smoothstep(0.55, 1.0, y)) * (1.0 - smoothstep(0.55, 1.0, life)) * uAlpha * uFade;
   if (!(a >= 0.003)) discard;
   gl_FragColor = vec4(mix(uA, uB, core), a);
 }
