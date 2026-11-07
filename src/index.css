@@ -258,11 +258,6 @@ body,
 
 /* ---------------------------------------------------------------- page backdrops (PageBackdrop) */
 
-/* a fine diagonal weave instead of the old squares */
-.bd-texture {
-  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 7px);
-}
-
 /* stadium beams swaying */
 @keyframes bd-beam {
   0%,
@@ -275,219 +270,6 @@ body,
 }
 .bd-beam {
   animation: bd-beam 10s ease-in-out infinite;
-}
-
-/* podium light breathing */
-@keyframes bd-pillar {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scaleY(0.92);
-  }
-  50% {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-}
-.bd-pillar {
-  transform-origin: bottom;
-  animation: bd-pillar 5s ease-in-out infinite;
-}
-
-/* soft lights floating */
-@keyframes bd-float {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(18px, -28px);
-  }
-}
-.bd-float {
-  animation: bd-float 12s ease-in-out infinite;
-}
-
-/* thin lines gliding past */
-@keyframes bd-lines {
-  to {
-    background-position: 220px 0;
-  }
-}
-.bd-lines {
-  background-image: repeating-linear-gradient(115deg, currentColor 0 1px, transparent 1px 22px);
-  animation: bd-lines 14s linear infinite;
-}
-
-/* a streak of light crossing the page */
-@keyframes bd-streak {
-  0% {
-    transform: translateX(-45vw);
-    opacity: 0;
-  }
-  15%,
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(115vw);
-    opacity: 0;
-  }
-}
-.bd-streak {
-  left: 0;
-  animation: bd-streak 7s ease-in infinite;
-}
-
-@keyframes bd-pulse {
-  0%,
-  100% {
-    opacity: 0.65;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-.bd-pulse {
-  animation: bd-pulse 4s ease-in-out infinite;
-}
-
-@keyframes bd-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.06);
-  }
-}
-.bd-breathe {
-  animation: bd-breathe 6s ease-in-out infinite;
-}
-
-/* a honeycomb drifting slowly */
-@keyframes bd-hex {
-  to {
-    background-position: 0 -104px;
-    mask-position: 0 -104px;
-  }
-}
-.bd-hex {
-  background-color: currentColor;
-  --hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 2 58 18v32L30 66 2 50V18zM30 66v36M58 50l2 1M2 50l-2 1' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
-  mask-image: var(--hex);
-  mask-size: 60px 104px;
-  animation: bd-hex 12s linear infinite;
-}
-
-/* page art (backdropArt.tsx) */
-@keyframes bd-fall {
-  0% {
-    transform: translateY(0) rotate(0deg);
-  }
-  100% {
-    transform: translateY(115vh) rotate(540deg);
-  }
-}
-.bd-fall {
-  animation: bd-fall 9s linear infinite;
-}
-@keyframes bd-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-14px);
-  }
-}
-.bd-bob {
-  animation: bd-bob 6s ease-in-out infinite;
-}
-@keyframes bd-fan {
-  0%,
-  100% {
-    transform: translateX(-50%) rotate(var(--fan));
-  }
-  50% {
-    transform: translateX(-50%) rotate(calc(var(--fan) * 1.3));
-  }
-}
-.bd-fan {
-  animation: bd-fan 7s ease-in-out infinite;
-}
-@keyframes bd-spot {
-  0%,
-  100% {
-    transform: rotate(-16deg);
-  }
-  50% {
-    transform: rotate(16deg);
-  }
-}
-.bd-spot {
-  animation: bd-spot 8s ease-in-out infinite;
-}
-@keyframes bd-sway {
-  0%,
-  100% {
-    transform: rotate(-3deg);
-  }
-  50% {
-    transform: rotate(3deg);
-  }
-}
-.bd-sway {
-  animation: bd-sway 5s ease-in-out infinite;
-}
-@keyframes bd-dash {
-  to {
-    stroke-dashoffset: -14;
-  }
-}
-.bd-dash {
-  animation: bd-dash 3s linear infinite;
-}
-@keyframes bd-twinkle {
-  0%,
-  100% {
-    opacity: 0.15;
-  }
-  50% {
-    opacity: 0.9;
-  }
-}
-.bd-twinkle {
-  animation: bd-twinkle 3.2s ease-in-out infinite;
-}
-@keyframes bd-chevrons {
-  to {
-    background-position: 12vh 0;
-  }
-}
-.bd-chevrons {
-  animation: bd-chevrons 2.5s linear infinite;
-}
-@keyframes bd-flicker {
-  0%,
-  100% {
-    opacity: 0.15;
-  }
-  8% {
-    opacity: 1;
-  }
-  12% {
-    opacity: 0.3;
-  }
-  16% {
-    opacity: 0.9;
-  }
-  30% {
-    opacity: 0.2;
-  }
-}
-.bd-flicker {
-  animation: bd-flicker 3.6s steps(1, end) infinite;
 }
 
 /* ---------------------------------------------------------------- mouse parallax (parallax.ts) */
@@ -601,22 +383,6 @@ body,
   .menu-sweep,
   .menu-pulse,
   .bd-beam,
-  .bd-pillar,
-  .bd-float,
-  .bd-lines,
-  .bd-streak,
-  .bd-pulse,
-  .bd-breathe,
-  .bd-hex,
-  .bd-fall,
-  .bd-bob,
-  .bd-fan,
-  .bd-spot,
-  .bd-sway,
-  .bd-dash,
-  .bd-twinkle,
-  .bd-chevrons,
-  .bd-flicker,
   .parallax-far,
   .parallax-mid,
   .parallax-near,
@@ -624,6 +390,26 @@ body,
   .title-chevron,
   .title-orbit-spin,
   .title-orbit-face {
+    animation: none;
+  }
+}
+
+/* the arena picture behind the pages: softened, darkened, drifting very slowly */
+.bd-photo {
+  filter: blur(2px) brightness(0.62) saturate(0.95);
+  transform: scale(1.04);
+  animation: bd-photo 48s ease-in-out infinite alternate;
+}
+@keyframes bd-photo {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.1) translate3d(-1.2%, -0.8%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bd-photo {
     animation: none;
   }
 }
