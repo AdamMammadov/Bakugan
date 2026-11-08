@@ -118,8 +118,6 @@ export function BallModel({
   const Custom = skin ? undefined : PROCEDURAL_BALLS[bakugan.id]
   const placeholder = Custom ? <Custom openRef={openRef} /> : <BakuganBall color={element.color} openRef={openRef} />
   if (!ballUrl) return placeholder
-  const figure = bakugan.models?.figure
-  const creature = formModels({ bakugan, form })?.monster
   return (
     <Suspense fallback={null}>
       <group position={[0, -BALL_SIZE / 2, 0]}>
@@ -129,56 +127,8 @@ export function BallModel({
           openRef={openRef}
           tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
         />
-        {figure && creature && (
-          <OpenFigure
-            url={asset(skin?.models?.[bakugan.id] ?? creature)}
-            height={BALL_SIZE * figure}
-            length={formModels({ bakugan, form })?.length ?? 2}
-            openRef={openRef}
-            tint={skin ? { color: skin.color, glow: skin.glow } : undefined}
-          />
-        )}
       </group>
     </Suspense>
-  )
-}
-
-/** Where the creature stands in an open pod ball: on the base's floor, a little above the ball's bottom. */
-const FIGURE_FLOOR = BALL_SIZE * 0.06
-
-/**
- * The creature itself, small, rising out of a ball that opens like a pod (as a Bakugan pops open on a Gate Card):
- * it grows from the ball's floor as the shell opens, and shrinks back into it when the ball closes.
- */
-function OpenFigure({
-  url,
-  height,
-  length,
-  openRef,
-  tint,
-}: {
-  url: string
-  height: number
-  /** How wide its wings may spread, in heights. */
-  length: number
-  openRef: RefObject<boolean>
-  tint?: { color: string; glow: string }
-}) {
-  const group = useRef<THREE.Group>(null)
-  const amount = useRef(0)
-  useFrame((_, dt) => {
-    amount.current = THREE.MathUtils.damp(amount.current, openRef.current ? 1 : 0, 4, dt)
-    const g = group.current
-    if (!g) return
-    // it rises once the shell has started to open
-    const k = THREE.MathUtils.smootherstep(amount.current, 0.2, 1)
-    g.scale.setScalar(Math.max(k, 0.001))
-    g.visible = k > 0.01
-  })
-  return (
-    <group ref={group} position={[0, FIGURE_FLOOR, 0]} visible={false} scale={0.001}>
-      <NormalizedModel url={url} height={height} maxLength={height * length} tint={tint} />
-    </group>
   )
 }
 
