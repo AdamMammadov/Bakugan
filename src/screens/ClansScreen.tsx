@@ -92,7 +92,7 @@ export function ClansScreen() {
                     playSfx('tick')
                     setView(id)
                   }}
-                  className={`font-display rounded border px-4 py-2 text-xs tracking-[0.3em] transition ${
+                  className={`font-display rounded border px-4 py-2 text-xs tracking-wider transition ${
                     view === id ? 'border-white bg-white/10 text-white' : 'border-white/15 text-white/50 hover:text-white'
                   }`}
                 >
@@ -248,7 +248,9 @@ function ClanBrowser({
   const disbands = !!mine && !mine.cpu && mine.members.filter((id) => !isBot(id)).length === 1
   return (
     <section>
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">ALL CLANS · {clans.length}</h2>
+      <h2 className="text-sm font-semibold text-white/80">
+        All clans <span className="font-normal text-white/40">· {clans.length}</span>
+      </h2>
       <div className="mt-3 space-y-3">
         {rankedClans(clans, profiles, now).map(({ clan: c, members, score }, i) => {
           const el = ELEMENT_BY_ID[c.element]
@@ -288,12 +290,12 @@ function ClanBrowser({
                     playSfx('tick')
                     setExpanded(open ? null : c.id)
                   }}
-                  className="font-display rounded border border-white/20 px-3 py-2 text-[10px] tracking-[0.3em] text-white/70 hover:bg-white/10"
+                  className="font-display rounded border border-white/20 px-3 py-2 text-[10px] tracking-wider text-white/70 hover:bg-white/10"
                 >
                   MEMBERS {open ? '▴' : '▾'}
                 </button>
                 {isMine ? (
-                  <span className="font-display w-32 text-center text-[10px] tracking-[0.3em]" style={{ color: el.color }}>
+                  <span className="font-display w-32 text-center text-[10px] tracking-wider" style={{ color: el.color }}>
                     YOUR CLAN
                   </span>
                 ) : (
@@ -305,7 +307,7 @@ function ClanBrowser({
                       setConfirm(null)
                       onJoined()
                     }}
-                    className="font-display w-32 border-2 border-white/40 py-2 text-xs tracking-[0.3em] hover:bg-white/10"
+                    className="font-display w-32 border-2 border-white/40 py-2 text-xs tracking-wider hover:bg-white/10"
                   >
                     {!mine ? 'JOIN' : confirm === c.id ? 'SURE?' : 'SWITCH'}
                   </button>
@@ -340,7 +342,7 @@ function CreateClan({ me }: { me: Profile }) {
   const valid = name.trim().length >= 3 && tag.trim().length >= 2
   return (
     <section className="rounded-xl border border-white/10 bg-black/40 p-6">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">FOUND A CLAN</h2>
+      <h2 className="text-sm font-semibold text-white/80">Found a clan</h2>
       <div className="mt-4 flex items-center gap-4">
         <ClanEmblem clan={{ element, tag }} size={64} />
         <p className="font-display text-xl font-bold">
@@ -387,7 +389,7 @@ function CreateClan({ me }: { me: Profile }) {
           playSfx('victory')
           create(me.id, { name: name.trim(), tag: tag.trim(), motto: motto.trim(), element })
         }}
-        className="font-display mt-5 w-full border-2 border-white/60 py-3 tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
+        className="font-display mt-5 w-full border-2 border-white/60 py-3 tracking-wider transition enabled:hover:bg-white/10 disabled:opacity-40"
       >
         FOUND CLAN
       </button>
@@ -398,7 +400,7 @@ function CreateClan({ me }: { me: Profile }) {
   )
 }
 
-type Tab = 'overview' | 'members' | 'war' | 'goals' | 'activity'
+type Tab = 'overview' | 'members' | 'war' | 'goals' | 'activity' | 'settings'
 
 /** Panels on the clan page: opaque enough to read over any page backdrop. */
 const PANEL = 'rounded-xl border border-white/10 bg-[#0b0c12]/90 backdrop-blur'
@@ -455,11 +457,12 @@ function ClanPage({
     Number(goals.every((g) => g.progress >= g.target) && !has('all')) +
     Number(level.level >= 7 && !has('perk'))
   const tabs: [Tab, string, number?][] = [
-    ['overview', 'OVERVIEW'],
-    ['members', `MEMBERS · ${members.length}`, requests],
-    ['war', 'CLAN WAR'],
-    ['goals', 'WEEKLY GOALS', toClaim],
-    ['activity', 'ACTIVITY'],
+    ['overview', 'Overview'],
+    ['members', `Members ${members.length}`, requests],
+    ['war', 'Clan war'],
+    ['goals', 'Weekly goals', toClaim],
+    ['activity', 'Activity'],
+    ...(clan.cpu ? [] : ([['settings', 'Clan settings']] as [Tab, string][])),
   ]
 
   return (
@@ -486,10 +489,8 @@ function ClanPage({
                   playSfx('tick')
                   setTab(id)
                 }}
-                className={`font-display -mb-px shrink-0 rounded-t-md border-b-2 px-3 py-2 text-[11px] tracking-[0.25em] whitespace-nowrap transition ${
-                  tab === id
-                    ? 'border-white bg-white/10 text-white'
-                    : 'border-transparent text-white/45 hover:bg-white/5 hover:text-white'
+                className={`-mb-px shrink-0 border-b-2 px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition ${
+                  tab === id ? 'border-white text-white' : 'border-transparent text-white/45 hover:text-white'
                 }`}
               >
                 {label}
@@ -507,6 +508,7 @@ function ClanPage({
             {tab === 'war' && <War clan={clan} me={me} now={now} war={war} />}
             {tab === 'goals' && <Goals clan={clan} me={me} level={level.level} goals={goals} has={has} week={week} />}
             {tab === 'activity' && <Activity clan={clan} me={me} now={now} onOpen={onOpen} />}
+            {tab === 'settings' && <ClanSettings clan={clan} me={me} level={level.level} />}
           </div>
         </section>
         <ClanChat clan={clan} me={me} now={now} online={online.size} inMatch={inMatch} onOpen={onOpen} />
@@ -517,7 +519,6 @@ function ClanPage({
 
 function ClanHeader({
   clan,
-  me,
   level,
   place,
   warPlace,
@@ -534,15 +535,12 @@ function ClanHeader({
   members: number
   onBrowse: () => void
 }) {
-  const leave = useClans((s) => s.leave)
-  const [sure, setSure] = useState(false)
   const el = ELEMENT_BY_ID[clan.element]
   const color = clan.emblem?.color ?? el.color
-  const alone = clan.leaderId === me.id && clan.members.filter((id) => id !== me.id && !isBot(id)).length === 0
-  const stat = (label: string, value: React.ReactNode, title?: string) => (
-    <div className="text-center" title={title}>
+  const stat = (value: React.ReactNode, label: string, title: string) => (
+    <div className="rounded-lg bg-white/[0.04] px-4 py-2 text-center" title={title}>
       <p className="font-display text-xl leading-none font-black">{value}</p>
-      <p className="font-display mt-1 text-[9px] tracking-[0.3em] text-white/40">{label}</p>
+      <p className="mt-1 text-[11px] text-white/45">{label}</p>
     </div>
   )
   return (
@@ -553,63 +551,53 @@ function ClanHeader({
     >
       <ClanEmblem clan={clan} size={76} />
       <div className="min-w-0 flex-1">
-        <p className="font-display flex items-center gap-2 text-[10px] tracking-[0.4em]" style={{ color }}>
-          {el.name.toUpperCase()} CLAN · FOUNDED {new Date(clan.createdAt).toLocaleDateString('en-GB')}
+        <h2 className="font-display truncate text-3xl font-black">
+          <span style={{ color }}>[{clan.tag}]</span> {clan.name}
+        </h2>
+        <p className="mt-0.5 truncate text-sm text-white/55 italic">“{clan.motto || 'No motto yet'}”</p>
+        <p className="mt-1 flex items-center gap-2 text-xs text-white/40">
+          {el.name} clan · founded{' '}
+          {new Date(clan.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
           {clan.cpu && <CpuChip />}
         </p>
-        <h2 className="font-display truncate text-3xl font-black">
-          [{clan.tag}] {clan.name}
-        </h2>
-        <p className="truncate text-sm text-white/55 italic">“{clan.motto || 'No motto yet'}”</p>
       </div>
       <div
-        className="w-52 shrink-0"
+        className="w-56 shrink-0"
         title={`${level.into.toLocaleString('en')} / ${level.need.toLocaleString('en')} XP to level ${level.level + 1}`}
       >
-        <p className="font-display flex items-baseline justify-between text-xs tracking-[0.3em] text-white/60">
-          CLAN LEVEL <span className="text-2xl font-black tracking-normal text-white">{level.level}</span>
+        <p className="flex items-baseline justify-between text-sm text-white/60">
+          Clan level <span className="font-display text-2xl font-black text-white">{level.level}</span>
         </p>
         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
           <div className="h-full rounded-full" style={{ width: `${(level.into / level.need) * 100}%`, background: color }} />
         </div>
-        <p className="mt-1 text-[10px] text-white/40">
-          {level.into.toLocaleString('en')} / {level.need.toLocaleString('en')} XP
+        <p className="mt-1 text-[11px] text-white/40">
+          {level.into.toLocaleString('en')} / {level.need.toLocaleString('en')} XP to level {level.level + 1}
         </p>
       </div>
-      <div className="flex shrink-0 gap-5 border-l border-white/10 pl-5">
-        {stat('RANK', `#${place}`, 'Place in the clan rankings (members’ rank scores)')}
-        {stat('WAR', `#${warPlace}`, 'Place in this week’s clan war')}
+      <div className="flex shrink-0 gap-2">
+        {stat(`#${place}`, 'clan rank', 'Place in the clan rankings (members’ rank scores)')}
+        {stat(`#${warPlace}`, 'clan war', 'Place in this week’s clan war')}
         {stat(
-          'ONLINE',
           <span>
             <span className="text-emerald-300">{online}</span>
             <span className="text-sm text-white/40">/{members}</span>
           </span>,
+          'online',
           'Members online now',
         )}
       </div>
-      <div className="flex shrink-0 flex-col gap-2">
-        <button
-          onClick={onBrowse}
-          className="font-display rounded border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.3em] text-white/70 transition hover:border-white/60 hover:bg-white/10 hover:text-white"
-        >
-          FIND CLANS
-        </button>
-        <button
-          onClick={() => (sure ? leave(me.id) : setSure(true))}
-          onMouseLeave={() => setSure(false)}
-          className="font-display rounded border border-white/15 px-3 py-1.5 text-[10px] tracking-[0.3em] text-white/50 transition hover:border-red-400 hover:text-red-300"
-        >
-          {sure ? 'SURE?' : alone ? 'DISBAND' : 'LEAVE CLAN'}
-        </button>
-      </div>
+      <button
+        onClick={onBrowse}
+        className="shrink-0 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/75 transition hover:border-white/50 hover:bg-white/10 hover:text-white"
+      >
+        Find clans
+      </button>
     </header>
   )
 }
 
-const H = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="font-display text-[11px] tracking-[0.4em] text-white/40">{children}</h3>
-)
+const H = ({ children }: { children: React.ReactNode }) => <h3 className="text-sm font-semibold text-white/80">{children}</h3>
 
 function Overview({
   clan,
@@ -641,77 +629,145 @@ function Overview({
     }))
     .sort((a, b) => b.wins - a.wins)
     .slice(0, 5)
-  const next = PERKS.find((p) => p.level > level.level)
+  const done = goals.filter((g) => g.progress >= g.target).length
+  const warPlace = war.findIndex((r) => r.clan.id === clan.id) + 1
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-white/10 bg-black/30 p-4">
-          <H>THIS WEEK · ENDS IN {timeLeft(weekEnd(now) - now).toUpperCase()}</H>
-          <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+          <div className="flex items-baseline justify-between">
+            <H>This week</H>
+            <span className="text-xs text-white/40">ends in {timeLeft(weekEnd(now) - now)}</span>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             {[
-              ['WINS', tally.wins],
+              ['wins', tally.wins],
               ['KOs', tally.kos],
-              ['WAR POINTS', mine?.points ?? 0],
+              ['war points', mine?.points ?? 0],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-md bg-white/5 py-2">
-                <p className="font-display text-xl font-black">{Number(value).toLocaleString('en')}</p>
-                <p className="font-display text-[9px] tracking-[0.3em] text-white/40">{label}</p>
+              <div key={label} className="rounded-md bg-white/[0.04] py-2.5">
+                <p className="font-display text-2xl font-black">{Number(value).toLocaleString('en')}</p>
+                <p className="text-[11px] text-white/45">{label}</p>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-sm text-white/60">
-            Goals done: <b className="text-white">{goals.filter((g) => g.progress >= g.target).length}</b> / {goals.length} · War:
-            #{war.findIndex((r) => r.clan.id === clan.id) + 1} of {war.length}
-          </p>
+          <div className="mt-4">
+            <p className="flex justify-between text-xs text-white/55">
+              <span>
+                Weekly goals: <b className="text-white">{done}</b> of {goals.length}
+              </span>
+              <span>
+                Clan war: <b className="text-white">#{warPlace}</b> of {war.length}
+              </span>
+            </p>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-emerald-400"
+                style={{ width: `${(done / Math.max(1, goals.length)) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
         <div className="rounded-lg border border-white/10 bg-black/30 p-4">
-          <H>TOP BRAWLERS THIS WEEK</H>
-          <div className="mt-2 space-y-1">
+          <H>Top brawlers this week</H>
+          <div className="mt-2 space-y-0.5">
             {top.map(({ m, wins }, i) => (
               <button
                 key={m.id}
                 onClick={() => onOpen(m.id)}
-                className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition hover:bg-white/5"
+                className="flex w-full items-center gap-2.5 rounded-md px-1.5 py-1 text-left transition hover:bg-white/5"
               >
                 <span className="font-display w-4 text-xs text-white/40">{i + 1}</span>
                 <Avatar avatar={m.avatar} color={ELEMENT_BY_ID[m.element].color} size={26} />
                 <span className="min-w-0 flex-1 truncate text-sm">{m.id === me.id ? 'You' : m.name}</span>
-                <span className="text-xs text-white/55">{wins} wins</span>
+                <span className="text-xs text-white/55">
+                  {wins} {wins === 1 ? 'win' : 'wins'}
+                </span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div>
-        <H>CLAN PERKS · LEVEL {level.level}</H>
-        <p className="mt-1 text-xs text-white/40">
-          Members’ brawls earn clan XP: {CLAN_XP.win} per win, {CLAN_XP.loss} per loss, {CLAN_XP.ko} per KO.
-          {next && ` Next perk at level ${next.level}.`}
-        </p>
-        <div className="mt-3 grid gap-2 lg:grid-cols-2">
+      <PerkTrack level={level.level} />
+    </div>
+  )
+}
+
+/** The clan's perks along its levels: what is unlocked, and what the next levels bring. */
+function PerkTrack({ level }: { level: number }) {
+  const last = PERKS[PERKS.length - 1].level
+  const next = PERKS.find((p) => p.level > level)
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+      <div className="flex items-baseline justify-between">
+        <H>Clan perks</H>
+        <span className="text-xs text-white/40">
+          Clan XP from members’ brawls: {CLAN_XP.win} a win, {CLAN_XP.loss} a loss, {CLAN_XP.ko} a KO
+        </span>
+      </div>
+      <div className="relative mt-5 mb-1 px-4">
+        <div className="absolute top-[11px] right-4 left-4 h-1 rounded-full bg-white/10" />
+        <div
+          className="absolute top-[11px] left-4 h-1 rounded-full bg-emerald-400"
+          style={{ width: `calc((100% - 2rem) * ${Math.min(1, Math.max(0, (level - 1) / (last - 1)))})` }}
+        />
+        <div className="relative grid" style={{ gridTemplateColumns: `repeat(${PERKS.length}, minmax(0, 1fr))` }}>
           {PERKS.map((p) => {
-            const on = level.level >= p.level
+            const on = level >= p.level
+            const soon = p === next
             return (
-              <div
-                key={p.name}
-                className={`flex items-center gap-3 rounded-lg border p-3 ${on ? 'border-emerald-400/40 bg-emerald-400/5' : 'border-white/10 bg-black/30 opacity-60'}`}
-              >
-                <span className="font-display w-12 shrink-0 text-center text-[10px] tracking-[0.2em] text-white/50">
-                  LV {p.level}
+              <div key={p.name} className="flex flex-col items-center text-center">
+                <span
+                  className={`font-display flex h-6 w-6 items-center justify-center rounded-full border-2 text-[10px] font-black ${
+                    on
+                      ? 'border-emerald-300 bg-emerald-400 text-black'
+                      : soon
+                        ? 'border-white bg-[#0b0c12] text-white'
+                        : 'border-white/20 bg-[#0b0c12] text-white/40'
+                  }`}
+                >
+                  {p.level}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">{p.name}</p>
-                  <p className="text-xs text-white/50">{p.text}</p>
-                </div>
-                <span className={on ? 'text-emerald-300' : 'text-white/40'}>{on ? '✓' : '🔒'}</span>
+                <p className={`mt-2 text-xs font-semibold ${on ? 'text-white' : soon ? 'text-white/85' : 'text-white/45'}`}>
+                  {p.name}
+                </p>
+                <p className={`mt-0.5 px-1 text-[11px] leading-snug ${on ? 'text-white/55' : 'text-white/35'}`}>{p.text}</p>
               </div>
             )
           })}
         </div>
       </div>
+    </div>
+  )
+}
 
-      {!clan.cpu && clan.leaderId === me.id && <Customise clan={clan} level={level.level} />}
+/** The clan's settings: the leader's badge, motto and disbanding; a member leaving. */
+function ClanSettings({ clan, me, level }: { clan: Clan; me: Profile; level: number }) {
+  const leave = useClans((s) => s.leave)
+  const [sure, setSure] = useState(false)
+  const leader = clan.leaderId === me.id
+  const alone = leader && clan.members.filter((id) => id !== me.id && !isBot(id)).length === 0
+  return (
+    <div className="space-y-6">
+      {leader && <Customise clan={clan} level={level} />}
+      <div className="rounded-lg border border-red-400/20 bg-red-500/[0.04] p-4">
+        <H>{alone ? 'Disband the clan' : 'Leave the clan'}</H>
+        <p className="mt-1 text-xs text-white/50">
+          {alone
+            ? 'The clan is closed for good: its CPU brawlers go back to being free.'
+            : leader
+              ? 'Another member becomes the leader.'
+              : 'You can join this clan or another one again later.'}
+        </p>
+        <button
+          onClick={() => (sure ? leave(me.id) : setSure(true))}
+          onMouseLeave={() => setSure(false)}
+          className="mt-3 rounded-lg border border-red-400/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
+        >
+          {sure ? 'Click again to confirm' : alone ? 'Disband clan' : 'Leave clan'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -726,11 +782,11 @@ function Customise({ clan, level }: { clan: Clan; level: number }) {
   const color = clan.emblem?.color
   return (
     <div data-testid="customise">
-      <H>CUSTOMISE THE CLAN</H>
+      <H>Badge and motto</H>
       <div className="mt-3 flex flex-wrap items-center gap-6">
         <ClanEmblem clan={clan} size={64} />
         <div>
-          <p className="text-[10px] tracking-[0.3em] text-white/40">SHAPE</p>
+          <p className="text-xs text-white/45">Shape</p>
           <div className="mt-1 flex gap-1.5">
             {SHAPES.map(([s, need]) => (
               <button
@@ -747,7 +803,7 @@ function Customise({ clan, level }: { clan: Clan; level: number }) {
           </div>
         </div>
         <div>
-          <p className="text-[10px] tracking-[0.3em] text-white/40">COLOUR</p>
+          <p className="text-xs text-white/45">Colour</p>
           <div className="mt-1 flex gap-1.5">
             <button
               title="Attribute colour"
@@ -783,9 +839,9 @@ function Customise({ clan, level }: { clan: Clan; level: number }) {
         />
         <button
           disabled={motto.trim() === clan.motto}
-          className="font-display rounded-md border border-white/40 px-4 text-[10px] tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
+          className="rounded-md border border-white/40 px-4 text-sm font-semibold transition enabled:hover:bg-white/10 disabled:opacity-40"
         >
-          SAVE MOTTO
+          Save motto
         </button>
       </form>
     </div>
@@ -819,7 +875,7 @@ function Members({
   const requests = (clan.requests ?? [])
     .map((r) => ({ ...r, b: brawlerOf(r.id, profiles, now) }))
     .filter((r): r is typeof r & { b: BrawlerView } => !!r.b)
-  const small = 'font-display rounded border px-2 py-1 text-[9px] tracking-[0.2em] transition'
+  const small = 'font-display rounded border px-2 py-1 text-[9px] tracking-wider transition'
   return (
     <div>
       {manage && (
@@ -850,7 +906,7 @@ function Members({
             title={
               full ? 'Your clan is full' : free ? 'Adds a free CPU brawler to your clan' : 'No CPU brawler is free right now'
             }
-            className="font-display rounded border border-white/30 px-3 py-1 text-[10px] tracking-[0.3em] whitespace-nowrap transition enabled:hover:bg-white/10 disabled:opacity-40"
+            className="font-display rounded border border-white/30 px-3 py-1 text-[10px] tracking-wider whitespace-nowrap transition enabled:hover:bg-white/10 disabled:opacity-40"
           >
             + RECRUIT CPU
           </button>
@@ -928,9 +984,7 @@ function War({ clan, me, now, war }: { clan: Clan; me: Profile; now: number; war
             clans of the week win BP (and the title War Champion for first place).
           </p>
         </div>
-        <p className="font-display text-xs tracking-[0.3em] text-amber-200">
-          ENDS IN {timeLeft(weekEnd(now) - now).toUpperCase()}
-        </p>
+        <p className="font-display text-xs tracking-wider text-amber-200">ENDS IN {timeLeft(weekEnd(now) - now).toUpperCase()}</p>
       </div>
       <div className="overflow-hidden rounded-lg border border-white/10" data-testid="war-table">
         {war.map((r, i) => {
@@ -947,7 +1001,7 @@ function War({ clan, me, now, war }: { clan: Clan; me: Profile; now: number; war
               <ClanEmblem clan={r.clan} size={30} />
               <span className="min-w-0 flex-1 truncate text-sm">
                 <span style={{ color: r.clan.emblem?.color ?? el.color }}>[{r.clan.tag}]</span> {r.clan.name}
-                {ours && <span className="font-display ml-2 text-[9px] tracking-[0.3em] text-white/60">YOUR CLAN</span>}
+                {ours && <span className="font-display ml-2 text-[9px] tracking-wider text-white/60">YOUR CLAN</span>}
               </span>
               <span className="w-24 text-right text-xs text-white/45">{r.wins} ranked wins</span>
               <span className="font-display w-20 text-right font-black">{r.points.toLocaleString('en')}</span>
@@ -992,12 +1046,12 @@ function ClaimButton({
   onClaim: () => boolean
   label: string
 }) {
-  if (done) return <span className="font-display text-[10px] tracking-[0.3em] text-emerald-300">✓ COLLECTED · {label}</span>
+  if (done) return <span className="font-display text-[10px] tracking-wider text-emerald-300">✓ COLLECTED · {label}</span>
   return (
     <button
       disabled={!ready}
       onClick={() => onClaim() && playSfx('victory')}
-      className="font-display rounded border-2 border-amber-300/80 bg-amber-300/10 px-3 py-1.5 text-[10px] tracking-[0.25em] text-amber-200 transition enabled:hover:bg-amber-300/25 disabled:border-white/15 disabled:bg-transparent disabled:text-white/40"
+      className="font-display rounded border-2 border-amber-300/80 bg-amber-300/10 px-3 py-1.5 text-[10px] tracking-wider text-amber-200 transition enabled:hover:bg-amber-300/25 disabled:border-white/15 disabled:bg-transparent disabled:text-white/40"
     >
       {ready ? 'CLAIM' : 'REWARD'} · {label}
     </button>
@@ -1040,7 +1094,7 @@ function Goals({
             >
               <div className="flex flex-wrap items-center gap-3">
                 <span
-                  className={`font-display rounded px-1.5 py-0.5 text-[9px] tracking-[0.25em] ${g.scope === 'clan' ? 'bg-sky-400/15 text-sky-300' : 'bg-fuchsia-400/15 text-fuchsia-300'}`}
+                  className={`font-display rounded px-1.5 py-0.5 text-[9px] tracking-wider ${g.scope === 'clan' ? 'bg-sky-400/15 text-sky-300' : 'bg-fuchsia-400/15 text-fuchsia-300'}`}
                 >
                   {g.scope === 'clan' ? 'CLAN' : 'YOU'}
                 </span>
@@ -1184,11 +1238,11 @@ function ClanChat({
 
   return (
     <section className={`flex min-h-0 flex-col overflow-hidden ${PANEL}`} data-testid="clan-chat">
-      <h3 className="font-display flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 text-xs tracking-[0.5em] text-white/40">
-        CLAN CHAT
-        <span className="text-[10px] tracking-[0.2em] text-emerald-300/80" data-testid="chat-online">
-          ● {online} ONLINE
-          {inMatch > 0 && <span className="text-amber-300/80"> · {inMatch} IN A MATCH</span>}
+      <h3 className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 text-sm font-semibold text-white/80">
+        Clan chat
+        <span className="text-xs font-normal text-emerald-300/80" data-testid="chat-online">
+          ● {online} online
+          {inMatch > 0 && <span className="text-amber-300/80"> · {inMatch} in a match</span>}
         </span>
       </h3>
       <div ref={log} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
@@ -1257,7 +1311,7 @@ function ClanChat({
           data-testid="clan-input"
           className="min-w-0 flex-1 rounded-md border border-white/15 bg-black/40 px-3 py-2 text-sm outline-none focus:border-white/50"
         />
-        <button className="font-display rounded-md border border-white/40 px-4 text-xs tracking-[0.3em] transition hover:bg-white/10">
+        <button className="font-display rounded-md border border-white/40 px-4 text-xs tracking-wider transition hover:bg-white/10">
           SEND
         </button>
       </form>
@@ -1287,8 +1341,8 @@ function JoinRequests({
   return (
     <div className="mb-6 rounded-xl border border-white/10 bg-black/40 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-display text-xs tracking-[0.3em] whitespace-nowrap text-white/40">
-          JOIN REQUESTS · {requests.length}
+        <h3 className="text-sm font-semibold whitespace-nowrap text-white/80">
+          Join requests <span className="font-normal text-white/40">· {requests.length}</span>
         </h3>
         <div className="flex rounded-full border border-white/15 p-0.5 text-[10px]">
           {(
@@ -1336,13 +1390,13 @@ function JoinRequests({
                 <button
                   disabled={full}
                   onClick={() => onAnswer(id, true)}
-                  className="font-display rounded border border-emerald-400/60 px-2 py-1 text-[10px] tracking-[0.2em] text-emerald-300 transition enabled:hover:bg-emerald-400/10 disabled:opacity-40"
+                  className="font-display rounded border border-emerald-400/60 px-2 py-1 text-[10px] tracking-wider text-emerald-300 transition enabled:hover:bg-emerald-400/10 disabled:opacity-40"
                 >
                   ACCEPT
                 </button>
                 <button
                   onClick={() => onAnswer(id, false)}
-                  className="font-display rounded border border-white/20 px-2 py-1 text-[10px] tracking-[0.2em] text-white/50 transition hover:text-red-300"
+                  className="font-display rounded border border-white/20 px-2 py-1 text-[10px] tracking-wider text-white/50 transition hover:text-red-300"
                 >
                   DECLINE
                 </button>
