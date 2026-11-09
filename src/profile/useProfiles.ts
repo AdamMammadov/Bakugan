@@ -45,14 +45,30 @@ const CARD_XP = 1500
 export const XP = { winMin: 60, winMax: 70, lossMin: 15, lossMax: 20, ko: 8 }
 export const BP = { win: 100, loss: 25, streakBonus: 10, streakCap: 5 }
 
+/**
+ * What a Bakugan costs in the shop: the stronger it is (base G), the dearer; one of another attribute costs more. Or it
+ * unlocks free with enough player XP. (Starters, the weakest of each attribute, are the cheapest.)
+ */
 export const PRICES = {
-  /** BP for a Bakugan of the player's own attribute. */
-  ownElement: 4000,
-  /** BP for a Bakugan of another attribute. */
-  otherElement: 11000,
-  /** Alternative: total player XP that unlocks the Bakugan for free. */
-  ownElementXp: 15000,
-  otherElementXp: 30000,
+  /** BP for the weakest Bakugan of the player's own attribute… */
+  base: 1500,
+  /** …from this base G… */
+  from: 300,
+  /** …and this much more per G above it. */
+  perG: 30,
+  /** Another attribute's Bakugan costs this many times as much. */
+  otherFactor: 2.5,
+  /** Player XP that unlocks it instead, per BP: own attribute, another. */
+  xpOwn: 3.75,
+  xpOther: 2.7,
+}
+
+const roundTo = (n: number, step: number) => Math.round(n / step) * step
+
+/** BP and player XP a Bakugan of `baseG` costs, of the player's own attribute or another. */
+export function bakuganPrice(baseG: number, own: boolean) {
+  const bp = roundTo((PRICES.base + Math.max(0, baseG - PRICES.from) * PRICES.perG) * (own ? 1 : PRICES.otherFactor), 250)
+  return { bp, xp: roundTo(bp * (own ? PRICES.xpOwn : PRICES.xpOther), 500) }
 }
 
 /** The six major tiers (index 0–5 sets CPU strength and matchmaking); each has divisions V → IV → III → II → I. */
@@ -320,8 +336,7 @@ export function unlockHint(p: Profile | null, b: Bakugan): string {
 export function priceOf(p: Profile, bakugan: Bakugan) {
   // pass Bakugan of an earlier season: in the shop, but expensive so the pass keeps its value
   if (seasonOfBakugan(bakugan.id)?.role === 'pass') return { bp: PASS_BAKUGAN_PRICE, xp: Infinity }
-  const own = bakugan.element === p.element
-  return { bp: own ? PRICES.ownElement : PRICES.otherElement, xp: own ? PRICES.ownElementXp : PRICES.otherElementXp }
+  return bakuganPrice(bakugan.baseG, bakugan.element === p.element)
 }
 
 /** Score the rank and leaderboard use: mostly ranked wins (through BR), plus a little, capped, for experience. */
@@ -603,12 +618,28 @@ export const useProfiles = create<ProfilesState>()(
           })),
         ),
       grantOwnerBakugan: () => {
-        const lacks = (p: Profile) => OWNER_GIFTS.filter((id) => !p.collection.some((o) => o.id === id))
+        // the owner's gifts come at their last form (every form to try out) with every card of it
+        const top = (id: string) => bakuganById(id).evolutions.length - 1
+        const lacks = (p: Profile) =>
+          OWNER_GIFTS.filter((id) => {
+            const o = p.collection.find((x) => x.id === id)
+            return !o || o.form < top(id)
+          })
         // nothing to give: no change at all, so watching the store for new profiles cannot loop
         if (!get().profiles.some((p) => lacks(p).length)) return
-        const gift = (id: string) => ({ ...own(id), bonusCards: bakuganById(id).abilities.length })
+        const gift = (o: OwnedBakugan | undefined, id: string): OwnedBakugan => ({
+          ...(o ?? own(id)),
+          form: top(id),
+          bonusCards: abilitiesOf(bakuganById(id), top(id)).length,
+        })
         set((s) => ({
-          profiles: s.profiles.map((p) => (lacks(p).length ? { ...p, collection: [...p.collection, ...lacks(p).map(gift)] } : p)),
+          profiles: s.profiles.map((p) => {
+            const need = lacks(p)
+            if (!need.length) return p
+            const collection = p.collection.map((o) => (need.includes(o.id) ? gift(o, o.id) : o))
+            for (const id of need) if (!collection.some((o) => o.id === id)) collection.push(gift(undefined, id))
+            return { ...p, collection }
+          }),
         }))
       },
       acquire: (bakuganId, how) => {

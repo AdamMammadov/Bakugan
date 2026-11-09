@@ -44,7 +44,7 @@ export const PACKS: ShopItem[] = [
 
 /**
  * Battle Points for money. A win pays 100 BP, so the smallest pack is about 33 wins; bigger packs
- * give more BP per dollar. A Bakugan of another attribute (11,000 BP) costs about $4 this way,
+ * give more BP per dollar. A strong Bakugan of another attribute (about 15,000 BP) costs about $4 this way,
  * and a past season's pass Bakugan (22,000 BP) about $5.50, so the Season Pass stays the better buy.
  */
 export const BP_PACKS: ShopItem[] = [

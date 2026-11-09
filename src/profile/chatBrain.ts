@@ -1,10 +1,10 @@
 import { abilitiesOf, abilityLabel, BAKUGAN, type Bakugan } from '../data/bakugan'
 import { ELEMENT_BY_ID, ELEMENTS, type ElementId } from '../data/elements'
 import { currentSeason } from '../season/current'
-import { OWNER_ONLY } from '../season/release'
+import { LAUNCH, OWNER_ONLY } from '../season/release'
 import { botById, botNow, BOTS, botTeam } from './bots'
 import { ATTR_WORD, azOrdinal, DAY_WORD, hourPhrase, LINES, type Lang, type LineKey } from './chatLines'
-import { PRICES, rankScore, tierOf, type Profile } from './useProfiles'
+import { bakuganPrice, rankScore, tierOf, type Profile } from './useProfiles'
 
 /**
  * How CPU brawlers answer a player in the clan chat and in direct messages. No network: the message is read
@@ -13,6 +13,13 @@ import { PRICES, rankScore, tierOf, type Profile } from './useProfiles'
  * numbers, in the language the player wrote in. A bot's question ("When?", "How are you?") is remembered on
  * its message, so a short answer to it ("8-də", "yox", "fine") is understood.
  */
+
+/** "2,250–6,750": what the weakest and the strongest launch Bakugan cost (own attribute or another). */
+function priceRange(own: boolean) {
+  const gs = LAUNCH.map((id) => BAKUGAN.find((b) => b.id === id)?.baseG ?? 0).filter(Boolean)
+  const [lo, hi] = [Math.min(...gs), Math.max(...gs)].map((g) => bakuganPrice(g, own).bp.toLocaleString('en'))
+  return `${lo}–${hi}`
+}
 
 export type { Lang }
 
@@ -375,8 +382,8 @@ function botInfo(input: ChatInput): BotInfo {
       team: team.map((t) => formName(BAKUGAN.find((b) => b.id === t.id)!, t.form)).join(', '),
       card: card?.name ?? '',
       cardLabel: card ? abilityLabel(card) : '',
-      own: PRICES.ownElement.toLocaleString('en'),
-      other: PRICES.otherElement.toLocaleString('en'),
+      own: priceRange(true),
+      other: priceRange(false),
       season: season.id,
       days: Math.max(1, Math.ceil((season.endsAt - input.now) / 86_400_000)),
       ...(me ? { bp: me.bp.toLocaleString('en') } : {}),

@@ -3663,7 +3663,7 @@ export const ROSTER: Bakugan[] = [
     "element": "aquos",
     "brawler": "Game Owner",
     "series": "Original",
-    "baseG": 470,
+    "baseG": 450,
     "brawlG": 570,
     "description": "A sea dragon knight from the deep, its navy hide dotted with pale spots like stars over night water. It wears blue-steel armour lit by glowing tide-lines, spreads wings like a manta ray's and holds a golden trident whose prongs burn with blue water-fire.",
     "abilities": [
