@@ -404,14 +404,16 @@ if (phantom)
 const pyroclast = ROSTER.find((b) => b.id === 'embral')?.evolutions.find((e) => e.name === 'Pyroclast Embral')
 // Embral evolved, from the owner's own model: its unpainted flames taken off (the game draws live fire on its crown and
 // tail instead), its armour turned to obsidian split by glowing lava cracks, embers in its scales, the magma heart in
-// its chest and its eyes aglow; welded so no seam opens, skinned and inked. Its ball is Embral's evolved: volcanic
-// armour cracked with lava, a core gem, more horns and spikes
+// its chest and both eyes aglow; welded so no seam opens, its loose specks cleared away, its open tail end given a
+// tapered tip, every claw and spike moving with the part it sits on, skinned and inked. Its ball is Embral's evolved:
+// volcanic armour cracked with lava, a core gem, more horns and spikes
 if (pyroclast)
   pyroclast.models = {
     ...ROSTER_MODELS.embral,
     ball: 'models/embral/pyroclast-ball.glb',
     monster: 'models/embral/pyroclast.glb',
-    scale: 2.2,
+    // (as big as before: the specks that once floated over its head no longer count in its height)
+    scale: 1.92,
     stage: 1.25,
   }
 

@@ -32,7 +32,7 @@ void main() {
   float w = 0.44 * pow(max(1.0 - y, 0.0), 0.7) * smoothstep(-0.04, 0.16, y);
   float edge = w * (0.75 + 0.55 * n2 + 0.25 * n3);
   float shape = 1.0 - smoothstep(edge * 0.45, max(edge, 1e-4), dx);
-  shape *= smoothstep(1.0, 0.5 + 0.4 * n1, y);
+  shape *= 1.0 - smoothstep(0.5 + 0.4 * n1, 1.0, y);
   float heat = shape * (1.0 - 0.7 * y) * (0.75 + 0.5 * n2);
   vec3 col = mix(uEdge, uMid, smoothstep(0.12, 0.5, heat));
   col = mix(col, uCore, smoothstep(0.5, 0.85, heat));

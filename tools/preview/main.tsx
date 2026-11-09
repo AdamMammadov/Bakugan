@@ -20,6 +20,9 @@ const d = Number(q.get('d') ?? 4.2)
 const spin = Number(q.get('spin') ?? 0)
 /** Height of the point the camera looks at. */
 const ty = Number(q.get('ty') ?? 0)
+/** Sideways and forward offsets of that point. */
+const tx = Number(q.get('tx') ?? 0)
+const tz = Number(q.get('tz') ?? 0)
 /** pose=<node>:<rx>:<ry>:<rz>,...: turns rigged parts (radians), to look at their joints mid-move. */
 const pose = (q.get('pose') ?? '')
   .split(',')
@@ -54,8 +57,11 @@ function GameBall({ id }: { id: string }) {
 
 createRoot(document.getElementById('root')!).render(
   <Canvas
-    camera={{ position: [Math.sin(az) * Math.cos(el) * d, ty + Math.sin(el) * d, Math.cos(az) * Math.cos(el) * d], fov: 30 }}
-    onCreated={({ camera }) => camera.lookAt(0, ty, 0)}
+    camera={{
+      position: [tx + Math.sin(az) * Math.cos(el) * d, ty + Math.sin(el) * d, tz + Math.cos(az) * Math.cos(el) * d],
+      fov: 30,
+    }}
+    onCreated={({ camera }) => camera.lookAt(tx, ty, tz)}
   >
     <color attach="background" args={[q.get('bg') ?? '#000000']} />
     <hemisphereLight args={['#ffffff', '#444466', 0.6]} />
