@@ -23,6 +23,12 @@ export const LAUNCH = [
 export const OWNER_ONLY = ['dharak']
 
 /**
+ * What the owner's browser (devView) gives its profiles, every card unlocked, so the owner can try them out: the
+ * owner-only Bakugan and the game's own (Embral, Tidevane), which players buy or earn.
+ */
+export const OWNER_GIFTS = [...OWNER_ONLY, 'embral', 'tidevane']
+
+/**
  * Whether players can see and get a Bakugan: the launch ones always, a season's from the day that season
  * begins. Bakugan not given a season yet stay hidden.
  */

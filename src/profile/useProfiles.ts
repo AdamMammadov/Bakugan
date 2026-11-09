@@ -4,7 +4,7 @@ import { abilitiesOf, BAKUGAN, type Bakugan, type Entrant } from '../data/bakuga
 import type { ElementId } from '../data/elements'
 import { normalizeAvatar, type Avatar } from './avatar'
 import { currentSeason, seasonBakugan, seasonOfBakugan } from '../season/current'
-import { isReleased, LAUNCH, OWNER_ONLY } from '../season/release'
+import { isReleased, LAUNCH, OWNER_GIFTS } from '../season/release'
 import { cosmeticsOnSale, PACKS } from '../shop/shop'
 import { gloryItem } from '../season/glory'
 import {
@@ -600,7 +600,7 @@ export const useProfiles = create<ProfilesState>()(
           })),
         ),
       grantOwnerBakugan: () => {
-        const lacks = (p: Profile) => OWNER_ONLY.filter((id) => !p.collection.some((o) => o.id === id))
+        const lacks = (p: Profile) => OWNER_GIFTS.filter((id) => !p.collection.some((o) => o.id === id))
         // nothing to give: no change at all, so watching the store for new profiles cannot loop
         if (!get().profiles.some((p) => lacks(p).length)) return
         const gift = (id: string) => ({ ...own(id), bonusCards: bakuganById(id).abilities.length })
