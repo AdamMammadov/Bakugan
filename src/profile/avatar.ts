@@ -13,7 +13,18 @@ export interface AvatarParts {
 
 export type HairStyle = 'spiky' | 'twintails' | 'bowl' | 'ponytail' | 'long' | 'short' | 'swept' | 'bald'
 export type EyeStyle = 'bright' | 'sharp' | 'calm' | 'happy'
-export type Accessory = 'none' | 'glasses' | 'mask' | 'goggles' | 'headband' | 'cap' | 'visor' | 'crown' | 'halo'
+export type Accessory =
+  | 'none'
+  | 'glasses'
+  | 'mask'
+  | 'goggles'
+  | 'headband'
+  | 'cap'
+  | 'visor'
+  | 'crown'
+  | 'halo'
+  | 'horns'
+  | 'laurel'
 
 /**
  * How a player looks: a series character or a drawn avatar (their look in the 3D arena), optionally with their
@@ -47,9 +58,21 @@ export const HAIR_COLORS = [
 export const EYE_STYLES: EyeStyle[] = ['bright', 'sharp', 'calm', 'happy']
 export const EYE_COLORS = ['#5a3220', '#2a62c8', '#2c8a4a', '#7a3ab8', '#c8262b', '#1a1a22', '#c89a20']
 export const OUTFITS = ['#c8262b', '#2a62c8', '#2c8a4a', '#f2c230', '#6a3a9a', '#e8e8f0', '#e870a8', '#c8761e', '#22252e']
-export const ACCESSORIES: Accessory[] = ['none', 'glasses', 'mask', 'goggles', 'headband', 'cap', 'visor', 'crown', 'halo']
+export const ACCESSORIES: Accessory[] = [
+  'none',
+  'glasses',
+  'mask',
+  'goggles',
+  'headband',
+  'cap',
+  'visor',
+  'crown',
+  'halo',
+  'horns',
+  'laurel',
+]
 /** Accessories that must be earned in the Season Pass first. */
-export const LOCKED_ACCESSORIES: Accessory[] = ['visor', 'crown', 'halo']
+export const LOCKED_ACCESSORIES: Accessory[] = ['visor', 'crown', 'halo', 'horns', 'laurel']
 
 /** The Battle Brawlers, drawn as simple fan avatars. */
 export interface Character {

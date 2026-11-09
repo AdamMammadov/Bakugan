@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { BotBrawler } from './bots'
-import { rankScore, ratingChange, ratingSwing } from './useProfiles'
+import { currentSeason } from '../season/current'
+import { rankScore, ratingChange, ratingSwing, SEASON_KEEP } from './useProfiles'
 
 /**
  * CPU brawlers keep brawling while nobody is looking. There is no server, so their record is worked out
  * from the clock: every bot plays a number of brawls each day (some days none), at fixed times, and wins
  * or loses each one by a seeded roll. Same bot + same time = same numbers, on every screen and after a
- * reload. Ratings move by the players' ranked rules (ratingChange, against a bot on its own level). A bot's win
+ * reload. Ratings move by the players' ranked rules (ratingChange, against a bot on its own level), and a new season
+ * softens them as it does the players' (SEASON_KEEP). A bot's win
  * chance falls as it nears the rating its skill can hold (that ceiling creeps up slowly with time), so bots stay
  * spread over the ladder, strong ones keep climbing a little, and bad days cost rating.
  */
@@ -114,6 +116,9 @@ function playDay(plan: Plan, day: number, from: Tally, until: number): Tally {
   return r
 }
 
+/** The season running at the start of a (UTC) day. */
+const seasonOfDay = (day: number) => currentSeason(day * DAY).id
+
 /** Each bot's record at the start of every day played so far (index 0 = START_DAY). */
 const dayStarts: Record<string, Tally[]> = {}
 const latest: Record<string, { minute: number; bot: LiveBot }> = {}
@@ -142,7 +147,10 @@ export function botAt(bot: BotBrawler, count: number, now: number): LiveBot {
     const starts = (dayStarts[bot.id] ??= [rec])
     while (starts.length <= day - START_DAY) {
       const d = START_DAY + starts.length - 1
-      starts.push(playDay(plan, d, starts[starts.length - 1], Infinity))
+      const next = playDay(plan, d, starts[starts.length - 1], Infinity)
+      // a new season begins: the bot keeps the same share of its rating as a player does
+      if (seasonOfDay(d + 1) > seasonOfDay(d)) next.rating = Math.floor(next.rating * SEASON_KEEP)
+      starts.push(next)
     }
     rec = playDay(plan, day, starts[day - START_DAY], t)
   }

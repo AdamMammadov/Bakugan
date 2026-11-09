@@ -99,6 +99,7 @@ export const skinFits = (skin: Skin, bakuganId: string) => !skin.models || bakug
 
 const SHOP = { shop: true } as const
 const PASS_1 = { pass: 1 } as const
+const PASS_2 = { pass: 2 } as const
 const EARNED = { earned: true } as const
 
 /** Colour variants for Bakugan, shown in the viewer and the arena. */
@@ -111,6 +112,14 @@ export const SKINS: Skin[] = [
   { id: 'shadow', name: 'Shadow', color: '#2a1f3d', glow: '#9a6cff', rarity: 'epic', from: PASS_1 },
   { id: 'crystal', name: 'Crystal', color: '#cfefff', glow: '#ffffff', rarity: 'legendary', from: PASS_1 },
   { id: 'gold', name: 'Golden', color: '#d4af37', glow: '#fff1a8', rarity: 'legendary', from: PASS_1 },
+  // Season 2 pass
+  { id: 'coral', name: 'Coral', color: '#ff7f6e', glow: '#ffd2c4', rarity: 'common', from: PASS_2 },
+  { id: 'midnight', name: 'Midnight', color: '#1b2766', glow: '#7f9bff', rarity: 'rare', from: PASS_2 },
+  { id: 'venom', name: 'Venom', color: '#3f9a1a', glow: '#c8ff4a', rarity: 'rare', from: PASS_2 },
+  { id: 'solar', name: 'Solar Flare', color: '#ff8c00', glow: '#fff36a', rarity: 'epic', from: PASS_2 },
+  { id: 'phantom', name: 'Phantom', color: '#454b63', glow: '#7af0ff', rarity: 'epic', from: PASS_2 },
+  { id: 'onyx', name: 'Onyx', color: '#141016', glow: '#ff3d6e', rarity: 'legendary', from: PASS_2 },
+  { id: 'pearl', name: 'Pearl', color: '#f4f1ff', glow: '#a8e8ff', rarity: 'legendary', from: PASS_2 },
   // shop
   { id: 'ruby', name: 'Ruby', color: '#c8102e', glow: '#ff6b81', rarity: 'common', from: SHOP },
   { id: 'jade', name: 'Jade', color: '#00a86b', glow: '#7dffc4', rarity: 'common', from: SHOP },
@@ -182,6 +191,22 @@ export const FRAMES: Record<string, CosmeticBase & { ring: string }> = {
     rarity: 'legendary',
     from: EARNED,
   },
+  // Season 2 pass
+  copper: { name: 'Copper Frame', ring: 'linear-gradient(135deg,#6b3518,#e8915a,#5a2a10)', rarity: 'common', from: PASS_2 },
+  sapphire: { name: 'Sapphire Frame', ring: 'linear-gradient(135deg,#0e2a7a,#7fb2ff,#0a1d55)', rarity: 'rare', from: PASS_2 },
+  verdant: { name: 'Verdant Frame', ring: 'linear-gradient(135deg,#1d5a14,#b6f06a,#143d0d)', rarity: 'rare', from: PASS_2 },
+  tidal: {
+    name: 'Tidal Frame',
+    ring: 'linear-gradient(135deg,#032a4a,#3ad7ff,#e8fbff,#0a4a7a)',
+    rarity: 'epic',
+    from: PASS_2,
+  },
+  phoenix: {
+    name: 'Phoenix Frame',
+    ring: 'conic-gradient(#ff3b1f,#ffb21a,#fff3b0,#ffb21a,#ff3b1f)',
+    rarity: 'legendary',
+    from: PASS_2,
+  },
   // the Glory store (ranked seasons): earned only
   valor: { name: 'Valor Frame', ring: 'linear-gradient(135deg,#5a1a10,#e8b04a,#fff2c4,#5a1a10)', rarity: 'epic', from: EARNED },
   conqueror: {
@@ -206,6 +231,9 @@ export const OUTFITS: Record<string, CosmeticBase & { color: string }> = {
   royal: { name: 'Royal Violet Set', color: '#5b2a86', rarity: 'epic', from: PASS_1 },
   obsidian: { name: 'Obsidian Set', color: '#15151c', rarity: 'epic', from: PASS_1 },
   gold: { name: 'Gold Rush Set', color: '#c9a227', rarity: 'legendary', from: PASS_1 },
+  magma: { name: 'Magma Set', color: '#5a1408', rarity: 'epic', from: PASS_2 },
+  tidecall: { name: 'Tidecaller Set', color: '#1d4f8a', rarity: 'epic', from: PASS_2 },
+  platinum: { name: 'Platinum Set', color: '#d6dbe3', rarity: 'legendary', from: PASS_2 },
   crimson: { name: 'Crimson Set', color: '#7a0f1f', rarity: 'common', from: SHOP },
   navy: { name: 'Navy Set', color: '#14204a', rarity: 'common', from: SHOP },
   forest: { name: 'Forest Set', color: '#174d33', rarity: 'rare', from: SHOP },
@@ -218,6 +246,8 @@ export const ACCESSORIES: Record<string, CosmeticBase> = {
   visor: { name: 'Battle Visor', rarity: 'epic', from: PASS_1 },
   crown: { name: 'Brawler Crown', rarity: 'legendary', from: PASS_1 },
   halo: { name: 'Light Halo', rarity: 'legendary', from: PASS_1 },
+  horns: { name: 'Demon Horns', rarity: 'epic', from: PASS_2 },
+  laurel: { name: "Victor's Laurel", rarity: 'legendary', from: PASS_2 },
 }
 
 // ---------------------------------------------------------------- rewards
@@ -243,8 +273,16 @@ const SEASON_SKIN: Record<number, string> = { 2: 'golden-dragonoid' }
 
 export function passRewards(season: number): Reward[] {
   const t = (name: string): Reward => ({ kind: 'title', name: `Season ${season} ${name}` })
-  // index = level (index 0 unused)
-  const rewards: Reward[] = [
+  // every season has rewards of its own; a season not given its own yet takes the latest season's layout
+  const rewards = season === 1 ? season1Rewards(t) : season2Rewards(t)
+  // a season can put its own showpiece skin on premium level 45
+  if (SEASON_SKIN[season]) rewards[45] = { kind: 'skin', id: SEASON_SKIN[season] }
+  return rewards
+}
+
+/** Season 1's pass (index = level, index 0 unused). */
+function season1Rewards(t: (name: string) => Reward): Reward[] {
+  return [
     { kind: 'bp', amount: 0 },
     { kind: 'bp', amount: 300 },
     { kind: 'boost', amount: 2 },
@@ -297,9 +335,63 @@ export function passRewards(season: number): Reward[] {
     { kind: 'bp', amount: 2500 },
     { kind: 'bundle', items: [t('Champion'), { kind: 'frame', id: 'champion' }, { kind: 'bp', amount: 5000 }] },
   ]
-  // a season can put its own showpiece skin on premium level 45
-  if (SEASON_SKIN[season]) rewards[45] = { kind: 'skin', id: SEASON_SKIN[season] }
-  return rewards
+}
+
+/** Season 2's pass: its own skins, frames, outfits, accessories and titles (index = level, index 0 unused). */
+function season2Rewards(t: (name: string) => Reward): Reward[] {
+  return [
+    { kind: 'bp', amount: 0 },
+    { kind: 'bp', amount: 400 },
+    { kind: 'cardKey', amount: 1 },
+    t('Challenger'),
+    { kind: 'skin', id: 'coral' },
+    { kind: 'bp', amount: 1200 },
+    { kind: 'boost', amount: 3 },
+    { kind: 'frame', id: 'copper' },
+    { kind: 'outfit', id: 'magma' },
+    { kind: 'cardKey', amount: 2 },
+    { kind: 'seasonBakugan', slot: 0 },
+    { kind: 'bp', amount: 600 },
+    { kind: 'skin', id: 'midnight' },
+    { kind: 'boost', amount: 3 },
+    { kind: 'accessory', id: 'horns' },
+    t('Vanguard'),
+    { kind: 'bp', amount: 800 },
+    { kind: 'cardKey', amount: 1 },
+    { kind: 'skin', id: 'venom' },
+    { kind: 'frame', id: 'sapphire' },
+    { kind: 'seasonBakugan', slot: 1 },
+    { kind: 'frame', id: 'verdant' },
+    { kind: 'bp', amount: 1200 },
+    { kind: 'boost', amount: 4 },
+    { kind: 'outfit', id: 'tidecall' },
+    { kind: 'bp', amount: 2500 },
+    { kind: 'cardKey', amount: 2 },
+    { kind: 'bp', amount: 1000 },
+    { kind: 'skin', id: 'solar' },
+    { kind: 'skin', id: 'phantom' },
+    { kind: 'seasonBakugan', slot: 2 },
+    t('Warlord'),
+    { kind: 'bp', amount: 1500 },
+    { kind: 'boost', amount: 4 },
+    { kind: 'frame', id: 'tidal' },
+    { kind: 'cardKey', amount: 3 },
+    { kind: 'cardKey', amount: 2 },
+    { kind: 'bp', amount: 1750 },
+    { kind: 'skin', id: 'onyx' },
+    { kind: 'outfit', id: 'platinum' },
+    { kind: 'seasonBakugan', slot: 3 },
+    { kind: 'boost', amount: 5 },
+    { kind: 'bp', amount: 2000 },
+    { kind: 'cardKey', amount: 2 },
+    { kind: 'accessory', id: 'laurel' },
+    { kind: 'bp', amount: 3000 },
+    { kind: 'bp', amount: 3000 },
+    t('Master'),
+    { kind: 'frame', id: 'phoenix' },
+    { kind: 'skin', id: 'pearl' },
+    { kind: 'bundle', items: [t('Champion'), { kind: 'frame', id: 'champion' }, { kind: 'bp', amount: 5000 }] },
+  ]
 }
 
 export function rewardLabel(r: Reward, seasonBakuganName?: (slot: number) => string | null): string {

@@ -220,6 +220,34 @@ export function AvatarDrawing({ parts, color }: { parts: AvatarParts; color: str
       {accessory === 'halo' && (
         <ellipse cx="100" cy="30" rx="34" ry="8" fill="none" stroke="#fff6b0" strokeWidth="5" opacity="0.9" />
       )}
+      {accessory === 'horns' && (
+        <g fill="#2a1418" stroke="#ff4a3d" strokeWidth="2">
+          <path d="M70 52 Q58 34 62 14 Q70 32 84 44 Z" />
+          <path d="M130 52 Q142 34 138 14 Q130 32 116 44 Z" />
+        </g>
+      )}
+      {accessory === 'laurel' && (
+        <g fill="#f5c518" stroke="#a87c00" strokeWidth="1.5">
+          {[0, 1, 2, 3].map((i) => (
+            <g key={i}>
+              <ellipse
+                cx={70 + i * 7}
+                cy={50 - i * 7}
+                rx="8"
+                ry="4"
+                transform={`rotate(${-40 - i * 8} ${70 + i * 7} ${50 - i * 7})`}
+              />
+              <ellipse
+                cx={130 - i * 7}
+                cy={50 - i * 7}
+                rx="8"
+                ry="4"
+                transform={`rotate(${40 + i * 8} ${130 - i * 7} ${50 - i * 7})`}
+              />
+            </g>
+          ))}
+        </g>
+      )}
       {accessory === 'cap' && (
         <g>
           <path d="M62 78 Q62 40 100 40 Q138 40 138 78 Z" fill={outfit} />

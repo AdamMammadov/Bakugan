@@ -174,21 +174,12 @@ export function SettingsPanel() {
                 {tab === 'DISPLAY' && (
                   <Section>
                     <Toggle
-                      label="Reduce motion"
-                      sub="Pages and panels slide and pop less"
+                      label="Fewer animations"
+                      sub="Pages and windows appear at once, without sliding or zooming in. Good on a slow computer, or if the motion bothers you."
                       on={s.reduceMotion}
                       onClick={() => s.set({ reduceMotion: !s.reduceMotion })}
                     />
-                    <Toggle
-                      label="Full screen"
-                      sub="F11 does the same"
-                      on={typeof document !== 'undefined' && !!document.fullscreenElement}
-                      onClick={() =>
-                        document.fullscreenElement
-                          ? void document.exitFullscreen()
-                          : void document.documentElement.requestFullscreen?.().catch(() => {})
-                      }
-                    />
+                    <FullScreenToggle />
                   </Section>
                 )}
               </div>
@@ -215,6 +206,35 @@ export function SettingsPanel() {
         </motion.div>
       )}
     </AnimatePresence>
+  )
+}
+
+/** Full screen on or off; the switch follows the screen, also when F11 or Esc changes it. */
+function FullScreenToggle() {
+  const [full, setFull] = useState(() => typeof document !== 'undefined' && !!document.fullscreenElement)
+  useEffect(() => {
+    const onChange = () => setFull(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onChange)
+    // F11 makes the browser itself full screen (no fullscreenchange): the window then fills the screen
+    const onResize = () => setFull(!!document.fullscreenElement || window.innerHeight >= screen.height - 2)
+    window.addEventListener('resize', onResize)
+    onResize()
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [])
+  return (
+    <Toggle
+      label="Full screen"
+      sub="The game fills the whole screen. F11 does the same; Esc leaves it."
+      on={full}
+      onClick={() =>
+        document.fullscreenElement
+          ? void document.exitFullscreen()
+          : void document.documentElement.requestFullscreen?.().catch(() => {})
+      }
+    />
   )
 }
 

@@ -430,6 +430,9 @@ export function seasonFor(p: Profile, now = Date.now()): SeasonProgress {
   }
 }
 
+/** Share of the rating every brawler keeps into a new season (players and the CPU brawlers in the rankings alike). */
+export const SEASON_KEEP = 0.6
+
 /** Ends a finished season: history entry, a rank title, and a softer rating for the new one. */
 function rollSeason(p: Profile, now = Date.now()): Profile {
   const id = currentSeason(now).id
@@ -444,7 +447,7 @@ function rollSeason(p: Profile, now = Date.now()): Profile {
   const glory = old.wins > 0 || old.peak ? gloryFor(best) : 0
   return {
     ...p,
-    rating: Math.floor(p.rating * 0.6),
+    rating: Math.floor(p.rating * SEASON_KEEP),
     season: emptySeason(id, now),
     glory: (p.glory ?? 0) + glory,
     cosmetics: { ...p.cosmetics, owned: [...owned] },

@@ -288,6 +288,19 @@ function Face({ parts }: { parts: AvatarParts }) {
           <meshStandardMaterial color="#fff6b0" emissive="#fff6b0" emissiveIntensity={2} toneMapped={false} />
         </mesh>
       )}
+      {parts.accessory === 'horns' &&
+        [-1, 1].map((side) => (
+          <mesh key={side} position={[side * 0.1, 0.22, -0.02]} rotation={[0, 0, -side * 0.45]}>
+            <coneGeometry args={[0.03, 0.14, 8]} />
+            <meshStandardMaterial color="#2a1418" emissive="#ff4a3d" emissiveIntensity={0.35} roughness={0.35} />
+          </mesh>
+        ))}
+      {parts.accessory === 'laurel' && (
+        <mesh position={[0, 0.17, -0.04]} rotation={[Math.PI / 2 - 0.15, 0, Math.PI * 1.3]}>
+          <torusGeometry args={[0.15, 0.02, 6, 28, Math.PI * 1.4]} />
+          <meshStandardMaterial color="#f5c518" metalness={0.8} roughness={0.25} />
+        </mesh>
+      )}
       {(parts.accessory === 'goggles' || parts.accessory === 'headband') && (
         <mesh position={[0, 0.09, -0.04]} rotation={[0.2, 0, 0]}>
           <torusGeometry args={[0.15, 0.022, 6, 24]} />
