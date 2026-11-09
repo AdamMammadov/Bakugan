@@ -78,7 +78,7 @@ export function SeasonPassScreen() {
       <PageNav current="pass" />
       <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="font-display text-xs tracking-[0.5em]" style={{ color: GOLD }}>
+          <p className="font-display text-xs tracking-[0.22em]" style={{ color: GOLD }}>
             {SEASON_DAYS}-DAY SEASON · ENDS IN {timeLeft(info.endsAt - now).toUpperCase()}
           </p>
           <h1 className="font-display text-5xl font-black tracking-wider">SEASON {info.id} PASS</h1>
@@ -121,7 +121,7 @@ function Pass({ profile }: { profile: Profile }) {
         <div>
           <div className="flex items-baseline gap-4">
             <span className="font-display text-6xl font-black">{level}</span>
-            <span className="font-display text-sm tracking-[0.3em] text-white/50">/ {PASS_LEVELS} LEVEL</span>
+            <span className="font-display text-sm tracking-[0.16em] text-white/50">/ {PASS_LEVELS} LEVEL</span>
             <span className="ml-auto text-sm text-white/60">
               {season.passXp.toLocaleString('en')} / {PASS_TOTAL_XP.toLocaleString('en')} XP
             </span>
@@ -143,7 +143,7 @@ function Pass({ profile }: { profile: Profile }) {
         <div className="flex w-64 flex-col items-stretch justify-center gap-2 text-center">
           {season.premium ? (
             <p
-              className="font-display rounded-lg border-2 py-3 font-black tracking-[0.3em]"
+              className="font-display rounded-lg border-2 py-3 font-black tracking-[0.16em]"
               style={{ borderColor: GOLD, color: GOLD }}
             >
               ★ PREMIUM PASS
@@ -153,7 +153,7 @@ function Pass({ profile }: { profile: Profile }) {
               <button
                 disabled
                 title="Payments open with the online version"
-                className="font-display rounded-lg border-2 py-3 font-black tracking-[0.3em] opacity-80"
+                className="font-display rounded-lg border-2 py-3 font-black tracking-[0.16em] opacity-80"
                 style={{ borderColor: GOLD, color: GOLD }}
               >
                 BUY PASS · {formatUsd(price.price)}
@@ -177,7 +177,7 @@ function Pass({ profile }: { profile: Profile }) {
                 playSfx('victory')
                 claimAll()
               }}
-              className="font-display rounded-lg border border-white/50 bg-white/10 py-2 text-xs tracking-[0.3em] hover:bg-white/20"
+              className="font-display rounded-lg border border-white/50 bg-white/10 py-2 text-xs tracking-[0.16em] hover:bg-white/20"
             >
               CLAIM ALL ({claimable.length})
             </button>
@@ -191,7 +191,7 @@ function Pass({ profile }: { profile: Profile }) {
           from={from}
           focus={focus}
           title={
-            <h2 className="font-display text-xs tracking-[0.4em] text-white/50">
+            <h2 className="font-display text-xs tracking-[0.2em] text-white/50">
               LEVELS 1–{PASS_LEVELS}{' '}
               <span className="font-body text-xs tracking-normal text-white/35">· ◀ ▶, mouse wheel or drag to browse</span>
             </h2>
@@ -317,7 +317,7 @@ function Challenges({
 }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-black/50 p-5">
-      <h2 className="font-display text-xs tracking-[0.4em] text-white/50">
+      <h2 className="font-display text-xs tracking-[0.2em] text-white/50">
         {title} <span className="text-white/30">· new every {resets}</span>
       </h2>
       <div className="mt-3 space-y-3">
@@ -358,7 +358,7 @@ function SeasonBakugan({ profile }: { profile: Profile }) {
 
   return (
     <section className="mt-6 mb-10 rounded-2xl border border-white/10 bg-black/50 p-5">
-      <h2 className="font-display text-xs tracking-[0.4em] text-white/50">SEASON {season.id} BAKUGAN</h2>
+      <h2 className="font-display text-xs tracking-[0.2em] text-white/50">SEASON {season.id} BAKUGAN</h2>
       <p className="mt-1 text-sm text-white/50">
         Every season brings 12 new Bakugan: 4 in the pass and 8 earned in play — Bakugan of your attribute are easier to earn.
         When the season ends, the pass Bakugan move to the shop at a high price.

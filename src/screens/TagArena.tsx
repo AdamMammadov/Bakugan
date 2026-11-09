@@ -694,7 +694,7 @@ function DuelPanel({
       animate={{ opacity: 1, x: 0 }}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="font-display text-[10px] tracking-[0.3em] text-white/60">
+        <p className="font-display text-[10px] tracking-[0.16em] text-white/60">
           {waiting ? 'FINISHING · ' : ''}
           {mini.pair[0] === 1 ? "PARTNER'S BATTLE" : 'OTHER BATTLE'}
         </p>
@@ -784,18 +784,18 @@ function RoundPanel({
       </div>
       {between.choice === 'ask' ? (
         <>
-          <p className="font-display mt-4 text-xs tracking-[0.4em] text-white/60">NEXT ROUND · YOUR CALL</p>
+          <p className="font-display mt-4 text-xs tracking-[0.2em] text-white/60">NEXT ROUND · YOUR CALL</p>
           <div className="mt-2 flex gap-4">
             <button
               onClick={() => onChoose(false)}
-              className="font-display flex flex-col items-center border-2 border-white/70 px-6 py-2.5 tracking-[0.25em] hover:bg-white/10"
+              className="font-display flex flex-col items-center border-2 border-white/70 px-6 py-2.5 tracking-[0.14em] hover:bg-white/10"
             >
               KEEP PAIRS
               <span className="mt-0.5 text-[10px] tracking-[0.15em] text-white/55">{pairText(between.next)}</span>
             </button>
             <button
               onClick={() => onChoose(true)}
-              className="font-display flex flex-col items-center border-2 border-[#ffc94a] bg-[#ffc94a]/10 px-6 py-2.5 tracking-[0.25em] text-[#ffe3a0] hover:bg-[#ffc94a]/20"
+              className="font-display flex flex-col items-center border-2 border-[#ffc94a] bg-[#ffc94a]/10 px-6 py-2.5 tracking-[0.14em] text-[#ffe3a0] hover:bg-[#ffc94a]/20"
             >
               SWAP OPPONENTS
               <span className="mt-0.5 text-[10px] tracking-[0.15em] text-white/55">{pairText(between.swapped)}</span>
@@ -806,7 +806,7 @@ function RoundPanel({
       ) : (
         <>
           <p
-            className="font-display mt-4 text-lg font-black tracking-[0.3em]"
+            className="font-display mt-4 text-lg font-black tracking-[0.16em]"
             style={{ color: between.choice === 'keep' || between.choice === 'auto' ? '#fff' : '#ffc94a' }}
           >
             {between.choice === 'swap'
@@ -860,7 +860,7 @@ function TagResultView({
       <p className="font-display text-6xl font-black tracking-widest italic" style={{ textShadow: `0 0 40px ${color}` }}>
         {won ? 'VICTORY!' : 'DEFEAT'}
       </p>
-      <p className="font-display mt-2 tracking-[0.3em] text-white/60">
+      <p className="font-display mt-2 tracking-[0.16em] text-white/60">
         {won
           ? `YOU AND ${cast.short[1].toUpperCase()} WIN THE TAG BATTLE`
           : `${cast.short[2].toUpperCase()} & ${cast.short[3].toUpperCase()} WIN THE TAG BATTLE`}{' '}
@@ -894,14 +894,14 @@ function TagResultView({
         {!event && (
           <button
             onClick={onAgain}
-            className="font-display border-2 border-white/70 px-8 py-3 tracking-[0.3em] hover:bg-white/10"
+            className="font-display border-2 border-white/70 px-8 py-3 tracking-[0.16em] hover:bg-white/10"
           >
             TAG AGAIN
           </button>
         )}
         <button
           onClick={onLeave}
-          className={`font-display border-2 px-8 py-3 tracking-[0.3em] hover:bg-white/10 ${event ? 'border-white/70' : 'border-white/25 text-white/70'}`}
+          className={`font-display border-2 px-8 py-3 tracking-[0.16em] hover:bg-white/10 ${event ? 'border-white/70' : 'border-white/25 text-white/70'}`}
         >
           {event ? 'BACK TO EVENTS' : 'LEAVE'}
         </button>

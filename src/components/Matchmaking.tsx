@@ -82,7 +82,7 @@ export function Matchmaking({
             ))}
             <Avatar avatar={me.avatar} color={ELEMENT_BY_ID[me.element].color} size={96} />
           </div>
-          <p className="font-display mt-6 text-2xl font-black tracking-[0.3em]">SEARCHING FOR AN OPPONENT</p>
+          <p className="font-display mt-6 text-2xl font-black tracking-[0.16em]">SEARCHING FOR AN OPPONENT</p>
           <p className="font-display mt-2 text-4xl font-black tabular-nums">
             {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
           </p>
@@ -94,7 +94,7 @@ export function Matchmaking({
               playSfx('select')
               onCancel()
             }}
-            className="font-display mt-8 rounded-full border border-white/25 px-8 py-2.5 text-xs tracking-[0.35em] text-white/70 transition hover:border-white/60 hover:text-white"
+            className="font-display mt-8 rounded-full border border-white/25 px-8 py-2.5 text-xs tracking-[0.18em] text-white/70 transition hover:border-white/60 hover:text-white"
           >
             CANCEL
           </button>
@@ -106,7 +106,7 @@ export function Matchmaking({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.35 }}
         >
-          <p className="font-display text-center text-sm tracking-[0.5em] text-emerald-300">OPPONENT FOUND</p>
+          <p className="font-display text-center text-sm tracking-[0.22em] text-emerald-300">OPPONENT FOUND</p>
           <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-6">
             <Side name={me.name} avatar={me.avatar} element={me.element} rank={myRank.rank} rating={me.rating} team={me.team} />
             <p className="font-display text-6xl font-black text-white/30 italic">VS</p>
@@ -120,7 +120,7 @@ export function Matchmaking({
               right
             />
           </div>
-          <p className="font-display mt-10 text-center text-xs tracking-[0.4em] text-white/50">
+          <p className="font-display mt-10 text-center text-xs tracking-[0.2em] text-white/50">
             ENTERING THE ARENA IN <span className="text-base text-white">{left}</span>
           </p>
         </motion.div>
@@ -156,7 +156,7 @@ function Side({
         <Avatar avatar={avatar} color={color} size={64} />
         <div className="min-w-0">
           <p className="font-display truncate text-xl font-black tracking-wider">{name.toUpperCase()}</p>
-          <p className="font-display mt-0.5 text-[11px] tracking-[0.25em] text-white/55">
+          <p className="font-display mt-0.5 text-[11px] tracking-[0.14em] text-white/55">
             {rank.toUpperCase()} · {rating.toLocaleString('en-US')} BR
           </p>
         </div>

@@ -119,7 +119,7 @@ function IncomingCard({ inv }: { inv: Invite }) {
     >
       <div className="p-5">
         <div className="flex items-center justify-between">
-          <p className="font-display text-[10px] tracking-[0.4em]" style={{ color: el.color }}>
+          <p className="font-display text-[10px] tracking-[0.2em]" style={{ color: el.color }}>
             {inv.kind === 'duel' ? '⚔ BATTLE INVITE' : '⚔⚔ TAG BATTLE INVITE'}
           </p>
           <p className="font-display text-xs text-white/60 tabular-nums">{left} s</p>
@@ -134,7 +134,7 @@ function IncomingCard({ inv }: { inv: Invite }) {
               {clan && <span className="mr-1.5 text-sm text-white/45">[{clan.tag}]</span>}
               {b.name}
             </p>
-            <p className="font-display mt-0.5 text-[10px] tracking-[0.3em]" style={{ color: rankColor(tier) }}>
+            <p className="font-display mt-0.5 text-[10px] tracking-[0.16em]" style={{ color: rankColor(tier) }}>
               {tier.rank.toUpperCase()}
             </p>
             <p className="mt-1 text-sm text-white/80">
@@ -167,13 +167,13 @@ function IncomingCard({ inv }: { inv: Invite }) {
           <div className="mt-4 flex gap-2">
             <button
               onClick={accept}
-              className="font-display flex-1 rounded-md bg-emerald-500 py-2.5 text-sm font-black tracking-[0.25em] text-black transition hover:bg-emerald-300"
+              className="font-display flex-1 rounded-md bg-emerald-500 py-2.5 text-sm font-black tracking-[0.14em] text-black transition hover:bg-emerald-300"
             >
               ACCEPT
             </button>
             <button
               onClick={() => decline()}
-              className="font-display flex-1 rounded-md border border-white/30 py-2.5 text-sm tracking-[0.25em] transition hover:border-white/70 hover:bg-white/10"
+              className="font-display flex-1 rounded-md border border-white/30 py-2.5 text-sm tracking-[0.14em] transition hover:border-white/70 hover:bg-white/10"
             >
               DECLINE
             </button>
@@ -213,7 +213,7 @@ function WaitingPanel({ o }: { o: Outgoing }) {
   const tone =
     o.state === 'accepted' ? '#3ee07a' : o.state === 'declined' ? '#ff6b6b' : o.state === 'expired' ? '#9aa3b5' : el.color
   const button =
-    'font-display mt-6 rounded border-2 border-white/40 px-8 py-2 text-xs tracking-[0.3em] transition hover:border-white/80 hover:bg-white/10'
+    'font-display mt-6 rounded border-2 border-white/40 px-8 py-2 text-xs tracking-[0.16em] transition hover:border-white/80 hover:bg-white/10'
   return (
     <motion.div
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
@@ -232,7 +232,7 @@ function WaitingPanel({ o }: { o: Outgoing }) {
         animate={{ scale: 1, y: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="font-display text-[10px] tracking-[0.4em] text-white/45">
+        <p className="font-display text-[10px] tracking-[0.2em] text-white/45">
           {o.kind === 'duel' ? '⚔ FRIENDLY BATTLE INVITE' : '⚔⚔ TAG BATTLE INVITE'}
         </p>
         <div className="relative mx-auto mt-5 w-fit">

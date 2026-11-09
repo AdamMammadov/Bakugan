@@ -23,7 +23,7 @@ function SeasonChip() {
       onClick={() => openPage('pass')}
       className="ml-auto rounded-xl border-2 border-amber-300/60 bg-black/50 px-5 py-3 text-left backdrop-blur transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-300/10"
     >
-      <p className="font-display text-[10px] tracking-[0.4em] text-amber-300">
+      <p className="font-display text-[10px] tracking-[0.2em] text-amber-300">
         SEASON {info.id} · ENDS IN {timeLeft(info.endsAt - now).toUpperCase()}
       </p>
       <p className="font-display mt-1 text-xl font-black">
@@ -113,7 +113,7 @@ function BakuganCard({
         {locked ? (
           <span className="text-right text-xs leading-snug text-white/60">{unlockHint(profile, b)}</span>
         ) : (
-          <span className="font-display text-xs tracking-[0.3em] text-white/50 group-hover:text-white">INSPECT →</span>
+          <span className="font-display text-xs tracking-[0.16em] text-white/50 group-hover:text-white">INSPECT →</span>
         )}
       </div>
     </motion.div>
@@ -149,7 +149,7 @@ export function ElementHub() {
           playSfx('tick')
           go('menu')
         }}
-        className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+        className="font-display text-xs tracking-[0.2em] text-white/50 transition hover:text-white"
       >
         ← MAIN MENU
       </button>
@@ -157,7 +157,7 @@ export function ElementHub() {
       <header className="mt-8 flex items-center gap-6">
         <img src={element.icon} alt="" className="h-24 w-24" style={{ filter: `drop-shadow(0 0 20px ${element.glow})` }} />
         <div>
-          <p className="font-display text-xs tracking-[0.5em] text-white/40">{element.attribute.toUpperCase()} ATTRIBUTE</p>
+          <p className="font-display text-xs tracking-[0.22em] text-white/40">{element.attribute.toUpperCase()} ATTRIBUTE</p>
           <h1 className="font-display text-5xl font-black tracking-wider" style={{ color: element.color }}>
             {element.name.toUpperCase()} BAKUGAN
           </h1>
@@ -176,12 +176,12 @@ export function ElementHub() {
         <section className="mt-14 pb-16">
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <p className="font-display text-xs tracking-[0.5em] text-white/40">OTHER ATTRIBUTES</p>
+              <p className="font-display text-xs tracking-[0.22em] text-white/40">OTHER ATTRIBUTES</p>
               <h2 className="font-display mt-1 text-3xl font-black tracking-wider">YOUR OTHER BAKUGAN</h2>
             </div>
             <button
               onClick={() => openPage('shop')}
-              className="font-display mb-1 ml-auto rounded-full border border-white/20 px-4 py-1.5 text-[10px] tracking-[0.3em] text-white/60 transition hover:border-white/50 hover:bg-white/10 hover:text-white"
+              className="font-display mb-1 ml-auto rounded-full border border-white/20 px-4 py-1.5 text-[10px] tracking-[0.16em] text-white/60 transition hover:border-white/50 hover:bg-white/10 hover:text-white"
             >
               GET MORE IN THE SHOP →
             </button>

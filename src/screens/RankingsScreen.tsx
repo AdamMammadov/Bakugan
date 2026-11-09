@@ -170,19 +170,19 @@ export function RankingsScreen() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`font-display rounded border px-4 py-1.5 text-xs tracking-[0.3em] ${tab === t ? 'border-white text-white' : 'border-white/15 text-white/50'}`}
+            className={`font-display rounded border px-4 py-1.5 text-xs tracking-[0.16em] ${tab === t ? 'border-white text-white' : 'border-white/15 text-white/50'}`}
           >
             {t === 'season' ? 'SEASON & GLORY' : t.toUpperCase()}
           </button>
         ))}
         {/* where the player stands on the shown list: themselves among brawlers, their clan among clans */}
         {tab === 'players' && myPlace > 0 && (
-          <span className="font-display ml-auto self-center text-xs tracking-[0.3em] text-white/50">
+          <span className="font-display ml-auto self-center text-xs tracking-[0.16em] text-white/50">
             YOU ARE #{myPlace} OF {rows.length}
           </span>
         )}
         {tab === 'clans' && (
-          <span className="font-display ml-auto self-center text-xs tracking-[0.3em] text-white/50">
+          <span className="font-display ml-auto self-center text-xs tracking-[0.16em] text-white/50">
             {myClan && myClanPlace > 0
               ? `[${myClan.tag}] IS #${myClanPlace} OF ${clanRows.length} CLANS`
               : `${clanRows.length} CLANS · YOU ARE NOT IN A CLAN`}
@@ -194,7 +194,7 @@ export function RankingsScreen() {
         <RankedSeason now={now} />
       ) : tab === 'players' ? (
         <table className="mt-4 w-full border-separate border-spacing-y-1.5 text-left">
-          <thead className="font-display text-[10px] tracking-[0.3em] text-white/40">
+          <thead className="font-display text-[10px] tracking-[0.16em] text-white/40">
             <tr>
               <th className="px-3">#</th>
               <th>BRAWLER</th>

@@ -131,7 +131,7 @@ function FriendList({
   const online = rows.filter((r) => !r.pending && (r.status.state === 'online' || r.status.state === 'match')).length
   return (
     <section>
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
+      <h2 className="font-display text-xs tracking-[0.22em] text-white/40">
         FRIENDS · {rows.filter((r) => !r.pending).length}
         <span className="ml-2 text-emerald-300/70">{online} ONLINE</span>
       </h2>
@@ -207,14 +207,14 @@ function FindBrawlers({ me, onOpen }: { me: Profile; onOpen: (id: string) => voi
         .slice(0, 5)
   return (
     <section className="rounded-xl border border-white/10 bg-black/40 p-4">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">FIND BRAWLERS</h2>
+      <h2 className="font-display text-xs tracking-[0.22em] text-white/40">FIND BRAWLERS</h2>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search by name…"
         className="mt-3 w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 text-sm outline-none focus:border-white/50"
       />
-      <p className="mt-3 text-[10px] tracking-[0.3em] text-white/35">{q ? 'RESULTS' : 'SUGGESTED'}</p>
+      <p className="mt-3 text-[10px] tracking-[0.16em] text-white/35">{q ? 'RESULTS' : 'SUGGESTED'}</p>
       {ids.length === 0 && <p className="mt-2 text-sm text-white/40">Nobody by that name.</p>}
       <div className="mt-2 space-y-1.5">
         {ids.map((id) => {
@@ -270,7 +270,7 @@ function BattleButton({
       disabled={disabled}
       onClick={onClick}
       title={title}
-      className="font-display rounded border-2 px-5 py-2 text-left text-xs tracking-[0.3em] transition enabled:hover:-translate-y-0.5 enabled:hover:bg-white/10 disabled:opacity-50"
+      className="font-display rounded border-2 px-5 py-2 text-left text-xs tracking-[0.16em] transition enabled:hover:-translate-y-0.5 enabled:hover:bg-white/10 disabled:opacity-50"
       style={{ borderColor: color, background: `${color}26` }}
     >
       <span className="block">{label}</span>
@@ -367,7 +367,7 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
           {friend && (
             <button
               onClick={() => chat.current?.focus()}
-              className="font-display self-stretch rounded border-2 border-white/50 px-5 py-2 text-xs tracking-[0.3em] transition hover:bg-white/10"
+              className="font-display self-stretch rounded border-2 border-white/50 px-5 py-2 text-xs tracking-[0.16em] transition hover:bg-white/10"
             >
               ✉ MESSAGE
             </button>
@@ -438,14 +438,14 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
         <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2">
           {stats.map(([label, value]) => (
             <div key={label} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 backdrop-blur">
-              <p className="font-display text-[10px] tracking-[0.3em] text-white/40">{label}</p>
+              <p className="font-display text-[10px] tracking-[0.16em] text-white/40">{label}</p>
               <p className="font-display mt-0.5 text-xl font-black">{value}</p>
             </div>
           ))}
         </div>
 
         <section className="mt-8">
-          <h3 className="font-display text-xs tracking-[0.5em] text-white/40">BATTLE TEAM · {teamG}G</h3>
+          <h3 className="font-display text-xs tracking-[0.22em] text-white/40">BATTLE TEAM · {teamG}G</h3>
           <div
             className="relative mt-3 h-72 overflow-hidden rounded-xl border border-white/10"
             style={{ background: `radial-gradient(circle at 50% 40%, ${el.color}33, #05060a 70%)` }}
@@ -482,7 +482,7 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
         <Collection b={b} />
 
         <section className="mt-8 pb-10">
-          <h3 className="font-display text-xs tracking-[0.5em] text-white/40">CLAN</h3>
+          <h3 className="font-display text-xs tracking-[0.22em] text-white/40">CLAN</h3>
           {clan ? (
             <div className="mt-3 flex items-center gap-4 rounded-xl border border-white/10 bg-black/40 p-4">
               <ClanEmblem clan={clan} size={56} />
@@ -498,7 +498,7 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
               </div>
               <button
                 onClick={() => openPage('clans')}
-                className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.3em] hover:bg-white/10"
+                className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.16em] hover:bg-white/10"
               >
                 CLANS →
               </button>
@@ -521,7 +521,7 @@ function Collection({ b }: { b: BrawlerView }) {
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-xs tracking-[0.5em] text-white/40">COLLECTION · {b.collection.length} BAKUGAN</h3>
+        <h3 className="font-display text-xs tracking-[0.22em] text-white/40">COLLECTION · {b.collection.length} BAKUGAN</h3>
         {b.collection.length > 8 && (
           <button onClick={() => setAll(!all)} className="text-xs text-white/45 hover:text-white">
             {all ? 'Show fewer' : `Show all ${b.collection.length}`}
@@ -629,7 +629,7 @@ function DirectChat({
           {status === 'friend' && <PresenceDot state={typing ? 'online' : live.state} size={11} />}
         </span>
         <div className="min-w-0">
-          <p className="font-display truncate text-xs tracking-[0.3em] text-white/60">MESSAGES · {b.firstName.toUpperCase()}</p>
+          <p className="font-display truncate text-xs tracking-[0.16em] text-white/60">MESSAGES · {b.firstName.toUpperCase()}</p>
           <p className="flex min-w-0 text-[11px]" data-testid="dm-status">
             {typing ? (
               <span className="animate-pulse text-emerald-300">typing…</span>
@@ -703,7 +703,7 @@ function DirectChat({
         />
         <button
           disabled={status !== 'friend'}
-          className="font-display rounded-md border border-white/40 px-4 text-xs tracking-[0.3em] enabled:hover:bg-white/10 disabled:opacity-40"
+          className="font-display rounded-md border border-white/40 px-4 text-xs tracking-[0.16em] enabled:hover:bg-white/10 disabled:opacity-40"
         >
           SEND
         </button>
@@ -728,7 +728,7 @@ function DndControl({ me }: { me: Profile }) {
       style={{ borderColor: until ? '#ffb64888' : 'rgba(255,255,255,0.1)' }}
       data-testid="dnd"
     >
-      <p className="font-display text-[10px] tracking-[0.4em] text-white/40">BATTLE INVITES</p>
+      <p className="font-display text-[10px] tracking-[0.2em] text-white/40">BATTLE INVITES</p>
       {until ? (
         <div className="mt-1.5 flex flex-wrap items-center gap-3">
           <span className="text-sm text-amber-200">
@@ -736,7 +736,7 @@ function DndControl({ me }: { me: Profile }) {
           </span>
           <button
             onClick={() => setDnd(me.id, 0)}
-            className="font-display rounded border border-amber-300/60 px-3 py-1 text-[10px] tracking-[0.25em] text-amber-200 transition hover:bg-amber-300/15"
+            className="font-display rounded border border-amber-300/60 px-3 py-1 text-[10px] tracking-[0.14em] text-amber-200 transition hover:bg-amber-300/15"
           >
             TURN OFF
           </button>
@@ -746,7 +746,7 @@ function DndControl({ me }: { me: Profile }) {
           <span className="text-sm text-emerald-300">🔔 On: online friends can invite you</span>
           <button
             onClick={() => setOpen(!open)}
-            className="font-display rounded border border-white/25 px-3 py-1 text-[10px] tracking-[0.25em] text-white/70 transition hover:border-white/60 hover:bg-white/10 hover:text-white"
+            className="font-display rounded border border-white/25 px-3 py-1 text-[10px] tracking-[0.14em] text-white/70 transition hover:border-white/60 hover:bg-white/10 hover:text-white"
           >
             🔕 DO NOT DISTURB
           </button>

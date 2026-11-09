@@ -81,7 +81,7 @@ export function EventsScreen() {
       <PageNav current="events" />
       <header className="mt-8 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="font-display text-xs tracking-[0.5em] text-amber-300">TOURNAMENTS · BOSS BATTLES · RULE EVENTS</p>
+          <p className="font-display text-xs tracking-[0.22em] text-amber-300">TOURNAMENTS · BOSS BATTLES · RULE EVENTS</p>
           <h1 className="font-display text-5xl font-black tracking-wider">EVENTS</h1>
           <p className="mt-1 max-w-3xl text-white/55">
             More than the arena: knockout cups against brawlers of your rank, the villains of the anime with boosted teams, and
@@ -97,7 +97,7 @@ export function EventsScreen() {
             playSfx('tick')
             open({ kind: 'board' })
           }}
-          className="font-display mt-6 text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+          className="font-display mt-6 text-xs tracking-[0.2em] text-white/50 transition hover:text-white"
         >
           ← ALL EVENTS
         </button>
@@ -108,7 +108,7 @@ export function EventsScreen() {
           <p className="flex-1 text-white/75">Events are played with your own Bakugan and pay into your profile.</p>
           <button
             onClick={() => editProfile(null)}
-            className="font-display rounded border border-amber-300/70 px-4 py-2 text-xs tracking-[0.3em] text-amber-200 hover:bg-amber-300/10"
+            className="font-display rounded border border-amber-300/70 px-4 py-2 text-xs tracking-[0.16em] text-amber-200 hover:bg-amber-300/10"
           >
             + CREATE PROFILE
           </button>
@@ -135,7 +135,7 @@ function Summary({ events }: { events: ProfileEvents }) {
         <Trophy size={36} />
         <div>
           <p className="font-display text-2xl leading-none font-black">{cups}</p>
-          <p className="font-display text-[9px] tracking-[0.3em] text-white/45">CUPS WON</p>
+          <p className="font-display text-[9px] tracking-[0.16em] text-white/45">CUPS WON</p>
         </div>
       </div>
       <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-black/50 px-4 py-2">
@@ -145,7 +145,7 @@ function Summary({ events }: { events: ProfileEvents }) {
             {beaten}
             <span className="text-sm text-white/40">/{BOSSES.length}</span>
           </p>
-          <p className="font-display text-[9px] tracking-[0.3em] text-white/45">BOSSES DEFEATED</p>
+          <p className="font-display text-[9px] tracking-[0.16em] text-white/45">BOSSES DEFEATED</p>
         </div>
       </div>
     </div>
@@ -169,8 +169,8 @@ function Board({ profile, events, now }: { profile: Profile | null; events: Prof
       </div>
 
       <div className="mt-10 flex items-baseline justify-between">
-        <h2 className="font-display text-xs tracking-[0.5em] text-white/50">BOSS BATTLES · THIS WEEK</h2>
-        <p className="font-display text-[10px] tracking-[0.3em] text-white/35">
+        <h2 className="font-display text-xs tracking-[0.22em] text-white/50">BOSS BATTLES · THIS WEEK</h2>
+        <p className="font-display text-[10px] tracking-[0.16em] text-white/35">
           NEW LINE-UP IN {timeLeft(weekEnd(now) - now).toUpperCase()}
         </p>
       </div>
@@ -200,13 +200,13 @@ function TeamBar({ profile }: { profile: Profile }) {
   return (
     <div className="mt-6 rounded-xl border border-white/10 bg-black/45 p-4 backdrop-blur">
       <div className="flex flex-wrap items-center gap-3">
-        <p className="font-display text-[10px] tracking-[0.4em] text-white/40">YOUR EVENT TEAM</p>
+        <p className="font-display text-[10px] tracking-[0.2em] text-white/40">YOUR EVENT TEAM</p>
         {team.map((e, i) => (
           <TeamChip key={e.bakugan.id} entrant={e} lead={i === 0} />
         ))}
         <button
           onClick={() => setEditing((v) => !v)}
-          className="font-display ml-auto rounded border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.3em] text-white/70 hover:bg-white/10"
+          className="font-display ml-auto rounded border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.16em] text-white/70 hover:bg-white/10"
         >
           {editing ? 'DONE' : 'CHANGE TEAM'}
         </button>
@@ -281,7 +281,7 @@ function StatusPill({ status, label }: { status: Status; label?: string }) {
   const s = STATUS[status]
   return (
     <span
-      className="font-display rounded-full border px-2 py-0.5 text-[9px] tracking-[0.25em]"
+      className="font-display rounded-full border px-2 py-0.5 text-[9px] tracking-[0.14em]"
       style={{ borderColor: `${s.color}aa`, color: s.color, background: `${s.color}14` }}
     >
       {status === 'locked' ? '🔒 ' : status === 'done' ? '✓ ' : ''}
@@ -293,7 +293,7 @@ function StatusPill({ status, label }: { status: Status; label?: string }) {
 function Rewards({ rewards, label = 'REWARDS' }: { rewards: Reward[]; label?: string }) {
   return (
     <div className="mt-3">
-      <p className="font-display text-[9px] tracking-[0.4em] text-white/35">{label}</p>
+      <p className="font-display text-[9px] tracking-[0.2em] text-white/35">{label}</p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {rewards.map((r, i) => (
           <span
@@ -377,11 +377,11 @@ function Card({
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-display text-[9px] tracking-[0.4em]" style={{ color }}>
+          <span className="font-display text-[9px] tracking-[0.2em]" style={{ color }}>
             {kind}
           </span>
           <StatusPill status={status} label={statusLabel} />
-          {time && <span className="font-display ml-auto text-[9px] tracking-[0.25em] text-white/45">⏱ {time}</span>}
+          {time && <span className="font-display ml-auto text-[9px] tracking-[0.14em] text-white/45">⏱ {time}</span>}
         </div>
         <h3 className="font-display mt-1 text-xl font-black tracking-wide">{name}</h3>
         {children}
@@ -488,7 +488,7 @@ function CupCard({ profile, events, now }: { profile: Profile | null; events: Pr
         {([1, 2, 3, 5] as Place[]).map((place) => (
           <div key={place} className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
             <p
-              className="font-display text-[9px] tracking-[0.25em]"
+              className="font-display text-[9px] tracking-[0.14em]"
               style={{ color: place === 1 ? GOLD : 'rgba(255,255,255,0.5)' }}
             >
               {PLACE_NAME[place].toUpperCase()}
@@ -537,7 +537,7 @@ function CupPanel({ profile, events, now }: { profile: Profile; events: ProfileE
       <div className="flex flex-wrap items-end gap-6">
         <Trophy size={72} />
         <div>
-          <p className="font-display text-xs tracking-[0.5em]" style={{ color: GOLD }}>
+          <p className="font-display text-xs tracking-[0.22em]" style={{ color: GOLD }}>
             BAKUGAN CUP ·{' '}
             {shown && shown.cup !== cup.index ? 'EARLIER CUP' : `ENTRIES CLOSE IN ${timeLeft(cup.endsAt - now).toUpperCase()}`}
           </p>
@@ -571,7 +571,7 @@ function CupPanel({ profile, events, now }: { profile: Profile; events: ProfileE
         <div className="flex flex-col gap-4">
           {foe && next && (
             <div className="rounded-2xl border-2 border-amber-300/60 bg-black/55 p-5 backdrop-blur">
-              <p className="font-display text-[10px] tracking-[0.4em] text-amber-300">YOUR {ROUND_NAME[stage].toUpperCase()}</p>
+              <p className="font-display text-[10px] tracking-[0.2em] text-amber-300">YOUR {ROUND_NAME[stage].toUpperCase()}</p>
               <div className="mt-3 flex items-center gap-3">
                 <Avatar avatar={{ kind: 'preset', id: foe.characterId }} color={ELEMENT_BY_ID[foe.element].color} size={56} />
                 <div className="min-w-0">
@@ -624,13 +624,13 @@ function CupPanel({ profile, events, now }: { profile: Profile; events: ProfileE
             <div className="rounded-2xl border border-white/15 bg-black/55 p-5 backdrop-blur">
               {entry.enteredToday ? (
                 <>
-                  <p className="font-display text-[10px] tracking-[0.4em] text-white/45">NEXT ENTRY</p>
+                  <p className="font-display text-[10px] tracking-[0.2em] text-white/45">NEXT ENTRY</p>
                   <p className="font-display mt-1 text-xl font-black">IN {timeLeft(dayEnd(now) - now).toUpperCase()}</p>
                   <p className="mt-1 text-xs text-white/45">One free entry a day.</p>
                 </>
               ) : (
                 <>
-                  <p className="font-display text-[10px] tracking-[0.4em] text-emerald-300">ENTRY OPEN · FREE</p>
+                  <p className="font-display text-[10px] tracking-[0.2em] text-emerald-300">ENTRY OPEN · FREE</p>
                   <p className="mt-1 text-sm text-white/60">
                     One entry a day. Lose once and you are out; your placement still pays. Leaving a match before it ends counts
                     as a loss.
@@ -649,7 +649,7 @@ function CupPanel({ profile, events, now }: { profile: Profile; events: ProfileE
           )}
 
           <div className="rounded-2xl border border-white/10 bg-black/45 p-4 backdrop-blur">
-            <p className="font-display text-[10px] tracking-[0.4em] text-white/40">PRIZES</p>
+            <p className="font-display text-[10px] tracking-[0.2em] text-white/40">PRIZES</p>
             {([1, 2, 3, 5] as Place[]).map((place) => (
               <div key={place} className="mt-2 flex items-center gap-2 text-xs">
                 <span
@@ -878,12 +878,12 @@ function BossCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
         <img src={el.icon} alt="" className="absolute top-3 left-3 h-8 w-8" />
         {defeated && (
-          <span className="font-display absolute top-3 right-3 rotate-6 rounded border-2 border-emerald-300 bg-black/70 px-2 py-0.5 text-[10px] font-black tracking-[0.25em] text-emerald-300">
+          <span className="font-display absolute top-3 right-3 rotate-6 rounded border-2 border-emerald-300 bg-black/70 px-2 py-0.5 text-[10px] font-black tracking-[0.14em] text-emerald-300">
             DEFEATED
           </span>
         )}
         <div className="absolute inset-x-3 bottom-2">
-          <p className="font-display text-[9px] tracking-[0.4em]" style={{ color: el.color }}>
+          <p className="font-display text-[9px] tracking-[0.2em]" style={{ color: el.color }}>
             BOSS BATTLE
           </p>
           <p className="font-display text-xl leading-tight font-black">{boss.name}</p>
@@ -927,13 +927,13 @@ function BossPanel({ profile, boss, events, now }: { profile: Profile; boss: Bos
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
           <div className="absolute inset-x-4 bottom-4 flex items-center justify-between">
             <BossStamps cleared={prog.cleared} />
-            <span className="font-display text-[10px] tracking-[0.3em] text-white/60">
+            <span className="font-display text-[10px] tracking-[0.16em] text-white/60">
               {prog.wins}W · {prog.losses}L
             </span>
           </div>
         </div>
         <div>
-          <p className="font-display flex items-center gap-2 text-xs tracking-[0.5em]" style={{ color: el.color }}>
+          <p className="font-display flex items-center gap-2 text-xs tracking-[0.22em]" style={{ color: el.color }}>
             <img src={el.icon} alt="" className="h-6 w-6" /> BOSS BATTLE · {el.name.toUpperCase()}
           </p>
           <h2 className="font-display mt-1 text-5xl font-black tracking-wider">{boss.name.toUpperCase()}</h2>
@@ -945,7 +945,7 @@ function BossPanel({ profile, boss, events, now }: { profile: Profile; boss: Bos
             </p>
           )}
 
-          <p className="font-display mt-5 text-[10px] tracking-[0.4em] text-white/40">BOSS TEAM · {info.name.toUpperCase()}</p>
+          <p className="font-display mt-5 text-[10px] tracking-[0.2em] text-white/40">BOSS TEAM · {info.name.toUpperCase()}</p>
           <div className="mt-2 flex flex-wrap gap-3">
             {team.map((e) => (
               <div
@@ -1030,7 +1030,7 @@ function BossPanel({ profile, boss, events, now }: { profile: Profile; boss: Bos
           }}
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.97 }}
-          className="font-display skew-x-[-12deg] border-2 px-12 py-4 text-xl font-black tracking-[0.3em] disabled:opacity-35"
+          className="font-display skew-x-[-12deg] border-2 px-12 py-4 text-xl font-black tracking-[0.16em] disabled:opacity-35"
           style={{ borderColor: info.color, background: `${info.color}22` }}
         >
           BRAWL {boss.name.split(' ')[0].toUpperCase()} · {info.name.toUpperCase()}
@@ -1055,7 +1055,7 @@ function Cabinet({ events }: { events: ProfileEvents }) {
   return (
     <div className="mt-10 grid grid-cols-[1fr_1fr] gap-5">
       <div className="rounded-2xl border border-amber-300/25 bg-black/45 p-5 backdrop-blur">
-        <h2 className="font-display text-xs tracking-[0.5em] text-amber-300/80">TROPHY CABINET</h2>
+        <h2 className="font-display text-xs tracking-[0.22em] text-amber-300/80">TROPHY CABINET</h2>
         {events.trophies.length === 0 ? (
           <p className="mt-3 text-sm text-white/45">Reach a Bakugan Cup final to put your first trophy here.</p>
         ) : (
@@ -1073,7 +1073,7 @@ function Cabinet({ events }: { events: ProfileEvents }) {
         )}
       </div>
       <div className="rounded-2xl border border-white/10 bg-black/45 p-5 backdrop-blur">
-        <h2 className="font-display text-xs tracking-[0.5em] text-white/50">BOSSES DEFEATED</h2>
+        <h2 className="font-display text-xs tracking-[0.22em] text-white/50">BOSSES DEFEATED</h2>
         <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2.5">
           {BOSSES.map((b) => (
             <div key={b.id} className="flex items-center gap-3">

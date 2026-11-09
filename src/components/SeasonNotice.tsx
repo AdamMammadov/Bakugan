@@ -31,7 +31,7 @@ export function SeasonNotice() {
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
           >
-            <p className="font-display text-xs tracking-[0.5em] text-amber-300">SEASON {notice.ended} HAS ENDED</p>
+            <p className="font-display text-xs tracking-[0.22em] text-amber-300">SEASON {notice.ended} HAS ENDED</p>
             <h2 className="font-display mt-2 text-4xl font-black">NEW SEASON!</h2>
             <p className="mt-4 text-white/70">
               You finished the pass at level {notice.level} and earned the title{' '}
@@ -49,13 +49,13 @@ export function SeasonNotice() {
                   dismiss()
                   openPage('pass')
                 }}
-                className="font-display border-2 border-amber-300/80 px-6 py-2 tracking-[0.3em] text-amber-200 hover:bg-amber-300/10"
+                className="font-display border-2 border-amber-300/80 px-6 py-2 tracking-[0.16em] text-amber-200 hover:bg-amber-300/10"
               >
                 OPEN PASS
               </button>
               <button
                 onClick={dismiss}
-                className="font-display border border-white/30 px-6 py-2 tracking-[0.3em] hover:bg-white/10"
+                className="font-display border border-white/30 px-6 py-2 tracking-[0.16em] hover:bg-white/10"
               >
                 LATER
               </button>

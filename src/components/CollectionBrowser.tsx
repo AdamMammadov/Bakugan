@@ -96,12 +96,12 @@ export function CollectionBrowser({
   return (
     <section className="mt-10">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
+        <h2 className="font-display text-xs tracking-[0.22em] text-white/40">
           BAKUGAN COLLECTION · {profile.collection.length}/{released().length}
         </h2>
         <button
           onClick={() => openPage('shop')}
-          className="font-display cursor-pointer rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.3em] transition hover:border-white/60 hover:bg-white/10"
+          className="font-display cursor-pointer rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.16em] transition hover:border-white/60 hover:bg-white/10"
         >
           GET MORE IN THE SHOP →
         </button>
@@ -194,14 +194,14 @@ export function CollectionBrowser({
             {filtered && (
               <button
                 onClick={clear}
-                className="font-display cursor-pointer px-2 text-[10px] tracking-[0.25em] text-white/45 underline-offset-4 transition hover:text-white hover:underline"
+                className="font-display cursor-pointer px-2 text-[10px] tracking-[0.14em] text-white/45 underline-offset-4 transition hover:text-white hover:underline"
               >
                 CLEAR FILTERS
               </button>
             )}
 
             <div className="ml-auto flex items-center gap-2">
-              <span className="font-display text-[10px] tracking-[0.3em] text-white/35">SORT</span>
+              <span className="font-display text-[10px] tracking-[0.16em] text-white/35">SORT</span>
               <div className="flex flex-wrap items-center rounded-lg border border-white/15 bg-black/40 p-0.5">
                 {SORTS.map((s) => {
                   const on = prefs.sort === s.id
@@ -228,7 +228,7 @@ export function CollectionBrowser({
                     onClick={() => prefs.view !== v && set({ view: v })}
                     title={v === 'grid' ? 'Pictures in a grid' : 'A detailed list'}
                     aria-pressed={prefs.view === v}
-                    className={`font-display flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] tracking-[0.25em] transition ${
+                    className={`font-display flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] tracking-[0.14em] transition ${
                       prefs.view === v ? 'bg-white/15 text-white' : 'text-white/45 hover:bg-white/5 hover:text-white'
                     }`}
                   >
@@ -255,7 +255,7 @@ export function CollectionBrowser({
           </p>
           <button
             onClick={clear}
-            className="font-display mt-5 cursor-pointer rounded border border-white/30 px-5 py-2 text-xs tracking-[0.3em] transition hover:border-white/70 hover:bg-white/10"
+            className="font-display mt-5 cursor-pointer rounded border border-white/30 px-5 py-2 text-xs tracking-[0.16em] transition hover:border-white/70 hover:bg-white/10"
           >
             CLEAR FILTERS
           </button>
@@ -470,7 +470,7 @@ function List({
     <div className="mt-1 overflow-x-auto rounded-xl border border-white/10 bg-black/40 backdrop-blur">
       <div className="min-w-[860px]">
         <div
-          className={`font-display grid ${LIST_COLS} items-center gap-4 border-b border-white/10 px-3 py-2.5 text-[10px] tracking-[0.25em] text-white/40`}
+          className={`font-display grid ${LIST_COLS} items-center gap-4 border-b border-white/10 px-3 py-2.5 text-[10px] tracking-[0.14em] text-white/40`}
         >
           <span />
           {head('NAME', 'name')}

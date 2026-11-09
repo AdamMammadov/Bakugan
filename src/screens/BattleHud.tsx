@@ -108,7 +108,7 @@ export function TurnCounter({ turn, battle, label = 'BATTLE' }: { turn: number; 
         {String(Math.max(1, turn)).padStart(2, '0')}
         <span className="text-2xl">T</span>
       </p>
-      <p className="font-display mt-1 text-[10px] tracking-[0.45em] text-white/50">
+      <p className="font-display mt-1 text-[10px] tracking-[0.2em] text-white/50">
         {label} {battle}
       </p>
     </div>
@@ -189,7 +189,7 @@ export function BrawlerHud({
         <div className="min-w-0">
           {badge}
           <p className="font-display truncate text-lg leading-tight font-black tracking-wider">{brawler.name.toUpperCase()}</p>
-          <p className="font-display truncate text-[10px] tracking-[0.3em] text-white/50">{brawler.tag}</p>
+          <p className="font-display truncate text-[10px] tracking-[0.16em] text-white/50">{brawler.tag}</p>
           {!!boost && (
             <p
               className="font-display mt-1 inline-block rounded border border-[#ff4a3d]/80 bg-[#ff4a3d]/20 px-1.5 text-[10px] font-bold tracking-[0.2em] text-[#ff8a7d]"
@@ -223,7 +223,7 @@ export function BrawlerHud({
           )}
           {/* whose move it is: a tag over the portrait (it used to sit on the name) */}
           {moving && (
-            <span className="font-display absolute inset-x-0 bottom-0 bg-white py-0.5 text-center text-[9px] font-black tracking-[0.3em] text-black">
+            <span className="font-display absolute inset-x-0 bottom-0 bg-white py-0.5 text-center text-[9px] font-black tracking-[0.16em] text-black">
               MOVE
             </span>
           )}
@@ -276,7 +276,7 @@ export function BrawlerHud({
               )}
             </>
           ) : (
-            <p className="font-display text-[10px] tracking-[0.3em] text-white/45">
+            <p className="font-display text-[10px] tracking-[0.16em] text-white/45">
               {state.phase === 'throw' || state.phase === 'set' ? 'CHOOSING A BAKUGAN…' : ''}
             </p>
           )}
@@ -429,7 +429,7 @@ export function GateSlot({ state, names, mine }: { state: BattleState; names: [s
         >
           <span className="font-display text-xl font-black text-[#ffc94a]">?</span>
         </div>
-        <p className="font-display mt-1 text-[9px] tracking-[0.3em] text-white/55">GATE CARD · {owner}</p>
+        <p className="font-display mt-1 text-[9px] tracking-[0.16em] text-white/55">GATE CARD · {owner}</p>
         {mine && <p className="text-[10px] text-white/45">yours: {gateLabel(card)}</p>}
       </motion.div>
     )
@@ -448,7 +448,7 @@ export function GateSlot({ state, names, mine }: { state: BattleState; names: [s
       <img src={el.icon} alt="" className={`h-6 w-6 ${open ? '' : 'opacity-40 grayscale'}`} />
       <div className={`text-left leading-tight ${open ? '' : 'opacity-50'}`}>
         <p className="font-display text-xs font-black">{gateLabel(card).toUpperCase()}</p>
-        <p className="font-display text-[9px] tracking-[0.25em] text-white/60">
+        <p className="font-display text-[9px] tracking-[0.14em] text-white/60">
           {open ? `OPEN · FOR ${names[gate.openFor!].toUpperCase()}` : `${owner}'S`}
         </p>
       </div>

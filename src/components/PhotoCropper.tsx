@@ -171,7 +171,7 @@ export function PhotoCropper({ src, color, onDone, onCancel }: Props) {
       </div>
       <p className="mt-3 text-xs text-white/50">Drag to move · scroll or pinch to zoom</p>
       <label className="mt-3 flex w-[320px] items-center gap-3 text-xs text-white/50">
-        <span className="font-display tracking-[0.3em]">ZOOM</span>
+        <span className="font-display tracking-[0.16em]">ZOOM</span>
         <input
           type="range"
           min={1}
@@ -190,20 +190,20 @@ export function PhotoCropper({ src, color, onDone, onCancel }: Props) {
       <div className="mt-5 flex gap-3">
         <button
           onClick={onCancel}
-          className="font-display rounded-md border-2 border-white/25 px-5 py-2.5 text-xs tracking-[0.3em] text-white/70 hover:bg-white/10"
+          className="font-display rounded-md border-2 border-white/25 px-5 py-2.5 text-xs tracking-[0.16em] text-white/70 hover:bg-white/10"
         >
           CANCEL
         </button>
         <button
           onClick={() => setView({ zoom: 1, x: 0, y: 0 })}
-          className="font-display rounded-md border-2 border-white/25 px-5 py-2.5 text-xs tracking-[0.3em] text-white/70 hover:bg-white/10"
+          className="font-display rounded-md border-2 border-white/25 px-5 py-2.5 text-xs tracking-[0.16em] text-white/70 hover:bg-white/10"
         >
           RESET
         </button>
         <button
           disabled={!img}
           onClick={done}
-          className="font-display rounded-md border-2 px-6 py-2.5 text-xs tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
+          className="font-display rounded-md border-2 px-6 py-2.5 text-xs tracking-[0.16em] transition enabled:hover:bg-white/10 disabled:opacity-40"
           style={{ borderColor: color, background: `${color}33` }}
         >
           USE PHOTO

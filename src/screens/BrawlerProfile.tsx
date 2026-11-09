@@ -70,7 +70,7 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
           {b.cpu && <PresenceDot state={live.state} size={20} />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-display flex items-center gap-2 text-xs tracking-[0.4em]" style={{ color: rankColor(tier) }}>
+          <p className="font-display flex items-center gap-2 text-xs tracking-[0.2em]" style={{ color: rankColor(tier) }}>
             {tier.rank.toUpperCase()}
             {b.cpu && <span className="rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>}
           </p>
@@ -107,13 +107,13 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
       <div className="mt-6 grid grid-cols-3 gap-2">
         {stats.map(([label, value]) => (
           <div key={label} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2">
-            <p className="font-display text-[10px] tracking-[0.3em] text-white/40">{label}</p>
+            <p className="font-display text-[10px] tracking-[0.16em] text-white/40">{label}</p>
             <p className="font-display mt-0.5 text-xl font-black">{value}</p>
           </div>
         ))}
       </div>
 
-      <h3 className="font-display mt-6 text-xs tracking-[0.5em] text-white/40">BATTLE TEAM</h3>
+      <h3 className="font-display mt-6 text-xs tracking-[0.22em] text-white/40">BATTLE TEAM</h3>
       <div className="mt-2 flex flex-wrap gap-2">
         {b.team.length === 0 && <p className="text-sm text-white/40">No team picked.</p>}
         {b.team.map((t, i) => {
@@ -137,13 +137,13 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
       <div className="mt-7 flex items-center gap-3">
         {me && me.id === id ? (
           <>
-            <span className="font-display text-xs tracking-[0.3em] text-white/50">THIS IS YOU</span>
+            <span className="font-display text-xs tracking-[0.16em] text-white/50">THIS IS YOU</span>
             <button
               onClick={() => {
                 onClose()
                 openPage('profile')
               }}
-              className="font-display rounded border border-white/30 px-5 py-2 text-xs tracking-[0.3em] hover:bg-white/10"
+              className="font-display rounded border border-white/30 px-5 py-2 text-xs tracking-[0.16em] hover:bg-white/10"
             >
               OPEN MY PROFILE
             </button>
@@ -158,7 +158,7 @@ function BrawlerCard({ id, onClose }: { id: string; onClose: () => void }) {
                   useFriendChat.getState().setFocus(id)
                   openPage('friends')
                 }}
-                className="font-display ml-auto rounded border border-white/30 px-4 py-2 text-xs tracking-[0.3em] hover:bg-white/10"
+                className="font-display ml-auto rounded border border-white/30 px-4 py-2 text-xs tracking-[0.16em] hover:bg-white/10"
               >
                 {friendStatus(me, id, now) === 'friend' ? '✉ MESSAGE · FULL PROFILE →' : 'FULL PROFILE →'}
               </button>
@@ -187,20 +187,20 @@ export function FriendButton({ id, name, small }: { id: string; name: string; sm
           playSfx('select')
           addFriend(id)
         }}
-        className={`font-display rounded border-2 border-white/60 tracking-[0.3em] hover:bg-white/10 ${size}`}
+        className={`font-display rounded border-2 border-white/60 tracking-[0.16em] hover:bg-white/10 ${size}`}
       >
         + ADD FRIEND
       </button>
     )
   if (status === 'pending')
     return (
-      <span className={`font-display animate-pulse rounded border-2 border-white/20 tracking-[0.3em] text-white/60 ${size}`}>
+      <span className={`font-display animate-pulse rounded border-2 border-white/20 tracking-[0.16em] text-white/60 ${size}`}>
         REQUEST SENT…{!small && <span className="ml-2 tracking-normal text-white/40">waiting for {name}</span>}
       </span>
     )
   return (
     <span className="flex items-center gap-3">
-      <span className={`font-display rounded border-2 border-emerald-400/70 tracking-[0.3em] text-emerald-300 ${size}`}>
+      <span className={`font-display rounded border-2 border-emerald-400/70 tracking-[0.16em] text-emerald-300 ${size}`}>
         ✓ FRIENDS
       </span>
       {!small && (
@@ -229,12 +229,12 @@ export function FriendsList({ onOpen }: { onOpen: (id: string) => void }) {
   return (
     <section>
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-display text-xs tracking-[0.5em] text-white/40">
+        <h3 className="font-display text-xs tracking-[0.22em] text-white/40">
           FRIENDS · {list.filter(({ f }) => f.since <= now).length}
         </h3>
         <button
           onClick={() => openPage('friends')}
-          className="font-display text-[10px] tracking-[0.3em] text-white/45 transition hover:text-white"
+          className="font-display text-[10px] tracking-[0.16em] text-white/45 transition hover:text-white"
         >
           OPEN FRIENDS →
         </button>

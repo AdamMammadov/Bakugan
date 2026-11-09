@@ -51,7 +51,7 @@ export function ProfileScreen() {
         <PageNav current="profile">
           {/* player switcher */}
           <div className="flex items-center gap-3">
-            <span className="font-display text-[10px] tracking-[0.4em] text-white/40">PLAYERS</span>
+            <span className="font-display text-[10px] tracking-[0.2em] text-white/40">PLAYERS</span>
             {profiles.map((p) => (
               <button
                 key={p.id}
@@ -117,13 +117,13 @@ export function ProfileScreen() {
                     remove(profile.id)
                     setConfirmDelete(false)
                   }}
-                  className="font-display border-2 border-red-500/70 px-6 py-2 tracking-[0.3em] text-red-300 hover:bg-red-500/10"
+                  className="font-display border-2 border-red-500/70 px-6 py-2 tracking-[0.16em] text-red-300 hover:bg-red-500/10"
                 >
                   DELETE
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="font-display border-2 border-white/25 px-6 py-2 tracking-[0.3em] hover:bg-white/10"
+                  className="font-display border-2 border-white/25 px-6 py-2 tracking-[0.16em] hover:bg-white/10"
                 >
                   KEEP
                 </button>
@@ -170,11 +170,11 @@ function Header({ profile, onEdit, onDelete }: { profile: Profile; onEdit: () =>
       <div className="flex shrink-0 flex-col gap-2">
         <button
           onClick={onEdit}
-          className="font-display border-2 border-white/40 px-5 py-2 text-xs tracking-[0.3em] hover:bg-white/10"
+          className="font-display border-2 border-white/40 px-5 py-2 text-xs tracking-[0.16em] hover:bg-white/10"
         >
           EDIT PROFILE
         </button>
-        <button onClick={onDelete} className="font-display px-5 py-2 text-xs tracking-[0.3em] text-white/35 hover:text-red-300">
+        <button onClick={onDelete} className="font-display px-5 py-2 text-xs tracking-[0.16em] text-white/35 hover:text-red-300">
           DELETE
         </button>
       </div>
@@ -199,7 +199,7 @@ function Stats({ profile }: { profile: Profile }) {
     <div className="mt-8 grid grid-cols-9 gap-3">
       {items.map(([label, value]) => (
         <div key={label} className="rounded-lg border border-white/10 bg-black/40 px-4 py-3 backdrop-blur">
-          <p className="font-display text-[10px] tracking-[0.3em] text-white/40">{label}</p>
+          <p className="font-display text-[10px] tracking-[0.16em] text-white/40">{label}</p>
           <p className="font-display mt-1 text-2xl font-black">{value}</p>
         </div>
       ))}
@@ -211,7 +211,7 @@ function Team({ profile, onOpen }: { profile: Profile; onOpen: (id: string, list
   const team = teamEntrants(profile)
   return (
     <section className="mt-10">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
+      <h2 className="font-display text-xs tracking-[0.22em] text-white/40">
         BATTLE TEAM · {team.reduce((n, e) => n + formBrawlG(e), 0)}G
       </h2>
       <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -279,7 +279,7 @@ function Locker({ profile }: { profile: Profile }) {
       </p>
       <button
         onClick={() => openPage('inventory')}
-        className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.3em] hover:bg-white/10"
+        className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.16em] hover:bg-white/10"
       >
         OPEN INVENTORY →
       </button>
@@ -294,7 +294,7 @@ export function RankBadge({ profile, color }: { profile: Pick<Profile, 'rating' 
   const c = color ?? rankColor(tier)
   return (
     <div className="flex items-center gap-3">
-      <p className="font-display text-xs tracking-[0.5em]" style={{ color: c }}>
+      <p className="font-display text-xs tracking-[0.22em]" style={{ color: c }}>
         {tier.rank.toUpperCase()}
       </p>
       {tier.nextRank && (

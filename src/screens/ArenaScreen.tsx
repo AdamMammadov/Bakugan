@@ -966,7 +966,7 @@ export function Brawl({
         <div className="flex min-w-48 flex-col items-center text-center">
           {badge}
           {title && (
-            <p className="font-display mb-2 max-w-72 rounded-full border border-[#ffc94a]/70 bg-black/70 px-3 py-1 text-[10px] font-bold tracking-[0.3em] text-[#ffc94a]">
+            <p className="font-display mb-2 max-w-72 rounded-full border border-[#ffc94a]/70 bg-black/70 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-[#ffc94a]">
               ★ {title.toUpperCase()}
             </p>
           )}
@@ -984,7 +984,7 @@ export function Brawl({
       {live && (
         <button
           onClick={onLeave}
-          className="font-display absolute top-[46%] left-5 text-xs tracking-[0.4em] text-white/45 transition hover:text-white"
+          className="font-display absolute top-[46%] left-5 text-xs tracking-[0.2em] text-white/45 transition hover:text-white"
         >
           ✕ EXIT
         </button>
@@ -1038,25 +1038,25 @@ export function Brawl({
             >
               {live ? `${nameOf(battle.winner!).toUpperCase()} WINS!` : battle.winner === 0 ? 'VICTORY!' : 'DEFEAT'}
             </p>
-            <p className="font-display mt-2 tracking-[0.3em] text-white/60">
+            <p className="font-display mt-2 tracking-[0.16em] text-white/60">
               {live ? nameOf(battle.winner!).toUpperCase() : battle.winner === 0 ? 'YOU WIN' : `${nameOf(1).toUpperCase()} WINS`}{' '}
               {battle.sides[battle.winner!].wins}–{battle.sides[other(battle.winner!)].wins} IN {battle.results.length} BATTLES ·{' '}
               {battle.sides[battle.winner!].lives} {battle.sides[battle.winner!].lives === 1 ? 'LIFE' : 'LIVES'} LEFT
             </p>
             {reward && <RewardList reward={reward} />}
             {live ? (
-              <p className="font-display mt-5 animate-pulse text-sm tracking-[0.4em] text-white/60">NEXT LIVE MATCH STARTING…</p>
+              <p className="font-display mt-5 animate-pulse text-sm tracking-[0.2em] text-white/60">NEXT LIVE MATCH STARTING…</p>
             ) : exit ? (
               <button
                 onClick={exit.onClick}
-                className="font-display mt-5 border-2 border-white/70 px-8 py-3 tracking-[0.3em] hover:bg-white/10"
+                className="font-display mt-5 border-2 border-white/70 px-8 py-3 tracking-[0.16em] hover:bg-white/10"
               >
                 {exit.label}
               </button>
             ) : (
               <>
                 {rematch === 'asking' && (
-                  <p className="font-display mt-5 animate-pulse text-sm tracking-[0.3em] text-white/80">
+                  <p className="font-display mt-5 animate-pulse text-sm tracking-[0.16em] text-white/80">
                     WAITING FOR {nameOf(1).toUpperCase()}…
                   </p>
                 )}
@@ -1064,13 +1064,13 @@ export function Brawl({
                   <button
                     onClick={askRematch}
                     disabled={rematch !== 'idle'}
-                    className="font-display border-2 border-white/70 px-8 py-3 tracking-[0.3em] enabled:hover:bg-white/10 disabled:opacity-40"
+                    className="font-display border-2 border-white/70 px-8 py-3 tracking-[0.16em] enabled:hover:bg-white/10 disabled:opacity-40"
                   >
                     {rematch === 'declined' ? 'REMATCH DECLINED' : rematch === 'asking' ? 'REMATCH ASKED' : 'REMATCH'}
                   </button>
                   <button
                     onClick={onLeave}
-                    className="font-display border-2 border-white/25 px-8 py-3 tracking-[0.3em] text-white/70 hover:bg-white/10"
+                    className="font-display border-2 border-white/25 px-8 py-3 tracking-[0.16em] text-white/70 hover:bg-white/10"
                   >
                     CHANGE TEAMS
                   </button>
@@ -1194,7 +1194,7 @@ function PhaseLabel({
   else if (state.phase === 'clash' || state.phase === 'result') text = 'CLASH!'
   if (!text || state.phase === 'over') return null
   return (
-    <p className="font-display mt-2 rounded border border-white/15 bg-black/60 px-3 py-1 text-[10px] tracking-[0.35em] text-white/85">
+    <p className="font-display mt-2 rounded border border-white/15 bg-black/60 px-3 py-1 text-[10px] tracking-[0.18em] text-white/85">
       {text}
     </p>
   )
@@ -1368,7 +1368,7 @@ function GatePicker({ gates, onPick }: { gates: GateCard[]; onPick: (index: numb
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <p className="font-display mb-1 text-xs tracking-[0.5em] text-white/80">GATE CARD, SET!</p>
+      <p className="font-display mb-1 text-xs tracking-[0.22em] text-white/80">GATE CARD, SET!</p>
       <p className="mb-4 text-xs text-white/55">It lies face-down: open it during the battle when the time is right.</p>
       <div className="flex gap-3">
         {gates.map((g, i) => {
@@ -1386,7 +1386,7 @@ function GatePicker({ gates, onPick }: { gates: GateCard[]; onPick: (index: numb
                 <img src={el.icon} alt="" className="h-7 w-7" />
                 <span className="font-display text-sm font-bold">{gateLabel(g)}</span>
               </span>
-              <span className="font-display mt-1 text-[9px] tracking-[0.3em] text-white/45">{gateKindLabel(g)}</span>
+              <span className="font-display mt-1 text-[9px] tracking-[0.16em] text-white/45">{gateKindLabel(g)}</span>
               <span className="mt-1 text-xs leading-snug text-white/70">{g.text}</span>
             </motion.button>
           )
@@ -1416,7 +1416,7 @@ function ThrowPicker({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <p className="font-display mb-1 text-xs tracking-[0.5em] text-white/80">CHOOSE YOUR BAKUGAN · THROW!</p>
+      <p className="font-display mb-1 text-xs tracking-[0.22em] text-white/80">CHOOSE YOUR BAKUGAN · THROW!</p>
       <p className="mb-4 text-xs text-white/55">
         {foe
           ? `${foe.name} (${foe.g} G) stands on the Gate Card. Who answers it?`
@@ -1482,7 +1482,7 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
       <div className="flex items-center gap-8 rounded-xl border border-white/15 bg-black/80 px-10 py-4 backdrop-blur">
         {[0, 1].map((i) => (
           <div key={i} className={`flex flex-col items-center ${i === 1 ? 'order-3' : ''}`}>
-            <span className="font-display text-[10px] tracking-[0.4em] text-white/55">{clash.names[i].toUpperCase()}</span>
+            <span className="font-display text-[10px] tracking-[0.2em] text-white/55">{clash.names[i].toUpperCase()}</span>
             <motion.span
               className="font-display text-6xl font-black tabular-nums"
               style={{ color: colors[i], textShadow: `0 0 26px ${colors[i]}` }}
@@ -1512,7 +1512,7 @@ function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [str
           >
             {clash.names[clash.winner].toUpperCase()} WINS!
           </p>
-          <p className="font-display mt-1 text-sm tracking-[0.3em] text-white/70">{clashReason(clash, tie)}</p>
+          <p className="font-display mt-1 text-sm tracking-[0.16em] text-white/70">{clashReason(clash, tie)}</p>
         </motion.div>
       )}
       {clash.step >= 2 && (

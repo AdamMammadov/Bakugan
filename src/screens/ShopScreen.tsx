@@ -71,7 +71,7 @@ export function ShopScreen() {
     >
       <PageNav current="shop">
         {profile && (
-          <span className="font-display flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-4 py-1.5 text-xs tracking-[0.3em]">
+          <span className="font-display flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-4 py-1.5 text-xs tracking-[0.16em]">
             <BpIcon size={18} /> {profile.bp.toLocaleString('en')}
           </span>
         )}
@@ -101,7 +101,7 @@ export function ShopScreen() {
               playSfx('tick')
               setTab(id)
             }}
-            className={`font-display rounded border px-4 py-2 text-xs tracking-[0.3em] transition ${
+            className={`font-display rounded border px-4 py-2 text-xs tracking-[0.16em] transition ${
               tab === id ? 'border-white bg-white/10 text-white' : 'border-white/15 text-white/50 hover:text-white'
             }`}
           >
@@ -113,7 +113,7 @@ export function ShopScreen() {
 
       {tab === 'featured' && (
         <section className="mt-6">
-          <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
+          <h2 className="font-display text-xs tracking-[0.22em] text-white/40">
             TODAY'S PICKS · NEW PICKS IN {timeLeft(refresh).toUpperCase()}
           </h2>
           {grid(featuredToday())}
@@ -122,7 +122,7 @@ export function ShopScreen() {
       {tab === 'bakugan' && <BakuganShelf profile={profile} />}
       {tab === 'skins' && (
         <section className="mt-6">
-          <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BAKUGAN SKINS</h2>
+          <h2 className="font-display text-xs tracking-[0.22em] text-white/40">BAKUGAN SKINS</h2>
           {grid(onSale.filter((i) => i.kind === 'skin').sort(byRarity))}
         </section>
       )}
@@ -132,7 +132,7 @@ export function ShopScreen() {
           return (
             items.length > 0 && (
               <section key={kind} className="mt-6">
-                <h2 className="font-display text-xs tracking-[0.5em] text-white/40">{KIND_LABEL[kind].toUpperCase()}S</h2>
+                <h2 className="font-display text-xs tracking-[0.22em] text-white/40">{KIND_LABEL[kind].toUpperCase()}S</h2>
                 {grid(items)}
               </section>
             )
@@ -140,7 +140,7 @@ export function ShopScreen() {
         })}
       {tab === 'boosts' && (
         <section className="mt-6">
-          <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BOOSTS & CARD KEYS</h2>
+          <h2 className="font-display text-xs tracking-[0.22em] text-white/40">BOOSTS & CARD KEYS</h2>
           {profile && (
             <p className="mt-1 text-sm text-white/50">
               You have {profile.boosts ?? 0} XP Boosts and {profile.cardKeys ?? 0} Card Keys.
@@ -151,7 +151,7 @@ export function ShopScreen() {
       )}
       {tab === 'bp' && (
         <section className="mt-6">
-          <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BATTLE POINTS</h2>
+          <h2 className="font-display text-xs tracking-[0.22em] text-white/40">BATTLE POINTS</h2>
           <p className="mt-1 text-sm text-white/50">
             Battle Points are won in brawls (100 for a win). Short of time? Top them up here; bigger packs give more per dollar.
           </p>
@@ -172,7 +172,7 @@ export function ShopScreen() {
               className="max-w-md rounded-2xl border border-white/15 bg-[#0b0c12] p-8 text-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="font-display text-xs tracking-[0.4em]" style={{ color: RARITY[moneyItem.rarity].color }}>
+              <p className="font-display text-xs tracking-[0.2em]" style={{ color: RARITY[moneyItem.rarity].color }}>
                 {RARITY[moneyItem.rarity].name.toUpperCase()}
               </p>
               <h3 className="font-display mt-2 text-2xl font-bold">{moneyItem.name}</h3>
@@ -182,7 +182,7 @@ export function ShopScreen() {
               </p>
               <button
                 onClick={() => setMoneyItem(null)}
-                className="font-display mt-6 rounded border border-white/30 px-6 py-2 text-xs tracking-[0.3em] hover:bg-white/10"
+                className="font-display mt-6 rounded border border-white/30 px-6 py-2 text-xs tracking-[0.16em] hover:bg-white/10"
               >
                 OK
               </button>
@@ -207,7 +207,7 @@ function ItemCard({ item, profile, onMoney }: { item: ShopItem; profile: Profile
       style={{ borderColor: `${rarity.color}${item.rarity === 'common' ? '55' : 'aa'}` }}
     >
       <div className="flex items-start justify-between">
-        <span className="font-display text-[10px] tracking-[0.3em]" style={{ color: rarity.color }}>
+        <span className="font-display text-[10px] tracking-[0.16em]" style={{ color: rarity.color }}>
           {/* BP packs are bought with money whatever their size, so they are not sorted by rarity */}
           {item.kind === 'bp' ? 'TOP-UP' : rarity.name.toUpperCase()}
         </span>
@@ -312,7 +312,7 @@ function BakuganShelf({ profile }: { profile: Profile | null }) {
   )
   return (
     <section className="mt-6">
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">BAKUGAN · BATTLE POINTS ONLY</h2>
+      <h2 className="font-display text-xs tracking-[0.22em] text-white/40">BAKUGAN · BATTLE POINTS ONLY</h2>
       <p className="mt-1 text-sm text-white/50">
         Win brawls for Battle Points. Bakugan of your own attribute cost less, and high player XP unlocks them too. This season's
         Bakugan are earned on the{' '}

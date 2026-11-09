@@ -146,7 +146,7 @@ export function AbilityBrowser({ profile, onOpen }: { profile: Profile; onOpen: 
   return (
     <section className="mt-10 pb-10">
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-display text-xs tracking-[0.5em] text-white/40">
+        <h2 className="font-display text-xs tracking-[0.22em] text-white/40">
           ABILITY CARDS · {unlocked}/{total} UNLOCKED
         </h2>
         <span className="text-xs text-white/40">across {mons.length} Bakugan · click a card for its full text</span>
@@ -262,7 +262,7 @@ export function AbilityBrowser({ profile, onOpen }: { profile: Profile; onOpen: 
               {filtered && (
                 <button
                   onClick={clear}
-                  className="font-display px-2 text-[10px] tracking-[0.25em] text-white/45 underline-offset-4 transition hover:text-white hover:underline"
+                  className="font-display px-2 text-[10px] tracking-[0.14em] text-white/45 underline-offset-4 transition hover:text-white hover:underline"
                 >
                   CLEAR FILTERS
                 </button>
@@ -295,7 +295,7 @@ export function AbilityBrowser({ profile, onOpen }: { profile: Profile; onOpen: 
                     mons.map((m) => m.owned.id),
                   )
                 }}
-                className="font-display shrink-0 rounded-lg border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.25em] transition hover:border-white/60 hover:bg-white/10"
+                className="font-display shrink-0 rounded-lg border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.14em] transition hover:border-white/60 hover:bg-white/10"
               >
                 DETAILS →
               </button>
@@ -313,7 +313,7 @@ export function AbilityBrowser({ profile, onOpen }: { profile: Profile; onOpen: 
               </p>
               <button
                 onClick={clear}
-                className="font-display mt-4 rounded border border-white/30 px-4 py-1.5 text-xs tracking-[0.3em] transition hover:border-white/70 hover:bg-white/10"
+                className="font-display mt-4 rounded border border-white/30 px-4 py-1.5 text-xs tracking-[0.16em] transition hover:border-white/70 hover:bg-white/10"
               >
                 CLEAR FILTERS
               </button>
@@ -335,7 +335,7 @@ export function AbilityBrowser({ profile, onOpen }: { profile: Profile; onOpen: 
                       <span className="text-[11px] text-white/40">
                         {c.mon.unlocked}/{c.mon.total} unlocked
                       </span>
-                      <span className="font-display ml-auto text-[9px] tracking-[0.25em] text-white/30 transition group-hover:text-white/70">
+                      <span className="font-display ml-auto text-[9px] tracking-[0.14em] text-white/30 transition group-hover:text-white/70">
                         ONLY THIS ONE →
                       </span>
                     </button>

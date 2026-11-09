@@ -132,7 +132,7 @@ export function LevelStrip({
         {ends.away && (
           <button
             onClick={() => centreInStrip(strip.current, strip.current && card(strip.current, focus), 'smooth')}
-            className="font-display rounded-full border border-white/25 px-3 py-1 text-[10px] tracking-[0.3em] text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="font-display rounded-full border border-white/25 px-3 py-1 text-[10px] tracking-[0.16em] text-white/70 transition hover:bg-white/10 hover:text-white"
           >
             ◎ BACK TO LEVEL {focus}
           </button>

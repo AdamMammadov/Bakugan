@@ -125,11 +125,11 @@ export function Viewer() {
         <div className="pointer-events-auto">
           <button
             onClick={() => go(back)}
-            className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+            className="font-display text-xs tracking-[0.2em] text-white/50 transition hover:text-white"
           >
             {back === 'menu' ? '← MAIN MENU' : '← BACK'}
           </button>
-          <p className="font-display mt-6 text-xs tracking-[0.5em]" style={{ color: element.color }}>
+          <p className="font-display mt-6 text-xs tracking-[0.22em]" style={{ color: element.color }}>
             {element.name.toUpperCase()} · {evo.series.toUpperCase()}
           </p>
           <h1 className="font-display text-5xl font-black tracking-wider">{evo.name}</h1>
@@ -147,7 +147,7 @@ export function Viewer() {
 
       {/* evolution timeline */}
       <div className="absolute bottom-28 left-8">
-        <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">EVOLUTION</p>
+        <p className="font-display mb-3 text-xs tracking-[0.22em] text-white/40">EVOLUTION</p>
         <ol className="space-y-2 border-l border-white/15 pl-4">
           {bakugan.evolutions.map((e, i) => {
             const locked = i > reached
@@ -185,7 +185,7 @@ export function Viewer() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
           >
-            <p className="font-display mb-3 text-xs tracking-[0.5em] text-white/40">ABILITY CARDS ({cards.length})</p>
+            <p className="font-display mb-3 text-xs tracking-[0.22em] text-white/40">ABILITY CARDS ({cards.length})</p>
             {/* scrolls on its own so the cards never cover the G-Power counter */}
             <div className="scroll-panel flex-1 space-y-3 overflow-y-auto pr-2">
               {cards.map((a) => {
@@ -302,7 +302,7 @@ function ActionButton({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.96 }}
-      className={`font-display skew-x-[-12deg] border-2 px-10 py-4 font-black tracking-[0.3em] ${subtle ? 'text-sm' : 'text-xl'}`}
+      className={`font-display skew-x-[-12deg] border-2 px-10 py-4 font-black tracking-[0.16em] ${subtle ? 'text-sm' : 'text-xl'}`}
       style={{
         borderColor: color,
         background: subtle ? 'rgba(0,0,0,0.5)' : `${color}33`,
@@ -318,7 +318,7 @@ function SmallButton({ label, onClick }: { label: string; onClick: () => void })
   return (
     <button
       onClick={onClick}
-      className="font-display rounded border border-white/20 bg-black/50 px-4 py-2 text-xs tracking-[0.3em] text-white/70 backdrop-blur transition hover:border-white/60 hover:text-white"
+      className="font-display rounded border border-white/20 bg-black/50 px-4 py-2 text-xs tracking-[0.16em] text-white/70 backdrop-blur transition hover:border-white/60 hover:text-white"
     >
       {label}
     </button>

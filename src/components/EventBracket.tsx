@@ -19,7 +19,7 @@ export function EventBracket({ run, myAvatar }: { run: CupRun; myAvatar: AvatarV
     <div className="grid grid-cols-[1fr_1fr_1fr_0.8fr] gap-6">
       {CUP_ROUNDS.map((stage, ri) => (
         <div key={stage} className="flex flex-col">
-          <p className="font-display mb-3 text-center text-[10px] tracking-[0.4em] text-white/40">
+          <p className="font-display mb-3 text-center text-[10px] tracking-[0.2em] text-white/40">
             {ROUND_NAME[stage].toUpperCase()}
             {run.stage === stage && <span className="ml-2 text-amber-300">● NOW</span>}
           </p>
@@ -31,11 +31,11 @@ export function EventBracket({ run, myAvatar }: { run: CupRun; myAvatar: AvatarV
         </div>
       ))}
       <div className="flex flex-col">
-        <p className="font-display mb-3 text-center text-[10px] tracking-[0.4em] text-amber-300/70">CHAMPION</p>
+        <p className="font-display mb-3 text-center text-[10px] tracking-[0.2em] text-amber-300/70">CHAMPION</p>
         <div className="flex flex-1 flex-col items-center justify-center gap-3" style={{ minHeight: 440 }}>
           <Trophy size={96} metal={champion === null ? 'silver' : 'gold'} />
           {champion === null ? (
-            <p className="font-display text-sm tracking-[0.3em] text-white/30">?</p>
+            <p className="font-display text-sm tracking-[0.16em] text-white/30">?</p>
           ) : (
             <motion.div
               className="flex flex-col items-center gap-2"
@@ -148,7 +148,7 @@ function Empty() {
   return (
     <div className="flex items-center gap-2 px-2.5 py-1.5">
       <span className="h-[26px] w-[26px] rounded-full border border-dashed border-white/20" />
-      <span className="font-display text-xs tracking-[0.3em] text-white/25">TBD</span>
+      <span className="font-display text-xs tracking-[0.16em] text-white/25">TBD</span>
     </div>
   )
 }

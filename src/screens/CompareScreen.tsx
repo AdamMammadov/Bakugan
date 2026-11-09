@@ -134,7 +134,7 @@ export function CompareScreen() {
     >
       <button
         onClick={() => go(back)}
-        className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+        className="font-display text-xs tracking-[0.2em] text-white/50 transition hover:text-white"
       >
         {back === 'menu' ? '← MAIN MENU' : '← BACK'}
       </button>
@@ -166,7 +166,7 @@ export function CompareScreen() {
                 playSfx('select')
                 setRanked(m === 'ranked')
               }}
-              className={`font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition hover:bg-white/10 ${
+              className={`font-display rounded border px-3 py-1.5 text-xs tracking-[0.16em] transition hover:bg-white/10 ${
                 (m === 'ranked') === ranked
                   ? 'border-white text-white'
                   : 'border-white/15 text-white/50 hover:border-white/60 hover:text-white'
@@ -179,14 +179,14 @@ export function CompareScreen() {
       )}
 
       <div className="mt-6 flex items-center gap-3">
-        <p className="font-display text-xs tracking-[0.4em] text-white/40">BAKUGAN PER SIDE</p>
+        <p className="font-display text-xs tracking-[0.2em] text-white/40">BAKUGAN PER SIDE</p>
         {[1, 2, 3].map((n) => (
           <button
             key={n}
             disabled={n > most}
             title={n > most ? `Own ${n} Bakugan to brawl ${n} vs ${n}` : undefined}
             onClick={() => resize(n)}
-            className={`font-display rounded border px-3 py-1.5 text-xs tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-30 ${
+            className={`font-display rounded border px-3 py-1.5 text-xs tracking-[0.16em] transition enabled:hover:bg-white/10 disabled:opacity-30 ${
               left.length === n
                 ? 'border-white text-white'
                 : 'border-white/15 text-white/50 enabled:hover:border-white/60 enabled:hover:text-white'
@@ -219,7 +219,7 @@ export function CompareScreen() {
           onClick={brawl}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.96 }}
-          className="font-display skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.3em]"
+          className="font-display skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.16em]"
         >
           {isRanked ? 'FIND MATCH' : 'ENTER THE ARENA'}
         </motion.button>
@@ -231,7 +231,7 @@ export function CompareScreen() {
           }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.96 }}
-          className="font-display flex skew-x-[-12deg] items-center gap-3 border-2 border-red-500/60 bg-black/40 px-8 py-4 text-lg font-black tracking-[0.3em]"
+          className="font-display flex skew-x-[-12deg] items-center gap-3 border-2 border-red-500/60 bg-black/40 px-8 py-4 text-lg font-black tracking-[0.16em]"
         >
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
           WATCH LIVE
@@ -246,7 +246,7 @@ export function CompareScreen() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.96 }}
           title="2 vs 2: you and a random CPU partner of your rank against two CPU brawlers"
-          className="font-display skew-x-[-12deg] border-2 border-[#ffc94a]/80 bg-black/40 px-8 py-4 text-lg font-black tracking-[0.3em]"
+          className="font-display skew-x-[-12deg] border-2 border-[#ffc94a]/80 bg-black/40 px-8 py-4 text-lg font-black tracking-[0.16em]"
         >
           ⚔⚔ RANDOM TAG BATTLE
         </motion.button>
@@ -297,7 +297,7 @@ export function CompareScreen() {
 function RankedSlot({ size, rank }: { size: number; rank: string }) {
   return (
     <div className="flex min-h-[18rem] flex-col rounded-xl border border-dashed border-white/20 bg-black/40 p-6 backdrop-blur">
-      <p className="font-display text-xs tracking-[0.5em] text-white/40">OPPONENT · RANKED MATCHMAKING</p>
+      <p className="font-display text-xs tracking-[0.22em] text-white/40">OPPONENT · RANKED MATCHMAKING</p>
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <div className="font-display flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/20 text-4xl font-black text-white/30">
           ?
@@ -351,10 +351,10 @@ function TeamCard({
   return (
     <div className="rounded-xl border border-white/10 bg-black/40 p-6 backdrop-blur">
       <div className="flex items-baseline justify-between">
-        <p className="font-display text-xs tracking-[0.5em] text-white/40">{label}</p>
+        <p className="font-display text-xs tracking-[0.22em] text-white/40">{label}</p>
         <div className="flex items-baseline gap-4">
           {onRandom && (
-            <button onClick={onRandom} className="font-display text-xs tracking-[0.3em] text-white/50 hover:text-white">
+            <button onClick={onRandom} className="font-display text-xs tracking-[0.16em] text-white/50 hover:text-white">
               ⟳ NEW OPPONENT
             </button>
           )}
@@ -402,7 +402,7 @@ function TeamCard({
 
       {onChange && (
         <>
-          <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">SLOT {slot + 1} · BAKUGAN</p>
+          <p className="font-display mt-5 text-xs tracking-[0.2em] text-white/40">SLOT {slot + 1} · BAKUGAN</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {BAKUGAN.filter((b) => (owned ? ownedOf(b.id) : isReleased(b.id))).map((b) => (
               <button
@@ -421,7 +421,7 @@ function TeamCard({
             ))}
           </div>
 
-          <p className="font-display mt-4 text-xs tracking-[0.4em] text-white/40">FORM</p>
+          <p className="font-display mt-4 text-xs tracking-[0.2em] text-white/40">FORM</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {current.bakugan.evolutions.map((evo, i) => {
               const on = i === current.form
@@ -451,7 +451,7 @@ function TeamCard({
         </>
       )}
 
-      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">
+      <p className="font-display mt-5 text-xs tracking-[0.2em] text-white/40">
         ABILITY DECK ({team.reduce((n, e) => n + (e.cards?.length ?? abilitiesOf(e.bakugan, e.form).length), 0)} CARDS)
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -473,7 +473,7 @@ function TeamCard({
         )}
       </div>
 
-      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">GATE DECK</p>
+      <p className="font-display mt-5 text-xs tracking-[0.2em] text-white/40">GATE DECK</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {gateDeck(team).map((g) => (
           <GateChip key={g.id} gate={g} />

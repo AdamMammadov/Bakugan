@@ -88,13 +88,13 @@ function Stopped() {
         <div className="mt-5 flex justify-center gap-3">
           <button
             onClick={() => location.reload()}
-            className="font-display skew-x-[-10deg] border-2 border-white/70 bg-white/10 px-6 py-2 text-xs font-black tracking-[0.3em] hover:bg-white/20"
+            className="font-display skew-x-[-10deg] border-2 border-white/70 bg-white/10 px-6 py-2 text-xs font-black tracking-[0.16em] hover:bg-white/20"
           >
             RELOAD
           </button>
           <button
             onClick={() => setOpen(true)}
-            className="font-display skew-x-[-10deg] border-2 border-white/30 bg-black/30 px-6 py-2 text-xs font-black tracking-[0.3em] hover:bg-white/10"
+            className="font-display skew-x-[-10deg] border-2 border-white/30 bg-black/30 px-6 py-2 text-xs font-black tracking-[0.16em] hover:bg-white/10"
           >
             ⚙ SETTINGS
           </button>

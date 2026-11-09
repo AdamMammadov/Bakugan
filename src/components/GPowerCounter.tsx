@@ -30,7 +30,7 @@ export function GPowerCounter({ value, color }: { value: number; color: string }
 
   return (
     <div className="text-right">
-      <p className="font-display text-xs tracking-[0.5em] text-white/50">G-POWER</p>
+      <p className="font-display text-xs tracking-[0.22em] text-white/50">G-POWER</p>
       <motion.p
         key={delta?.id}
         className="font-display text-7xl font-black tabular-nums"

@@ -16,7 +16,7 @@ export function EventsChip() {
     >
       <Trophy size={40} />
       <span>
-        <span className="font-display block text-[10px] tracking-[0.4em] text-violet-300">{line}</span>
+        <span className="font-display block text-[10px] tracking-[0.2em] text-violet-300">{line}</span>
         <span className="font-display mt-0.5 block text-xl font-black">EVENTS</span>
       </span>
     </button>

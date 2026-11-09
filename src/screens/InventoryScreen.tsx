@@ -59,7 +59,7 @@ export function InventoryScreen() {
               playSfx('tick')
               setTab(id)
             }}
-            className={`font-display rounded border px-4 py-2 text-xs tracking-[0.3em] transition ${
+            className={`font-display rounded border px-4 py-2 text-xs tracking-[0.16em] transition ${
               tab === id ? 'border-white bg-white/10 text-white' : 'border-white/15 text-white/50 hover:text-white'
             }`}
           >
@@ -86,7 +86,7 @@ const owns = (p: Profile, key: string) => !!p.cosmetics?.owned.includes(key)
 
 function RarityTag({ rarity }: { rarity: Rarity }) {
   return (
-    <span className="font-display text-[9px] tracking-[0.3em]" style={{ color: RARITY[rarity].color }}>
+    <span className="font-display text-[9px] tracking-[0.16em]" style={{ color: RARITY[rarity].color }}>
       {RARITY[rarity].name.toUpperCase()}
     </span>
   )
@@ -127,7 +127,7 @@ function Skins({ profile }: { profile: Profile }) {
   return (
     <section className="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-8">
       <div>
-        <h2 className="font-display text-xs tracking-[0.5em] text-white/40">YOUR BAKUGAN</h2>
+        <h2 className="font-display text-xs tracking-[0.22em] text-white/40">YOUR BAKUGAN</h2>
         <div className="mt-2 flex flex-wrap gap-2">
           {profile.collection.map((o) => (
             <button
@@ -147,7 +147,7 @@ function Skins({ profile }: { profile: Profile }) {
           ))}
         </div>
 
-        <h2 className="font-display mt-8 text-xs tracking-[0.5em] text-white/40">YOUR SKINS · {skins.length}</h2>
+        <h2 className="font-display mt-8 text-xs tracking-[0.22em] text-white/40">YOUR SKINS · {skins.length}</h2>
         {skins.length === 0 && <Empty text="You have no skins yet." />}
         <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
           {[undefined, ...skins].map((skin) => {
@@ -210,7 +210,7 @@ function Skins({ profile }: { profile: Profile }) {
               resetKey={`${owned.id}-${trying}`}
             />
           </GameCanvas>
-          <p className="font-display absolute top-4 left-5 text-xs tracking-[0.3em] text-white/60">
+          <p className="font-display absolute top-4 left-5 text-xs tracking-[0.16em] text-white/60">
             {bakugan.evolutions[owned.form]?.name ?? bakugan.name} · {trying ? SKIN_BY_ID[trying].name : 'Original'}
           </p>
         </div>
@@ -220,7 +220,7 @@ function Skins({ profile }: { profile: Profile }) {
             setSkin(owned.id, trying)
             playSfx('victory')
           }}
-          className="font-display mt-3 rounded-lg border-2 py-3 text-sm tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
+          className="font-display mt-3 rounded-lg border-2 py-3 text-sm tracking-[0.16em] transition enabled:hover:bg-white/10 disabled:opacity-40"
           style={{ borderColor: element.color }}
         >
           {trying === worn ? 'WORN' : trying ? `EQUIP ${SKIN_BY_ID[trying].name.toUpperCase()}` : 'REMOVE SKIN'}
@@ -335,7 +335,7 @@ function AvatarItems({ profile }: { profile: Profile }) {
 function Row({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="font-display text-xs tracking-[0.5em] text-white/40">{title}</h2>
+      <h2 className="font-display text-xs tracking-[0.22em] text-white/40">{title}</h2>
       <div className="mt-3 flex flex-wrap items-start gap-3">{children}</div>
     </div>
   )
@@ -384,7 +384,7 @@ function BoostsAndKeys({ profile }: { profile: Profile }) {
   return (
     <section className="mt-6 grid grid-cols-[22rem_minmax(0,1fr)] gap-10">
       <div className="rounded-2xl border border-white/10 bg-black/40 p-6">
-        <p className="font-display text-xs tracking-[0.4em] text-white/40">XP BOOSTS</p>
+        <p className="font-display text-xs tracking-[0.2em] text-white/40">XP BOOSTS</p>
         <p className="font-display mt-2 flex items-center gap-3 text-5xl font-black text-sky-300">
           <RewardIcon kind="boost" size={56} /> {boosts}
         </p>
@@ -394,7 +394,7 @@ function BoostsAndKeys({ profile }: { profile: Profile }) {
         <button
           disabled={boosts === 0}
           onClick={() => setBoostsOn(!on)}
-          className={`font-display mt-4 w-full rounded-lg border-2 py-2 text-xs tracking-[0.3em] transition enabled:hover:brightness-125 disabled:opacity-40 ${
+          className={`font-display mt-4 w-full rounded-lg border-2 py-2 text-xs tracking-[0.16em] transition enabled:hover:brightness-125 disabled:opacity-40 ${
             on
               ? 'border-sky-300 bg-sky-300/15 text-sky-200'
               : 'border-white/25 text-white/60 enabled:hover:bg-white/10 enabled:hover:text-white'
@@ -406,7 +406,7 @@ function BoostsAndKeys({ profile }: { profile: Profile }) {
       </div>
 
       <div>
-        <p className="font-display flex items-center gap-2 text-xs tracking-[0.4em] text-white/40">
+        <p className="font-display flex items-center gap-2 text-xs tracking-[0.2em] text-white/40">
           <RewardIcon kind="cardKey" size={28} /> CARD KEYS · {keys}
         </p>
         <p className="mt-1 text-sm text-white/60">A Card Key unlocks the next ability card of a Bakugan right away.</p>
@@ -449,7 +449,7 @@ function KeyTarget({ owned, keys }: { owned: OwnedBakugan; keys: number }) {
           applyCardKey(owned.id)
           playSfx('gPower')
         }}
-        className="font-display mt-2 w-full rounded border py-1.5 text-[10px] tracking-[0.3em] transition enabled:hover:bg-white/10 disabled:opacity-40"
+        className="font-display mt-2 w-full rounded border py-1.5 text-[10px] tracking-[0.16em] transition enabled:hover:bg-white/10 disabled:opacity-40"
         style={{ borderColor: element.color }}
       >
         <span className="inline-flex items-center gap-1.5">

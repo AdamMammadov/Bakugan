@@ -96,7 +96,7 @@ export function LiveScreen() {
         }, NEXT_MATCH_MS)
       }}
       badge={
-        <div className="font-display mb-2 flex items-center gap-2 rounded-full border border-red-500/60 bg-black/70 px-3 py-1 text-[10px] tracking-[0.3em]">
+        <div className="font-display mb-2 flex items-center gap-2 rounded-full border border-red-500/60 bg-black/70 px-3 py-1 text-[10px] tracking-[0.16em]">
           <span className="h-2 w-2 animate-pulse rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
           <span className="font-bold text-red-400">LIVE</span>
           <span className="text-white/70">👁 {viewers.toLocaleString('en')}</span>

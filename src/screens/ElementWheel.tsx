@@ -120,7 +120,7 @@ export function ElementWheel() {
       {profile && !chosen && (
         <button
           onClick={() => go('menu')}
-          className="font-display absolute top-10 left-12 z-10 text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+          className="font-display absolute top-10 left-12 z-10 text-xs tracking-[0.2em] text-white/50 transition hover:text-white"
         >
           ← CANCEL
         </button>
@@ -213,7 +213,7 @@ function InfoPanel({ element }: { element: ElementInfo }) {
   const roster = bakuganForElement(element.id)
   return (
     <div className="w-[26rem] shrink-0">
-      <p className="font-display text-xs tracking-[0.5em] text-white/40">CHOOSE YOUR ATTRIBUTE</p>
+      <p className="font-display text-xs tracking-[0.22em] text-white/40">CHOOSE YOUR ATTRIBUTE</p>
       <AnimatePresence mode="wait">
         <motion.div
           key={element.id}
@@ -228,7 +228,7 @@ function InfoPanel({ element }: { element: ElementInfo }) {
           >
             {element.name.toUpperCase()}
           </h2>
-          <p className="font-display mt-1 text-base tracking-[0.4em] text-white/70">{element.attribute.toUpperCase()}</p>
+          <p className="font-display mt-1 text-base tracking-[0.2em] text-white/70">{element.attribute.toUpperCase()}</p>
           <p className="mt-4 text-xl font-medium text-white/90">{element.tagline}</p>
           <p className="mt-2 text-sm leading-relaxed text-white/60">{element.lore}</p>
 
@@ -267,7 +267,7 @@ function InfoPanel({ element }: { element: ElementInfo }) {
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-4">
-      <dt className="font-display w-20 shrink-0 pt-0.5 text-[10px] tracking-[0.3em] text-white/35">{label}</dt>
+      <dt className="font-display w-20 shrink-0 pt-0.5 text-[10px] tracking-[0.16em] text-white/35">{label}</dt>
       <dd className="flex flex-wrap items-center gap-x-3 gap-y-1">{children}</dd>
     </div>
   )
@@ -304,7 +304,7 @@ function ChosenBanner({ element }: { element: ElementInfo }) {
         animate={{ scaleX: 1 }}
         transition={{ delay: 0.15, duration: 0.35, ease: 'easeOut' }}
       >
-        <p className="font-display text-sm tracking-[0.6em] text-white/60">YOU ARE NOW A</p>
+        <p className="font-display text-sm tracking-[0.22em] text-white/60">YOU ARE NOW A</p>
         <p className="font-display mt-2 text-5xl font-black tracking-widest" style={{ color: element.color }}>
           {element.name.toUpperCase()} BRAWLER
         </p>

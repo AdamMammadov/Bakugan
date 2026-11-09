@@ -206,7 +206,7 @@ export function BakuganShowroom() {
             <button
               key={s}
               onClick={() => setShelf(s)}
-              className={`font-display rounded border px-4 py-2 text-xs tracking-[0.3em] transition ${
+              className={`font-display rounded border px-4 py-2 text-xs tracking-[0.16em] transition ${
                 shelf === s ? 'border-white bg-white/10 text-white' : 'border-white/15 text-white/50 hover:text-white'
               }`}
             >
@@ -259,7 +259,7 @@ export function BakuganShowroom() {
                   <ScrollPanel>
                     <div className="flex items-center gap-2">
                       <img src={el.icon} alt="" className="h-7 w-7" />
-                      <span className="font-display text-xs tracking-[0.4em]" style={{ color: el.color }}>
+                      <span className="font-display text-xs tracking-[0.2em]" style={{ color: el.color }}>
                         {el.name.toUpperCase()} · {bakugan.series.toUpperCase()}
                       </span>
                     </div>
@@ -294,7 +294,7 @@ export function BakuganShowroom() {
                       </p>
                     )}
 
-                    <p className="font-display mt-6 text-[10px] tracking-[0.4em] text-white/40">EVOLUTIONS</p>
+                    <p className="font-display mt-6 text-[10px] tracking-[0.2em] text-white/40">EVOLUTIONS</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {bakugan.evolutions.map((e, i) => {
                         const have = i <= reached
@@ -334,7 +334,7 @@ export function BakuganShowroom() {
                         <button
                           key={v}
                           onClick={() => setView(v)}
-                          className={`font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] ${
+                          className={`font-display rounded border px-3 py-1.5 text-[10px] tracking-[0.16em] ${
                             view === v ? 'border-white bg-white/10' : 'border-white/25 text-white/60 hover:bg-white/10'
                           }`}
                         >
@@ -347,7 +347,7 @@ export function BakuganShowroom() {
                             chooseElement(bakugan.element)
                             openBakugan(bakugan.id)
                           }}
-                          className="font-display ml-auto rounded border px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
+                          className="font-display ml-auto rounded border px-3 py-1.5 text-[10px] tracking-[0.16em] hover:bg-white/10"
                           style={{ borderColor: el.color }}
                         >
                           TAKE TO THE FIELD →
@@ -363,7 +363,7 @@ export function BakuganShowroom() {
                               playSfx('tick')
                               pose.current = { kind: move === 'roar' || move === 'guard' ? 'cast' : 'lunge', move, start: null }
                             }}
-                            className="font-display rounded border border-white/20 px-2.5 py-1 text-[9px] tracking-[0.25em] text-white/70 hover:bg-white/10 hover:text-white"
+                            className="font-display rounded border border-white/20 px-2.5 py-1 text-[9px] tracking-[0.14em] text-white/70 hover:bg-white/10 hover:text-white"
                           >
                             {label}
                           </button>
@@ -381,7 +381,7 @@ export function BakuganShowroom() {
             {/* ability cards */}
             <section className="pointer-events-auto flex min-h-0 w-72 max-w-[21vw] shrink-0">
               <ScrollPanel>
-                <p className="font-display text-[10px] tracking-[0.4em] text-white/40">ABILITY CARDS</p>
+                <p className="font-display text-[10px] tracking-[0.2em] text-white/40">ABILITY CARDS</p>
                 <ul className="mt-2 space-y-2">
                   {abilitiesOf(bakugan, form).map((a, i) => {
                     const unlocked = owned ? i < cardCount(owned) : false
@@ -406,7 +406,7 @@ export function BakuganShowroom() {
           </div>
         )}
 
-        <p className="mt-4 text-center text-xs tracking-[0.3em] text-white/35">
+        <p className="mt-4 text-center text-xs tracking-[0.16em] text-white/35">
           DRAG TO TURN · RIGHT-DRAG UP / DOWN · SCROLL TO ZOOM · ← → TO SWITCH
         </p>
         {/* Bakugan strip, on the bottom row between the eye button and the sound buttons */}
@@ -460,7 +460,7 @@ export function BakuganShowroom() {
           }}
           aria-label={bare ? 'Show the info' : 'Hide the info'}
           title={bare ? 'Bring the info back (Esc)' : 'Hide everything but the Bakugan'}
-          className={`font-display absolute bottom-5 left-5 flex h-9 items-center gap-2 rounded-full border bg-black/50 px-4 text-xs tracking-[0.3em] backdrop-blur transition hover:text-white ${
+          className={`font-display absolute bottom-5 left-5 flex h-9 items-center gap-2 rounded-full border bg-black/50 px-4 text-xs tracking-[0.16em] backdrop-blur transition hover:text-white ${
             bare ? 'border-white/60 text-white' : 'border-white/15 text-white/60'
           }`}
         >
@@ -539,7 +539,7 @@ function MoveBody({ pose, children }: { pose: React.RefObject<Pose | null>; chil
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="rounded border border-white/10 bg-black/40 py-2">
-      <p className="font-display text-[9px] tracking-[0.3em] text-white/40">{label}</p>
+      <p className="font-display text-[9px] tracking-[0.16em] text-white/40">{label}</p>
       <p className="font-display mt-1 text-lg font-bold" style={{ color }}>
         {value}
       </p>

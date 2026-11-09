@@ -33,7 +33,7 @@ export class PageErrorBoundary extends Component<Props, State> {
 
   render() {
     if (!this.state.error) return this.props.children
-    const button = 'font-display skew-x-[-12deg] border-2 px-8 py-3 text-sm font-black tracking-[0.3em] hover:bg-white/20'
+    const button = 'font-display skew-x-[-12deg] border-2 px-8 py-3 text-sm font-black tracking-[0.16em] hover:bg-white/20'
     return (
       <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-6">
         <div className="max-w-md border border-white/20 bg-[#0b1024]/95 p-8 text-center shadow-2xl">

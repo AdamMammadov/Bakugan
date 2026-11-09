@@ -170,7 +170,7 @@ function CaptionView({ c, reduced }: { c: Caption; reduced: boolean }) {
   const dir = left ? -1 : 1
   const centred = c.variant === 'gate' || c.variant === 'close'
   const big = c.variant === 'nullify'
-  const kicker = big ? 'text-[clamp(13px,1.35vw,19px)] tracking-[0.3em]' : 'text-[clamp(17px,2.1vw,30px)] tracking-[0.06em]'
+  const kicker = big ? 'text-[clamp(13px,1.35vw,19px)] tracking-[0.16em]' : 'text-[clamp(17px,2.1vw,30px)] tracking-[0.06em]'
   const title = big ? 'text-[clamp(34px,5.4vw,78px)]' : 'text-[clamp(24px,3.7vw,54px)]'
   const place = centred
     ? // between the two G-Power cards and the announcer's band, clear of both
@@ -217,7 +217,7 @@ function CaptionView({ c, reduced }: { c: Caption; reduced: boolean }) {
       <div className={`relative px-[clamp(20px,4vw,56px)] py-2 ${centred ? '' : left ? 'pr-16' : 'pl-16'}`}>
         {c.badge && (
           <motion.div
-            className="font-display mb-1 inline-block rounded-sm px-2 py-0.5 text-[clamp(10px,1vw,13px)] font-black tracking-[0.3em] text-black"
+            className="font-display mb-1 inline-block rounded-sm px-2 py-0.5 text-[clamp(10px,1vw,13px)] font-black tracking-[0.16em] text-black"
             style={{ background: c.glow, boxShadow: `0 0 14px ${c.glow}` }}
             initial={reduced ? false : { scale: 1.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

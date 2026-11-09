@@ -139,7 +139,7 @@ export function MainMenu() {
                 <span className="font-display block text-[clamp(2.1rem,3.2vw,3.3rem)] leading-none font-black tracking-[0.14em] italic">
                   BRAWL
                 </span>
-                <span className="font-display mt-1.5 block truncate text-[10px] font-bold tracking-[0.28em] opacity-85">
+                <span className="font-display mt-1.5 block truncate text-[10px] font-bold tracking-[0.15em] opacity-85">
                   {profile ? 'RANKED' : 'PRACTICE'} · WITH {lead.name.toUpperCase()}
                 </span>
               </span>
@@ -197,7 +197,7 @@ export function MainMenu() {
               title="LIVE MATCHES"
               sub="TOP BRAWLERS NOW"
               meta={
-                <span className="font-display flex items-center gap-1.5 rounded-full border border-rose-500/60 bg-rose-500/15 px-2 py-0.5 text-[9px] font-bold tracking-[0.25em] text-rose-300">
+                <span className="font-display flex items-center gap-1.5 rounded-full border border-rose-500/60 bg-rose-500/15 px-2 py-0.5 text-[9px] font-bold tracking-[0.14em] text-rose-300">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e]" /> LIVE
                 </span>
               }
@@ -226,7 +226,7 @@ export function MainMenu() {
           >
             <img src={leadEl.icon} alt="" className="h-9 w-9" />
             <span className="text-left whitespace-nowrap">
-              <span className="font-display block text-[9px] tracking-[0.25em] text-white/45">
+              <span className="font-display block text-[9px] tracking-[0.14em] text-white/45">
                 LEAD BAKUGAN · <span className="transition group-hover:text-white">INSPECT →</span>
               </span>
               <span className="font-display block text-base leading-tight font-black tracking-wider">
@@ -393,7 +393,7 @@ function PrimaryTile({
 const Meta = ({ value, label }: { value: number; label: string }) => (
   <span className="font-display flex flex-col items-center leading-none">
     <span className="text-lg font-black">{value}</span>
-    <span className="mt-0.5 text-[7.5px] tracking-[0.25em] text-white/45">{label}</span>
+    <span className="mt-0.5 text-[7.5px] tracking-[0.14em] text-white/45">{label}</span>
   </span>
 )
 
@@ -504,7 +504,7 @@ function Logo({ element }: { element: ElementInfo }) {
           className="mt-2 inline-block skew-x-[-14deg] px-3 py-0.5"
           style={{ background: element.color, color: ink(element.color) }}
         >
-          <span className="font-display block skew-x-[14deg] text-[11px] font-bold tracking-[0.6em]">
+          <span className="font-display block skew-x-[14deg] text-[11px] font-bold tracking-[0.22em]">
             {GAME_SUBTITLE.toUpperCase()}
           </span>
         </div>

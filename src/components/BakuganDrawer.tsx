@@ -84,7 +84,7 @@ export function BakuganDrawer({
             <header className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
               <NavButton label="‹" title="Previous (←)" disabled={!prevId} onClick={() => go(prevId)} />
               <NavButton label="›" title="Next (→)" disabled={!nextId} onClick={() => go(nextId)} />
-              <span className="font-display ml-1 text-[10px] tracking-[0.3em] text-white/40">
+              <span className="font-display ml-1 text-[10px] tracking-[0.16em] text-white/40">
                 {at >= 0 ? `${at + 1} / ${list.length}` : 'BAKUGAN'}
               </span>
               <button
@@ -167,7 +167,7 @@ function Stage({ row }: { row: Row }) {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#07080d] to-transparent" />
       <div className="pointer-events-none absolute top-3 left-4 flex items-center gap-2">
         <img src={el.icon} alt="" className="h-7 w-7" style={{ filter: `drop-shadow(0 0 8px ${el.glow})` }} />
-        <span className="font-display text-xs tracking-[0.3em]" style={{ color: el.color }}>
+        <span className="font-display text-xs tracking-[0.16em]" style={{ color: el.color }}>
           {el.name.toUpperCase()}
         </span>
       </div>
@@ -196,7 +196,7 @@ function Section({ title, aside, children }: { title: string; aside?: React.Reac
   return (
     <section className="mt-6">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-display text-[10px] tracking-[0.4em] text-white/40">{title}</h3>
+        <h3 className="font-display text-[10px] tracking-[0.2em] text-white/40">{title}</h3>
         {aside && <span className="text-[11px] text-white/50">{aside}</span>}
       </div>
       <div className="mt-2">{children}</div>
@@ -296,7 +296,7 @@ function Details({ row, profile }: { row: Row; profile: Profile }) {
           ] as const
         ).map(([label, value]) => (
           <div key={label} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2">
-            <p className="font-display text-[9px] tracking-[0.25em] text-white/40">{label}</p>
+            <p className="font-display text-[9px] tracking-[0.14em] text-white/40">{label}</p>
             <p className="font-display mt-0.5 text-lg font-black">{value}</p>
           </div>
         ))}
@@ -365,7 +365,7 @@ function Details({ row, profile }: { row: Row; profile: Profile }) {
             }}
             animate={{ boxShadow: [`0 0 0px ${el.glow}`, `0 0 24px ${el.glow}`, `0 0 0px ${el.glow}`] }}
             transition={{ repeat: Infinity, duration: 1.6 }}
-            className="font-display mt-3 w-full cursor-pointer rounded-lg border-2 py-2.5 font-black tracking-[0.3em] transition hover:brightness-125"
+            className="font-display mt-3 w-full cursor-pointer rounded-lg border-2 py-2.5 font-black tracking-[0.16em] transition hover:brightness-125"
             style={{ borderColor: el.color, background: `${el.color}33` }}
           >
             EVOLVE → {bakugan.evolutions[owned.form + 1].name.toUpperCase()}
@@ -415,7 +415,7 @@ function Details({ row, profile }: { row: Row; profile: Profile }) {
             <p className="text-xs text-white/45">No skins for this Bakugan yet.</p>
             <button
               onClick={() => openPage('shop')}
-              className="font-display cursor-pointer text-[10px] tracking-[0.25em] text-white/60 transition hover:text-white hover:underline"
+              className="font-display cursor-pointer text-[10px] tracking-[0.14em] text-white/60 transition hover:text-white hover:underline"
             >
               SHOP →
             </button>

@@ -11,7 +11,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
     <div className="flex items-center gap-4">
       <button
         onClick={() => go(back)}
-        className="font-display shrink-0 text-xs tracking-[0.4em] whitespace-nowrap text-white/50 transition hover:text-white"
+        className="font-display shrink-0 text-xs tracking-[0.2em] whitespace-nowrap text-white/50 transition hover:text-white"
       >
         {back === 'menu' ? '← MAIN MENU' : '← BACK'}
       </button>
@@ -19,7 +19,7 @@ export function PageNav({ current, children }: { current: PageScreen; children?:
         <button
           onClick={() => go('menu')}
           title="Main menu"
-          className="font-display flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-black/40 px-3 text-[10px] tracking-[0.3em] whitespace-nowrap text-white/60 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
+          className="font-display flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-black/40 px-3 text-[10px] tracking-[0.16em] whitespace-nowrap text-white/60 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
         >
           <span className="text-sm leading-none tracking-normal">⌂</span> MENU
         </button>

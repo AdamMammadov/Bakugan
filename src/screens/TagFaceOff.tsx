@@ -69,13 +69,13 @@ export function TagFaceOff({
               win.
             </p>
           </div>
-          <button onClick={onClose} className="font-display text-xs tracking-[0.3em] text-white/50 hover:text-white">
+          <button onClick={onClose} className="font-display text-xs tracking-[0.16em] text-white/50 hover:text-white">
             ✕ CLOSE
           </button>
         </div>
 
         <p
-          className="font-display mt-4 inline-block rounded border px-3 py-1 text-[11px] tracking-[0.25em]"
+          className="font-display mt-4 inline-block rounded border px-3 py-1 text-[11px] tracking-[0.14em]"
           style={{
             borderColor: ranked ? '#f5c518' : 'rgba(255,255,255,0.3)',
             color: ranked ? '#f5c518' : 'rgba(255,255,255,0.7)',
@@ -132,7 +132,7 @@ export function TagFaceOff({
             onClick={enter}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.96 }}
-            className="font-display skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.3em]"
+            className="font-display skew-x-[-12deg] border-2 border-white/70 bg-white/10 px-12 py-4 text-xl font-black tracking-[0.16em]"
           >
             ENTER THE ARENA
           </motion.button>
@@ -171,9 +171,9 @@ function TeamColumn({ label, rows, action }: { label: string; rows: Row[]; actio
   return (
     <div className="rounded-xl border border-white/10 bg-black/40 p-5">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="font-display text-xs tracking-[0.4em] text-white/40">{label}</p>
+        <p className="font-display text-xs tracking-[0.2em] text-white/40">{label}</p>
         {action && (
-          <button onClick={action.onClick} className="font-display text-xs tracking-[0.25em] text-white/50 hover:text-white">
+          <button onClick={action.onClick} className="font-display text-xs tracking-[0.14em] text-white/50 hover:text-white">
             {action.label}
           </button>
         )}
@@ -184,7 +184,7 @@ function TeamColumn({ label, rows, action }: { label: string; rows: Row[]; actio
             <Avatar avatar={r.avatar} color={r.color} size={52} />
             <div className="min-w-0 flex-1">
               <p className="font-display truncate text-lg leading-tight font-bold">{r.name}</p>
-              <p className="font-display text-[10px] tracking-[0.3em] text-white/45">
+              <p className="font-display text-[10px] tracking-[0.16em] text-white/45">
                 {r.sub}
                 {r.rank && <span style={{ color: rankColor(r.rank) }}> · {r.rank.rank.toUpperCase()}</span>}
               </p>

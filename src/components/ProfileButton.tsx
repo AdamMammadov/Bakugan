@@ -37,7 +37,7 @@ export function ProfileButton({ menu = true }: { menu?: boolean }) {
             go('menu')
           }}
           title="Main menu"
-          className={`${pill} gap-1.5 border-white/25 px-4 text-xs tracking-[0.3em] text-white/80 hover:border-white/60 hover:text-white`}
+          className={`${pill} gap-1.5 border-white/25 px-4 text-xs tracking-[0.16em] text-white/80 hover:border-white/60 hover:text-white`}
         >
           <span className="text-base leading-none tracking-normal">⌂</span> MENU
         </button>

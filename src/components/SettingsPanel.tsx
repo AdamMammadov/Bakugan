@@ -32,7 +32,7 @@ export function SettingsButton({ className = '' }: { className?: string }) {
         setOpen(true)
       }}
       title="Settings"
-      className={`font-display flex h-9 items-center gap-2 rounded-full border border-white/15 bg-black/50 px-4 text-xs tracking-[0.3em] text-white/70 backdrop-blur transition hover:border-white/40 hover:text-white ${className}`}
+      className={`font-display flex h-9 items-center gap-2 rounded-full border border-white/15 bg-black/50 px-4 text-xs tracking-[0.16em] text-white/70 backdrop-blur transition hover:border-white/40 hover:text-white ${className}`}
     >
       <span className="text-base leading-none tracking-normal">⚙</span> SETTINGS
     </button>
@@ -79,7 +79,7 @@ export function SettingsPanel() {
               <button
                 onClick={() => setOpen(false)}
                 title="Close (Esc)"
-                className="font-display text-xs tracking-[0.3em] text-white/50 hover:text-white"
+                className="font-display text-xs tracking-[0.16em] text-white/50 hover:text-white"
               >
                 CLOSE ✕
               </button>
@@ -92,7 +92,7 @@ export function SettingsPanel() {
                   <button
                     key={t}
                     onClick={() => setTab(t)}
-                    className={`font-display rounded-lg px-4 py-3 text-left text-xs tracking-[0.3em] transition ${
+                    className={`font-display rounded-lg px-4 py-3 text-left text-xs tracking-[0.16em] transition ${
                       tab === t ? 'bg-white/15 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
                     }`}
                   >
@@ -188,7 +188,7 @@ export function SettingsPanel() {
             <div className="flex justify-between border-t border-white/10 px-7 py-4">
               <button
                 onClick={() => s.reset()}
-                className="font-display text-xs tracking-[0.25em] text-white/45 transition hover:text-white"
+                className="font-display text-xs tracking-[0.14em] text-white/45 transition hover:text-white"
               >
                 ↺ DEFAULTS
               </button>
@@ -197,7 +197,7 @@ export function SettingsPanel() {
               </span>
               <button
                 onClick={() => setOpen(false)}
-                className="font-display skew-x-[-10deg] border-2 border-white/70 bg-white/10 px-8 py-2 text-sm font-black tracking-[0.3em] hover:bg-white/20"
+                className="font-display skew-x-[-10deg] border-2 border-white/70 bg-white/10 px-8 py-2 text-sm font-black tracking-[0.16em] hover:bg-white/20"
               >
                 DONE
               </button>

@@ -46,7 +46,7 @@ export function BakuganInfo({
         >
           <img src={element.icon} alt="" className="h-20 w-20" style={{ filter: `drop-shadow(0 0 16px ${element.glow})` }} />
           <div className="flex-1">
-            <p className="font-display text-xs tracking-[0.4em]" style={{ color: element.color }}>
+            <p className="font-display text-xs tracking-[0.2em]" style={{ color: element.color }}>
               {element.name.toUpperCase()} · {bakugan.series.toUpperCase()}
             </p>
             <h2 className="font-display text-4xl font-black tracking-wider">{bakugan.name}</h2>
@@ -70,7 +70,7 @@ export function BakuganInfo({
             <Stat label="ABILITY CARDS" value={String(bakugan.abilities.length)} color={element.color} />
           </div>
 
-          <h3 className="font-display mt-8 text-xs tracking-[0.5em] text-white/40">EVOLUTION</h3>
+          <h3 className="font-display mt-8 text-xs tracking-[0.22em] text-white/40">EVOLUTION</h3>
           <ol className="mt-3 flex flex-wrap items-center gap-2">
             {bakugan.evolutions.map((e, i) => (
               <li key={`${e.name}-${e.series}`} className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export function BakuganInfo({
             ))}
           </ol>
 
-          <h3 className="font-display mt-8 text-xs tracking-[0.5em] text-white/40">ABILITY CARDS</h3>
+          <h3 className="font-display mt-8 text-xs tracking-[0.22em] text-white/40">ABILITY CARDS</h3>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {bakugan.abilities.map((a) => (
               <div key={a.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
@@ -108,7 +108,7 @@ export function BakuganInfo({
           ) : (
             <button
               onClick={onInspect}
-              className="font-display border-2 px-6 py-2 text-sm tracking-[0.3em] transition hover:bg-white/10"
+              className="font-display border-2 px-6 py-2 text-sm tracking-[0.16em] transition hover:bg-white/10"
               style={{ borderColor: element.color }}
             >
               INSPECT IN 3D →
@@ -123,7 +123,7 @@ export function BakuganInfo({
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="rounded-lg border border-white/10 p-4">
-      <p className="font-display text-[10px] tracking-[0.3em] text-white/40">{label}</p>
+      <p className="font-display text-[10px] tracking-[0.16em] text-white/40">{label}</p>
       <p className="font-display mt-1 text-2xl font-black" style={{ color }}>
         {value}
       </p>

@@ -123,12 +123,12 @@ export function ProfileEditor() {
       {(existing || hasProfiles) && (
         <button
           onClick={() => go(back)}
-          className="font-display text-xs tracking-[0.4em] text-white/50 transition hover:text-white"
+          className="font-display text-xs tracking-[0.2em] text-white/50 transition hover:text-white"
         >
           ← CANCEL
         </button>
       )}
-      <p className="font-display mt-4 text-xs tracking-[0.5em] text-white/40">BRAWLER PROFILE</p>
+      <p className="font-display mt-4 text-xs tracking-[0.22em] text-white/40">BRAWLER PROFILE</p>
       <h1 className="font-display text-4xl font-black tracking-wider">
         {existing ? 'EDIT YOUR BRAWLER' : 'CREATE YOUR BRAWLER'}
       </h1>
@@ -145,7 +145,7 @@ export function ProfileEditor() {
               <p className="mt-1 text-white/50">{ELEMENT_BY_ID[element].name} Brawler</p>
               {/* what the player looks like in the 3D arena, which a photo does not change */}
               <div className="mt-3 flex items-center gap-2 text-xs text-white/50">
-                <span className="font-display tracking-[0.3em] text-white/35">IN BATTLE</span>
+                <span className="font-display tracking-[0.16em] text-white/35">IN BATTLE</span>
                 <Avatar avatar={look} color={color} size={28} />
                 <span>{character ? character.name : 'Your own brawler'}</span>
               </div>
@@ -157,7 +157,7 @@ export function ProfileEditor() {
               <button
                 key={t}
                 onClick={() => openTab(t)}
-                className="font-display -mb-px border-b-2 px-4 py-2 text-xs tracking-[0.3em] transition hover:bg-white/5"
+                className="font-display -mb-px border-b-2 px-4 py-2 text-xs tracking-[0.16em] transition hover:bg-white/5"
                 style={{ borderColor: tab === t ? color : 'transparent', color: tab === t ? '#fff' : 'rgba(255,255,255,0.45)' }}
               >
                 {t === 'characters' ? 'SERIES CHARACTERS' : t === 'build' ? 'BUILD YOUR OWN' : 'PHOTO'}
@@ -265,7 +265,7 @@ export function ProfileEditor() {
                 {photo && <Avatar avatar={{ ...look, photo }} color={color} size={72} />}
                 <button
                   onClick={() => file.current?.click()}
-                  className="font-display rounded-md border-2 px-6 py-3 text-sm tracking-[0.3em] transition hover:bg-white/10"
+                  className="font-display rounded-md border-2 px-6 py-3 text-sm tracking-[0.16em] transition hover:bg-white/10"
                   style={{ borderColor: color }}
                 >
                   {photo ? 'CHANGE PHOTO' : 'UPLOAD PHOTO'}
@@ -274,13 +274,13 @@ export function ProfileEditor() {
                   <>
                     <button
                       onClick={() => setCropping(original ?? photo)}
-                      className="font-display rounded-md border-2 border-white/25 px-4 py-3 text-xs tracking-[0.3em] hover:bg-white/10"
+                      className="font-display rounded-md border-2 border-white/25 px-4 py-3 text-xs tracking-[0.16em] hover:bg-white/10"
                     >
                       ADJUST
                     </button>
                     <button
                       onClick={() => setPhoto(undefined)}
-                      className="font-display px-3 py-3 text-xs tracking-[0.3em] text-white/45 hover:text-red-300"
+                      className="font-display px-3 py-3 text-xs tracking-[0.16em] text-white/45 hover:text-red-300"
                     >
                       REMOVE PHOTO
                     </button>
@@ -298,7 +298,7 @@ export function ProfileEditor() {
             <Field label="LAST NAME" value={lastName} onChange={setLastName} placeholder="Kuso" />
           </div>
 
-          <p className="font-display mt-6 text-xs tracking-[0.4em] text-white/40">ATTRIBUTE</p>
+          <p className="font-display mt-6 text-xs tracking-[0.2em] text-white/40">ATTRIBUTE</p>
           {/* the attribute is chosen once, when the profile is made */}
           {existing ? (
             <div
@@ -338,7 +338,7 @@ export function ProfileEditor() {
             </p>
           )}
 
-          <p className="font-display mt-6 text-xs tracking-[0.4em] text-white/40">BIO</p>
+          <p className="font-display mt-6 text-xs tracking-[0.2em] text-white/40">BIO</p>
           <textarea
             value={bio}
             maxLength={BIO_MAX}
@@ -356,7 +356,7 @@ export function ProfileEditor() {
             onClick={save}
             whileHover={valid ? { scale: 1.04 } : undefined}
             whileTap={valid ? { scale: 0.97 } : undefined}
-            className="font-display mt-6 w-full skew-x-[-10deg] border-2 py-4 text-lg font-black tracking-[0.3em] transition"
+            className="font-display mt-6 w-full skew-x-[-10deg] border-2 py-4 text-lg font-black tracking-[0.16em] transition"
             style={{
               borderColor: valid ? color : 'rgba(255,255,255,0.15)',
               background: valid ? `${color}33` : 'transparent',
@@ -377,7 +377,7 @@ export function ProfileEditor() {
             exit={{ opacity: 0 }}
           >
             <div className="rounded-2xl border border-white/15 bg-[#0b0c12] p-7">
-              <p className="font-display text-xs tracking-[0.5em] text-white/40">YOUR PORTRAIT</p>
+              <p className="font-display text-xs tracking-[0.22em] text-white/40">YOUR PORTRAIT</p>
               <h2 className="font-display mb-5 text-2xl font-black tracking-wider">PLACE YOUR FACE IN THE CIRCLE</h2>
               <PhotoCropper
                 src={cropping}
@@ -410,7 +410,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="font-display text-xs tracking-[0.4em] text-white/40">{label}</span>
+      <span className="font-display text-xs tracking-[0.2em] text-white/40">{label}</span>
       <input
         value={value}
         maxLength={24}
@@ -435,7 +435,7 @@ function Swatches({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="font-display w-24 shrink-0 text-[10px] tracking-[0.3em] text-white/40">{label}</span>
+      <span className="font-display w-24 shrink-0 text-[10px] tracking-[0.16em] text-white/40">{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {options.map((c) => (
           <button
@@ -467,7 +467,7 @@ function Choices<T extends string>({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="font-display w-24 shrink-0 text-[10px] tracking-[0.3em] text-white/40">{label}</span>
+      <span className="font-display w-24 shrink-0 text-[10px] tracking-[0.16em] text-white/40">{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {options.map((o) => (
           <button

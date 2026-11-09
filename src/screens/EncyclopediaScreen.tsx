@@ -73,7 +73,7 @@ export function EncyclopediaScreen() {
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`font-display rounded border px-4 py-2 text-xs tracking-[0.3em] transition ${
+            className={`font-display rounded border px-4 py-2 text-xs tracking-[0.16em] transition ${
               tab === id ? 'border-white bg-white/10 text-white' : 'border-white/15 text-white/50 hover:text-white'
             }`}
           >
@@ -218,7 +218,7 @@ function CardsTab({ cards, bakugan, setBakugan }: { cards: DbCard[]; bakugan: st
         )}
       </div>
 
-      <p className="font-display mt-5 text-xs tracking-[0.4em] text-white/40">{shown.length} CARDS</p>
+      <p className="font-display mt-5 text-xs tracking-[0.2em] text-white/40">{shown.length} CARDS</p>
       <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3">
         {shown.map((c) => (
           <CardTile key={c.id} card={c} onOpen={() => setOpen(c)} />
@@ -360,7 +360,7 @@ function BakuganTab({ cards, onCards }: { cards: DbCard[]; onCards: (name: strin
         ))}
       </div>
 
-      <h2 className="font-display mt-6 text-xs tracking-[0.5em] text-white/40">PLAYABLE IN 3D</h2>
+      <h2 className="font-display mt-6 text-xs tracking-[0.22em] text-white/40">PLAYABLE IN 3D</h2>
       <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
         {viewable()
           .filter((b) => !element || b.element === element)
@@ -404,7 +404,7 @@ function BakuganTab({ cards, onCards }: { cards: DbCard[]; onCards: (name: strin
           })}
       </div>
 
-      <h2 className="font-display mt-10 text-xs tracking-[0.5em] text-white/40">
+      <h2 className="font-display mt-10 text-xs tracking-[0.22em] text-white/40">
         ALL BAKUGAN IN THE CARD DATABASE · {index.length}
       </h2>
       <p className="mt-1 text-sm text-white/45">3D models for these come later. Click one to see its cards.</p>

@@ -48,7 +48,7 @@ export function EventToast() {
               <img src={ELEMENT_BY_ID[toast.element].icon} alt="" className="h-12 w-12 shrink-0" />
             )}
             <div className="min-w-0">
-              <p className="font-display text-[10px] tracking-[0.4em]" style={{ color: TONE[toast.tone] }}>
+              <p className="font-display text-[10px] tracking-[0.2em]" style={{ color: TONE[toast.tone] }}>
                 EVENT PROGRESS
               </p>
               <p className="font-display text-lg leading-tight font-black">{toast.title}</p>

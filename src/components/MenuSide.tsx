@@ -174,7 +174,7 @@ function PlayerCard({ profile, element }: { profile: Profile | null; element: El
 function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="rounded-lg bg-white/[0.04] px-2 py-1.5 text-center">
-      <p className="font-display text-[8.5px] tracking-[0.25em] text-white/40">{label}</p>
+      <p className="font-display text-[8.5px] tracking-[0.14em] text-white/40">{label}</p>
       <p className="font-display mt-0.5 flex justify-center text-[13px] font-bold whitespace-nowrap">{children}</p>
     </div>
   )
@@ -207,7 +207,7 @@ function SwitchButton({ open, setOpen, label }: { open: boolean; setOpen: (o: bo
         }}
         title="Switch profile"
         aria-expanded={open}
-        className="menu-item font-display flex items-center gap-1.5 rounded-full border border-white/20 bg-black/30 px-2.5 py-1 text-[9px] tracking-[0.25em] text-white/65 transition hover:border-white/50 hover:bg-white/10 hover:text-white"
+        className="menu-item font-display flex items-center gap-1.5 rounded-full border border-white/20 bg-black/30 px-2.5 py-1 text-[9px] tracking-[0.14em] text-white/65 transition hover:border-white/50 hover:bg-white/10 hover:text-white"
       >
         <MenuIcon name="switch" size={13} /> {label}
       </button>
@@ -219,7 +219,7 @@ function SwitchButton({ open, setOpen, label }: { open: boolean; setOpen: (o: bo
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
           >
-            <p className="font-display px-4 pt-3 pb-1 text-[10px] tracking-[0.4em] text-white/40">BRAWLERS ON THIS DEVICE</p>
+            <p className="font-display px-4 pt-3 pb-1 text-[10px] tracking-[0.2em] text-white/40">BRAWLERS ON THIS DEVICE</p>
             {profiles.map((p) => {
               const el = ELEMENT_BY_ID[p.element]
               const on = p.id === activeId
@@ -243,7 +243,7 @@ function SwitchButton({ open, setOpen, label }: { open: boolean; setOpen: (o: bo
                       {el.name} · {tierOf(rankScore(p)).rank}
                     </span>
                   </span>
-                  {on && <span className="font-display text-[9px] tracking-[0.3em] text-white/45">PLAYING</span>}
+                  {on && <span className="font-display text-[9px] tracking-[0.16em] text-white/45">PLAYING</span>}
                 </button>
               )
             })}
@@ -253,7 +253,7 @@ function SwitchButton({ open, setOpen, label }: { open: boolean; setOpen: (o: bo
                 setOpen(false)
                 useGame.getState().newProfile()
               }}
-              className="font-display flex w-full items-center gap-2 border-t border-white/10 px-4 py-3 text-left text-xs tracking-[0.3em] text-white/70 transition hover:bg-white/10 hover:text-white"
+              className="font-display flex w-full items-center gap-2 border-t border-white/10 px-4 py-3 text-left text-xs tracking-[0.16em] text-white/70 transition hover:bg-white/10 hover:text-white"
             >
               <MenuIcon name="plus" size={16} /> NEW BRAWLER
             </button>
@@ -285,8 +285,8 @@ function TodayPanel({ profile, now }: { profile: Profile | null; now: number }) 
   return (
     <div className={`${panel} p-2.5`}>
       <div className="flex items-center justify-between px-1">
-        <p className="font-display text-[10px] tracking-[0.45em] text-white/55">TODAY</p>
-        <p className="font-display text-[9px] tracking-[0.25em] text-white/35">
+        <p className="font-display text-[10px] tracking-[0.2em] text-white/55">TODAY</p>
+        <p className="font-display text-[9px] tracking-[0.14em] text-white/35">
           NEW EVENTS IN {timeLeft(dayEnd(now) - now).toUpperCase()}
         </p>
       </div>
@@ -413,7 +413,7 @@ function FriendsCard({ profile, now }: { profile: Profile; now: number }) {
       className={`${card} ${panel} flex flex-col gap-1.5 p-2.5`}
     >
       <span className="flex w-full items-center justify-between">
-        <span className="font-display text-[10px] font-bold tracking-[0.3em]">FRIENDS</span>
+        <span className="font-display text-[10px] font-bold tracking-[0.16em]">FRIENDS</span>
         {unread > 0 && (
           <span className="font-display rounded-full bg-amber-400 px-1.5 text-[10px] leading-4 text-black">✉ {unread}</span>
         )}
@@ -473,7 +473,7 @@ function ClanCard({ profile, now }: { profile: Profile; now: number }) {
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className="font-display block text-[10px] font-bold tracking-[0.3em]">CLAN</span>
+        <span className="font-display block text-[10px] font-bold tracking-[0.16em]">CLAN</span>
         <span className="block truncate text-sm font-bold">{clan ? `[${clan.tag}] ${clan.name}` : 'No clan yet'}</span>
         <span className="font-display block text-[9px] tracking-[0.2em] text-white/50">
           {clan ? `#${place} OF ${clans.length} CLANS` : 'JOIN OR FOUND ONE'}

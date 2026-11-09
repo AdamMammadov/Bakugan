@@ -87,7 +87,7 @@ export function CharacterShowroom() {
           >
             <div className="flex items-center gap-2">
               <img src={element.icon} alt="" className="h-7 w-7" />
-              <span className="font-display text-xs tracking-[0.4em]" style={{ color: element.color }}>
+              <span className="font-display text-xs tracking-[0.2em]" style={{ color: element.color }}>
                 {element.name.toUpperCase()} · {info?.role.toUpperCase()}
               </span>
             </div>
@@ -98,7 +98,7 @@ export function CharacterShowroom() {
             <p className="mt-4 leading-relaxed text-white/80">{info?.story}</p>
             <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-display text-[10px] tracking-[0.3em] text-emerald-300/80">STRENGTHS</p>
+                <p className="font-display text-[10px] tracking-[0.16em] text-emerald-300/80">STRENGTHS</p>
                 <ul className="mt-1 space-y-1 text-white/75">
                   {info?.strengths.map((s) => (
                     <li key={s}>▲ {s}</li>
@@ -106,7 +106,7 @@ export function CharacterShowroom() {
                 </ul>
               </div>
               <div>
-                <p className="font-display text-[10px] tracking-[0.3em] text-rose-300/80">WEAKNESSES</p>
+                <p className="font-display text-[10px] tracking-[0.16em] text-rose-300/80">WEAKNESSES</p>
                 <ul className="mt-1 space-y-1 text-white/75">
                   {info?.weaknesses.map((s) => (
                     <li key={s}>▼ {s}</li>
@@ -115,7 +115,7 @@ export function CharacterShowroom() {
               </div>
             </div>
             <p className="mt-4 text-sm text-white/60">
-              <span className="font-display text-[10px] tracking-[0.3em] text-white/40">BRAWL STYLE · </span>
+              <span className="font-display text-[10px] tracking-[0.16em] text-white/40">BRAWL STYLE · </span>
               {info?.style}
             </p>
             <div className="mt-5 flex gap-2">
@@ -123,7 +123,7 @@ export function CharacterShowroom() {
                 <button
                   key={g}
                   onClick={() => setGesture({ kind: g, key: Date.now() })}
-                  className="font-display rounded border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.3em] hover:bg-white/10"
+                  className="font-display rounded border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.16em] hover:bg-white/10"
                 >
                   {g === 'card' ? 'ABILITY CARD' : g === 'point' ? 'BAKUGAN, BRAWL!' : 'VICTORY'}
                 </button>
@@ -133,7 +133,7 @@ export function CharacterShowroom() {
           </motion.section>
         </AnimatePresence>
 
-        <p className="mt-auto text-center text-xs tracking-[0.3em] text-white/35">
+        <p className="mt-auto text-center text-xs tracking-[0.16em] text-white/35">
           DRAG TO TURN · RIGHT-DRAG UP / DOWN · SCROLL TO ZOOM · ← → TO SWITCH
         </p>
         {/* character strip */}

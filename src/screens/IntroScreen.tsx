@@ -168,7 +168,7 @@ export function IntroScreen() {
             className="h-[3px] w-[12vw] rounded-full"
             style={{ background: `linear-gradient(90deg, transparent, ${RAINBOW.join(', ')})` }}
           />
-          <span className="font-display text-[clamp(0.8rem,1.3vw,1.15rem)] font-bold tracking-[0.7em] text-white/85">
+          <span className="font-display text-[clamp(0.8rem,1.3vw,1.15rem)] font-bold tracking-[0.22em] text-white/85">
             {GAME_SUBTITLE.toUpperCase()}
           </span>
           <span
@@ -177,7 +177,7 @@ export function IntroScreen() {
           />
         </motion.div>
         <motion.p
-          className="font-display mt-[4vh] flex items-center gap-4 rounded-full border border-white/25 bg-black/40 px-7 py-2.5 text-[clamp(0.85rem,1.25vw,1.15rem)] font-bold tracking-[0.5em] text-white shadow-[0_0_30px_#ffb34733] backdrop-blur"
+          className="font-display mt-[4vh] flex items-center gap-4 rounded-full border border-white/25 bg-black/40 px-7 py-2.5 text-[clamp(0.85rem,1.25vw,1.15rem)] font-bold tracking-[0.22em] text-white shadow-[0_0_30px_#ffb34733] backdrop-blur"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.35, 1, 0.35] }}
           transition={{ delay: 1.6, repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}

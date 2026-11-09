@@ -38,7 +38,7 @@ export function RankedSeason({ now }: { now: number }) {
       <div className="flex flex-col gap-4">
         {/* this season */}
         <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-          <p className="font-display text-[10px] tracking-[0.4em] text-white/45">RANKED SEASON {season.id}</p>
+          <p className="font-display text-[10px] tracking-[0.2em] text-white/45">RANKED SEASON {season.id}</p>
           <p className="font-display mt-1 text-sm tracking-[0.2em] text-amber-200">
             ENDS IN {timeLeft(season.endsAt - now).toUpperCase()}
           </p>
@@ -68,7 +68,7 @@ export function RankedSeason({ now }: { now: number }) {
               </p>
               <p className="font-display mt-4 flex items-center gap-2 text-2xl font-black text-amber-200">
                 <GloryIcon size={22} /> {glory.toLocaleString('en')}
-                <span className="text-xs tracking-[0.3em] text-white/45">GLORY</span>
+                <span className="text-xs tracking-[0.16em] text-white/45">GLORY</span>
               </p>
             </>
           ) : (
@@ -78,7 +78,7 @@ export function RankedSeason({ now }: { now: number }) {
 
         {/* what each rank pays */}
         <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-          <p className="font-display text-[10px] tracking-[0.4em] text-white/45">GLORY AT THE SEASON’S END</p>
+          <p className="font-display text-[10px] tracking-[0.2em] text-white/45">GLORY AT THE SEASON’S END</p>
           <div className="mt-3 flex flex-col gap-1.5">
             {TIERS.map((t, i) => {
               const low = RANKS.find((r) => r.tier === i && r.division === 'V')!
@@ -103,7 +103,7 @@ export function RankedSeason({ now }: { now: number }) {
 
       {/* the Glory store */}
       <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-        <p className="font-display text-[10px] tracking-[0.4em] text-white/45">GLORY STORE · REWARDS SOLD NOWHERE ELSE</p>
+        <p className="font-display text-[10px] tracking-[0.2em] text-white/45">GLORY STORE · REWARDS SOLD NOWHERE ELSE</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {GLORY_STORE.map((item) => {
             const owned = !item.repeat && !!profile?.cosmetics?.owned.includes(item.key)
@@ -127,7 +127,7 @@ export function RankedSeason({ now }: { now: number }) {
                   onClick={() => {
                     if (buy(item.key)) playSfx('victory')
                   }}
-                  className="font-display mt-auto flex items-center justify-center gap-2 rounded border border-amber-300/60 px-3 py-2 pt-2 text-xs tracking-[0.25em] text-amber-200 transition enabled:hover:bg-amber-300/10 disabled:border-white/15 disabled:text-white/35"
+                  className="font-display mt-auto flex items-center justify-center gap-2 rounded border border-amber-300/60 px-3 py-2 pt-2 text-xs tracking-[0.14em] text-amber-200 transition enabled:hover:bg-amber-300/10 disabled:border-white/15 disabled:text-white/35"
                   style={{ marginTop: 14 }}
                 >
                   {owned ? (
