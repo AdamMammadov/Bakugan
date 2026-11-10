@@ -29,9 +29,39 @@ const pose = (q.get('pose') ?? '')
   .filter(Boolean)
   .map((p) => p.split(':'))
 
+/**
+ * faces=1: shows which side of the surface is seen. The outside is drawn grey, the inside red: any
+ * red seen from outside is a hole in the model (or a face turned inside out). The ink outline shells are hidden.
+ */
+function showSides(scene: THREE.Object3D) {
+  const skins: THREE.Mesh[] = []
+  scene.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (m.isMesh) skins.push(m)
+  })
+  for (const m of skins) {
+    const ink = (Array.isArray(m.material) ? m.material : [m.material]).every(
+      (x) => (x as THREE.MeshBasicMaterial).isMeshBasicMaterial,
+    )
+    if (ink) {
+      m.visible = false
+      continue
+    }
+    m.material = [
+      new THREE.MeshStandardMaterial({ color: '#6f7480', roughness: 0.9, side: THREE.FrontSide }),
+      new THREE.MeshBasicMaterial({ color: '#ff0000', side: THREE.BackSide }),
+    ]
+    const count = m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count
+    m.geometry.clearGroups()
+    m.geometry.addGroup(0, count, 0)
+    m.geometry.addGroup(0, count, 1)
+  }
+}
+
 function Model() {
   const { scene } = useGLTF(`/models/${model}`)
   useMemo(() => {
+    if (q.get('faces') === '1') showSides(scene)
     scene.traverse((o) => {
       const u = o.userData
       if (u.openOnly) o.visible = open
