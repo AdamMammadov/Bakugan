@@ -417,6 +417,21 @@ if (pyroclast)
     stage: 1.25,
   }
 
+const leviathan = ROSTER.find((b) => b.id === 'tidevane')?.evolutions.find((e) => e.name === 'Leviathan Tidevane')
+// Tidevane evolved, built for the game shape by shape and unlike the dragons that stand on two legs: a sea serpent's
+// coils on the ground instead of legs, its tail rising beside it to a crescent fin; a knight's armoured chest and arms;
+// an eel-dragon's head on a long neck, with a jaw that opens and a webbed hood that flares behind it; a sail down its
+// back; and a great golden trident whose three prongs burn with live water-fire. One seamless body, skinned and inked.
+// (Its ball is Tidevane's for now.)
+if (leviathan)
+  leviathan.models = {
+    ...ROSTER_MODELS.tidevane,
+    monster: 'models/tidevane/leviathan.glb',
+    scale: 2.15,
+    length: 1.7,
+    stage: 1.3,
+  }
+
 BAKUGAN.push(...ROSTER)
 
 export const bakuganForElement = (element: ElementId) => BAKUGAN.filter((b) => b.element === element)

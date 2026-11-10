@@ -44,23 +44,20 @@ void main() {
 
 const linear = (c: string) => new THREE.Color(c).convertSRGBToLinear()
 
-/** Fire's colours: white-hot core, orange body, red edge. */
-const FIRE: [string, string, string] = ['#fff3c4', '#ffae2b', '#e8340c']
+/** What a flame burns as: its core, middle and edge colours. */
+export const FLAME_TONES = {
+  /** White-hot core, orange body, red edge. */
+  fire: ['#fff3c4', '#ffae2b', '#e8340c'],
+  /** Water-fire: a pale core in blue. */
+  water: ['#eefcff', '#52c6ff', '#1c58dc'],
+} satisfies Record<string, [string, string, string]>
+export type FlameTone = keyof typeof FLAME_TONES
 
 /**
  * A living flame, burning upwards from where it stands (a fire on a Bakugan's crown or tail), turned to face the
  * camera. `height` and `width` are in the units of whatever it is placed in.
  */
-export function LiveFlame({
-  height,
-  width,
-  colors = FIRE,
-}: {
-  height: number
-  width: number
-  /** Core, middle and edge colours. */
-  colors?: [string, string, string]
-}) {
+export function LiveFlame({ height, width, tone = 'fire' }: { height: number; width: number; tone?: FlameTone }) {
   const group = useRef<THREE.Group>(null)
   const meshes = useRef<(THREE.Mesh | null)[]>([])
   const layers = useMemo(() => {
@@ -87,13 +84,13 @@ export function LiveFlame({
       })
       return { geometry, material }
     }
-    const [core, mid, edge] = colors
+    const [core, mid, edge] = FLAME_TONES[tone]
     return [
       // the outer flame, and a smaller, hotter one inside it, flickering out of step
       make(width, height, 0, 1.2, [mid, mid, edge]),
       make(width * 0.6, height * 0.72, 100, 2.2, [core, core, mid]),
     ]
-  }, [height, width, colors])
+  }, [height, width, tone])
   useEffect(
     () => () =>
       layers.forEach((l) => {

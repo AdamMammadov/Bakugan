@@ -3762,5 +3762,102 @@
       "test": "mesh === 'tail_tip'",
       "swing": 0.4
     }
+  ],
+  "leviathan-tidevane": [
+    {
+      "name": "neck",
+      "pivot": [
+        0.0,
+        0.17,
+        0.0
+      ],
+      "test": "mesh === 'neck'",
+      "swing": 0.6
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "pivot": [
+        0.0,
+        0.322,
+        0.095
+      ],
+      "test": "mesh === 'head'",
+      "swing": 0.55
+    },
+    {
+      "name": "jaw",
+      "parent": "head",
+      "pivot": [
+        0.0,
+        0.331,
+        0.124
+      ],
+      "test": "mesh === 'jaw'",
+      "swing": 0.6
+    },
+    {
+      "name": "wing_l",
+      "parent": "head",
+      "pivot": [
+        0.035,
+        0.335,
+        0.05
+      ],
+      "test": "mesh === 'wing_l'",
+      "swing": 0.35
+    },
+    {
+      "name": "wing_r",
+      "parent": "head",
+      "pivot": [
+        -0.035,
+        0.335,
+        0.05
+      ],
+      "test": "mesh === 'wing_r'",
+      "swing": 0.35
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        0.165,
+        0.155,
+        0.0
+      ],
+      "test": "mesh === 'arm_l'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -0.165,
+        0.155,
+        0.0
+      ],
+      "test": "mesh === 'arm_r'",
+      "swing": 0.2
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0.245,
+        -0.417,
+        0.1
+      ],
+      "test": "mesh === 'tail'",
+      "swing": 0.35
+    },
+    {
+      "name": "tail_tip",
+      "parent": "tail",
+      "pivot": [
+        0.41,
+        -0.05,
+        -0.11
+      ],
+      "test": "mesh === 'tail_tip'",
+      "swing": 0.5
+    }
   ]
 }

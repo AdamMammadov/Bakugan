@@ -3664,8 +3664,8 @@ export const ROSTER: Bakugan[] = [
     "brawler": "Game Owner",
     "series": "Original",
     "baseG": 450,
-    "brawlG": 570,
-    "description": "A sea dragon knight from the deep, its navy hide dotted with pale spots like stars over night water. It wears blue-steel armour lit by glowing tide-lines, spreads wings like a manta ray's and holds a golden trident whose prongs burn with blue water-fire.",
+    "brawlG": 550,
+    "description": "A sea dragon knight from the deep, its navy hide dotted with pale spots like stars over night water. It wears blue-steel armour lit by glowing tide-lines, spreads wings like a manta ray's and holds a golden trident whose prongs burn with blue water-fire. Evolved, it trades its legs for a great sea serpent's coils and raises a webbed hood behind its head.",
     "abilities": [
       {
         "id": "riptide-rising",
@@ -3735,7 +3735,77 @@ export const ROSTER: Bakugan[] = [
       {
         "name": "Tidevane",
         "series": "Original",
-        "gPower": 470
+        "gPower": 450
+      },
+      {
+        "name": "Leviathan Tidevane",
+        "series": "Original",
+        "gPower": 730,
+        "abilities": [
+          {
+            "id": "hood-of-the-deep",
+            "name": "Hood of the Deep",
+            "type": "boost",
+            "amount": 250,
+            "effect": "aura",
+            "description": "The webbed hood behind Leviathan Tidevane's head flares wide and the sea answers it: adds 250 G to Leviathan Tidevane.",
+            "estimated": true
+          },
+          {
+            "id": "coiled-bulwark",
+            "name": "Coiled Bulwark",
+            "type": "shield",
+            "amount": 0,
+            "effect": "shieldDome",
+            "description": "Leviathan Tidevane draws its coils round itself like a wall: cancels the opponent's last ability card.",
+            "estimated": true
+          },
+          {
+            "id": "crushing-depths",
+            "name": "Crushing Depths",
+            "type": "weaken",
+            "amount": 200,
+            "effect": "waterSphere",
+            "description": "The weight of the deep sea closes round the opponent: subtracts 200 G from the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "serpents-undertow",
+            "name": "Serpent's Undertow",
+            "type": "drain",
+            "amount": 200,
+            "effect": "waterJet",
+            "description": "Its tail sweeps the opponent's strength away on an undertow: transfers 200 G from the opponent to Leviathan Tidevane.",
+            "estimated": true
+          },
+          {
+            "id": "high-tide-ascendant",
+            "name": "High Tide Ascendant",
+            "type": "boost",
+            "amount": 200,
+            "effect": "aura",
+            "description": "The tide-lines in its armour blaze and the water rises under its coils: adds 200 G to Leviathan Tidevane.",
+            "estimated": true
+          },
+          {
+            "id": "trident-whirlpool",
+            "name": "Trident Whirlpool",
+            "type": "attack",
+            "amount": 200,
+            "effect": "waterJet",
+            "description": "It drives its burning trident into the ground and a whirlpool tears up under the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "leviathans-deluge",
+            "name": "Leviathan's Deluge",
+            "type": "attack",
+            "amount": 250,
+            "effect": "waterSphere",
+            "description": "Leviathan Tidevane rears to its full height and brings the whole deep sea down on the opponent.",
+            "estimated": true
+          }
+        ]
       }
     ]
   }
