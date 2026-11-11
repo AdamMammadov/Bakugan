@@ -423,7 +423,9 @@ const leviathan = ROSTER.find((b) => b.id === 'tidevane')?.evolutions.find((e) =
 // Tidevane evolved, built for the game shape by shape and unlike the dragons that stand on two legs: a sea serpent's
 // coils on the ground instead of legs, its tail rising beside it to a crescent fin; a knight's armoured chest and arms;
 // an eel-dragon's head on a long neck, with a jaw that opens and a webbed hood that flares behind it; a sail down its
-// back; and a great golden trident whose three prongs burn with live water-fire. One seamless body, skinned and inked.
+// back; and a great golden trident whose three prongs burn with live water-fire, held aslant in its right fist (the
+// fingers closed round the shaft). Its pale belly band follows the body's curve down and along the ground. One
+// seamless body, skinned and inked.
 // Its ball is Tidevane's evolved: a webbed hood over its upper sides, ivory horns, a steel breastplate with a glowing
 // gem, the serpent's coils wound round its lower half; open, the head rises on a long neck, the hood flares behind it
 // and the trident stands at its side with glowing prongs
