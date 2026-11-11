@@ -1,5 +1,5 @@
 {
-  "_doc": "Splits a one-piece monster into the pivot nodes the game animates (see src/three/pose.ts). Coordinates are the model's own, forward = +Z. Parts are tried in order; a triangle goes to the first part whose test matches its centre (x, y, z; `mesh` is its mesh's name, for a piece lifted off as its own mesh), otherwise to the body. 'bake' turns the part (radians XYZ) around its pivot once, e.g. to bring T-posed arms down. 'swing' (0..1) damps how far the game turns the part, for cuts that would show at full swing; below 0 it also turns the part the other way. 'soft' (a radius) bends a bake in smoothly across the joint (see convert.ts) so baked arms stay attached.",
+  "_doc": "Splits a one-piece monster into the pivot nodes the game animates (see src/three/pose.ts). Coordinates are the model's own, forward = +Z. Parts are tried in order; a triangle goes to the first part whose test matches its centre (x, y, z; `mesh` is its mesh's name, for a piece lifted off as its own mesh), otherwise to the body. 'bake' turns the part (radians XYZ) around its pivot once, e.g. to bring T-posed arms down. 'swing' (0..1) damps how far the game turns the part, for cuts that would show at full swing; below 0 it also turns the part the other way. 'soft' (a radius) bends a bake in smoothly across the joint (see convert.ts) so baked arms stay attached. 'rigid' (with skin=) makes a part move as one piece: nothing that merely lies close to it bends with it (a jaw, whose teeth lie against the head's).",
   "hydranoid": [
     {
       "name": "tail_tip",
@@ -3858,6 +3858,102 @@
       ],
       "test": "mesh === 'tail_tip'",
       "swing": 0.5
+    }
+  ],
+  "cragmaul": [
+    {
+      "name": "neck",
+      "pivot": [
+        0.0,
+        -0.09,
+        0.27
+      ],
+      "test": "mesh === 'neck'",
+      "swing": 0.5
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "pivot": [
+        0.0,
+        -0.1,
+        0.36
+      ],
+      "test": "mesh === 'head'",
+      "swing": 0.6
+    },
+    {
+      "name": "jaw",
+      "parent": "head",
+      "pivot": [
+        0.0,
+        -0.18,
+        0.434
+      ],
+      "test": "mesh === 'jaw'",
+      "swing": 0.7,
+      "rigid": true
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        0.185,
+        -0.12,
+        0.2
+      ],
+      "test": "mesh === 'leg_fl'",
+      "swing": 0.45
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -0.185,
+        -0.12,
+        0.2
+      ],
+      "test": "mesh === 'leg_fr'",
+      "swing": 0.45
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        0.185,
+        -0.12,
+        -0.26
+      ],
+      "test": "mesh === 'leg_bl'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -0.185,
+        -0.12,
+        -0.26
+      ],
+      "test": "mesh === 'leg_br'",
+      "swing": 0.4
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0.0,
+        -0.115,
+        -0.33
+      ],
+      "test": "mesh === 'tail'",
+      "swing": 0.5
+    },
+    {
+      "name": "tail_tip",
+      "parent": "tail",
+      "pivot": [
+        0.0,
+        -0.135,
+        -0.56
+      ],
+      "test": "mesh === 'tail_tip'",
+      "swing": 0.6
     }
   ]
 }

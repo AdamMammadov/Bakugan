@@ -3808,6 +3808,88 @@ export const ROSTER: Bakugan[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "cragmaul",
+    "name": "Cragmaul",
+    "element": "subterra",
+    "brawler": "Game Owner",
+    "series": "Original",
+    "baseG": 480,
+    "brawlG": 580,
+    "description": "A four-legged beast of living rock, low and heavy. Bands of stone plate lie over its back like a shell, amber crystals grow in a ridge along its spine, and its tail ends in a maul studded with more of them. It carries a great nose horn, two brow horns and a shield of bone behind its head.",
+    "abilities": [
+      {
+        "id": "bedrock-stance",
+        "name": "Bedrock Stance",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "Cragmaul plants its four legs and the ground sets hard as bedrock under it: adds 200 G to Cragmaul.",
+        "estimated": true
+      },
+      {
+        "id": "shellwall",
+        "name": "Shellwall",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Cragmaul draws its head in under its shell of rock plates: cancels the opponent's last ability card.",
+        "estimated": true
+      },
+      {
+        "id": "tremor-stomp",
+        "name": "Tremor Stomp",
+        "type": "weaken",
+        "amount": 150,
+        "effect": "quake",
+        "description": "Cragmaul stamps, and the ground bucks under the opponent: subtracts 150 G from the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "crystal-leech",
+        "name": "Crystal Leech",
+        "type": "drain",
+        "amount": 150,
+        "effect": "quake",
+        "description": "The crystals on its back draw the opponent's strength into their glow: transfers 150 G from the opponent to Cragmaul.",
+        "estimated": true
+      },
+      {
+        "id": "amber-core",
+        "name": "Amber Core",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "The amber crystals along its spine light up from within: adds 150 G to Cragmaul.",
+        "estimated": true
+      },
+      {
+        "id": "horn-charge",
+        "name": "Horn Charge",
+        "type": "attack",
+        "amount": 150,
+        "effect": "quake",
+        "description": "Cragmaul lowers its great nose horn and runs the opponent down.",
+        "estimated": true
+      },
+      {
+        "id": "maul-quake",
+        "name": "Maul Quake",
+        "type": "attack",
+        "amount": 200,
+        "effect": "quake",
+        "description": "Cragmaul brings its crystal-studded tail maul down, and the shock splits the ground under the opponent.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Cragmaul",
+        "series": "Original",
+        "gPower": 480
+      }
+    ]
   }
 ]
 

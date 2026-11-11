@@ -445,6 +445,12 @@ if (q.get('rig')) {
      */
     soft?: number
     swing?: number
+    /**
+     * With skin=: the part moves as one piece. Its own vertices go wholly with it, and it bends nothing that merely
+     * lies close to it; only where its surface runs on into another part's do the two share a bend. For a jaw:
+     * its teeth lie close against the head's, and would otherwise stretch between the two as it opens.
+     */
+    rigid?: boolean
   }
   const parts: Part[] = (await (await fetch('/tools/preview/rigs.json')).json())[q.get('rig')!]
   // a test sees the triangle's centre and the name of its mesh (a part lifted off as its own mesh)
@@ -670,6 +676,7 @@ if (q.get('rig')) {
       parts.forEach((_, k) => {
         if (!live[k]) return
         if (q.get('family') && own.length && !own.some((o) => kin(o, k))) return
+        if (!set.has(k) && (parts[k].rigid || own.some((o) => parts[o].rigid))) return
         const a = set.has(k) ? 1 : THREE.MathUtils.smoothstep(1 - nearest(k, x, y, z) / radius, 0, 1)
         if (a > 0) pull.push([index[k], a])
       })

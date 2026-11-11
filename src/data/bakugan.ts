@@ -350,6 +350,11 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // owner's picture (deep navy skin with pale spots, blue-steel armour, gold claws and trident; the tide-lines, eyes
   // and trident tips glow), skinned and inked. A winged giant standing on its legs, its trident in its right hand
   tidevane: { ball: 'models/tidevane/ball.glb', monster: 'models/tidevane/monster.glb', scale: 2, length: 1.7, stage: 1.3 },
+  // the game's own Terra Bakugan, built for the game shape by shape: a low, heavy beast on four legs, a shell of
+  // overlapping rock plates with a ridge of amber crystals, a horned head with a bone shield behind it, a jaw that
+  // opens, and an armoured tail ending in a crystal-studded maul; one seamless body, skinned and inked. Long and
+  // low, so it is given its whole length
+  cragmaul: { monster: 'models/cragmaul/monster.glb', scale: 1.45, length: 2.5, stage: 0.92 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
