@@ -424,10 +424,13 @@ const leviathan = ROSTER.find((b) => b.id === 'tidevane')?.evolutions.find((e) =
 // coils on the ground instead of legs, its tail rising beside it to a crescent fin; a knight's armoured chest and arms;
 // an eel-dragon's head on a long neck, with a jaw that opens and a webbed hood that flares behind it; a sail down its
 // back; and a great golden trident whose three prongs burn with live water-fire. One seamless body, skinned and inked.
-// (Its ball is Tidevane's for now.)
+// Its ball is Tidevane's evolved: a webbed hood over its upper sides, ivory horns, a steel breastplate with a glowing
+// gem, the serpent's coils wound round its lower half; open, the head rises on a long neck, the hood flares behind it
+// and the trident stands at its side with glowing prongs
 if (leviathan)
   leviathan.models = {
     ...ROSTER_MODELS.tidevane,
+    ball: 'models/tidevane/leviathan-ball.glb',
     monster: 'models/tidevane/leviathan.glb',
     scale: 2.15,
     length: 1.7,
