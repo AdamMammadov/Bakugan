@@ -353,8 +353,10 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // the game's own Terra Bakugan, from the owner's own model: a low, heavy beast on four legs under a shell of rock
   // plates, a ridge of amber crystals on its back and on its tail's maul, a horned head with a bone shield behind
   // it. Given one closed skin (so nothing of its inside shows), its crystals and eyes glow, skinned and inked. Long
-  // and low, so it is given its whole length
-  cragmaul: { monster: 'models/cragmaul/monster.glb', scale: 1.45, length: 2.5, stage: 0.92 },
+  // and low, so it is given its whole length. Its ball: a shell of rock plates over the top with the crystal ridge, the
+  // helmed face on the front, a leg folded on each lower quarter, the tail and its maul down the back; open, the head
+  // comes forward out of the shell, the four legs fold down so it stands on them, and the tail swings out behind
+  cragmaul: { ball: 'models/cragmaul/ball.glb', monster: 'models/cragmaul/monster.glb', scale: 1.45, length: 2.5, stage: 0.92 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
