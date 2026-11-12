@@ -3949,8 +3949,8 @@
       "parent": "tail",
       "pivot": [
         0.0,
-        -0.135,
-        -0.56
+        -0.12,
+        -0.63
       ],
       "test": "mesh === 'tail_tip'",
       "swing": 0.6
