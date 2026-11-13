@@ -139,6 +139,12 @@ export const RATING = {
 }
 const SWING_AT = [...TIERS.map((t) => t.min), TOP_RANK.min, TOP_RANK.min + 1500]
 
+/**
+ * One-time rating gifts the owner's browser (devView) gives its profiles, once each (a profile records the ids it
+ * has had), to those made before `before` (not test profiles made later): the owner asked for a lift up the rankings.
+ */
+export const OWNER_BOOSTS = [{ id: 'rating-2026-11', rating: 350, before: Date.UTC(2026, 10, 13, 12) }]
+
 /** Rank score from experience: 1 point per `per` total XP, at most `max`, so playing alone cannot carry a rank. */
 export const RANK_XP = { per: 200, max: 200 }
 
@@ -220,6 +226,8 @@ export interface Profile {
   glory?: number
   /** Friends (profile or bot ids). A CPU brawler accepts a few seconds after the request: until `since` it is pending. */
   friends?: Friend[]
+  /** One-time gifts of the owner's browser already given to this profile (see OWNER_BOOSTS). */
+  ownerGrants?: string[]
 }
 
 export interface Friend {
@@ -544,7 +552,10 @@ interface ProfilesState {
   evolve: (bakuganId: string) => void
   /** Buys a Bakugan with BP, or claims it when the player's XP is high enough. */
   acquire: (bakuganId: string, how: 'bp' | 'xp') => boolean
-  /** Gives the game owner's own Bakugan, every card unlocked, to each profile in this browser that lacks them. */
+  /**
+   * Gives the game owner's own Bakugan, every card unlocked, to each profile in this browser that lacks them, and the
+   * owner's one-time rating gifts (OWNER_BOOSTS) to those that have not had them.
+   */
   grantOwnerBakugan: () => void
   /** Applies XP, BP, rating and stats for the active player; returns what was gained. */
   recordBattle: (report: BattleReport) => BattleReward | null
@@ -625,8 +636,9 @@ export const useProfiles = create<ProfilesState>()(
             const o = p.collection.find((x) => x.id === id)
             return !o || o.form < top(id)
           })
+        const boosts = (p: Profile) => OWNER_BOOSTS.filter((b) => p.createdAt < b.before && !p.ownerGrants?.includes(b.id))
         // nothing to give: no change at all, so watching the store for new profiles cannot loop
-        if (!get().profiles.some((p) => lacks(p).length)) return
+        if (!get().profiles.some((p) => lacks(p).length || boosts(p).length)) return
         const gift = (o: OwnedBakugan | undefined, id: string): OwnedBakugan => ({
           ...(o ?? own(id)),
           form: top(id),
@@ -635,10 +647,14 @@ export const useProfiles = create<ProfilesState>()(
         set((s) => ({
           profiles: s.profiles.map((p) => {
             const need = lacks(p)
-            if (!need.length) return p
+            const due = boosts(p)
+            if (!need.length && !due.length) return p
             const collection = p.collection.map((o) => (need.includes(o.id) ? gift(o, o.id) : o))
             for (const id of need) if (!collection.some((o) => o.id === id)) collection.push(gift(undefined, id))
-            return { ...p, collection }
+            const rating = p.rating + due.reduce((n, b) => n + b.rating, 0)
+            // (the season's best rank follows, so the climb counts for its Glory)
+            const season = p.season && { ...p.season, peak: Math.max(p.season.peak ?? 0, rankScore({ rating, xp: p.xp })) }
+            return { ...p, collection, rating, season, ownerGrants: [...(p.ownerGrants ?? []), ...due.map((b) => b.id)] }
           }),
         }))
       },
