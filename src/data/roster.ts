@@ -3511,8 +3511,8 @@ export const ROSTER: Bakugan[] = [
     "element": "pyrus",
     "brawler": "Game Owner",
     "series": "Original",
-    "baseG": 470,
-    "brawlG": 570,
+    "baseG": 380,
+    "brawlG": 480,
     "description": "A fire dragon clad in obsidian armour split by glowing lava cracks, with a crown of flame on its head and a tail that ends in fire. When it spreads its wings, veins of magma light up across them.",
     "abilities": [
       {
@@ -3583,12 +3583,12 @@ export const ROSTER: Bakugan[] = [
       {
         "name": "Embral",
         "series": "Original",
-        "gPower": 470
+        "gPower": 380
       },
       {
         "name": "Pyroclast Embral",
         "series": "Original",
-        "gPower": 750,
+        "gPower": 620,
         "abilities": [
           {
             "id": "pyroclast-crown",
@@ -3663,8 +3663,8 @@ export const ROSTER: Bakugan[] = [
     "element": "aquos",
     "brawler": "Game Owner",
     "series": "Original",
-    "baseG": 450,
-    "brawlG": 550,
+    "baseG": 340,
+    "brawlG": 440,
     "description": "A sea dragon knight from the deep, its navy hide dotted with pale spots like stars over night water. It wears blue-steel armour lit by glowing tide-lines, spreads wings like a manta ray's and holds a golden trident whose prongs burn with blue water-fire. Evolved, it trades its legs for a great sea serpent's coils and raises a webbed hood behind its head.",
     "abilities": [
       {
@@ -3735,12 +3735,12 @@ export const ROSTER: Bakugan[] = [
       {
         "name": "Tidevane",
         "series": "Original",
-        "gPower": 450
+        "gPower": 340
       },
       {
         "name": "Leviathan Tidevane",
         "series": "Original",
-        "gPower": 730,
+        "gPower": 560,
         "abilities": [
           {
             "id": "hood-of-the-deep",
@@ -3815,8 +3815,8 @@ export const ROSTER: Bakugan[] = [
     "element": "subterra",
     "brawler": "Game Owner",
     "series": "Original",
-    "baseG": 480,
-    "brawlG": 580,
+    "baseG": 420,
+    "brawlG": 520,
     "description": "A four-legged beast of living rock, low and heavy. Bands of stone plate lie over its back like a shell, amber crystals grow in a ridge along its spine, and its tail ends in a maul studded with more of them. It carries a great nose horn, two brow horns and a shield of bone behind its head.",
     "abilities": [
       {
@@ -3887,7 +3887,7 @@ export const ROSTER: Bakugan[] = [
       {
         "name": "Cragmaul",
         "series": "Original",
-        "gPower": 480
+        "gPower": 420
       }
     ]
   }
