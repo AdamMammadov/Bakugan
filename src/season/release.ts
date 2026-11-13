@@ -4,14 +4,14 @@ import { currentSeason, seasonOfBakugan } from './current'
 
 /**
  * The launch Bakugan: 4 of each attribute, there from the start, plus the game's own Bakugan (Embral, Tidevane,
- * Cragmaul). A new player gets the weakest of their attribute's (listed first); the others are bought or earned.
- * Every other Bakugan comes with a season.
+ * Cragmaul, Aeryx). A new player gets the weakest of their attribute's (listed first); the others are bought or
+ * earned. Every other Bakugan comes with a season.
  */
 export const LAUNCH = [
   ...['saurus', 'dragonoid', 'falconeer', 'rubanoid', 'embral'],
   ...['robotallion', 'preyas', 'preyas-diablo', 'sirenoid', 'tidevane'],
   ...['baliton', 'gorem', 'cycloid', 'manion', 'cragmaul'],
-  ...['monarus', 'skyress', 'harpus', 'ravenoid'],
+  ...['monarus', 'skyress', 'harpus', 'ravenoid', 'aeryx'],
   ...['tigrerra', 'tentaclear', 'pegatrix', 'laserman'],
   ...['fear-ripper', 'hydranoid', 'hades', 'howlkor'],
 ]
@@ -24,9 +24,9 @@ export const OWNER_ONLY = ['dharak']
 
 /**
  * What the owner's browser (devView) gives its profiles, every card unlocked, so the owner can try them out: the
- * owner-only Bakugan and the game's own (Embral, Tidevane, Cragmaul), which players buy or earn.
+ * owner-only Bakugan and the game's own (Embral, Tidevane, Cragmaul, Aeryx), which players buy or earn.
  */
-export const OWNER_GIFTS = [...OWNER_ONLY, 'embral', 'tidevane', 'cragmaul']
+export const OWNER_GIFTS = [...OWNER_ONLY, 'embral', 'tidevane', 'cragmaul', 'aeryx']
 
 /**
  * Whether players can see and get a Bakugan: the launch ones always, a season's from the day that season

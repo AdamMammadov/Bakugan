@@ -3888,6 +3888,158 @@ export const ROSTER: Bakugan[] = [
         "name": "Cragmaul",
         "series": "Original",
         "gPower": 420
+      },
+      {
+        "name": "Monolith Cragmaul",
+        "series": "Original",
+        "gPower": 640,
+        "abilities": [
+          {
+            "id": "monolith-stance",
+            "name": "Monolith Stance",
+            "type": "boost",
+            "amount": 250,
+            "effect": "aura",
+            "description": "Monolith Cragmaul sets its four feet and stands as still as a mountain: adds 250 G to Monolith Cragmaul.",
+            "estimated": true
+          },
+          {
+            "id": "granite-bastion",
+            "name": "Granite Bastion",
+            "type": "shield",
+            "amount": 0,
+            "effect": "shieldDome",
+            "description": "The granite plates on its back lock together like a fortress wall: cancels the opponent's last ability card.",
+            "estimated": true
+          },
+          {
+            "id": "magma-fissure",
+            "name": "Magma Fissure",
+            "type": "weaken",
+            "amount": 200,
+            "effect": "quake",
+            "description": "Its stamp splits the ground open and lava wells up round the opponent: subtracts 200 G from the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "amber-siphon",
+            "name": "Amber Siphon",
+            "type": "drain",
+            "amount": 200,
+            "effect": "quake",
+            "description": "The amber crystals crowding its spine pull the opponent's strength into their glow: transfers 200 G from the opponent to Monolith Cragmaul.",
+            "estimated": true
+          },
+          {
+            "id": "lava-veins",
+            "name": "Lava Veins",
+            "type": "boost",
+            "amount": 200,
+            "effect": "aura",
+            "description": "The cracks between its stone plates blaze with molten rock: adds 200 G to Monolith Cragmaul.",
+            "estimated": true
+          },
+          {
+            "id": "tusk-ram",
+            "name": "Tusk Ram",
+            "type": "attack",
+            "amount": 200,
+            "effect": "quake",
+            "description": "Monolith Cragmaul lowers its horned head and drives its tusks into the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "crystal-cataclysm",
+            "name": "Crystal Cataclysm",
+            "type": "attack",
+            "amount": 250,
+            "effect": "quake",
+            "description": "It brings its crystal-crowned tail club down and the ground bursts into amber shards under the opponent.",
+            "estimated": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aeryx",
+    "name": "Aeryx",
+    "element": "ventus",
+    "brawler": "Game Owner",
+    "series": "Original",
+    "baseG": 390,
+    "brawlG": 490,
+    "description": "A great bird of the high winds, green as a forest canopy, with a breast of pale down and a crest of long jade plumes swept back from its brow. Its eyes burn a cold cyan, and a leaf-shaped gem glows in the middle of its chest. Its wide wings fan out into long flight feathers, and a fan of tail feathers trails behind it.",
+    "abilities": [
+      {
+        "id": "gale-crest",
+        "name": "Gale Crest",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "Aeryx raises its jade crest and the wind gathers round it: adds 200 G to Aeryx.",
+        "estimated": true
+      },
+      {
+        "id": "feather-veil",
+        "name": "Feather Veil",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Aeryx folds its great wings round itself: cancels the opponent's last ability card.",
+        "estimated": true
+      },
+      {
+        "id": "downdraft",
+        "name": "Downdraft",
+        "type": "weaken",
+        "amount": 150,
+        "effect": "tornado",
+        "description": "One beat of its wings drives a crushing wind down on the opponent: subtracts 150 G from the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "leafstone-pull",
+        "name": "Leafstone Pull",
+        "type": "drain",
+        "amount": 150,
+        "effect": "tornado",
+        "description": "The gem in its breast flares and draws the opponent's strength up on the wind: transfers 150 G from the opponent to Aeryx.",
+        "estimated": true
+      },
+      {
+        "id": "jade-eye",
+        "name": "Jade Eye",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Its cyan eyes find every gap in the opponent's guard: adds 150 G to Aeryx.",
+        "estimated": true
+      },
+      {
+        "id": "talon-dive",
+        "name": "Talon Dive",
+        "type": "attack",
+        "amount": 150,
+        "effect": "tornado",
+        "description": "Aeryx folds its wings and drops on the opponent talons first.",
+        "estimated": true
+      },
+      {
+        "id": "cyclone-plume",
+        "name": "Cyclone Plume",
+        "type": "attack",
+        "amount": 200,
+        "effect": "tornado",
+        "description": "Aeryx spins in the air and its flight feathers cut a cyclone through the opponent.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Aeryx",
+        "series": "Original",
+        "gPower": 390
       }
     ]
   }

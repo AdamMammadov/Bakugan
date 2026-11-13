@@ -358,6 +358,12 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // springs and its tail out behind (the closed one gives way to it as the ball opens). Both given one closed skin and
   // amber crystals that glow
   cragmaul: { ball: 'models/cragmaul/ball.glb', monster: 'models/cragmaul/monster.glb', scale: 1.45, length: 2.5, stage: 0.92 },
+  // the game's own Ventus Bakugan, from the owner's own model: a great green bird with a pale breast, a crest of jade
+  // plumes, wide wings and a fan of tail feathers. Its eyes, which sat dark under its brow, are painted glowing cyan
+  // as in the owner's picture, and the leaf-shaped gem in its breast glows. Given one closed skin, cut into its head,
+  // wings, tail fan and feet, skinned and inked (inkThin for the thin feathers). It hovers, its wings spread, so it is
+  // given their whole span. It has no ball of its own yet
+  aeryx: { monster: 'models/aeryx/monster.glb', fly: true, scale: 1.3, length: 2.2 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
@@ -445,6 +451,20 @@ if (leviathan)
     scale: 2.15,
     length: 1.7,
     stage: 1.3,
+  }
+
+const monolith = ROSTER.find((b) => b.id === 'cragmaul')?.evolutions.find((e) => e.name === 'Monolith Cragmaul')
+// Cragmaul evolved, from the owner's own model, coloured after the owner's picture: clear amber crystals crowding its
+// spine, knees, nose and tail club that glow from within (the model's own facets and streaks kept, the facets that
+// came out half dark filled in), dark granite plates with molten lava glowing in the cracks between them, tan brow
+// and cheek horns, tusks and claws, and glowing amber eyes under its helm. Given one closed skin, cut into its neck,
+// head, jaw (the tusks stay with the upper lip), four legs, tail and club, skinned and inked. It keeps Cragmaul's ball
+if (monolith)
+  monolith.models = {
+    ...ROSTER_MODELS.cragmaul,
+    monster: 'models/cragmaul/monolith.glb',
+    scale: 1.8,
+    stage: 1,
   }
 
 BAKUGAN.push(...ROSTER)
