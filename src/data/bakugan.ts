@@ -362,12 +362,8 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // plumes, wide wings and a fan of tail feathers. Its eyes, which sat dark under its brow, are painted glowing cyan
   // as in the owner's picture, and the leaf-shaped gem in its breast glows. Given one closed skin, cut into its head,
   // wings, tail fan and feet, skinned and inked (inkThin for the thin feathers). It hovers, its wings spread, so it is
-  // given their whole span. Its ball, after the owner's picture: green armour plates in three greens with steel hinges
-  // at the seams, the eagle's head moulded on its front (a bronze helm over its crown, glowing cyan eyes, its hooked
-  // beak standing out of the ball), a wing folded down each side in three rows of broad feathers, the tail feathers
-  // down its back and the leaf gem glowing in a steel triangle on its chest. Open, its panels swing open and give way
-  // to Aeryx itself, wings spread, hovering where the ball was
-  aeryx: { ball: 'models/aeryx/ball.glb', monster: 'models/aeryx/monster.glb', fly: true, scale: 1.3, length: 2.2 },
+  // given their whole span. It has no ball of its own yet
+  aeryx: { monster: 'models/aeryx/monster.glb', fly: true, scale: 1.3, length: 2.2 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
@@ -462,16 +458,10 @@ const monolith = ROSTER.find((b) => b.id === 'cragmaul')?.evolutions.find((e) =>
 // spine, knees, nose and tail club that glow from within (the model's own facets and streaks kept, the facets that
 // came out half dark filled in), dark granite plates with molten lava glowing in the cracks between them, tan brow
 // and cheek horns, tusks and claws, and glowing amber eyes under its helm. Given one closed skin, cut into its neck,
-// head, jaw (the tusks stay with the upper lip), four legs, tail and club, skinned and inked.
-// Its ball, after the owner's two pictures: a ball of dark granite broken into plates of every size, lava glowing in
-// some of the cracks between them, crowned with the creature's own amber crystals (taken from its model), two great
-// crystals low on its front and a horn on one side. Open, two bands of its shell stay with Monolith Cragmaul as it
-// stands where the ball was: one arching over its shoulders on a hinge, the other a claw of rock behind it on spring
-// struts; the rest of the ball gives way
+// head, jaw (the tusks stay with the upper lip), four legs, tail and club, skinned and inked. It keeps Cragmaul's ball
 if (monolith)
   monolith.models = {
     ...ROSTER_MODELS.cragmaul,
-    ball: 'models/cragmaul/monolith-ball.glb',
     monster: 'models/cragmaul/monolith.glb',
     scale: 1.8,
     stage: 1,
