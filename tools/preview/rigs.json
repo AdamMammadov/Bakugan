@@ -4113,5 +4113,67 @@
       "test": "mesh === 'leg_br'",
       "swing": 0.35
     }
+  ],
+  "tempest-aeryx": [
+    {
+      "name": "head",
+      "pivot": [
+        0.0,
+        0.78,
+        0.58
+      ],
+      "test": "mesh === 'head'",
+      "swing": 0.45
+    },
+    {
+      "name": "wing_l",
+      "pivot": [
+        0.22,
+        0.8,
+        0.4
+      ],
+      "test": "mesh === 'wing_l'",
+      "swing": 0.55
+    },
+    {
+      "name": "wing_r",
+      "pivot": [
+        -0.22,
+        0.8,
+        0.4
+      ],
+      "test": "mesh === 'wing_r'",
+      "swing": 0.55
+    },
+    {
+      "name": "tail",
+      "pivot": [
+        0.0,
+        0.35,
+        0.15
+      ],
+      "test": "mesh === 'tail'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        0.12,
+        0.33,
+        0.42
+      ],
+      "test": "mesh === 'leg_bl'",
+      "swing": 0.35
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -0.12,
+        0.33,
+        0.42
+      ],
+      "test": "mesh === 'leg_br'",
+      "swing": 0.35
+    }
   ]
 }

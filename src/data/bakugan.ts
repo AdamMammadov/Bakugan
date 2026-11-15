@@ -476,6 +476,20 @@ if (monolith)
     stage: 1,
   }
 
+const tempest = ROSTER.find((b) => b.id === 'aeryx')?.evolutions.find((e) => e.name === 'Tempest Aeryx')
+// Aeryx evolved, from the owner's own model: a great green bird standing on armoured legs, its wings raised, a jade
+// crest, a breastplate with a glowing gem and three long tail plumes. Given one closed skin (the middle plume, which
+// stood loose behind the body, joined to its back), its eyes and gem made to glow, cut into its head, wings, tail and
+// legs, skinned and inked. It stands rather than hovers, and keeps Aeryx's ball
+if (tempest)
+  tempest.models = {
+    ...ROSTER_MODELS.aeryx,
+    monster: 'models/aeryx/tempest.glb',
+    fly: false,
+    scale: 1.7,
+    length: 2.2,
+  }
+
 BAKUGAN.push(...ROSTER)
 
 export const bakuganForElement = (element: ElementId) => BAKUGAN.filter((b) => b.element === element)

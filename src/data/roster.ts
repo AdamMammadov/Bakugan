@@ -4040,6 +4040,76 @@ export const ROSTER: Bakugan[] = [
         "name": "Aeryx",
         "series": "Original",
         "gPower": 390
+      },
+      {
+        "name": "Tempest Aeryx",
+        "series": "Original",
+        "gPower": 590,
+        "abilities": [
+          {
+            "id": "storm-crown",
+            "name": "Storm Crown",
+            "type": "boost",
+            "amount": 250,
+            "effect": "aura",
+            "description": "The jade plumes of its crest stand up and the storm gathers round Tempest Aeryx: adds 250 G to Tempest Aeryx.",
+            "estimated": true
+          },
+          {
+            "id": "aegis-plumage",
+            "name": "Aegis Plumage",
+            "type": "shield",
+            "amount": 0,
+            "effect": "shieldDome",
+            "description": "Tempest Aeryx closes its great wings round its armoured breast: cancels the opponent's last ability card.",
+            "estimated": true
+          },
+          {
+            "id": "crosswind-shear",
+            "name": "Crosswind Shear",
+            "type": "weaken",
+            "amount": 200,
+            "effect": "tornado",
+            "description": "Its wings beat once each way and the crosswind tears at the opponent: subtracts 200 G from the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "heartstone-gale",
+            "name": "Heartstone Gale",
+            "type": "drain",
+            "amount": 200,
+            "effect": "tornado",
+            "description": "The gem in its breastplate blazes and draws the opponent's strength up on the gale: transfers 200 G from the opponent to Tempest Aeryx.",
+            "estimated": true
+          },
+          {
+            "id": "eye-of-the-tempest",
+            "name": "Eye of the Tempest",
+            "type": "boost",
+            "amount": 200,
+            "effect": "aura",
+            "description": "Its eyes burn cyan and the wind falls still round it: adds 200 G to Tempest Aeryx.",
+            "estimated": true
+          },
+          {
+            "id": "talon-strike",
+            "name": "Talon Strike",
+            "type": "attack",
+            "amount": 200,
+            "effect": "tornado",
+            "description": "Tempest Aeryx drops on the opponent with its armoured talons.",
+            "estimated": true
+          },
+          {
+            "id": "three-plume-cyclone",
+            "name": "Three-Plume Cyclone",
+            "type": "attack",
+            "amount": 250,
+            "effect": "tornado",
+            "description": "It spins on its three long tail plumes and a cyclone of blade-sharp feathers cuts through the opponent.",
+            "estimated": true
+          }
+        ]
       }
     ]
   }
