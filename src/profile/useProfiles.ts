@@ -140,10 +140,20 @@ export const RATING = {
 const SWING_AT = [...TIERS.map((t) => t.min), TOP_RANK.min, TOP_RANK.min + 1500]
 
 /**
- * One-time rating gifts the owner's browser (devView) gives its profiles, once each (a profile records the ids it
- * has had), to those made before `before` (not test profiles made later): the owner asked for a lift up the rankings.
+ * One-time gifts the owner's browser (devView) gives its profiles, once each (a profile records the ids it has had),
+ * to those made before `before` (not test profiles made later): the owner asked for a lift up the rankings.
  */
-export const OWNER_BOOSTS = [{ id: 'rating-2026-11', rating: 350, before: Date.UTC(2026, 10, 13, 12) }]
+export const OWNER_BOOSTS: {
+  id: string
+  before: number
+  /** Rating added. */
+  rating?: number
+  /** Standing raised to at least these (rating, player XP, ranked wins and losses). */
+  atLeast?: { rating: number; xp: number; wins: number; losses: number }
+}[] = [
+  { id: 'rating-2026-11', rating: 350, before: Date.UTC(2026, 10, 13, 12) },
+  { id: 'standing-2026-11', atLeast: { rating: 3010, xp: 48000, wins: 342, losses: 85 }, before: Date.UTC(2026, 10, 15) },
+]
 
 /** Rank score from experience: 1 point per `per` total XP, at most `max`, so playing alone cannot carry a rank. */
 export const RANK_XP = { per: 200, max: 200 }
@@ -651,10 +661,28 @@ export const useProfiles = create<ProfilesState>()(
             if (!need.length && !due.length) return p
             const collection = p.collection.map((o) => (need.includes(o.id) ? gift(o, o.id) : o))
             for (const id of need) if (!collection.some((o) => o.id === id)) collection.push(gift(undefined, id))
-            const rating = p.rating + due.reduce((n, b) => n + b.rating, 0)
+            let { rating, xp, stats } = p
+            for (const b of due) {
+              rating += b.rating ?? 0
+              if (b.atLeast) {
+                rating = Math.max(rating, b.atLeast.rating)
+                xp = Math.max(xp, b.atLeast.xp)
+                const wins = Math.max(stats.wins, b.atLeast.wins)
+                const losses = Math.max(stats.losses, b.atLeast.losses)
+                stats = { ...stats, wins, losses, battles: Math.max(stats.battles, wins + losses) }
+              }
+            }
             // (the season's best rank follows, so the climb counts for its Glory)
-            const season = p.season && { ...p.season, peak: Math.max(p.season.peak ?? 0, rankScore({ rating, xp: p.xp })) }
-            return { ...p, collection, rating, season, ownerGrants: [...(p.ownerGrants ?? []), ...due.map((b) => b.id)] }
+            const season = p.season && { ...p.season, peak: Math.max(p.season.peak ?? 0, rankScore({ rating, xp })) }
+            return {
+              ...p,
+              collection,
+              rating,
+              xp,
+              stats,
+              season,
+              ownerGrants: [...(p.ownerGrants ?? []), ...due.map((b) => b.id)],
+            }
           }),
         }))
       },
