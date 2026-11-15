@@ -458,10 +458,16 @@ const monolith = ROSTER.find((b) => b.id === 'cragmaul')?.evolutions.find((e) =>
 // spine, knees, nose and tail club that glow from within (the model's own facets and streaks kept, the facets that
 // came out half dark filled in), dark granite plates with molten lava glowing in the cracks between them, tan brow
 // and cheek horns, tusks and claws, and glowing amber eyes under its helm. Given one closed skin, cut into its neck,
-// head, jaw (the tusks stay with the upper lip), four legs, tail and club, skinned and inked. It keeps Cragmaul's ball
+// head, jaw (the tusks stay with the upper lip), four legs, tail and club, skinned and inked.
+// Its ball is the owner's own two models, coloured after the owner's pictures (amber crystals that glow, lava in the
+// gaps between the rock plates, tan horns and claws, orange eyes) and each given one closed skin (their holes and
+// breaks sealed). Closed, the ball of rock plates with the head curled in it under a crown of crystals; as it opens,
+// the open model (the beast on its legs, its side plates out on their springs, its tail out) takes its place at the
+// same size, half way through
 if (monolith)
   monolith.models = {
     ...ROSTER_MODELS.cragmaul,
+    ball: 'models/cragmaul/monolith-ball.glb',
     monster: 'models/cragmaul/monolith.glb',
     scale: 1.8,
     stage: 1,

@@ -125,7 +125,7 @@ export function NormalizedModel({
     })
     // parts that only exist in the open form start collapsed, and must not affect the fit
     copy.traverse((o) => {
-      if (o.userData.openOnly) {
+      if (o.userData.openOnly || o.userData.openSwap) {
         o.scale.setScalar(0.001)
         o.visible = false
       }
@@ -138,7 +138,7 @@ export function NormalizedModel({
     const nodes: { node: THREE.Object3D; pos: THREE.Vector3; rot: THREE.Euler; u: Record<string, unknown> }[] = []
     scene.traverse((o) => {
       const u = o.userData
-      if (u.openPos || u.openRot || u.openOnly || u.closedOnly)
+      if (u.openPos || u.openRot || u.openOnly || u.closedOnly || u.openSwap || u.closedSwap)
         nodes.push({ node: o, pos: o.position.clone(), rot: o.rotation.clone(), u })
     })
     return nodes
@@ -160,6 +160,16 @@ export function NormalizedModel({
       if (u.closedOnly) {
         node.scale.setScalar(Math.max(1 - k, 0.001))
         node.visible = k < 0.98
+      }
+      // a ball whose open form is a model of its own, the same size and in the same place: the closed one gives way
+      // to it half way through, both nearly full size (a quick pop, not one shrinking away before the other grows)
+      if (u.closedSwap) {
+        node.scale.setScalar(1 - 0.1 * Math.min(k / 0.5, 1))
+        node.visible = k < 0.5
+      }
+      if (u.openSwap) {
+        node.scale.setScalar(0.9 + 0.1 * Math.min(Math.max((k - 0.5) / 0.5, 0), 1))
+        node.visible = k >= 0.5
       }
     }
   })

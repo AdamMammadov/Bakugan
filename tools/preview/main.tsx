@@ -99,8 +99,8 @@ function Model() {
     if (q.get('faces') === '1') showSides(scene)
     scene.traverse((o) => {
       const u = o.userData
-      if (u.openOnly) o.visible = open
-      if (u.closedOnly) o.visible = !open
+      if (u.openOnly || u.openSwap) o.visible = open
+      if (u.closedOnly || u.closedSwap) o.visible = !open
       if (open && u.openPos) o.position.add(new THREE.Vector3(...u.openPos))
       if (open && u.openRot) o.rotation.set(o.rotation.x + u.openRot[0], o.rotation.y + u.openRot[1], o.rotation.z + u.openRot[2])
       for (const [name, x, y, z] of pose) if (o.name === name) o.rotation.set(Number(x), Number(y), Number(z))
