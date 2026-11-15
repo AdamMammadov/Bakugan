@@ -362,8 +362,11 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // plumes, wide wings and a fan of tail feathers. Its eyes, which sat dark under its brow, are painted glowing cyan
   // as in the owner's picture, and the leaf-shaped gem in its breast glows. Given one closed skin, cut into its head,
   // wings, tail fan and feet, skinned and inked (inkThin for the thin feathers). It hovers, its wings spread, so it is
-  // given their whole span. It has no ball of its own yet
-  aeryx: { monster: 'models/aeryx/monster.glb', fly: true, scale: 1.3, length: 2.2 },
+  // given their whole span. Its ball is the owner's own two models, each given one closed skin: closed, a ball of
+  // green feather plates with the eagle's head on its front (its pale V crest and both eyes made to glow, its beak the
+  // bronze-grey of the owner's picture); as it opens, the open model (Aeryx crouched on its talons, wings raised, its
+  // eyes aglow) takes its place at the same size, half way through
+  aeryx: { ball: 'models/aeryx/ball.glb', monster: 'models/aeryx/monster.glb', fly: true, scale: 1.3, length: 2.2 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
