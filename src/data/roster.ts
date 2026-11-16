@@ -4112,6 +4112,88 @@ export const ROSTER: Bakugan[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "scarion",
+    "name": "Scarion",
+    "element": "haos",
+    "brawler": "Game Owner",
+    "series": "Original",
+    "baseG": 360,
+    "brawlG": 460,
+    "description": "A great beetle of light, low and heavy on six armoured legs. Pearl wing cases banded with gold cover its back, a twin pair of long curved horns arches forward from its shield, a short gold horn rises from its head, and its eyes glow a clear cyan.",
+    "abilities": [
+      {
+        "id": "radiant-carapace",
+        "name": "Radiant Carapace",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "Light gathers in the gold bands of its wing cases: adds 200 G to Scarion.",
+        "estimated": true
+      },
+      {
+        "id": "pearl-bulwark",
+        "name": "Pearl Bulwark",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Scarion draws its legs in under its pearl armour: cancels the opponent's last ability card.",
+        "estimated": true
+      },
+      {
+        "id": "blinding-flare",
+        "name": "Blinding Flare",
+        "type": "weaken",
+        "amount": 150,
+        "effect": "lightBeam",
+        "description": "Its eyes flare and the opponent is dazzled: subtracts 150 G from the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "sun-siphon",
+        "name": "Sun Siphon",
+        "type": "drain",
+        "amount": 150,
+        "effect": "lightBeam",
+        "description": "The light drains out of the opponent into Scarion's armour: transfers 150 G from the opponent to Scarion.",
+        "estimated": true
+      },
+      {
+        "id": "gilded-shell",
+        "name": "Gilded Shell",
+        "type": "boost",
+        "amount": 150,
+        "effect": "aura",
+        "description": "Its gold trim burns bright as noon: adds 150 G to Scarion.",
+        "estimated": true
+      },
+      {
+        "id": "horn-lift",
+        "name": "Horn Lift",
+        "type": "attack",
+        "amount": 150,
+        "effect": "lightBeam",
+        "description": "Scarion gets its horns under the opponent and heaves it up.",
+        "estimated": true
+      },
+      {
+        "id": "twin-arc-crush",
+        "name": "Twin Arc Crush",
+        "type": "attack",
+        "amount": 200,
+        "effect": "lightBeam",
+        "description": "Scarion brings its twin curved horns down together and crushes the opponent between them.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Scarion",
+        "series": "Original",
+        "gPower": 360
+      }
+    ]
   }
 ]
 

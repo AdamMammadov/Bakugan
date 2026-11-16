@@ -4175,5 +4175,57 @@
       "test": "mesh === 'leg_br'",
       "swing": 0.35
     }
+  ],
+  "scarion": [
+    {
+      "name": "head",
+      "pivot": [
+        0.0,
+        -0.05,
+        0.17
+      ],
+      "test": "mesh === 'head'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_fl",
+      "pivot": [
+        0.23,
+        -0.02,
+        0.12
+      ],
+      "test": "mesh === 'leg_fl'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_fr",
+      "pivot": [
+        -0.23,
+        -0.02,
+        0.12
+      ],
+      "test": "mesh === 'leg_fr'",
+      "swing": 0.4
+    },
+    {
+      "name": "leg_bl",
+      "pivot": [
+        0.23,
+        -0.02,
+        -0.6
+      ],
+      "test": "mesh === 'leg_bl'",
+      "swing": 0.35
+    },
+    {
+      "name": "leg_br",
+      "pivot": [
+        -0.23,
+        -0.02,
+        -0.6
+      ],
+      "test": "mesh === 'leg_br'",
+      "swing": 0.35
+    }
   ]
 }

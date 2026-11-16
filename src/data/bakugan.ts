@@ -367,6 +367,12 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // the owner's own almond sockets beside the beak, its beak the bronze-grey of the owner's picture); as it opens, the open model (Aeryx crouched on its talons, wings raised, its
   // eyes aglow) takes its place at the same size, half way through
   aeryx: { ball: 'models/aeryx/ball.glb', monster: 'models/aeryx/monster.glb', fly: true, scale: 1.3, length: 2.2 },
+  // the game's own Haos Bakugan, from the owner's own model: a great beetle of light on six armoured legs, pearl and
+  // gold armour, a twin pair of long curved horns arching forward from its shield (the owner modelled one; its twin,
+  // which broke off in the owner's tool, is the same horn mirrored to the other side, both turned a little outward so
+  // they stand side by side), a short gold horn on its head and cyan eyes that glow. Given one closed skin, cut into
+  // its head and front and back legs (the middle pair stay with the body), skinned and inked. It has no ball yet
+  scarion: { monster: 'models/scarion/monster.glb', scale: 1.35, length: 2.3, stage: 0.95 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
