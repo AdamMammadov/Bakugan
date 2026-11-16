@@ -480,10 +480,15 @@ const tempest = ROSTER.find((b) => b.id === 'aeryx')?.evolutions.find((e) => e.n
 // Aeryx evolved, from the owner's own model: a great green bird standing on armoured legs, its wings raised, a jade
 // crest, a breastplate with a glowing gem and three long tail plumes. Given one closed skin (the middle plume, which
 // stood loose behind the body, joined to its back), its eyes and gem made to glow, cut into its head, wings, tail and
-// legs, skinned and inked. It stands rather than hovers, and keeps Aeryx's ball
+// legs, skinned and inked. It stands rather than hovers.
+// Its ball is the owner's own two models, each given one closed skin: closed, a ball of green feather plates under a
+// cyan crest, the eagle's face with its beak, and a breastplate holding the gem (the gem and eyes glow); as it opens,
+// the open model (the ball stood on its legs, its head up on its neck, wings spread on their hinges, its tail fan out,
+// its body as big as the ball) takes its place half way through
 if (tempest)
   tempest.models = {
     ...ROSTER_MODELS.aeryx,
+    ball: 'models/aeryx/tempest-ball.glb',
     monster: 'models/aeryx/tempest.glb',
     fly: false,
     scale: 1.7,
