@@ -4,6 +4,7 @@ import { currentSeason } from '../season/current'
 import { LAUNCH, OWNER_ONLY } from '../season/release'
 import { botById, botNow, BOTS, botTeam } from './bots'
 import { ATTR_WORD, azOrdinal, DAY_WORD, hourPhrase, LINES, type Lang, type LineKey } from './chatLines'
+import { KIRA_LINES, type KiraKey } from './kiraLines'
 import { bakuganPrice, rankScore, tierOf, type Profile } from './useProfiles'
 
 /**
@@ -155,7 +156,7 @@ const INSULT = W(
   'noob|n00b|nub|stupid|idiot|dumb|loser|trash|garbage|you suck|u suck|shut up|stfu|hate you|ugly|lame|moron|clown|axmaq~|gic~|sarsaq~|eşşək~|salak~|aptal~|gerizekalı~|ezik~|beyinsiz~|dangalaq~|qanmaz~|дурак~|тупой~|тупица|нуб~|лох~|идиот~|заткнись|отстой',
 )
 const ARE_BOT = W(
-  'are you a bot|are you bot|you a bot|r u a bot|are you real|are you human|botsan|sən botsan|botsan|bot musan|insansan|bot musun|insan mısın|ты бот|ты робот|ты настоящий',
+  'like a bot|like a robot|bot kimi|robot kimi|bot gibi|robot gibi|как бот|как робот|are you a bot|are you bot|you a bot|r u a bot|are you real|are you human|botsan|sən botsan|botsan|bot musan|insansan|bot musun|insan mısın|ты бот|ты робот|ты настоящий',
 )
 const COMPLIMENT = W(
   "you're good|youre good|you are good|you're great|you are great|you're the best|you are the best|you're strong|you are strong|you're awesome|you rock|great job|good job|well done|nice one|gj|wp|well played|respect|legend|goat|əlasan|əla oynayırsan|supersən|güclüsən|qəşəngsən|afərin|aferin|bravo|maladess|molodec|harikasın|çok iyisin|helal|efsanesin|efsane|ustasın|молодец|красавчик|ты лучший|круто играешь|респект",
@@ -174,7 +175,7 @@ const WHO_WANTS_FAR = new RegExp(
   'u',
 )
 const WIN = W(
-  'i won|won|win|wins|winning|victory|i beat|gg|evolved|qalib~|udmuşam|uddum|uddu|udduq|qazandım|qazandıq|kazandım|kazandık|yendim|galip|победил~|выиграл~|победа',
+  'i won|won|win|wins|winning|victory|i beat|gg|evolved|qalib~|udmuşam|uddum~|uddu|udduq|qazandım|qazandıq|kazandım|kazandık|yendim|galip|победил~|выиграл~|победа',
 )
 const LOSS = W(
   'i lost|lost|lose|losing|defeated|got beat|rekt|uduzdum|uduzdu~|uduzuram|uduzmuşam|məğlub~|kaybettim|kaybettik|yenildim|mağlup~|проиграл~|поражени~|слил~',
@@ -226,7 +227,8 @@ const NO = W(
 const LATER = W('later|sonra|potom|позже|потом')
 
 // question words
-const Q_WHO = W("who|who's|whos|kim|kimdir|kimin|kimə|kimi|кто|кого|кому")
+// ("kimi" is left out: far more often it is "like", as in "bot kimi")
+const Q_WHO = W("who|who's|whos|kim|kimdir|kimin|kimə|кто|кого|кому")
 const Q_WHAT = W("what|what's|whats|nə|nədir|nəyi|ne|nedir|что|чего")
 const Q_WHEN = W('when|what time|nə vaxt|nəvaxt|haçan|ne zaman|когда|во сколько')
 const Q_WHERE = W('where|harada|harda|hara|nerede|nereye|где|куда')
@@ -495,8 +497,8 @@ const REQUEST = W(
   "let's|lets|wanna|want to|gəl|gəlin|edək|döyüşək|döyüşərik|oynayaq|hadi|haydi|давай|сразимся|1v1|2v2|3v3|rematch",
 )
 
-/** The answer of a CPU brawler to a player's message. */
-export function reply(input: ChatInput): ChatReply {
+/** The answer of a CPU brawler to a player's message, with the line keys it was built from. */
+function baseReply(input: ChatInput): ChatReply & { keys: LineKey[] } {
   const raw = input.text
   const own = botById(input.botId)
   let t = fold(raw)
@@ -738,7 +740,15 @@ export function reply(input: ChatInput): ChatReply {
     ),
     ask: asking && ASKS[asking.key],
     lang,
+    keys: parts.map((p) => p.key),
   }
+}
+
+/** The answer of a CPU brawler to a player's message (Kira answers her direct messages in her own way). */
+export function reply(input: ChatInput): ChatReply {
+  const base = baseReply(input)
+  if (isKiraDm(input)) return kiraReply(input, base)
+  return { text: base.text, ask: base.ask, lang: base.lang }
 }
 
 /** Another clan member's first name, for "ask {someone}". */
@@ -767,5 +777,153 @@ export function botLine(
 ): ChatReply {
   const info = botInfo({ ...input, text: '', history: [] })
   const vars = { ...info.vars, ...(input.name ? { me: input.name } : {}) }
+  if (input.botId === KIRA && input.place.kind === 'dm' && key in KIRA_LINES[lang]) {
+    const own = kiraLine(lang, key as KiraKey, vars, input.recent)
+    if (own) return { text: own, ask: ASKS[key], lang }
+  }
   return { text: line(lang, key, vars, input.recent) || line('en', key, vars), ask: ASKS[key], lang }
+}
+
+// ---------------------------------------------------------------- Kira
+
+/**
+ * Kira Kurogane talks to the player in direct messages like someone close to them: warm, playful, a little
+ * jealous, lots of emoji (sweet, never explicit). She understands more of the everyday things said to someone
+ * close (missing them, "love you", sorry, good night, "you talk like a bot", a lone "??") and answers the game's
+ * questions (rank, shop, Bakugan…) with the same facts as every brawler, in her own tone. In clan chats she
+ * talks like everyone else.
+ */
+const KIRA = BOTS.find((b) => b.name.split(' ')[0] === 'Kira')?.id
+
+const isKiraDm = (input: ChatInput) => input.botId === KIRA && input.place.kind === 'dm'
+
+const MISS = W(
+  'miss you|missed you|miss u|i miss|darıxdım|darıxmışdım|darıxmışam|darıxırdım|səndən ötrü darıx~|sənin üçün darıx~|darıxıram səni|səni darıxıram|özledim|özlemiştim|seni özledim|скучаю|соскучил~',
+)
+const LOVE = W(
+  'love you|luv you|love u|ily|i love you|səni sevirəm|sevirəm səni|seni seviyorum|seviyorum seni|люблю тебя|тебя люблю',
+)
+const LOVE_Q = W(
+  'do you love me|do u love me|you love me|məni sevirsən|sevirsən məni|sevirsənmi|beni seviyor musun|beni sever misin|ты меня любишь|любишь меня',
+)
+const GIRLFRIEND = W(
+  'be my girlfriend|my girlfriend|girlfriend|sevgilim ol~|sevgilim olarsan|qız dostum ol~|kız arkadaşım ol~|sevgilim olur musun|будь моей девушкой|моей девушкой',
+)
+const HUG = W('hug|hugs|hug me|qucaqla~|qucaqlayıram|sarıl~|обним~')
+const KISS = W('kiss|kisses|muah|mwah|öpürəm|öpüm|öpək|öpüş|öpücük|öpdüm|öp məni|öpüyorum|поцел~|целую')
+const PRETTY = W(
+  'beautiful|pretty|cute|gorgeous|lovely|gözəlsən|gözəlim|gözəl qız|qəşəngsən|şirinsən|şirinim|güzelsin|güzelim|tatlısın|tatlım|красивая|красотка|милая|прелесть',
+)
+const SORRY = W(
+  'sorry|my bad|forgive me|apologize|bağışla~|üzr istəyirəm|üzrlü say|özür dilerim|affet~|kusura bakma|извини|прости',
+)
+const WHERE_ARE = W(
+  'where are you|where were you|where have you been|harda idin|harada idin|hardaydın|haradaydın|hardasan|haradasan|harda qalmısan|neredesin|nerdesin|neredeydin|где ты|где была|где пропадала',
+)
+const HOW_WAS = W(
+  'necə idi|necə keçdi|nə təhər keçdi|how was it|how did it go|how was your day|günün necə keçdi|nasıldı|nasıl geçti|как прошло|как было|как день',
+)
+const MORNING = W('good morning|morning|sabahın xeyir|sabahınız xeyir|günaydın|доброе утро')
+const YOU_OBJ = W('səni|seni|sənə|you|u|тебя')
+const TOGETHER = W('tag|tag battle|2v2|birlikdə|bir komandada|eyni komandada|together|team up|beraber|birlikte|вместе')
+/** Girls' names among the other brawlers: Kira is (playfully) jealous of them. */
+const OTHER_GIRLS = W(
+  'Rena|Mira|Nia|Yuna|Aya|Lia|Zoe|Rin|Mei|Ivy|Nina|Emi|Suki|Ada|Hana|Lena|Maya|Tia|Yuki|Cleo|Saya',
+)
+/** What the shared lines say when they do not know what to answer: Kira says something of her own instead. */
+const FALLBACK: LineKey[] = ['unknown', 'qUnknown', 'who', 'why', 'when', 'where', 'number', 'yes', 'no', 'hello']
+const BATTLE_PLAIN: LineKey[] = ['battleYes', 'battleGroup', 'battleNow']
+
+function kiraLine(lang: Lang, key: KiraKey, vars: Record<string, string | number>, recent: string[] = []) {
+  const filled = KIRA_LINES[lang][key]
+    .map((l) => l.replace(/\{(\w+)\}/g, (_, k: string) => (vars[k] !== undefined && vars[k] !== '' ? String(vars[k]) : '\u0000')))
+    .filter((l) => !l.includes('\u0000'))
+  if (!filled.length) return ''
+  const fresh = filled.filter((l) => !recent.some((r) => r.includes(l)))
+  return pick(fresh.length ? fresh : filled)
+}
+
+function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }): ChatReply {
+  const { lang } = base
+  const raw = input.text
+  const t = fold(raw).replace(W('kira'), ' ').trim()
+  const is = (re: RegExp) => re.test(t)
+  const recent = input.history.slice(-12).map((h) => h.text)
+  const info = botInfo(input)
+  const lastBot = [...input.history].reverse().find((h) => h.author !== input.player?.id)
+  const asked = lastBot?.author === input.botId ? lastBot.ask : undefined
+  const question = raw.includes('?')
+  const yes = is(YES) || ((lang === 'az' || lang === 'tr') && is(YES_TURKIC))
+  const no = is(NO)
+  const keys: KiraKey[] = []
+  let ask: Ask | undefined
+  const say = (key: KiraKey, a?: Ask) => {
+    keys.push(key)
+    if (a) ask = a
+  }
+  const girl = OTHER_GIRLS.exec(t)
+  const vars: Record<string, string | number> = {
+    ...info.vars,
+    snip: snippet(raw),
+    ...(girl ? { other: cap(girl[0]) } : {}),
+  }
+  const greeted = is(GREET) && !is(MORNING)
+  const moodAnswer = () => say(info.fresh ? 'moodAskBrawled' : 'moodAsk', 'mood')
+
+  if (/^[\s?？!.…]+$/u.test(raw)) say('confused')
+  else if (is(INSULT)) say('hurt')
+  else if (is(ARE_BOT)) say('bot')
+  else if (is(SORRY)) say('sorry')
+  else if (is(LOVE_Q)) say('loveAsk')
+  else if (is(GIRLFRIEND)) say('girlfriend')
+  else if (is(LOVE)) say('love')
+  else if (is(MISS)) say('miss')
+  else if (is(KISS)) say('kiss')
+  else if (is(HUG)) say('hug')
+  else if (is(PRETTY) || is(COMPLIMENT)) say('compliment')
+  else if (is(WIN) && is(YOU_OBJ) && !question) say('beatMe')
+  else if (girl && !bakuganIn(t).length) say('jealous')
+  else if (is(HOW_WAS)) say(info.fresh ? 'howWasBrawled' : 'howWas')
+  else if (is(WHERE_ARE)) say('where')
+  else if (is(NIGHT)) say('night')
+  else if (is(MORNING)) say('morning')
+  else if (is(BYE)) say('bye')
+  else if (asked === 'mood' && (is(GOOD_MOOD) || is(BAD_MOOD) || yes)) {
+    say(is(BAD_MOOD) ? 'moodBad' : 'moodGood')
+    // asked back: her own mood, without asking again what was just answered
+    if (is(YOU_BACK) || ASKS_BACK.test(t) || is(MOOD)) say('moodMine')
+  } else if (is(MOOD) || ((is(YOU_BACK) || ASKS_BACK.test(t)) && asked === 'mood')) {
+    if (greeted) say('hi')
+    moodAnswer()
+  } else if (greeted && t.replace(new RegExp(GREET.source, 'gu'), ' ').replace(/[\p{P}\p{S}\s]+/gu, '').length <= 2)
+    say(Math.random() < 0.5 ? 'greet' : 'greetMood', 'mood')
+  else if (is(DOING)) say(info.fresh ? 'doingBrawled' : 'doing')
+  else if (is(BAD_MOOD) && !question) say('moodBad')
+  else if (is(THANKS)) say('thanks')
+  else if (is(LOSS) && !question && !is(REQUEST)) say('playerLost')
+  else if (is(WIN) && !question && !is(REQUEST)) say('playerWon')
+  else if (is(TOGETHER) && (is(BATTLE) || is(REQUEST))) say('tag')
+  else if (base.keys.some((k) => BATTLE_PLAIN.includes(k)) || (asked === 'battle' && yes)) say('battle')
+  else if (asked === 'battle' && no) say('no')
+  else if (is(LAUGH) || /😂|🤣|😆|😹/u.test(raw)) say('laugh')
+  else if (base.keys.length && base.keys.every((k) => FALLBACK.includes(k))) {
+    if (base.keys.includes('yes')) say('yes')
+    else if (base.keys.includes('no')) say('no')
+    else say(question ? 'question' : 'unknown')
+  }
+
+  if (!keys.length) {
+    // a game question (rank, shop, a Bakugan, a brawl at a time…): the shared facts, in her tone
+    let text = base.text.replace(/🙂/gu, '💜')
+    if (!hasEmoji(text)) text += kiraLine(lang, 'tail', vars)
+    return { text: greeted && !/^(hey|hi|salam|selam|привет)/iu.test(text) ? `${kiraLine(lang, 'hi', vars)} ${text}` : text, ask: base.ask, lang }
+  }
+  if (greeted && !keys.includes('greet') && !keys.includes('greetMood') && !keys.includes('hi')) keys.unshift('hi')
+  // (a line ending in a word gets its full stop before the next one)
+  const text = keys
+    .map((k) => kiraLine(lang, k, vars, recent))
+    .filter(Boolean)
+    .map((l, i, all) => (i < all.length - 1 && /\p{L}$/u.test(l) ? `${l}.` : l))
+    .join(' ')
+  return { text: text || base.text, ask, lang }
 }

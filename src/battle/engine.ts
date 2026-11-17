@@ -960,15 +960,30 @@ export function chooseGate(state: BattleState, level: AiLevel = AI_EASY, rng: ()
   return best
 }
 
-/** The team member a side throws: the strongest with its gate (when it is the setter's) and its cards. */
+/** How much less a Bakugan counts as a throw for each time it was already thrown this match (share of the team's mean). */
+const THROWN_BEFORE = 0.2
+/** How much less the Bakugan that lost the last battle counts (it sits the next one out when another can go). */
+const JUST_BEATEN = 0.3
+
+/**
+ * The team member a side throws: the strongest with its gate (when it is the setter's) and its cards, but a brawler
+ * brings the whole team into play, as brawlers do: a Bakugan counts for less each time it was already thrown this
+ * match (one not on the field yet gets its turn), and the one just beaten rests a battle when another can go.
+ * Without this the same strongest Bakugan was thrown every battle and the rest of a 3-Bakugan team was never seen.
+ */
 export function chooseThrow(state: BattleState, side: SideIndex, level: AiLevel = AI_EASY, rng: () => number = Math.random) {
   const s = state.sides[side]
   const lost = s.maxLives - s.lives
   const own = state.setter === side && state.gate
-  const options = s.team.map((f, i) => ({
-    i,
-    v: memberValue(s, i) + (own ? gateValue(state.gate!, f, lost) : 0) + rng() * level.noise * 2,
-  }))
+  const base = s.team.map((f, i) => memberValue(s, i) + (own ? gateValue(state.gate!, f, lost) : 0))
+  const mean = base.reduce((n, v) => n + v, 0) / base.length
+  const last = state.results[state.results.length - 1]
+  const beaten = last && last.winner !== side ? last.thrown[side] : -1
+  const options = s.team.map((_, i) => {
+    const times = state.results.filter((r) => r.thrown[side] === i).length
+    const rest = s.team.length > 1 && i === beaten ? JUST_BEATEN : 0
+    return { i, v: base[i] - mean * (THROWN_BEFORE * times + rest) + rng() * level.noise * 2 }
+  })
   options.sort((a, b) => b.v - a.v)
   return options[0].i
 }
