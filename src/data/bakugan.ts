@@ -371,8 +371,11 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // gold armour, a twin pair of long curved horns arching forward from its shield (the owner modelled one; its twin,
   // which broke off in the owner's tool, is the same horn mirrored to the other side, both turned a little outward so
   // they stand side by side), a short gold horn on its head and cyan eyes that glow. Given one closed skin, cut into
-  // its head and front and back legs (the middle pair stay with the body), skinned and inked. It has no ball yet
-  scarion: { monster: 'models/scarion/monster.glb', scale: 1.35, length: 2.3, stage: 0.95 },
+  // its head and front and back legs (the middle pair stay with the body), skinned and inked. Its ball is the owner's
+  // own two models, each given one closed skin: closed, a ball of pearl and gold plates with the beetle's face on its
+  // front (the short gold horn between round cyan eyes, two more eyes above); as it opens, the open model (the ball
+  // body on six legs, its two great horns spread wide, its eyes aglow) takes its place at the same size, half way
+  scarion: { ball: 'models/scarion/ball.glb', monster: 'models/scarion/monster.glb', scale: 1.35, length: 2.3, stage: 0.95 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },

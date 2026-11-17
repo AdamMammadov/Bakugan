@@ -830,6 +830,44 @@ const TOGETHER = W('tag|tag battle|2v2|birlikdə|bir komandada|eyni komandada|to
 const OTHER_GIRLS = W(
   'Rena|Mira|Nia|Yuna|Aya|Lia|Zoe|Rin|Mei|Ivy|Nina|Emi|Suki|Ada|Hana|Lena|Maya|Tia|Yuki|Cleo|Saya',
 )
+/** "I asked you a question", "what about the answer?": she goes back to the question she slid past. */
+const ANSWER_ME = W(
+  "sual verdim~|soruşdum|soruşuram|soruşmuşam|cavab ver~|cavab noldu|cavab nə oldu|cavabı noldu|cavabın hanı|cavab gözləyirəm|answer me|answer the question|i asked|i asked you|you didn't answer|you didnt answer|cevap ver~|cevap ne oldu|soru sordum|ответь|я спросил~|я же спросил~|где ответ",
+)
+/** "X yoxsa Y?", "X or Y?": a choice between two (the words round the "or" are the options). */
+const CHOICE = /^(.*?\p{L}.*?)\s+(?:yoxsa|ya da|yada|or|veya|yoksa|или)\s+(.*?\p{L}.*?)[\s?!.…]*$/iu
+const SELF = W('sən|sen|sənsən|özün|you|u|ты|тебя')
+const ME = W('mən|men|ben|me|i|я|меня')
+const FAV = W('sevimli|ən çox sevdiyin|ən sevdiyin|xoşladığın|favorite|favourite|fav|en sevdiğin|en sevdigin|любим~')
+const LIKES = W('sevirsən|xoşlayırsan|xoşuna gəlir|like|love|seversin|seviyorsun|любишь|нравится')
+const COLOR = W('rəng~|color|colour|renk~|цвет~')
+const FOOD = W('yemək~|yemey~|food|eat|yemek~|еда|еду|блюд~')
+const MUSIC_W = W('mahnı~|musiqi~|music|song~|şarkı~|müzik~|музык~|песн~')
+const MOVIE = W('film~|kino|movie~|anime|serial~|dizi~|фильм~')
+const AGE = W('neçə yaşın~|yaşın neçə~|neçə yaşındasan|how old|your age|kaç yaşında~|yaşın kaç|сколько тебе лет')
+const LIKE_Q = W('məni bəyənirsən|məndən xoşun gəlir|xoşuna gəlirəm|do you like me|u like me|beni beğeniyor musun|я тебе нравлюсь')
+/** A question asked with a question word (not a plain yes-or-no one). */
+const OPEN_Q = [Q_WHO, Q_WHAT, Q_WHEN, Q_WHERE, Q_WHICH, Q_WHY, Q_HOWMANY, W('how|necə|nasıl|как')]
+
+const ASLEEP = W('yatmısan|yatırsan|yatmısanmı|are you sleeping|are you asleep|asleep|sleeping|uyuyor musun|uyudun mu|спишь')
+/** Kira's and everyone's lines that slide past a question (so "I asked you!" after one of them is fair). */
+const EVASIVE = (['question', 'unknown', 'confused'] as KiraKey[])
+  .flatMap((k) => (['az', 'en', 'tr', 'ru'] as Lang[]).flatMap((l) => KIRA_LINES[l][k]))
+  .concat((['az', 'en', 'tr', 'ru'] as Lang[]).flatMap((l) => [...LINES[l].qUnknown, ...LINES[l].unknown, ...LINES[l].who]))
+  .map((l) => l.split('{')[0].trim())
+  .filter((l) => l.length > 4)
+const evasive = (text: string) => EVASIVE.some((l) => text.startsWith(l))
+
+/** One side of "X or Y": up to three words next to the "or", without the question words round them. */
+function option(side: string, last: boolean) {
+  const words = side
+    .replace(/[?!.,…]+/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w && !W('səncə|sence|məncə|bence|what do you think|which|hansı~|hangisi|kim|who|daha|more|better|по-твоему|кто').test(fold(w)))
+  const pick = last ? words.slice(-3) : words.slice(0, 3)
+  return pick.join(' ')
+}
+
 /** What the shared lines say when they do not know what to answer: Kira says something of her own instead. */
 const FALLBACK: LineKey[] = ['unknown', 'qUnknown', 'who', 'why', 'when', 'where', 'number', 'yes', 'no', 'hello']
 const BATTLE_PLAIN: LineKey[] = ['battleYes', 'battleGroup', 'battleNow']
@@ -843,7 +881,7 @@ function kiraLine(lang: Lang, key: KiraKey, vars: Record<string, string | number
   return pick(fresh.length ? fresh : filled)
 }
 
-function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }): ChatReply {
+function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }, forced = false): ChatReply {
   const { lang } = base
   const raw = input.text
   const t = fold(raw).replace(W('kira'), ' ').trim()
@@ -870,9 +908,46 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }): Cha
   const greeted = is(GREET) && !is(MORNING)
   const moodAnswer = () => say(info.fresh ? 'moodAskBrawled' : 'moodAsk', 'mood')
 
-  if (/^[\s?？!.…]+$/u.test(raw)) say('confused')
+  // "I asked you something": the question she slid past, answered properly this time
+  if (!forced && is(ANSWER_ME)) {
+    const mine = input.history.filter((h) => h.author === input.player?.id)
+    const prev = [...mine].reverse().find((h) => !ANSWER_ME.test(fold(h.text)) && (h.text.includes('?') || OPEN_Q.some((re) => re.test(fold(h.text)))))
+    if (prev) {
+      const at = input.history.lastIndexOf(prev)
+      const said = input.history[at + 1]
+      // she did answer it: she says so (with what she said)
+      if (said && said.author === input.botId && !evasive(said.text))
+        return { text: kiraLine(lang, 'answered', { ...vars, said: snippet(said.text) }) || said.text, lang }
+      const again = { ...input, text: prev.text, history: input.history.slice(0, at) }
+      const r = kiraReply(again, baseReply(again), true)
+      return { text: `${kiraLine(lang, 'oops', vars)} ${r.text}`, ask: r.ask, lang }
+    }
+  }
+
+  // "X or Y?": she picks one (herself over anyone, the player over anything)
+  const choice = CHOICE.exec(raw.trim())
+  const twoBakugan = bakuganIn(t).length === 2
+  if (choice && !twoBakugan) {
+    const [left, right] = [choice[1], choice[2]]
+    const selfLeft = SELF.test(fold(left))
+    if (selfLeft || SELF.test(fold(right))) {
+      vars.rival = cap(option(selfLeft ? right : left, !selfLeft))
+      say('choiceMe')
+    } else if (ME.test(fold(left)) || ME.test(fold(right))) say('choiceYou')
+    else {
+      const a = option(left, true)
+      const b = option(right, false)
+      vars.pick = (fold(a + b).length % 2 ? a : b) || a || b
+      say('choice')
+    }
+  } else if (/^[\s?？!.…]+$/u.test(raw)) say('confused')
   else if (is(INSULT)) say('hurt')
   else if (is(ARE_BOT)) say('bot')
+  else if (is(AGE)) say('age')
+  else if (is(ASLEEP) && question) say('awake')
+  else if (is(LIKE_Q)) say('likeAsk')
+  else if ((is(FAV) || (question && is(LIKES))) && (is(COLOR) || is(FOOD) || is(MUSIC_W) || is(MOVIE)))
+    say(is(COLOR) ? 'favColor' : is(FOOD) ? 'favFood' : is(MUSIC_W) ? 'favMusic' : 'favMovie')
   else if (is(SORRY)) say('sorry')
   else if (is(LOVE_Q)) say('loveAsk')
   else if (is(GIRLFRIEND)) say('girlfriend')
@@ -907,9 +982,16 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }): Cha
   else if (asked === 'battle' && no) say('no')
   else if (is(LAUGH) || /😂|🤣|😆|😹/u.test(raw)) say('laugh')
   else if (base.keys.length && base.keys.every((k) => FALLBACK.includes(k))) {
-    if (base.keys.includes('yes')) say('yes')
+    const open = OPEN_Q.some(is)
+    if (question || open) {
+      // a question gets an answer, not a shrug: a reason for "why", a yes or a no for a yes-or-no one
+      if (is(Q_WHY)) say('why')
+      else if (is(Q_WHO) && is(W('ən|en|most|best|daha|more|самый|лучше'))) say('choiceMe')
+      else if (!open) say(fold(raw).length % 3 === 0 ? 'answerNo' : 'answerYes')
+      else say(forced ? 'answerYes' : 'question')
+    } else if (base.keys.includes('yes')) say('yes')
     else if (base.keys.includes('no')) say('no')
-    else say(question ? 'question' : 'unknown')
+    else say('unknown')
   }
 
   if (!keys.length) {
@@ -925,5 +1007,5 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }): Cha
     .filter(Boolean)
     .map((l, i, all) => (i < all.length - 1 && /\p{L}$/u.test(l) ? `${l}.` : l))
     .join(' ')
-  return { text: text || base.text, ask, lang }
+  return { text: cap(text || base.text), ask, lang }
 }

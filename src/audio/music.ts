@@ -6,6 +6,7 @@ import { audio } from './sfx'
  * Background music, synthesised live with WebAudio (no files to download). Every page has its own
  * song, and each song is built from a few sections (verse, chorus, a break with a drum fill), so it
  * plays for about a minute before it comes round again. It ducks while the brawlers are talking.
+ * The newer songs are played "by hand" (see Song.human) and with piano, bell or flute colours.
  */
 export type Track =
   | 'menu'
@@ -21,6 +22,11 @@ export type Track =
   | 'clans'
   | 'pass'
   | 'faceoff'
+  | 'friends'
+  | 'events'
+  | 'viewer'
+  | 'wheel'
+  | 'live'
   // one of the battle songs, a different one from the last battle
   | 'battle'
 
@@ -41,11 +47,17 @@ type Pattern = string | string[]
 type Row = 'kick' | 'snare' | 'hat' | 'tom' | 'bass' | 'arp' | 'lead'
 type Pad = 'decay' | 'hold' | false
 
+/** Instrument colours beyond a plain wave: a struck piano-like note, a bell, a breathy flute. */
+type Tone = 'piano' | 'bell' | 'flute'
+
 type Parts = { [K in Row]?: Pattern } & {
   /** 'decay' strikes the chord each bar, 'hold' keeps it sounding into the next one. */
   pad?: Pad
   arpWave?: OscillatorType
   leadWave?: OscillatorType
+  /** Played with one of the instrument colours instead of the plain wave. */
+  arpTone?: Tone
+  leadTone?: Tone
 }
 
 type Section = Parts & {
@@ -72,6 +84,13 @@ type Song = Parts & {
   padWave?: OscillatorType
   /** Volume trim so every song plays at about the same level. */
   gain?: number
+  /**
+   * Played by hand rather than by a machine: every note up to this many seconds early or late and a little louder
+   * or softer than the one before (the drums half as loose).
+   */
+  human?: number
+  /** The bass's wave: a sawtooth by default, a triangle for a rounder, upright-like bass. */
+  bassWave?: OscillatorType
 }
 
 interface Fill {
@@ -172,6 +191,31 @@ const GM_EB_BB_F: Chord[] = [
   [51, 'maj'],
   [46, 'maj'],
   [53, 'maj'],
+]
+
+const E7_CSM7_A7_B7: Chord[] = [
+  [52, 'maj7'],
+  [49, 'min7'],
+  [57, 'maj7'],
+  [47, '7'],
+]
+const FSM_D_A_E: Chord[] = [
+  [54, 'min'],
+  [50, 'maj'],
+  [57, 'maj'],
+  [52, 'maj'],
+]
+const DB7_EBM7_FM7_GB7: Chord[] = [
+  [49, 'maj7'],
+  [51, 'min7'],
+  [53, 'min7'],
+  [54, 'maj7'],
+]
+const CM_AB_EB_BB: Chord[] = [
+  [48, 'min'],
+  [44, 'maj'],
+  [51, 'maj'],
+  [46, 'maj'],
 ]
 
 const SHOP_A: Section = {
@@ -698,6 +742,197 @@ const SONGS: Record<SongId, Song> = {
     },
     form: ['A', 'B', 'A', 'B', 'C'],
   },
+  // the friends list and its chats: cosy and warm, piano over a soft brushed groove, in E
+  friends: {
+    bpm: 86,
+    key: 64,
+    scale: 'major',
+    swing: 0.1,
+    human: 0.012,
+    kick: 'x.......x..x....',
+    snare: '....o.......o...',
+    hat: 'o.o.o.o.o.o.o.o.',
+    bass: '0...2...0..2.3..',
+    bassWave: 'triangle',
+    pad: 'hold',
+    padWave: 'triangle',
+    leadTone: 'piano',
+    echo: 0.18,
+    gain: 0.95,
+    sections: {
+      open: { chords: E7_CSM7_A7_B7, kick: '', snare: '', arp: '0..2..1..2..0...', arpTone: 'piano' },
+      A: {
+        chords: E7_CSM7_A7_B7,
+        lead: ['4-2-0---2-4-7---', '5---4-2-0---2---', '3-2-3-5-7-------', '6-----4-3-1-----'],
+      },
+      B: {
+        chords: [
+          [57, 'maj7'],
+          [56, 'min7'],
+          [54, 'min7'],
+          [47, '7'],
+        ],
+        lead: ['a---9-7-5-------', '9---7-6-4-------', '8---7-5-3-5-7---', '6---------4-6-8-'],
+      },
+      // a quiet bar or four: brushes out, the piano alone with the chords
+      C: {
+        chords: [
+          [52, 'maj7'],
+          [57, 'maj7'],
+          [52, 'maj7'],
+          [57, 'maj7'],
+        ],
+        kick: '',
+        snare: '',
+        lead: ['7-------9-------', 'a-----9-7-------', '4-------5-------', '4---------------'],
+      },
+    },
+    form: ['open', 'A', 'A', 'B', 'C', 'A', 'B'],
+  },
+  // events, tournaments and bosses: a determined march with brass-like leads, in F-sharp minor
+  events: {
+    bpm: 108,
+    key: 66,
+    scale: 'minor',
+    human: 0.006,
+    kick: 'x.....x.x.......',
+    snare: '....x.......x...',
+    hat: '..x...x...x...x.',
+    bass: '0.0...0.2.0...3.',
+    pad: 'decay',
+    leadWave: 'sawtooth',
+    echo: 0.18,
+    gain: 0.9,
+    sections: {
+      open: { chords: FSM_D_A_E, snare: '', tom: 'h...m...l...m.l.' },
+      A: { chords: FSM_D_A_E, lead: ['7---4---7-9-a---', '9---8-7-5-------', '2---4---6---9---', '8-------6---4---'] },
+      B: {
+        chords: [
+          [47, 'min'],
+          [50, 'maj'],
+          [54, 'min'],
+          [49, 'maj'],
+        ],
+        lead: ['a---9---7---a---', '9-------5---7---', '7---9---b---9---', 'b-------8-------'],
+      },
+      // the build: toms and a doubled snare rolling into the top
+      C: {
+        chords: [
+          [54, 'min'],
+          [54, 'min'],
+          [50, 'maj'],
+          [52, 'maj'],
+        ],
+        snare: ['....x.......x...', '....x.......x...', 'x...x...x...x...', 'x.x.x.x.x.x.x.x.'],
+        tom: '..........m...l.',
+        fill: 'roll',
+        riser: true,
+      },
+    },
+    form: ['open', 'A', 'B', 'A', 'C', 'B'],
+  },
+  // a Bakugan's own page: curious and full of wonder, bells over a slow pulse, in D-flat
+  viewer: {
+    bpm: 92,
+    key: 61,
+    scale: 'major',
+    human: 0.008,
+    kick: 'x.......x.......',
+    hat: '....o.......o...',
+    bass: '0-------2---0---',
+    bassWave: 'triangle',
+    arp: '0.1.2.3.2.1.0.1.',
+    arpWave: 'sine',
+    pad: 'hold',
+    leadTone: 'bell',
+    echo: 0.3,
+    gain: 0.95,
+    sections: {
+      open: { chords: DB7_EBM7_FM7_GB7, kick: '' },
+      A: { chords: DB7_EBM7_FM7_GB7, lead: ['4-------7---9---', '8-------7---5---', '9-------b---9---', 'a-------9-7-----'] },
+      B: {
+        chords: [
+          [46, 'min'],
+          [54, 'maj'],
+          [49, 'maj'],
+          [56, 'maj'],
+        ],
+        lead: ['9---8---7---5---', '7---5---3---2---', '4---------------', '6-------4-------'],
+      },
+    },
+    form: ['open', 'A', 'B', 'A', 'B'],
+  },
+  // choosing an attribute: mysterious and inviting, a flute over a slow, dark pulse, in C minor
+  wheel: {
+    bpm: 82,
+    key: 60,
+    scale: 'minor',
+    human: 0.01,
+    kick: 'x.........x.....',
+    hat: '..o...o...o...o.',
+    bass: '0-----0-2-------',
+    bassWave: 'triangle',
+    arp: '0.2.1.2.0.2.1.2.',
+    pad: 'hold',
+    leadTone: 'flute',
+    echo: 0.3,
+    gain: 0.95,
+    sections: {
+      open: { chords: CM_AB_EB_BB, kick: '' },
+      A: { chords: CM_AB_EB_BB, lead: ['7-------4---2---', '5-----4-2-------', '4---2---4---7---', '8-------6-------'] },
+      B: {
+        chords: [
+          [53, 'min'],
+          [48, 'min'],
+          [44, 'maj'],
+          [55, 'maj'],
+        ],
+        lead: ['a-------9---7---', '9-------7---4---', '7---5---4---2---', '4-------1---4---'],
+      },
+    },
+    form: ['open', 'A', 'B', 'A', 'B'],
+  },
+  // watching live brawls: an upbeat sports-broadcast groove, lighter than a battle, in B-flat
+  live: {
+    bpm: 116,
+    key: 70,
+    scale: 'major',
+    swing: 0.05,
+    human: 0.005,
+    kick: 'x..x..x...x.....',
+    snare: '....x.......x...',
+    hat: 'x.x.x.x.x.x.x.x.',
+    bass: '0.0.2.0..3.2.0..',
+    pad: 'decay',
+    leadWave: 'square',
+    echo: 0.12,
+    gain: 0.88,
+    sections: {
+      A: { chords: BB_F_GM_EB, lead: ['4-4-5-4---2-0---', '1-1-2-4---------', '5-5-7-5---4-2---', '3-------4-5-6---'] },
+      B: {
+        chords: [
+          [48, 'min'],
+          [53, 'maj'],
+          [46, 'maj'],
+          [46, 'maj'],
+        ],
+        lead: ['8---7---5---3---', '6---5---4-------', '7---9---7---4---', '7---------------'],
+      },
+      // a drum break before it comes round again
+      C: {
+        chords: [
+          [55, 'min'],
+          [51, 'maj'],
+          [53, 'maj'],
+          [53, 'maj'],
+        ],
+        arp: '0.1.2.1.0.1.2.1.',
+        fill: true,
+        riser: true,
+      },
+    },
+    form: ['A', 'B', 'A', 'B', 'C'],
+  },
   // battle 1: driving, in D minor
   clash: {
     bpm: 132,
@@ -1096,6 +1331,34 @@ function riser(p: Playing, at: number, dur: number) {
   src.stop(at + dur + 0.15)
 }
 
+/** A note in one of the instrument colours (`steps` long, at the song's speed). */
+function tone(p: Playing, kind: Tone, freq: number, at: number, steps: number, sixteenth: number, gain: number) {
+  if (kind === 'piano') {
+    // struck and left to die away; a quiet octave on top for the hammer's brightness
+    const dur = sixteenth * Math.min(Math.max(steps, 2), 10)
+    voice(p, { wave: 'triangle', freq, at, dur, gain: gain * 1.2, cutoff: 2600, attack: 0.004, echo: true })
+    voice(p, { wave: 'sine', freq: freq * 2, at, dur: dur * 0.45, gain: gain * 0.3, cutoff: 5000, attack: 0.004 })
+  } else if (kind === 'bell') {
+    voice(p, { wave: 'sine', freq, at, dur: sixteenth * 1.2, gain: gain * 1.1, cutoff: 6000, attack: 0.003, release: 1.1, echo: true })
+    voice(p, { wave: 'sine', freq: freq * 2.76, at, dur: 0.08, gain: gain * 0.2, cutoff: 9000, attack: 0.002, release: 0.45 })
+  } else {
+    // a soft breathy start, then the tone with a little vibrato when it is held
+    hiss(p, 'bandpass', Math.min(freq * 2, 8000), at, 0.09, 0.012)
+    voice(p, {
+      wave: 'sine',
+      freq,
+      at,
+      dur: sixteenth * Math.max(steps, 1.5) * 0.9,
+      gain: gain * 1.15,
+      cutoff: 3200,
+      attack: 0.06,
+      release: 0.2,
+      echo: true,
+      vibrato: steps >= 3,
+    })
+  }
+}
+
 function schedule(p: Playing, s: number, at: number) {
   const { song } = p
   const sixteenth = 60 / song.bpm / 4
@@ -1107,6 +1370,10 @@ function schedule(p: Playing, s: number, at: number) {
     return v === undefined ? '' : typeof v === 'string' ? v : v[n % v.length]
   }
   const t = at + (i % 2 ? (song.swing ?? 0) * sixteenth : 0)
+  // played by hand: a little early or late, a little louder or softer (never before the step was due)
+  const loose = song.human ?? 0
+  const late = (k = 1) => (loose ? Math.random() * 2 * loose * k : 0)
+  const touch = () => (loose ? 0.86 + Math.random() * 0.24 : 1)
   const filling = last && !!sec.fill
   if (i === 0) {
     if (filling)
@@ -1121,15 +1388,15 @@ function schedule(p: Playing, s: number, at: number) {
   // drums; a fill takes over the second half of the bar and gets louder as it goes
   if (filling) {
     const vel = i < 8 ? 1 : 0.6 + (0.4 * (i - 8)) / 7
-    drum(p, 'kick', p.fill.kick.charAt(i), t, 1)
-    drum(p, 'snare', p.fill.snare.charAt(i), t, vel)
-    drum(p, 'tom', p.fill.tom.charAt(i), t, vel)
-    if (i < 8) drum(p, 'hat', row('hat').charAt(i), t, 1)
+    drum(p, 'kick', p.fill.kick.charAt(i), t + late(0.5), touch())
+    drum(p, 'snare', p.fill.snare.charAt(i), t + late(0.5), vel * touch())
+    drum(p, 'tom', p.fill.tom.charAt(i), t + late(0.5), vel * touch())
+    if (i < 8) drum(p, 'hat', row('hat').charAt(i), t + late(0.5), touch())
   } else {
-    drum(p, 'kick', row('kick').charAt(i), t, 1)
-    drum(p, 'snare', row('snare').charAt(i), t, 1)
-    drum(p, 'hat', row('hat').charAt(i), t, 1)
-    drum(p, 'tom', row('tom').charAt(i), t, 1)
+    drum(p, 'kick', row('kick').charAt(i), t + late(0.5), touch())
+    drum(p, 'snare', row('snare').charAt(i), t + late(0.5), touch())
+    drum(p, 'hat', row('hat').charAt(i), t + late(0.5), touch())
+    drum(p, 'tom', row('tom').charAt(i), t + late(0.5), touch())
   }
 
   const [root, quality] = chord
@@ -1141,13 +1408,14 @@ function schedule(p: Playing, s: number, at: number) {
   if (!isNaN(bt)) {
     const len = held(bass, i)
     const triad = SHAPES[quality].slice(0, 3).map((x) => bassRoot + x)
+    const round = song.bassWave === 'triangle' || song.bassWave === 'sine'
     voice(p, {
-      wave: 'sawtooth',
+      wave: song.bassWave ?? 'sawtooth',
       freq: midi(chordTone(triad, bt)),
-      at: t,
+      at: t + late(),
       dur: sixteenth * (len > 1 ? len * 0.9 : 1.8),
-      gain: 0.22,
-      cutoff: 600,
+      gain: (round ? 0.3 : 0.22) * touch(),
+      cutoff: round ? 900 : 600,
     })
   }
 
@@ -1173,15 +1441,18 @@ function schedule(p: Playing, s: number, at: number) {
   const ad = digit(arp.charAt(i))
   if (!isNaN(ad)) {
     const len = held(arp, i)
-    voice(p, {
-      wave: sec.arpWave ?? song.arpWave ?? 'triangle',
-      freq: midi(chordTone(notes, ad) + 12),
-      at: t,
-      dur: sixteenth * (len > 1 ? len : 1.6),
-      gain: 0.07,
-      cutoff: 3000,
-      echo: true,
-    })
+    const arpTone = sec.arpTone ?? song.arpTone
+    if (arpTone) tone(p, arpTone, midi(chordTone(notes, ad) + 12), t + late(), len, sixteenth, 0.06 * touch())
+    else
+      voice(p, {
+        wave: sec.arpWave ?? song.arpWave ?? 'triangle',
+        freq: midi(chordTone(notes, ad) + 12),
+        at: t + late(),
+        dur: sixteenth * (len > 1 ? len : 1.6),
+        gain: 0.07 * touch(),
+        cutoff: 3000,
+        echo: true,
+      })
   }
 
   const lead = row('lead')
@@ -1192,12 +1463,14 @@ function schedule(p: Playing, s: number, at: number) {
     const note = song.key + scale[deg % 7] + 12 * Math.floor(deg / 7)
     const wave = sec.leadWave ?? song.leadWave ?? 'square'
     // soft waves get a little more level so the tune is heard as well as a square one
-    const gain = wave === 'triangle' || wave === 'sine' ? 0.058 : 0.045
-    if (len > 1)
+    const gain = (wave === 'triangle' || wave === 'sine' ? 0.058 : 0.045) * touch()
+    const leadTone = sec.leadTone ?? song.leadTone
+    if (leadTone) tone(p, leadTone, midi(note), t + late(), len, sixteenth, 0.058 * touch())
+    else if (len > 1)
       voice(p, {
         wave,
         freq: midi(note),
-        at: t,
+        at: t + late(),
         dur: sixteenth * len * 0.92,
         gain,
         cutoff: 2200,
@@ -1205,7 +1478,7 @@ function schedule(p: Playing, s: number, at: number) {
         echo: true,
         vibrato: len >= 4,
       })
-    else voice(p, { wave, freq: midi(note), at: t, dur: sixteenth * 1.5, gain, cutoff: 2200, echo: true })
+    else voice(p, { wave, freq: midi(note), at: t + late(), dur: sixteenth * 1.5, gain, cutoff: 2200, echo: true })
   }
 }
 

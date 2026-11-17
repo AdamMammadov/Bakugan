@@ -44,24 +44,24 @@ const EventsScreen = lazyPage(() => import('./screens/EventsScreen').then((m) =>
 /** Which song plays where: every page has its own, and the arena picks one of the battle songs. */
 const TRACK_FOR: Partial<Record<Screen, Track>> = {
   menu: 'menu',
-  wheel: 'menu',
+  wheel: 'wheel',
   profileEdit: 'workshop',
   hub: 'home',
-  viewer: 'home',
+  viewer: 'viewer',
   compare: 'faceoff',
   arena: 'battle',
-  live: 'battle',
+  live: 'live',
   shop: 'shop',
   inventory: 'inventory',
   pass: 'pass',
   profile: 'anthem',
   rankings: 'rankings',
   clans: 'clans',
-  friends: 'clans',
+  friends: 'friends',
   encyclopedia: 'gallery',
   showroom: 'showroom',
   characters: 'characters',
-  events: 'faceoff',
+  events: 'events',
 }
 
 export default function App() {

@@ -52,6 +52,21 @@ export type KiraKey =
   | 'inviteBusy'
   | 'inviteLate'
   | 'tail'
+  | 'choiceMe'
+  | 'choiceYou'
+  | 'choice'
+  | 'oops'
+  | 'answerYes'
+  | 'answerNo'
+  | 'why'
+  | 'favColor'
+  | 'favFood'
+  | 'favMusic'
+  | 'favMovie'
+  | 'age'
+  | 'likeAsk'
+  | 'awake'
+  | 'answered'
 
 type KiraLines = Record<KiraKey, string[]>
 
@@ -178,6 +193,21 @@ const az: KiraLines = {
   inviteNo: ['indi olmur, canım 🥺 sonra?', 'yemək yeyirəm 🙈 bir az sonra?'],
   inviteBusy: ['döyüşdəyəm, canım, bir az gözlə 🙈', 'reytinq matçındayam, 5 dəqiqə 💜'],
   inviteLate: ['Ayy, döyüşdə idim, görmədim 🥺 Yenə dəvət et!'],
+  choiceMe: ['Mən, əlbəttə 😏 {rival} kimdir ki?', 'Əlbəttə mən 😌💜 Başqa cavab ola bilməz', 'Bu nə sualdır? 😤 Mən! {rival} heç yaxınıma da gəlməz 😏'],
+  choiceYou: ['Sən, əlbəttə 🥰', 'Fikirləşmədən: sən 💜', 'Sən! Bunu niyə soruşursan ki? 🙈'],
+  choice: ['{pick} 😌 Fikirləşmədən', 'Məncə {pick} 🤔💜', '{pick}! Bəs sən nə deyirsən?'],
+  oops: ['Bağışla 🙈 fikrim səndə idi.', 'Ayy, düz deyirsən, cavab vermədim 😅', 'Hə, bağışla 🙈'],
+  answerYes: ['Hə 😌', 'Əlbəttə 💜', 'Hə, hə 🙈'],
+  awake: ['Yox, səni gözləyirdim 🙈', 'Yatmamışam hələ 😌 sənə gecən xeyrə demədən yuxum gəlmir'],
+  answered: ['Cavab verdim axı 🙈 “{said}”', 'Dedim ki 😤 “{said}”'],
+  answerNo: ['Yox 🙈', 'Hmm, yox 😅', 'Elə də yox 😌'],
+  why: ['Çünki belə xoşuma gəlir 😌', 'Çünki sənsən 🙈💜', 'Hmm… səbəbi sirdir 🤫', 'Bilmirəm, ürəyim belə deyir 💜'],
+  favColor: ['Bənövşəyi, əlbəttə 💜 Darkus qızıyam axı', 'Bənövşəyi və qara 🖤💜'],
+  favFood: ['Şokolad 🍫 bir də pizza 🍕', 'Şirin nə varsa 🍰 sən nəyi sevirsən?'],
+  favMusic: ['Gecə dinlənən sakit mahnılar 🎧', 'Döyüşdən əvvəl sürətli mahnılar, gecə isə sakit olanlar 🎧💜'],
+  favMovie: ['Anime 😄 xüsusilə döyüş olanları', 'Romantik filmlər… amma heç kimə demə 🙈'],
+  age: ['Qızdan yaş soruşmazlar 😤🙈', 'Sirdir 🤫 amma döyüşdə təcrübəm çoxdur 😏'],
+  likeAsk: ['Bəyənməsəydim burada səninlə danışardım? 🙈💜', 'Hmm… bir az 😏 yaxşı, çox 💜'],
   tail: [' 💜', ' 😊', ' 🥰', ' 😌'],
 }
 
@@ -275,6 +305,21 @@ const en: KiraLines = {
   inviteNo: ['can’t right now 🥺 later?', 'eating 🙈 in a bit?'],
   inviteBusy: ['in a brawl, give me a sec 🙈', 'ranked match, 5 min 💜'],
   inviteLate: ['Aww, I was mid-brawl and missed it 🥺 Invite me again!'],
+  choiceMe: ['Me, obviously 😏 Who even is {rival}?', 'Me, of course 😌💜 There’s no other answer', 'What kind of question is that? 😤 Me! {rival} doesn’t even come close 😏'],
+  choiceYou: ['You, of course 🥰', 'No need to think: you 💜', 'You! Why would you even ask? 🙈'],
+  choice: ['{pick} 😌 Easy', 'I’d say {pick} 🤔💜', '{pick}! What about you?'],
+  oops: ['Sorry 🙈 I was thinking about you.', 'Aww, you’re right, I didn’t answer 😅', 'Oops, sorry 🙈'],
+  answerYes: ['Yes 😌', 'Of course 💜', 'Yes, yes 🙈'],
+  awake: ['No, I was waiting for you 🙈', 'Not yet 😌 can’t sleep before saying good night to you'],
+  answered: ['I did answer 🙈 “{said}”', 'I told you 😤 “{said}”'],
+  answerNo: ['No 🙈', 'Hmm, no 😅', 'Not really 😌'],
+  why: ['Because I like it that way 😌', 'Because it’s you 🙈💜', 'Hmm… that’s a secret 🤫', 'I don’t know, my heart says so 💜'],
+  favColor: ['Purple, of course 💜 I’m a Darkus girl', 'Purple and black 🖤💜'],
+  favFood: ['Chocolate 🍫 and pizza 🍕', 'Anything sweet 🍰 what about you?'],
+  favMusic: ['Quiet songs late at night 🎧', 'Fast songs before a brawl, quiet ones at night 🎧💜'],
+  favMovie: ['Anime 😄 especially the battle ones', 'Romance movies… don’t tell anyone 🙈'],
+  age: ['You don’t ask a girl her age 😤🙈', 'It’s a secret 🤫 but I’ve got plenty of brawling experience 😏'],
+  likeAsk: ['Would I be here talking to you if I didn’t? 🙈💜', 'Hmm… a little 😏 okay, a lot 💜'],
   tail: [' 💜', ' 😊', ' 🥰', ' 😌'],
 }
 
@@ -323,6 +368,21 @@ const tr: KiraLines = {
   inviteNo: ['şimdi olmaz canım 🥺 sonra?'],
   inviteBusy: ['maçtayım canım, biraz bekle 🙈'],
   inviteLate: ['Ay, maçtaydım, göremedim 🥺 Tekrar davet et!'],
+  choiceMe: ['Ben tabii ki 😏 {rival} da kim?', 'Tabii ki ben 😌💜 Başka cevap olamaz'],
+  choiceYou: ['Sen tabii ki 🥰', 'Hiç düşünmeden: sen 💜'],
+  choice: ['{pick} 😌 Düşünmeden', 'Bence {pick} 🤔💜'],
+  oops: ['Pardon 🙈 aklım sendeydi.', 'Haklısın, cevap vermedim 😅'],
+  answerYes: ['Evet 😌', 'Tabii ki 💜'],
+  awake: ['Hayır, seni bekliyordum 🙈'],
+  answered: ['Cevap verdim ya 🙈 “{said}”'],
+  answerNo: ['Hayır 🙈', 'Hmm, yok 😅'],
+  why: ['Çünkü böyle hoşuma gidiyor 😌', 'Çünkü sensin 🙈💜', 'Hmm… sır 🤫'],
+  favColor: ['Mor tabii ki 💜 Darkus kızıyım'],
+  favFood: ['Çikolata 🍫 bir de pizza 🍕'],
+  favMusic: ['Gece dinlenen sakin şarkılar 🎧'],
+  favMovie: ['Anime 😄 özellikle savaşlı olanlar'],
+  age: ['Bir kıza yaşı sorulmaz 😤🙈'],
+  likeAsk: ['Beğenmesem burada seninle konuşur muydum? 🙈💜'],
   tail: [' 💜', ' 😊', ' 🥰'],
 }
 
@@ -371,6 +431,21 @@ const ru: KiraLines = {
   inviteNo: ['сейчас не могу 🥺 потом?'],
   inviteBusy: ['я в бою, подожди чуть-чуть 🙈'],
   inviteLate: ['Ой, я была в бою и пропустила 🥺 Позови ещё раз!'],
+  choiceMe: ['Я, конечно 😏 А кто такая {rival}?', 'Конечно я 😌💜 Других ответов нет'],
+  choiceYou: ['Ты, конечно 🥰', 'Даже думать не надо: ты 💜'],
+  choice: ['{pick} 😌 Без вариантов', 'Думаю, {pick} 🤔💜'],
+  oops: ['Прости 🙈 я задумалась о тебе.', 'Ой, и правда, я не ответила 😅'],
+  answerYes: ['Да 😌', 'Конечно 💜'],
+  awake: ['Нет, я ждала тебя 🙈'],
+  answered: ['Я же ответила 🙈 «{said}»'],
+  answerNo: ['Нет 🙈', 'Хм, нет 😅'],
+  why: ['Потому что мне так нравится 😌', 'Потому что это ты 🙈💜', 'Хм… это секрет 🤫'],
+  favColor: ['Фиолетовый, конечно 💜 Я же Darkus'],
+  favFood: ['Шоколад 🍫 и пицца 🍕'],
+  favMusic: ['Спокойные песни поздно ночью 🎧'],
+  favMovie: ['Аниме 😄 особенно про битвы'],
+  age: ['У девушки возраст не спрашивают 😤🙈'],
+  likeAsk: ['Разве я бы тут с тобой болтала, если бы нет? 🙈💜'],
   tail: [' 💜', ' 😊', ' 🥰'],
 }
 
