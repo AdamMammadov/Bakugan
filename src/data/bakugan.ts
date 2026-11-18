@@ -509,10 +509,16 @@ const zenith = ROSTER.find((b) => b.id === 'scarion')?.evolutions.find((e) => e.
 // pearl helm under a crest of cyan crystals, one great curved horn hung with gold beads arching over its head, a gold
 // horn on its face and cyan light glowing between its plates. Given one closed skin, its crystals, eyes and the light
 // between its plates made to glow, cut into its face horn and its front and back legs (the middle pair stay with the
-// body), skinned and inked
+// body), skinned and inked.
+// Its ball is the owner's own two models, each given one closed skin and its cyan made to glow: closed, the ball of
+// bronze and gold plates under the crystal crest, its great white horn and gold face horn (which had fused into one
+// ring where they met) parted with clean ends, as in the owner's picture; as it opens, the open model (the ball body on
+// six legs, its wing cases spread on their hinges, the gold beads hung from its horn on short stems) takes its place
+// at the same size, half way through
 if (zenith)
   zenith.models = {
     ...ROSTER_MODELS.scarion,
+    ball: 'models/scarion/zenith-ball.glb',
     monster: 'models/scarion/zenith.glb',
     scale: 1.7,
     length: 2.3,
