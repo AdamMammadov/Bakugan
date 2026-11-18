@@ -1080,6 +1080,9 @@ const SONGS: Record<SongId, Song> = {
   },
 }
 
+// every older song played by hand too, a touch looser the slower it is (the battles stay tight)
+for (const song of Object.values(SONGS)) song.human ??= song.bpm <= 90 ? 0.009 : song.bpm <= 110 ? 0.007 : 0.005
+
 const LOOKAHEAD = 0.3
 const TICK_MS = 50
 const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] }

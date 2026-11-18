@@ -504,6 +504,20 @@ if (tempest)
     length: 2.2,
   }
 
+const zenith = ROSTER.find((b) => b.id === 'scarion')?.evolutions.find((e) => e.name === 'Zenith Scarion')
+// Scarion evolved, from the owner's own model: a great beetle of light in bronze and gold armour on six clawed legs, a
+// pearl helm under a crest of cyan crystals, one great curved horn hung with gold beads arching over its head, a gold
+// horn on its face and cyan light glowing between its plates. Given one closed skin, its crystals, eyes and the light
+// between its plates made to glow, cut into its face horn and its front and back legs (the middle pair stay with the
+// body), skinned and inked
+if (zenith)
+  zenith.models = {
+    ...ROSTER_MODELS.scarion,
+    monster: 'models/scarion/zenith.glb',
+    scale: 1.7,
+    length: 2.3,
+  }
+
 BAKUGAN.push(...ROSTER)
 
 export const bakuganForElement = (element: ElementId) => BAKUGAN.filter((b) => b.element === element)

@@ -4192,6 +4192,76 @@ export const ROSTER: Bakugan[] = [
         "name": "Scarion",
         "series": "Original",
         "gPower": 360
+      },
+      {
+        "name": "Zenith Scarion",
+        "series": "Original",
+        "gPower": 610,
+        "abilities": [
+          {
+            "id": "zenith-crown",
+            "name": "Zenith Crown",
+            "type": "boost",
+            "amount": 250,
+            "effect": "aura",
+            "description": "The cyan crystals crowning its back blaze like the noon sun: adds 250 G to Zenith Scarion.",
+            "estimated": true
+          },
+          {
+            "id": "bronze-bastion",
+            "name": "Bronze Bastion",
+            "type": "shield",
+            "amount": 0,
+            "effect": "shieldDome",
+            "description": "Zenith Scarion folds its bronze wing cases down over its six legs: cancels the opponent's last ability card.",
+            "estimated": true
+          },
+          {
+            "id": "prism-glare",
+            "name": "Prism Glare",
+            "type": "weaken",
+            "amount": 200,
+            "effect": "lightBeam",
+            "description": "Light splits through its crystal crest and floods the opponent's eyes: subtracts 200 G from the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "solar-siphon",
+            "name": "Solar Siphon",
+            "type": "drain",
+            "amount": 200,
+            "effect": "lightBeam",
+            "description": "The glow between its armour plates draws the opponent's strength into it: transfers 200 G from the opponent to Zenith Scarion.",
+            "estimated": true
+          },
+          {
+            "id": "noon-radiance",
+            "name": "Noon Radiance",
+            "type": "boost",
+            "amount": 200,
+            "effect": "aura",
+            "description": "Its eyes burn cyan and every gold band of its armour lights up: adds 200 G to Zenith Scarion.",
+            "estimated": true
+          },
+          {
+            "id": "gilded-charge",
+            "name": "Gilded Charge",
+            "type": "attack",
+            "amount": 200,
+            "effect": "lightBeam",
+            "description": "Zenith Scarion lowers its gold horn and charges the opponent on its six clawed legs.",
+            "estimated": true
+          },
+          {
+            "id": "beaded-arc-strike",
+            "name": "Beaded Arc Strike",
+            "type": "attack",
+            "amount": 250,
+            "effect": "lightBeam",
+            "description": "It swings its great beaded horn over in one arc and brings it down on the opponent.",
+            "estimated": true
+          }
+        ]
       }
     ]
   }

@@ -67,6 +67,22 @@ export type KiraKey =
   | 'likeAsk'
   | 'awake'
   | 'answered'
+  | 'day'
+  | 'dayHeard'
+  | 'dayGood'
+  | 'dayBad'
+  | 'what'
+  | 'ack'
+  | 'okYes'
+  | 'okNo'
+  | 'topic'
+  | 'listen'
+  | 'pTired'
+  | 'pWork'
+  | 'pSchool'
+  | 'pEat'
+  | 'pHome'
+  | 'pPlay'
 
 type KiraLines = Record<KiraKey, string[]>
 
@@ -183,7 +199,6 @@ const az: KiraLines = {
   unknown: [
     'Hmm 🤔 bunu bir də de, başa düşmədim 🙈',
     'Sən danış, mən dinləyirəm 💜',
-    '“{snip}”… 😊 sonra?',
     'Haha, sən həmişə maraqlı şeylər deyirsən 😄',
     'Bilirsən, səninlə danışmaq xoşuma gəlir 😊 Davam et',
   ],
@@ -208,6 +223,34 @@ const az: KiraLines = {
   favMovie: ['Anime 😄 xüsusilə döyüş olanları', 'Romantik filmlər… amma heç kimə demə 🙈'],
   age: ['Qızdan yaş soruşmazlar 😤🙈', 'Sirdir 🤫 amma döyüşdə təcrübəm çoxdur 😏'],
   likeAsk: ['Bəyənməsəydim burada səninlə danışardım? 🙈💜', 'Hmm… bir az 😏 yaxşı, çox 💜'],
+  day: [
+    'Yaxşı keçir 😊 Səhər {lead} ilə məşq etdim, indi də səninləyəm. Bəs sənin günün necə keçir?',
+    'Bir az yorucu idi, iki döyüşüm oldu 😅 Amma indi yaxşıdır. Sənin günün necədir?',
+    'Sakit… sən yazana qədər darıxdırıcı idi 😌 Bəs sənin?',
+  ],
+  dayHeard: ['Hmm, başa düşdüm 😊 Əsas odur ki, indi buradasan 💜', 'Belə günlər də olur 😌 Danış, başqa nə oldu?', 'Aha 😊 Yaxşı ki yazdın, səni gözləyirdim'],
+  dayGood: ['Sevindim 🥰 Elə hər günün belə keçsin', 'Əla! Gülümsəyirsən yəqin indi 😌💜'],
+  dayBad: ['Ayy 🥺 nə olub ki? Danış mənə', 'Gəl bura 🫂 Pis gün keçər, mən buradayam 💜'],
+  what: ['Heç nə 🙈 sadəcə səni fikirləşirdim', 'Nə “nə”? 😄 Səninlə danışıram da', 'Hmm? 😊 Bir şey demək istəyirdin?'],
+  ack: ['Nə fikirləşirsən? 🤔', 'Söhbətimiz yaman qısaldı ha 😅', 'Səssizləşdin 🙈 hər şey yaxşıdır?'],
+  okYes: ['Yaxşı 😊', 'Oldu 💜', 'Super 😌'],
+  okNo: ['Yaxşı, problem deyil 😊', 'Olsun 💜', 'Aydındır 😌'],
+  topic: [
+    'Bəs sən bu gün nə etdin? 😊',
+    'Bilirsən bu gün mağazada nə gördüm? Yeni bir skin, çox qəşəngdir 😍 Sən skin alırsan?',
+    'Səncə {lead} təkamüldən sonra daha güclü olacaq? 🤔',
+    'Sabah boşsan? Bir döyüş edərik 😏',
+    'Ən çox hansı Bakuganını sevirsən? 😊',
+    'İndi musiqi dinləyirsən? Mən Dostlar səhifəsindəki mahnını çox sevirəm 🎧',
+    'Bu gün klanda çox səs-küy var idi 😅 Sənin klanın necədir?',
+  ],
+  listen: ['Hmm, başa düşürəm 😊', 'Ciddi? 😮 Sonra nə oldu?', 'Vay 😮 danış, maraqlıdır', 'Səni dinləmək xoşdur 💜 davam et'],
+  pTired: ['Yorulmusan? 🥺 Bir az dincəl, mən buradayam', 'Gəl bura 🫂 bu gün çox çalışmısan yəqin', 'Onda bu gün döyüş yoxdur, sadəcə söhbət edək 😌💜'],
+  pWork: ['İşdən sonra yorulmusan yəqin 🥺 Necə keçdi işdə?', 'Çalışqansan 😌 Fasilədə mənə yazmağın xoşuma gəldi 💜'],
+  pSchool: ['Dərslər necədir? 📚 Çətin deyil ki?', 'Oxu, oxu 😌 sonra döyüşərik. Uğurlar 💜'],
+  pEat: ['Nuş olsun 😋 Nə yeyirsən?', 'Afiyət olsun 😊 mənə də saxla 🙈'],
+  pHome: ['Evdə olmaq yaxşıdır 😌 Rahatlayırsan?', 'Mən də evdəyəm 😊 Onda bir az söhbət edək'],
+  pPlay: ['Nə oynayırsan? 😏 Məndən başqasıyla döyüşmürsən ki? 😤', 'Uğurlar 💪 Sonra danışarsan necə keçdi'],
   tail: [' 💜', ' 😊', ' 🥰', ' 😌'],
 }
 
@@ -295,7 +338,6 @@ const en: KiraLines = {
   unknown: [
     'Hmm 🤔 say that again, I didn’t get it 🙈',
     'Go on, I’m listening 💜',
-    '“{snip}”… 😊 and then?',
     'Haha, you always say the most interesting things 😄',
     'You know I like talking to you 😊 Keep going',
   ],
@@ -320,6 +362,34 @@ const en: KiraLines = {
   favMovie: ['Anime 😄 especially the battle ones', 'Romance movies… don’t tell anyone 🙈'],
   age: ['You don’t ask a girl her age 😤🙈', 'It’s a secret 🤫 but I’ve got plenty of brawling experience 😏'],
   likeAsk: ['Would I be here talking to you if I didn’t? 🙈💜', 'Hmm… a little 😏 okay, a lot 💜'],
+  day: [
+    'It’s going well 😊 Trained with {lead} this morning, and now I’m with you. How’s your day?',
+    'A bit tiring, I had two brawls 😅 But it’s good now. How’s yours going?',
+    'Quiet… boring until you texted 😌 And yours?',
+  ],
+  dayHeard: ['Mm, I see 😊 What matters is you’re here now 💜', 'Days like that happen 😌 What else happened?', 'Aha 😊 Glad you texted, I was waiting'],
+  dayGood: ['Yay 🥰 May every day go like that', 'Great! You’re smiling now, I can tell 😌💜'],
+  dayBad: ['Aww 🥺 what happened? Tell me', 'Come here 🫂 Bad days pass, I’m here 💜'],
+  what: ['Nothing 🙈 I was just thinking about you', 'What “what”? 😄 I’m talking to you', 'Hm? 😊 Were you going to say something?'],
+  ack: ['What are you thinking about? 🤔', 'Our chat got so short 😅', 'You went quiet 🙈 everything okay?'],
+  okYes: ['Okay 😊', 'Done 💜', 'Great 😌'],
+  okNo: ['Okay, no problem 😊', 'That’s fine 💜', 'Got it 😌'],
+  topic: [
+    'So what did you do today? 😊',
+    'Guess what I saw in the shop today? A new skin, so pretty 😍 Do you buy skins?',
+    'Do you think {lead} will be even stronger after evolving? 🤔',
+    'Are you free tomorrow? We could brawl 😏',
+    'Which of your Bakugan do you like most? 😊',
+    'Are you listening to music right now? I love the song on the Friends page 🎧',
+    'The clan was so noisy today 😅 How’s your clan?',
+  ],
+  listen: ['Mm, I get it 😊', 'Really? 😮 Then what?', 'Whoa 😮 tell me more', 'I like listening to you 💜 go on'],
+  pTired: ['Tired? 🥺 Rest a little, I’m here', 'Come here 🫂 you worked hard today', 'Then no brawls today, let’s just talk 😌💜'],
+  pWork: ['You must be tired after work 🥺 How did it go?', 'Hard worker 😌 I like that you text me on your break 💜'],
+  pSchool: ['How are classes? 📚 Not too hard?', 'Study first 😌 we’ll brawl later. Good luck 💜'],
+  pEat: ['Enjoy 😋 What are you eating?', 'Bon appétit 😊 save me some 🙈'],
+  pHome: ['Home is nice 😌 Relaxing?', 'I’m home too 😊 Let’s chat a bit then'],
+  pPlay: ['What are you playing? 😏 Not brawling anyone but me, right? 😤', 'Good luck 💪 Tell me how it went after'],
   tail: [' 💜', ' 😊', ' 🥰', ' 😌'],
 }
 
@@ -361,7 +431,7 @@ const tr: KiraLines = {
   laugh: ['Hahaha 😂 delisin 💜', '😂😂 seninle hiç sıkılmıyorum'],
   yes: ['Yaşasın 🥳', 'Evet diyeceğini biliyordum 😌'],
   no: ['Hıh 😤 peki…', 'Neden ama? 🥺'],
-  unknown: ['Hmm 🤔 bir daha söyle, anlamadım 🙈', 'Anlat, dinliyorum 💜', '“{snip}”… 😊 sonra?'],
+  unknown: ['Hmm 🤔 bir daha söyle, anlamadım 🙈', 'Anlat, dinliyorum 💜'],
   question: ['Hmm, bilmiyorum 🙈 Sen ne düşünüyorsun?', 'Zor soru 🤔 Birlikte bulalım mı?'],
   friendHello: ['Selam {me} 🥰 Beni eklemen çok sevindirdi! Bir gün kapışalım mı?'],
   inviteOk: ['tamam, sonra 💜'],
@@ -383,6 +453,22 @@ const tr: KiraLines = {
   favMovie: ['Anime 😄 özellikle savaşlı olanlar'],
   age: ['Bir kıza yaşı sorulmaz 😤🙈'],
   likeAsk: ['Beğenmesem burada seninle konuşur muydum? 🙈💜'],
+  day: ['İyi geçiyor 😊 Sabah {lead} ile antrenman yaptım, şimdi de seninleyim. Senin günün nasıl?', 'Biraz yorucuydu, iki maçım oldu 😅 Ama şimdi iyi. Seninki nasıl?'],
+  dayHeard: ['Hmm, anladım 😊 Önemli olan şimdi burada olman 💜', 'Böyle günler de olur 😌 Başka ne oldu?'],
+  dayGood: ['Sevindim 🥰 Her günün böyle geçsin'],
+  dayBad: ['Aww 🥺 ne oldu? Anlat bana', 'Gel buraya 🫂 Kötü günler geçer, ben buradayım 💜'],
+  what: ['Hiç 🙈 sadece seni düşünüyordum', 'Ne “ne”? 😄 Seninle konuşuyorum işte'],
+  ack: ['Ne düşünüyorsun? 🤔', 'Sessizleştin 🙈 her şey yolunda mı?'],
+  okYes: ['Tamam 😊', 'Süper 😌'],
+  okNo: ['Tamam, sorun değil 😊', 'Olsun 💜'],
+  topic: ['Peki sen bugün ne yaptın? 😊', 'Yarın boş musun? Bir maç yaparız 😏', 'En çok hangi Bakugan’ını seviyorsun? 😊', 'Şu an müzik dinliyor musun? Ben Friends sayfasındaki şarkıya bayılıyorum 🎧'],
+  listen: ['Hmm, anlıyorum 😊', 'Ciddi mi? 😮 Sonra ne oldu?', 'Seni dinlemek hoşuma gidiyor 💜 devam et'],
+  pTired: ['Yoruldun mu? 🥺 Biraz dinlen, ben buradayım', 'Bugün maç yok, sadece sohbet edelim 😌💜'],
+  pWork: ['İşten sonra yorulmuşsundur 🥺 Nasıl geçti?'],
+  pSchool: ['Dersler nasıl? 📚 Zor değil ya?'],
+  pEat: ['Afiyet olsun 😋 Ne yiyorsun?'],
+  pHome: ['Evde olmak güzel 😌 Dinleniyor musun?'],
+  pPlay: ['Ne oynuyorsun? 😏 Benden başkasıyla kapışmıyorsun değil mi? 😤'],
   tail: [' 💜', ' 😊', ' 🥰'],
 }
 
@@ -424,7 +510,7 @@ const ru: KiraLines = {
   laugh: ['Ахаха 😂 ты чудо 💜', '😂😂 с тобой никогда не скучно'],
   yes: ['Ура 🥳', 'Я знала, что ты согласишься 😌'],
   no: ['Хмф 😤 ладно…', 'А почему нет? 🥺'],
-  unknown: ['Хм 🤔 повтори, я не поняла 🙈', 'Рассказывай, я слушаю 💜', '«{snip}»… 😊 и что дальше?'],
+  unknown: ['Хм 🤔 повтори, я не поняла 🙈', 'Рассказывай, я слушаю 💜'],
   question: ['Хм, не знаю 🙈 А ты как думаешь?', 'Сложный вопрос 🤔 Разберёмся вместе?'],
   friendHello: ['Привет, {me} 🥰 Теперь мы друзья — так приятно! Сразимся как-нибудь?'],
   inviteOk: ['ладно, потом 💜'],
@@ -446,6 +532,22 @@ const ru: KiraLines = {
   favMovie: ['Аниме 😄 особенно про битвы'],
   age: ['У девушки возраст не спрашивают 😤🙈'],
   likeAsk: ['Разве я бы тут с тобой болтала, если бы нет? 🙈💜'],
+  day: ['Хорошо 😊 Утром тренировалась с {lead}, а теперь с тобой. А как твой день?', 'Немного утомительно, было два боя 😅 Но сейчас хорошо. Как твой день?'],
+  dayHeard: ['Понятно 😊 Главное, что ты сейчас здесь 💜', 'Бывают и такие дни 😌 Что ещё было?'],
+  dayGood: ['Ура 🥰 Пусть каждый день будет таким'],
+  dayBad: ['Ой 🥺 что случилось? Расскажи мне', 'Иди сюда 🫂 Плохие дни проходят, я рядом 💜'],
+  what: ['Ничего 🙈 просто думала о тебе', 'Что «что»? 😄 Я с тобой разговариваю'],
+  ack: ['О чём думаешь? 🤔', 'Всё в порядке? 🙈'],
+  okYes: ['Хорошо 😊', 'Отлично 😌'],
+  okNo: ['Ладно, без проблем 😊', 'Ничего страшного 💜'],
+  topic: ['Чем сегодня занимаешься? 😊', 'Завтра есть время? Можем сразиться 😏', 'Какой из твоих Bakugan тебе нравится больше всего? 😊', 'Ты сейчас слушаешь музыку? Мне очень нравится песня на странице Friends 🎧'],
+  listen: ['Понимаю 😊', 'Серьёзно? 😮 А дальше что?', 'Мне нравится тебя слушать 💜 продолжай'],
+  pTired: ['Устаёшь? 🥺 Отдохни немного, я рядом', 'Тогда сегодня без боёв, просто поболтаем 😌💜'],
+  pWork: ['После работы, наверное, сил нет 🥺 Как прошло?'],
+  pSchool: ['Как учёба? 📚 Не слишком сложно?'],
+  pEat: ['Приятного аппетита 😋 Что ешь?'],
+  pHome: ['Дома хорошо 😌 Отдыхаешь?'],
+  pPlay: ['Во что играешь? 😏 Надеюсь, ни с кем, кроме меня, не сражаешься? 😤'],
   tail: [' 💜', ' 😊', ' 🥰'],
 }
 

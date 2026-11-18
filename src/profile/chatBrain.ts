@@ -25,7 +25,7 @@ function priceRange(own: boolean) {
 export type { Lang }
 
 /** What a bot's line asked, so the player's short answer to it can be understood. */
-export type Ask = 'mood' | 'battle' | 'time' | 'lead'
+export type Ask = 'mood' | 'battle' | 'time' | 'lead' | 'day' | 'chat'
 
 export interface Turn {
   author: string
@@ -812,7 +812,7 @@ const GIRLFRIEND = W(
 const HUG = W('hug|hugs|hug me|qucaqla~|qucaqlayıram|sarıl~|обним~')
 const KISS = W('kiss|kisses|muah|mwah|öpürəm|öpüm|öpək|öpüş|öpücük|öpdüm|öp məni|öpüyorum|поцел~|целую')
 const PRETTY = W(
-  'beautiful|pretty|cute|gorgeous|lovely|gözəlsən|gözəlim|gözəl qız|qəşəngsən|şirinsən|şirinim|güzelsin|güzelim|tatlısın|tatlım|красивая|красотка|милая|прелесть',
+  "you're pretty|you are pretty|ur pretty|so pretty|beautiful|cute|gorgeous|gözəlsən|gözəlim|gözəl qız|qəşəngsən|şirinsən|şirinim|güzelsin|güzelim|tatlısın|tatlım|красивая|красотка|милая|прелесть",
 )
 const SORRY = W(
   'sorry|my bad|forgive me|apologize|bağışla~|üzr istəyirəm|üzrlü say|özür dilerim|affet~|kusura bakma|извини|прости',
@@ -849,13 +849,32 @@ const LIKE_Q = W('məni bəyənirsən|məndən xoşun gəlir|xoşuna gəlirəm|d
 /** A question asked with a question word (not a plain yes-or-no one). */
 const OPEN_Q = [Q_WHO, Q_WHAT, Q_WHEN, Q_WHERE, Q_WHICH, Q_WHY, Q_HOWMANY, W('how|necə|nasıl|как')]
 
+/** "How is your day going?" (asked of her, not of the game). */
+const DAY = W(
+  "günün necə~|gün necə~|günün necədir|necə keçir|necə gedir|necə keçdi günün|how is your day|how's your day|hows your day|how was your day|how's your day going|günün nasıl~|nasıl geçiyor|как день|как проходит день|как твой день",
+)
+const TIRED = W('yorğunam|yoruldum|yorulmuşam|yorulmuşdum|tired|exhausted|yorgunum|устал~|устала')
+const AT_WORK = W('işdəyəm|işdə idim|işdəydim|işdən gəldim|işləyirəm|işim çoxdur|at work|working|from work|işteyim|işten geldim|на работе|работаю|с работы')
+const SCHOOL = W('dərsdəyəm|dərsdə idim|dərsdəydim|dərs oxuyuram|dərslər~|məktəb~|universitet~|imtahan~|school|class|classes|exam~|homework|okul~|ders~|sınav~|школ~|урок~|экзамен~|учёб~|универ~')
+const EATING = W('yemək yeyirəm|yeyirəm|nahar edirəm|şam yeməyi|səhər yeməyi|eating|having lunch|having dinner|lunch|dinner|breakfast|yemek yiyorum|yemek yedim|ем|обедаю|ужинаю')
+const AT_HOME = W('evdəyəm|evdə idim|evdəydim|at home|evdeyim|дома')
+const PLAYING = W('oynayıram|oyun oynayıram|başqa oyun|playing|oynuyorum|играю')
+/** The game's own words: a "how…?" with none of them is about her, not a request for a tip. */
+const GAME_WORDS = W(
+  'kart~|card~|ability|abilit~|gate~|qapı~|döyüş~|battle~|brawl~|bakugan~|xal~|bp|pass|sezon~|season~|mağaza~|shop|skin~|güc~|power|reytinq~|rank~|təkamül~|evol~|klan~|clan~|oyun~|game|qalib~|win~|udmaq|uduz~|level|səviyyə~|g-power|kapış~|maç~|бой|карт~|клан~',
+)
+const SHORT_WHAT = /^(?:n[əe]+|ne+|what+|wha+t?|huh|что|чё|шо)[\s?!.]*$/u
+const SHORT_ACK = /^(?:h+m+|x+m+|ok+|oki+|okey|okay|aha+|a+|ну|ага|tamam|peki|yaxşı|oldu|hmm+)[\s.!]*$/u
+const SHORT_NO = /^(?:yo+x*|yoo+|no+|nope|nah|hayır|yok|нет|не-а)[\s.!]*$/u
+const SHORT_YES = /^(?:h[əe]+|ha+|yes+|yeah|yep|evet|hı+|да+|ага)[\s.!]*$/u
+
 const ASLEEP = W('yatmısan|yatırsan|yatmısanmı|are you sleeping|are you asleep|asleep|sleeping|uyuyor musun|uyudun mu|спишь')
 /** Kira's and everyone's lines that slide past a question (so "I asked you!" after one of them is fair). */
 const EVASIVE = (['question', 'unknown', 'confused'] as KiraKey[])
   .flatMap((k) => (['az', 'en', 'tr', 'ru'] as Lang[]).flatMap((l) => KIRA_LINES[l][k]))
-  .concat((['az', 'en', 'tr', 'ru'] as Lang[]).flatMap((l) => [...LINES[l].qUnknown, ...LINES[l].unknown, ...LINES[l].who]))
+  .concat((['az', 'en', 'tr', 'ru'] as Lang[]).flatMap((l) => [...LINES[l].qUnknown, ...LINES[l].unknown, ...LINES[l].who, ...LINES[l].tipWrap]))
   .map((l) => l.split('{')[0].trim())
-  .filter((l) => l.length > 4)
+  .filter((l) => l.length >= 4)
 const evasive = (text: string) => EVASIVE.some((l) => text.startsWith(l))
 
 /** One side of "X or Y": up to three words next to the "or", without the question words round them. */
@@ -908,8 +927,10 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }, forc
   const greeted = is(GREET) && !is(MORNING)
   const moodAnswer = () => say(info.fresh ? 'moodAskBrawled' : 'moodAsk', 'mood')
 
-  // "I asked you something": the question she slid past, answered properly this time
-  if (!forced && is(ANSWER_ME)) {
+  // "I asked you something" (or a lone "?" right after she slid past a question): that question, answered properly
+  const lastMine = [...input.history].reverse().find((h) => h.author === input.player?.id)
+  const slid = !!lastBot && evasive(lastBot.text) && !!lastMine && lastMine.text.includes('?')
+  if (!forced && (is(ANSWER_ME) || (/^[\s?？!.…]+$/u.test(raw) && slid))) {
     const mine = input.history.filter((h) => h.author === input.player?.id)
     const prev = [...mine].reverse().find((h) => !ANSWER_ME.test(fold(h.text)) && (h.text.includes('?') || OPEN_Q.some((re) => re.test(fold(h.text)))))
     if (prev) {
@@ -945,6 +966,18 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }, forc
   else if (is(ARE_BOT)) say('bot')
   else if (is(AGE)) say('age')
   else if (is(ASLEEP) && question) say('awake')
+  else if (SHORT_WHAT.test(t)) say('what')
+  else if (SHORT_NO.test(t) && asked !== 'battle' && asked !== 'mood') {
+    say('okNo')
+    if (Math.random() < 0.6) say('topic', 'chat')
+  } else if (SHORT_YES.test(t) && asked !== 'battle' && asked !== 'mood') say(lastBot?.text.trim().endsWith('?') ? 'okYes' : 'yes')
+  else if (SHORT_ACK.test(t)) {
+    if (Math.random() < 0.4) say('ack')
+    else say('topic', 'chat')
+  }
+  // her "and your day?" answered with how it went
+  else if (asked === 'day' && !question && (is(BAD_MOOD) || is(GOOD_MOOD)) && !is(LOVE) && !is(MISS))
+    say(is(BAD_MOOD) ? 'dayBad' : 'dayGood')
   else if (is(LIKE_Q)) say('likeAsk')
   else if ((is(FAV) || (question && is(LIKES))) && (is(COLOR) || is(FOOD) || is(MUSIC_W) || is(MOVIE)))
     say(is(COLOR) ? 'favColor' : is(FOOD) ? 'favFood' : is(MUSIC_W) ? 'favMusic' : 'favMovie')
@@ -958,7 +991,14 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }, forc
   else if (is(PRETTY) || is(COMPLIMENT)) say('compliment')
   else if (is(WIN) && is(YOU_OBJ) && !question) say('beatMe')
   else if (girl && !bakuganIn(t).length) say('jealous')
+  else if (is(DAY) && !is(GAME_WORDS)) say('day', 'day')
   else if (is(HOW_WAS)) say(info.fresh ? 'howWasBrawled' : 'howWas')
+  else if (is(TIRED) && !question) say('pTired')
+  else if (is(AT_WORK) && !question) say('pWork')
+  else if (is(SCHOOL) && !question) say('pSchool')
+  else if (is(EATING) && !question) say('pEat')
+  else if (is(PLAYING) && !question && !is(BATTLE) && !is(REQUEST)) say('pPlay')
+  else if (is(AT_HOME) && !question) say('pHome')
   else if (is(WHERE_ARE)) say('where')
   else if (is(NIGHT)) say('night')
   else if (is(MORNING)) say('morning')
@@ -981,6 +1021,12 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }, forc
   else if (base.keys.some((k) => BATTLE_PLAIN.includes(k)) || (asked === 'battle' && yes)) say('battle')
   else if (asked === 'battle' && no) say('no')
   else if (is(LAUGH) || /😂|🤣|😆|😹/u.test(raw)) say('laugh')
+  // her "and your day?" answered: glad, caring, or just listening
+  else if (asked === 'day' && !question) {
+    if (is(BAD_MOOD) || no) say('dayBad')
+    else if (is(GOOD_MOOD) || yes) say('dayGood')
+    else say('dayHeard')
+  }
   else if (base.keys.length && base.keys.every((k) => FALLBACK.includes(k))) {
     const open = OPEN_Q.some(is)
     if (question || open) {
@@ -991,8 +1037,14 @@ function kiraReply(input: ChatInput, base: ChatReply & { keys: LineKey[] }, forc
       else say(forced ? 'answerYes' : 'question')
     } else if (base.keys.includes('yes')) say('yes')
     else if (base.keys.includes('no')) say('no')
-    else say('unknown')
+    else if (t.split(' ').length >= 4) say('listen')
+    else {
+      say('unknown')
+      if (Math.random() < 0.5) say('topic', 'chat')
+    }
   }
+  // a game tip for a "how…?" that is not about the game: she answers about herself instead
+  else if (base.keys.includes('tipWrap') && !is(GAME_WORDS)) say(question ? 'question' : 'listen')
 
   if (!keys.length) {
     // a game question (rank, shop, a Bakugan, a brawl at a time…): the shared facts, in her tone
