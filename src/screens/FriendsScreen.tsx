@@ -7,6 +7,7 @@ import { ClanEmblem } from '../components/ClanEmblem'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { PageNav } from '../components/PageNav'
 import { PresenceDot, PresenceLabel, PresencePill } from '../components/PresenceBadge'
+import { BakuganThumb } from '../components/BakuganThumb'
 import { BAKUGAN, formBrawlG } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
 import { BOTS } from '../profile/bots'
@@ -79,6 +80,7 @@ export function FriendsScreen() {
         <div className="mt-8 grid grid-cols-[320px_minmax(0,1fr)] gap-8">
           <aside className="space-y-6">
             <FriendList me={me} clock={clock} selected={selected} onSelect={setSelected} />
+            {selected && <FriendSide key={selected} id={selected} me={me} />}
             <FindBrawlers me={me} onOpen={setSelected} />
           </aside>
           <main className="min-w-0">
@@ -283,29 +285,23 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
   const profiles = useProfiles((s) => s.profiles)
   const clans = useClans((s) => s.clans)
   const removeFriend = useProfiles((s) => s.removeFriend)
-  const openPage = useGame((s) => s.openPage)
   const waiting = useInvites((s) => s.outgoing?.state === 'waiting')
   const now = useMinute()
   const chat = useRef<HTMLInputElement>(null)
   const [confirm, setConfirm] = useState(false)
+  // the Bakugan on the 3D stage: the lead, or one picked from the team or the collection
+  const [picked, setPicked] = useState<{ id: string; form: number } | null>(null)
   const b = brawlerOf(id, profiles, now)
   if (!b) return null
   const el = ELEMENT_BY_ID[b.element]
   const status = friendStatus(me, id, clock)
   const live = statusOf(id, now)
   const clan = clanOf(clans, id)
-  const battles = b.wins + b.losses
-  const stats: [string, string | number][] = [
-    ['RANK SCORE', b.score.toLocaleString('en')],
-    ['RATING', `${b.rating} BR`],
-    ['PLAYER XP', b.xp.toLocaleString('en')],
-    ['BATTLES', battles.toLocaleString('en')],
-    ['WINS', b.wins.toLocaleString('en')],
-    ['LOSSES', b.losses.toLocaleString('en')],
-    ['WIN RATE', battles ? `${Math.round((b.wins / battles) * 100)}%` : '—'],
-    ['KOs', b.kos.toLocaleString('en')],
-    b.cpu ? ['TODAY', `${b.today ?? 0} ${b.today === 1 ? 'brawl' : 'brawls'}`] : ['BEST STREAK', b.bestStreak ?? 0],
-  ]
+  const onStage = picked ?? b.team[0] ?? b.collection[0]
+  const show = (t: { id: string; form: number }) => {
+    playSfx('tick')
+    setPicked({ id: t.id, form: t.form })
+  }
   const teamG = b.team.reduce((n, t) => n + formBrawlG({ bakugan: bakuganById(t.id), form: t.form }), 0)
   const friend = status === 'friend'
   const offline = friend && live.state === 'offline'
@@ -429,41 +425,38 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
         </div>
         {friend && (
           <p className="mt-2 text-xs text-white/35">
-            {b.cpu
-              ? `${b.firstName} gets your invite and accepts or declines in a few seconds. Invite to battle: a friendly brawl, no rating at stake. Tag battle: you and ${b.firstName} against two CPU brawlers of your level, 2 vs 2 (friendly too).`
-              : `Invite to battle: a friendly brawl, no rating at stake. Tag battle: you and ${b.firstName} against two CPU brawlers of your level, 2 vs 2 (friendly too).`}
+            Friendly brawls: no rating at stake. Tag battle: you and {b.firstName} against two CPU brawlers, 2 vs 2.
           </p>
         )}
 
-        <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2">
-          {stats.map(([label, value]) => (
-            <div key={label} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 backdrop-blur">
-              <p className="font-display text-[10px] tracking-[0.16em] text-white/40">{label}</p>
-              <p className="font-display mt-0.5 text-xl font-black">{value}</p>
-            </div>
-          ))}
-        </div>
-
-        <section className="mt-8">
+        <section className="mt-7">
           <h3 className="font-display text-xs tracking-[0.22em] text-white/40">BATTLE TEAM · {teamG}G</h3>
           <div
             className="relative mt-3 h-72 overflow-hidden rounded-xl border border-white/10"
             style={{ background: `radial-gradient(circle at 50% 40%, ${el.color}33, #05060a 70%)` }}
           >
             <Suspense fallback={<p className="p-4 text-xs text-white/40">Loading 3D…</p>}>
-              <FriendStage avatar={b.avatar} element={b.element} lead={b.team[0]} />
+              <FriendStage avatar={b.avatar} element={b.element} lead={onStage} />
             </Suspense>
+            {onStage && (
+              <p className="font-display pointer-events-none absolute right-4 bottom-3 text-right text-sm font-bold tracking-wider text-white/80">
+                {bakuganById(onStage.id).evolutions[onStage.form]?.name ?? bakuganById(onStage.id).name}
+                <span className="ml-2 text-xs text-white/45">{formBrawlG({ bakugan: bakuganById(onStage.id), form: onStage.form })}G</span>
+              </p>
+            )}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {b.team.length === 0 && <p className="text-sm text-white/40">No team picked.</p>}
             {b.team.map((t, i) => {
               const bakugan = bakuganById(t.id)
               const bel = ELEMENT_BY_ID[bakugan.element]
+              const on = onStage?.id === t.id
               return (
-                <div
+                <button
                   key={t.id}
-                  className="flex items-center gap-3 rounded-lg border-2 bg-black/40 px-4 py-2"
-                  style={{ borderColor: `${bel.color}aa` }}
+                  onClick={() => show(t)}
+                  className="flex items-center gap-3 rounded-lg border-2 bg-black/40 px-4 py-2 text-left transition hover:bg-white/5"
+                  style={{ borderColor: on ? bel.color : `${bel.color}66`, boxShadow: on ? `0 0 14px ${bel.color}55` : 'none' }}
                 >
                   <span className="font-display text-[10px] tracking-widest text-white/40">{i === 0 ? 'LEAD' : `#${i + 1}`}</span>
                   <img src={bel.icon} alt="" className="h-8 w-8" />
@@ -473,19 +466,59 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
                       {bel.name} · {formBrawlG({ bakugan, form: t.form })}G
                     </span>
                   </span>
-                </div>
+                </button>
               )
             })}
           </div>
         </section>
 
-        <Collection b={b} />
+        <Collection b={b} onStage={onStage} onPick={show} />
+      </div>
 
-        <section className="mt-8 pb-10">
-          <h3 className="font-display text-xs tracking-[0.22em] text-white/40">CLAN</h3>
-          {clan ? (
-            <div className="mt-3 flex items-center gap-4 rounded-xl border border-white/10 bg-black/40 p-4">
-              <ClanEmblem clan={clan} size={56} />
+      <DirectChat me={me} b={b} status={status} inputRef={chat} live={live} />
+    </div>
+  )
+}
+
+/** The open friend's numbers and clan, under the friend list (so the page is not one long column). */
+function FriendSide({ id, me }: { id: string; me: Profile }) {
+  const profiles = useProfiles((s) => s.profiles)
+  const clans = useClans((s) => s.clans)
+  const openPage = useGame((s) => s.openPage)
+  const now = useMinute()
+  const b = brawlerOf(id, profiles, now)
+  if (!b) return null
+  const clan = clanOf(clans, id)
+  const battles = b.wins + b.losses
+  const stats: [string, string | number][] = [
+    ['RANK SCORE', b.score.toLocaleString('en')],
+    ['RATING', `${b.rating} BR`],
+    ['PLAYER XP', b.xp.toLocaleString('en')],
+    ['BATTLES', battles.toLocaleString('en')],
+    ['WINS', b.wins.toLocaleString('en')],
+    ['LOSSES', b.losses.toLocaleString('en')],
+    ['WIN RATE', battles ? `${Math.round((b.wins / battles) * 100)}%` : '—'],
+    ['KOs', b.kos.toLocaleString('en')],
+    b.cpu ? ['TODAY', `${b.today ?? 0} ${b.today === 1 ? 'brawl' : 'brawls'}`] : ['BEST STREAK', b.bestStreak ?? 0],
+  ]
+  return (
+    <>
+      <section>
+        <h2 className="font-display text-xs tracking-[0.22em] text-white/40">{b.firstName.toUpperCase()} · STATS</h2>
+        <div className="mt-3 grid grid-cols-3 gap-1.5">
+          {stats.map(([label, value]) => (
+            <div key={label} className="rounded-lg border border-white/10 bg-black/40 px-2.5 py-2">
+              <p className="font-display text-[9px] tracking-[0.14em] text-white/40">{label}</p>
+              <p className="font-display mt-0.5 text-sm font-black whitespace-nowrap">{value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section>
+        <h3 className="font-display text-xs tracking-[0.22em] text-white/40">CLAN</h3>
+        {clan ? (
+            <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-black/40 p-3">
+              <ClanEmblem clan={clan} size={44} />
               <div className="min-w-0 flex-1">
                 <p className="font-display text-lg font-bold">
                   <span style={{ color: ELEMENT_BY_ID[clan.element].color }}>[{clan.tag}]</span> {clan.name}
@@ -498,7 +531,7 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
               </div>
               <button
                 onClick={() => openPage('clans')}
-                className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.16em] hover:bg-white/10"
+                className="font-display rounded border border-white/25 px-3 py-1.5 text-[10px] tracking-[0.16em] hover:bg-white/10"
               >
                 CLANS →
               </button>
@@ -506,57 +539,55 @@ function FriendPage({ id, me, clock, onGone }: { id: string; me: Profile; clock:
           ) : (
             <p className="mt-2 text-sm text-white/40">Not in a clan.</p>
           )}
-        </section>
-      </div>
-
-      <DirectChat me={me} b={b} status={status} inputRef={chat} live={live} />
-    </div>
+      </section>
+    </>
   )
 }
 
-/** Their Bakugan, furthest evolved first. */
-function Collection({ b }: { b: BrawlerView }) {
+/** Their Bakugan, furthest evolved first, as pictures: one clicked stands on the stage above. */
+function Collection({
+  b,
+  onStage,
+  onPick,
+}: {
+  b: BrawlerView
+  onStage: { id: string; form: number } | undefined
+  onPick: (t: { id: string; form: number }) => void
+}) {
   const [all, setAll] = useState(false)
-  const list = all ? b.collection : b.collection.slice(0, 8)
+  const FEW = 10
+  const list = all ? b.collection : b.collection.slice(0, FEW)
   return (
-    <section className="mt-8">
+    <section className="mt-7 pb-10">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xs tracking-[0.22em] text-white/40">COLLECTION · {b.collection.length} BAKUGAN</h3>
-        {b.collection.length > 8 && (
+        {b.collection.length > FEW && (
           <button onClick={() => setAll(!all)} className="text-xs text-white/45 hover:text-white">
             {all ? 'Show fewer' : `Show all ${b.collection.length}`}
           </button>
         )}
       </div>
-      <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2">
+      <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-2">
         {list.map((c) => {
           const bakugan = BAKUGAN.find((x) => x.id === c.id)
           if (!bakugan) return null
           const bel = ELEMENT_BY_ID[bakugan.element]
-          const forms = bakugan.evolutions.length
+          const on = onStage?.id === c.id
+          const name = bakugan.evolutions[c.form]?.name ?? bakugan.name
           return (
-            <div key={c.id} className="rounded-lg border bg-black/40 p-3" style={{ borderColor: `${bel.color}55` }}>
-              <div className="flex items-center gap-2">
-                <img src={bel.icon} alt="" className="h-7 w-7" />
-                <div className="min-w-0">
-                  <p className="font-display truncate text-sm font-bold">{bakugan.evolutions[c.form]?.name ?? bakugan.name}</p>
-                  <p className="text-[11px] text-white/45">
-                    {bel.name} · {formBrawlG({ bakugan, form: c.form })}G
-                  </p>
-                </div>
-              </div>
-              {forms > 1 && (
-                <div className="mt-2 flex gap-1" title={`Form ${c.form + 1} of ${forms}`}>
-                  {bakugan.evolutions.map((e, i) => (
-                    <span
-                      key={`${e.name}-${i}`}
-                      className="h-1.5 flex-1 rounded-full"
-                      style={{ background: i <= c.form ? bel.color : 'rgba(255,255,255,0.12)' }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <button
+              key={c.id}
+              onClick={() => onPick(c)}
+              title={`${name} · ${bel.name} · ${formBrawlG({ bakugan, form: c.form })}G`}
+              className="group relative aspect-square overflow-hidden rounded-lg border-2 bg-black/40 transition hover:-translate-y-0.5"
+              style={{ borderColor: on ? bel.color : 'rgba(255,255,255,0.08)', boxShadow: on ? `0 0 14px ${bel.color}55` : 'none' }}
+            >
+              <BakuganThumb entrant={{ bakugan, form: c.form }} />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-1.5 pt-4 pb-1 text-left">
+                <span className="font-display block truncate text-[11px] font-bold">{name}</span>
+                <span className="block text-[10px] text-white/50">{formBrawlG({ bakugan, form: c.form })}G</span>
+              </span>
+            </button>
           )
         })}
       </div>
