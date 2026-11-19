@@ -299,6 +299,13 @@ export const cardCount = (owned: OwnedBakugan) =>
 
 export const unlockedCards = (owned: OwnedBakugan) => abilitiesOf(bakuganById(owned.id), owned.form).slice(0, cardCount(owned))
 
+/**
+ * The cards a Bakugan brings at one of its forms: its unlocked cards at the form it has reached, every card of a form
+ * it has already grown past (it brawled its way through them all), none of a form it has not reached.
+ */
+export const cardsAtForm = (owned: OwnedBakugan, form: number) =>
+  form === owned.form ? unlockedCards(owned) : form < owned.form ? abilitiesOf(bakuganById(owned.id), form) : []
+
 /** XP at which ability card number `index` (0-based) unlocks. */
 export const cardUnlockXp = (index: number) => Math.max(0, index - START_CARDS + 1) * CARD_XP
 

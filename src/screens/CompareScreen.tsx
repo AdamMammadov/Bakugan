@@ -15,6 +15,7 @@ import {
   teamEntrants,
   tierOf,
   TIERS,
+  cardsAtForm,
   unlockedCards,
   useActiveProfile,
   useProfiles,
@@ -338,7 +339,8 @@ function TeamCard({
   const replace = (pick: Entrant) => {
     const o = ownedOf(pick.bakugan.id)
     if (owned && (!o || pick.form > o.form)) return
-    const entrant = o ? { ...pick, cards: unlockedCards(o).map((a) => a.id), skin: o.skin } : pick
+    // (the cards of the form picked: a lower form of an evolved Bakugan has cards of its own)
+    const entrant = o ? { ...pick, cards: cardsAtForm(o, pick.form).map((a) => a.id), skin: o.skin } : pick
     playSfx('tick')
     const next = [...team]
     // picking a Bakugan already in the team swaps the two slots

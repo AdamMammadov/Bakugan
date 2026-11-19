@@ -373,6 +373,8 @@ interface BrawlProps {
   callInset?: [string, string]
   /** A tag battle: each brawler's teammate, standing next to them in the scene. */
   partners?: [BrawlerInfo | null, BrawlerInfo | null]
+  /** A live match tuned into part-way: the state it has reached (between two battles), instead of a new match. */
+  joinAt?: BattleState
 }
 
 /** The match itself: lives, battles on a Gate Card, turns and each battle's end. */
@@ -393,6 +395,7 @@ export function Brawl({
   overlay,
   callInset,
   partners,
+  joinAt,
 }: BrawlProps) {
   const quality = useQuality()
   useEffect(() => teams.flat().forEach((e) => preloadModels(e.bakugan)), [teams])
@@ -490,7 +493,7 @@ export function Brawl({
   // ------------------------------------------------------------ match flow
 
   function begin(delay: number) {
-    const s = host ? host.battle.state : fresh()
+    const s = host ? host.battle.state : (joinAt ?? fresh())
     setView({ teams, brawlers })
     setBattle(s)
     setShown(s)
@@ -514,6 +517,14 @@ export function Brawl({
       started.current = host.battle.key
       const b = host.battle
       return later(delay, () => waitQuiet(() => battleStart(s, b)))
+    }
+    // tuned into a live match part-way: where it stands, then straight on with the next battle
+    if (joinAt) {
+      const [a, b] = [s.sides[0].lives, s.sides[1].lives]
+      call(
+        `We join the match in battle ${s.battle}! ${a === b ? `All square, ${livesLine(a)} each!` : `${nameOf(a > b ? 0 : 1)} leads, ${livesLine(Math.max(a, b))} to ${Math.min(a, b)}!`}`,
+      )
+      return later(delay / 2, () => waitQuiet(() => battleStart(s)))
     }
     const [l0, l1] = [s.sides[0].maxLives, s.sides[1].maxLives]
     const livesCall = l0 === l1 ? `${livesLine(l0)} each!` : `${nameOf(0)} has ${livesLine(l0)}, ${nameOf(1)} ${livesLine(l1)}!`
@@ -984,9 +995,9 @@ export function Brawl({
       {live && (
         <button
           onClick={onLeave}
-          className="font-display absolute top-[46%] left-5 text-xs tracking-[0.2em] text-white/45 transition hover:text-white"
+          className="font-display absolute bottom-6 left-6 z-20 rounded-full border border-white/40 bg-black/75 px-5 py-2.5 text-sm font-bold tracking-[0.18em] text-white shadow-lg backdrop-blur transition hover:border-red-400 hover:bg-red-500/25"
         >
-          ✕ EXIT
+          ✕ LEAVE LIVE MATCH
         </button>
       )}
 

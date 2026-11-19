@@ -1,6 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import { aiForTier } from '../battle/engine'
+import {
+  act,
+  aiForTier,
+  chooseAction,
+  chooseGate,
+  chooseThrow,
+  nextBattle,
+  resolveBattle,
+  setGate,
+  startBattle,
+  throwBakugan,
+  throwerOf,
+  type AiLevel,
+  type BattleState,
+} from '../battle/engine'
 import { abilitiesOf, BAKUGAN, type Entrant } from '../data/bakugan'
+import { gateDeck } from '../data/gates'
 import { CHARACTER_BY_ID } from '../profile/avatar'
 import { BOTS, botNow, botTeam, type BotBrawler } from '../profile/bots'
 import { rankScore, tierOf } from '../profile/useProfiles'
@@ -15,6 +30,8 @@ interface LiveMatch {
   teams: readonly [Entrant[], Entrant[]]
   brawlers: [BrawlerSide, BrawlerSide]
   viewers: number
+  /** Tuned into part-way: the match as it stands (a battle or two already played), or undefined from the start. */
+  joinAt?: BattleState
 }
 
 let matchId = 0
@@ -49,8 +66,28 @@ function sideOf(bot: BotBrawler): BrawlerSide {
   }
 }
 
+/**
+ * The match the two brawlers have been playing since before the player tuned in: `battles` whole battles played off
+ * screen with their own AI, stopped between two battles (or undefined if it would already be over by then).
+ */
+function playedSoFar(teams: readonly [Entrant[], Entrant[]], ai: [AiLevel, AiLevel], battles: number) {
+  let s: BattleState = startBattle(teams[0], teams[1], [gateDeck(teams[0]), gateDeck(teams[1])], Math.random() < 0.5 ? 0 : 1)
+  for (let guard = 0; s.results.length < battles && s.winner === null && s.phase !== 'over' && guard < 3000; guard++) {
+    if (s.phase === 'set') s = setGate(s, chooseGate(s, ai[s.setter]))
+    else if (s.phase === 'throw') {
+      const side = throwerOf(s)
+      if (side === null) break
+      s = throwBakugan(s, side, chooseThrow(s, side, ai[side]))
+    } else if (s.phase === 'battle') s = act(s, chooseAction(s, ai[s.duel!.turn])).state
+    else if (s.phase === 'clash') s = resolveBattle(s).state
+    else if (s.phase === 'result') s = nextBattle(s)
+  }
+  if (s.phase === 'result') s = nextBattle(s)
+  return s.winner === null && s.phase === 'set' && s.results.length === battles ? s : undefined
+}
+
 /** Two CPU brawlers close in the rankings (as they stand now), picked at random. */
-function liveMatch(): LiveMatch {
+function liveMatch(tuneIn = false): LiveMatch {
   const now = Date.now()
   const ranked = BOTS.map((bot) => botNow(bot, now)).sort((a, b) => rankScore(b) - rankScore(a))
   const i = Math.floor(Math.random() * (ranked.length - 1))
@@ -61,14 +98,24 @@ function liveMatch(): LiveMatch {
   const sideB = sideOf(b)
   // two CPU brawlers playing the same character still sound different
   if (a.characterId === b.characterId) sideB.voice = { ...sideB.voice, id: b.name }
-  return { id: ++matchId, teams: [teamOf(a), teamOf(b)], brawlers: [sideOf(a), sideB], viewers }
+  const teams = [teamOf(a), teamOf(b)] as const
+  const brawlers: [BrawlerSide, BrawlerSide] = [sideOf(a), sideB]
+  // tuning in, the match is usually under way already (one or two battles in); the next one starts from the top
+  const joinAt =
+    tuneIn && Math.random() < 0.8
+      ? playedSoFar(teams, [brawlers[0].ai!, brawlers[1].ai!], 1 + Math.floor(Math.random() * 2))
+      : undefined
+  return { id: ++matchId, teams, brawlers, viewers, joinAt }
 }
 
-/** Watch live: CPU brawlers' matches, one after another, until the player leaves. Nothing is recorded. */
+/**
+ * Watch live: CPU brawlers' matches, one after another, until the player leaves. Nothing is recorded. The first one is
+ * usually under way already when the player tunes in.
+ */
 export function LiveScreen() {
   const go = useGame((s) => s.go)
   const from = useGame((s) => s.liveFrom)
-  const [match, setMatch] = useState(liveMatch)
+  const [match, setMatch] = useState(() => liveMatch(true))
   const [viewers, setViewers] = useState(match.viewers)
   const next = useRef(0)
 
@@ -86,6 +133,7 @@ export function LiveScreen() {
       key={match.id}
       teams={match.teams}
       brawlers={match.brawlers}
+      joinAt={match.joinAt}
       live
       onLeave={() => go(from)}
       onOver={() => {

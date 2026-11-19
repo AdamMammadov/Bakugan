@@ -48,11 +48,9 @@ export function MainMenu() {
   const go = useGame((s) => s.go)
   const openPage = useGame((s) => s.openPage)
   const compareWith = useGame((s) => s.compareWith)
-  const openBakugan = useGame((s) => s.openBakugan)
   const watchLive = useGame((s) => s.watchLive)
   const element = ELEMENT_BY_ID[profile?.element ?? chosen ?? 'pyrus']
   const lead = leadOf(profile, element.id)
-  const leadEl = ELEMENT_BY_ID[lead.bakugan.element]
   const root = useRef<HTMLDivElement>(null)
 
   const events = useEventsLine()
@@ -210,33 +208,9 @@ export function MainMenu() {
           </div>
         </motion.div>
 
-        {/* middle: the lead Bakugan on its stand, and its name plate */}
+        {/* middle: the lead Bakugan on its stand (the Bakugan page shows it closer, so no plate here) */}
         <div className="relative hidden min-h-0 flex-col items-center lg:flex">
           <LeadStage lead={lead} />
-          <motion.button
-            data-menu-item
-            onClick={select(() => openBakugan(lead.bakugan.id))}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            whileHover={{ y: -3 }}
-            whileTap={{ scale: 0.97 }}
-            title={`Inspect ${lead.name} in 3D`}
-            className="menu-item group mt-2 flex shrink-0 items-center gap-3 rounded-full border border-white/15 bg-black/60 py-1.5 pr-5 pl-1.5 backdrop-blur transition hover:border-[var(--menu-accent)] hover:bg-black/80"
-          >
-            <img src={leadEl.icon} alt="" className="h-9 w-9" />
-            <span className="text-left whitespace-nowrap">
-              <span className="font-display block text-[9px] tracking-[0.14em] text-white/45">
-                LEAD BAKUGAN · <span className="transition group-hover:text-white">INSPECT →</span>
-              </span>
-              <span className="font-display block text-base leading-tight font-black tracking-wider">
-                {lead.name.toUpperCase()}
-                <span className="ml-2.5 text-sm" style={{ color: leadEl.color }}>
-                  {lead.g}G
-                </span>
-              </span>
-            </span>
-          </motion.button>
         </div>
 
         {/* right: the player, today's events, friends and clan, the other pages */}

@@ -7,7 +7,7 @@ import { botById, isBot } from './bots'
 import { brawlerOf } from './brawlers'
 import { isAvailable, presenceOf } from './presence'
 import { botSays, owe, useFriendChat, type InviteNote } from './useFriendChat'
-import { bakuganById, friendStatus, teamEntrants, tierOf, unlockedCards, useProfiles } from './useProfiles'
+import { bakuganById, cardsAtForm, friendStatus, teamEntrants, tierOf, useProfiles } from './useProfiles'
 
 /**
  * Battle invites between the player and their CPU friends, like with players online: an invite waits for an
@@ -101,7 +101,7 @@ export function startFriendly(meId: string, friendId: string) {
   // another player here brings their unlocked cards; a CPU brawler all of them
   const right: TeamMember[] = theirs.map((t) => {
     const owned = local?.collection.find((o) => o.id === t.id)
-    return owned ? { id: t.id, form: t.form, cards: unlockedCards(owned).map((a) => a.id), skin: owned.skin } : t
+    return owned ? { id: t.id, form: t.form, cards: cardsAtForm(owned, t.form).map((a) => a.id), skin: owned.skin } : t
   })
   const lead = bakuganById(theirs[0].id)
   let characterId = botById(b.id)?.characterId ?? (b.avatar.kind === 'preset' ? b.avatar.id : botCharacter(b.element).id)

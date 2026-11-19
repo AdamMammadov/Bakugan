@@ -246,11 +246,14 @@ const round10 = (n: number) => Math.round(n / 10) * 10
 export function makeSide(team: Entrant[], gates: GateCard[], lives = LIVES): Side {
   return {
     team: team.map((e) => ({ bakugan: e.bakugan, form: e.form, name: formOf(e).name, g: formBrawlG(e) + (e.bonusG ?? 0) })),
-    decks: team.map((e) =>
-      abilitiesOf(e.bakugan, e.form)
-        .filter((a) => !e.cards || e.cards.includes(a.id))
-        .map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id })),
-    ),
+    decks: team.map((e) => {
+      const all = abilitiesOf(e.bakugan, e.form)
+      const own = all.filter((a) => !e.cards || e.cards.includes(a.id))
+      // never an empty hand: cards of another form (one form's unlocked cards brought to another form) match none of
+      // this form's, so the form's own first cards are dealt instead, as many as were brought
+      const deck = own.length || !all.length ? own : all.slice(0, Math.max(3, Math.min(all.length, e.cards?.length ?? 3)))
+      return deck.map((ability) => ({ uid: `c${uid++}`, ability, owner: e.bakugan.id }))
+    }),
     gates: [...gates],
     gateDeck: [...gates],
     lives,
