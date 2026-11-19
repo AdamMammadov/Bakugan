@@ -171,15 +171,26 @@ export const gateKindLabel = (gate: GateCard) =>
   gate.kind === 'attribute' ? 'ATTRIBUTE GATE' : gate.kind === 'character' ? 'CHARACTER GATE' : 'COMMAND GATE'
 
 /**
- * A side's Gate Card deck: three cards, one for each battle it sets (a brawler sets at most three in a match).
- * The lead Bakugan's attribute gate, its attribute's command gate, and the lead's character gate when it has one
- * (else Grand Spirit, which helps a brawler who is behind).
+ * A side's Gate Card deck: three cards, one for each battle it sets (a brawler sets at most three in a match), all of
+ * them for its own team. First the attribute gate of each attribute in the team (so every Bakugan brought has a gate
+ * of its own: three attributes, three attribute gates), then, while there is room, the lead's attribute's command gate
+ * and a character gate of a Bakugan in the team (else Grand Spirit, which helps a brawler who is behind).
  */
 export function gateDeck(team: Entrant[]): GateCard[] {
   if (!team.length) return []
   const lead = team[0].bakugan
-  const attribute = GATE_BY_ID[`${lead.element}-${ATTRIBUTE_GATE_G}`]
-  const command = GATE_BY_ID[COMMAND_FOR[lead.element]]
-  const third = GATE_BY_ID[`char-${lead.id}`] ?? GATE_BY_ID['grand-spirit']
-  return [attribute, command, third]
+  const elements = [...new Set(team.map((e) => e.bakugan.element))]
+  const deck: GateCard[] = elements.map((el) => GATE_BY_ID[`${el}-${ATTRIBUTE_GATE_G}`]).filter(Boolean)
+  if (deck.length < 3) deck.push(GATE_BY_ID[COMMAND_FOR[lead.element]])
+  if (deck.length < 3) {
+    const own = team.map((e) => GATE_BY_ID[`char-${e.bakugan.id}`]).find(Boolean)
+    deck.push(own ?? GATE_BY_ID['grand-spirit'])
+  }
+  return deck.slice(0, 3)
 }
+
+/** Whether a gate card is one for this Bakugan: its attribute's gate, its own character gate, or a command gate. */
+export const gateFits = (gate: GateCard, bakugan: { id: string; element: ElementId }) =>
+  gate.kind === 'command' ||
+  (gate.kind === 'attribute' && gate.element === bakugan.element) ||
+  (gate.kind === 'character' && gate.bakugan === bakugan.id)

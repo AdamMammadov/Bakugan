@@ -23,6 +23,7 @@ import {
   useActiveProfile,
   XP,
 } from '../profile/useProfiles'
+import { takeEncyclopediaTab } from '../store/encyclopediaTab'
 import { useGame } from '../store/useGame'
 
 type Tab = 'bakugan' | 'cards' | 'attributes' | 'rules'
@@ -37,7 +38,8 @@ const TYPE_COLOR: Record<CardType, string> = {
 }
 
 export function EncyclopediaScreen() {
-  const [tab, setTab] = useState<Tab>('cards')
+  // (a link elsewhere may open it at a tab, see encyclopediaTab.ts)
+  const [tab, setTab] = useState<Tab>(() => takeEncyclopediaTab() ?? 'cards')
   const [cards, setCards] = useState<DbCard[] | null>(null)
   const [error, setError] = useState('')
   // set from the Bakugan tab to jump to that Bakugan's cards

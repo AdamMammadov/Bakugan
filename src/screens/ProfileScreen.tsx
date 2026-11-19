@@ -19,7 +19,7 @@ import { gateDeck } from '../data/gates'
 import { rankScore, teamEntrants, tierOf, useActiveProfile, useProfiles, type Profile } from '../profile/useProfiles'
 import { useGame } from '../store/useGame'
 import { EventTrophies } from '../components/EventTrophies'
-import { BrawlerProfileModal, FriendsList } from './BrawlerProfile'
+import { BrawlerProfileModal } from './BrawlerProfile'
 
 export function ProfileScreen() {
   const profile = useActiveProfile()
@@ -85,12 +85,8 @@ export function ProfileScreen() {
         <>
           <Header profile={profile} onEdit={() => editProfile(profile.id)} onDelete={() => setConfirmDelete(true)} />
           <Stats profile={profile} />
-          <div className="mt-8">
-            <FriendsList onOpen={setFriendId} />
-          </div>
           <Team profile={profile} onOpen={openDetail} />
           <CollectionBrowser profile={profile} openId={detail?.id ?? null} onOpen={openDetail} />
-          <Locker profile={profile} />
           <AbilityBrowser profile={profile} onOpen={openDetail} />
           <BakuganDrawer profile={profile} open={detail} onNavigate={stepDetail} onClose={closeDetail} />
         </>
@@ -262,27 +258,6 @@ function Team({ profile, onOpen }: { profile: Profile; onOpen: (id: string, list
           <GateChip key={g.id} gate={g} />
         ))}
       </div>
-    </section>
-  )
-}
-
-/** Short summary of what the player owns, opening the inventory. */
-function Locker({ profile }: { profile: Profile }) {
-  const openPage = useGame((s) => s.openPage)
-  const owned = profile.cosmetics?.owned ?? []
-  const count = (prefix: string) => owned.filter((k) => k.startsWith(prefix)).length
-  return (
-    <section className="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/30 px-6 py-4">
-      <p className="text-sm text-white/60">
-        Inventory: {count('skin:')} skins · {count('frame:')} frames · {count('outfit:') + count('acc:')} outfits & accessories ·{' '}
-        {profile.boosts ?? 0} XP Boosts · {profile.cardKeys ?? 0} Card Keys
-      </p>
-      <button
-        onClick={() => openPage('inventory')}
-        className="font-display rounded border border-white/25 px-4 py-1.5 text-xs tracking-[0.16em] hover:bg-white/10"
-      >
-        OPEN INVENTORY →
-      </button>
     </section>
   )
 }

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { playSfx } from '../audio/sfx'
-import { aiForTier, LIVES, MOVES, TEAM_SIZE } from '../battle/engine'
+import { aiForTier, TEAM_SIZE } from '../battle/engine'
 import { GRID, GRID_SIZE } from '../components/grid'
 import { abilitiesOf, abilityLabel, BAKUGAN, formBrawlG, formOf, type Entrant } from '../data/bakugan'
 import { isReleased, released } from '../season/release'
@@ -24,6 +24,7 @@ import {
 import { botCharacter } from '../profile/avatar'
 import { findRival, type Rival } from '../profile/rivals'
 import { useBackOf, useGame } from '../store/useGame'
+import { openEncyclopediaAt } from '../store/encyclopediaTab'
 import { TagFaceOff } from './TagFaceOff'
 
 /** Fills a team up to `size` with Bakugan not already in it. */
@@ -56,6 +57,7 @@ export function CompareScreen() {
   const bakuganId = useGame((s) => s.bakuganId)
   const compareForm = useGame((s) => s.compareForm)
   const go = useGame((s) => s.go)
+  const openPage = useGame((s) => s.openPage)
   // where the face-off was opened from (the menu's BRAWL, a Bakugan's FACE-OFF…), never a page or a match
   const back = useBackOf('compare')
   const enterArena = useGame((s) => s.enterArena)
@@ -140,13 +142,18 @@ export function CompareScreen() {
         {back === 'menu' ? '← MAIN MENU' : '← BACK'}
       </button>
       <h1 className="font-display mt-4 text-4xl font-black tracking-wider">TEAM FACE-OFF</h1>
+      {/* the rules are in the encyclopedia: here just what this page does */}
       <p className="mt-1 max-w-3xl text-white/50">
-        Pick your team. The system matches you with an opponent on your level: as many Bakugan as you bring, the same forms and
-        the same number of ability cards. Each brawler has {LIVES} lives. Every battle one brawler sets a Gate Card face-down and
-        both throw a Bakugan onto it, one after the other. Then each brawler makes {MOVES} moves, in turn: activate an ability
-        card, or open or close the Gate Card. Then the Bakugan clash and the higher G-Power wins; a Bakugan knocked down to a
-        quarter of its G-Power or less is defeated at once. The loser of a battle loses a life: lose {LIVES} battles and you are
-        defeated.
+        Pick your team: the system finds an opponent on your level, with as many Bakugan as you bring.{' '}
+        <button
+          onClick={() => {
+            openEncyclopediaAt('rules')
+            openPage('encyclopedia')
+          }}
+          className="font-display text-xs tracking-[0.16em] text-white/70 underline-offset-4 hover:text-white hover:underline"
+        >
+          HOW TO BRAWL →
+        </button>
       </p>
 
       {profile && (

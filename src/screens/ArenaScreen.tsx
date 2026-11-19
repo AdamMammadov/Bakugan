@@ -32,6 +32,7 @@ import {
   type BattleEvent,
   type BattleResult,
   type BattleState,
+  type Fighter,
   type Card,
   type Duel,
   type DuelEnd,
@@ -45,7 +46,7 @@ import { BakuganPortrait } from '../components/BakuganPortrait'
 import { FxOverlay } from '../components/FxOverlay'
 import { BAKUGAN, battleEffect, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
-import { GATE_BY_ID, gateDeck, gateElementOf, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
+import { GATE_BY_ID, gateDeck, gateElementOf, gateFits, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
 import { reportEventResult } from '../events/results'
 import { bakuganById, rankScore, TIERS, useActiveProfile, useProfiles, type BattleReward } from '../profile/useProfiles'
 import { useGame, type ArenaSetup, type TeamMember } from '../store/useGame'
@@ -323,6 +324,9 @@ export interface BrawlHost {
   counter?: string
 }
 
+/** What the player is picking: a gate card, the Bakugan to throw, or (setting the gate) the Bakugan first. */
+type Picking = 'gate' | 'throw' | 'first' | null
+
 /** A battle's end on screen: the counters, then the winner, then its final blow. */
 interface Clash {
   key: number
@@ -418,7 +422,9 @@ export function Brawl({
   const [defeated, setDefeated] = useState<[boolean, boolean]>([false, false])
   const [shields, setShields] = useState<[boolean, boolean]>([false, false])
   const [busy, setBusy] = useState(true)
-  const [picking, setPicking] = useState<'gate' | 'throw' | null>(null)
+  // 'first': the player, setting the gate, picks the Bakugan they will throw before the gate card for it
+  const [picking, setPicking] = useState<Picking>(null)
+  const preThrow = useRef<number | null>(null)
   const [banner, setBanner] = useState<{ text: string; sub?: string; color?: string; key: number } | null>(null)
   const [clash, setClash] = useState<Clash | null>(null)
   const [reward, setReward] = useState<BattleReward | null>(null)
@@ -547,12 +553,27 @@ export function Brawl({
     if (hosted) say(hosted.title, hosted.sub)
     else say(`BATTLE ${s.battle}`, `${nameOf(s.setter)} sets the Gate Card`)
     if (s.battle > 1) crowd('chant')
+    preThrow.current = null
     later(BATTLE_MS, () => {
-      if (human(s.setter) && gatesLeft(s.sides[0]).length > 1) {
+      // the player sets the gate: first the Bakugan they will throw, then a gate card for it
+      if (human(s.setter) && s.sides[0].team.length > 1) {
+        setPicking('first')
+        setBusy(false)
+      } else if (human(s.setter) && gatesLeft(s.sides[0]).length > 1) {
         setPicking('gate')
         setBusy(false)
       } else gateSet(s, human(s.setter) ? 0 : chooseGate(s, levelOf(s.setter)))
     })
+  }
+
+  /** The Bakugan the player will throw, picked before the gate card: then the gate cards, those for it marked. */
+  function pickFirst(s: BattleState, index: number) {
+    playSfx('select')
+    preThrow.current = index
+    if (gatesLeft(s.sides[0]).length > 1) {
+      setPicking('gate')
+      setBusy(false)
+    } else gateSet(s, 0)
   }
 
   function gateSet(s: BattleState, index: number) {
@@ -574,6 +595,12 @@ export function Brawl({
     setShown(s)
     const side = throwerOf(s)
     if (side === null) return battleReady(s)
+    // the Bakugan the player picked before setting the gate stands on it now
+    if (human(side) && preThrow.current !== null) {
+      const index = preThrow.current
+      preThrow.current = null
+      return throwOne(s, side, index)
+    }
     if (human(side) && s.sides[side].team.length > 1) {
       setPicking('throw')
       setBusy(false)
@@ -1001,8 +1028,15 @@ export function Brawl({
         </button>
       )}
 
-      {picking === 'gate' && !busy && <GatePicker gates={gatesLeft(battle.sides[0])} onPick={(i) => gateSet(battle, i)} />}
+      {picking === 'gate' && !busy && (
+        <GatePicker
+          gates={gatesLeft(battle.sides[0])}
+          forBakugan={preThrow.current === null ? undefined : battle.sides[0].team[preThrow.current]}
+          onPick={(i) => gateSet(battle, i)}
+        />
+      )}
       {picking === 'throw' && !busy && <ThrowPicker state={battle} teams={cast.teams} onPick={(i) => pickThrow(battle, i)} />}
+      {picking === 'first' && !busy && <ThrowPicker state={battle} teams={cast.teams} first onPick={(i) => pickFirst(battle, i)} />}
 
       {/* the player's moves: the ability cards in hand and the gate action, when there is one */}
       {hand && <MoveBar state={battle} myTurn={myTurn} foeName={shownName(1)} onMove={(m) => run(battle, m)} />}
@@ -1191,13 +1225,13 @@ function PhaseLabel({
   state: BattleState
   busy: boolean
   controls: boolean
-  picking: 'gate' | 'throw' | null
+  picking: Picking
   names: [string, string]
 }) {
   let text = ''
   const turn = state.duel?.turn
   if (picking === 'gate' && !busy) text = 'SET A GATE CARD'
-  else if (picking === 'throw' && !busy) text = 'CHOOSE YOUR BAKUGAN'
+  else if ((picking === 'throw' || picking === 'first') && !busy) text = 'CHOOSE YOUR BAKUGAN'
   else if (state.phase === 'set') text = `${names[state.setter].toUpperCase()} SETS THE GATE`
   else if (state.phase === 'throw') text = 'BAKUGAN, BRAWL!'
   else if (state.phase === 'battle' && turn !== undefined)
@@ -1372,27 +1406,44 @@ function GateButton({
 }
 
 /** The player sets a Gate Card: their unused ones, face up (only they see it). */
-function GatePicker({ gates, onPick }: { gates: GateCard[]; onPick: (index: number) => void }) {
+function GatePicker({
+  gates,
+  forBakugan,
+  onPick,
+}: {
+  gates: GateCard[]
+  /** The Bakugan the player will throw: the gates for it are marked, the others dimmed. */
+  forBakugan?: Fighter
+  onPick: (index: number) => void
+}) {
   return (
     <motion.div
       className="absolute inset-x-0 bottom-5 z-10 flex flex-col items-center"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <p className="font-display mb-1 text-xs tracking-[0.22em] text-white/80">GATE CARD, SET!</p>
+      <p className="font-display mb-1 text-xs tracking-[0.22em] text-white/80">
+        GATE CARD, SET!{forBakugan ? ` · FOR ${forBakugan.name.toUpperCase()}` : ''}
+      </p>
       <p className="mb-4 text-xs text-white/55">It lies face-down: open it during the battle when the time is right.</p>
       <div className="flex gap-3">
         {gates.map((g, i) => {
           const el = ELEMENT_BY_ID[gateElementOf(g)]
+          const fits = forBakugan ? gateFits(g, forBakugan.bakugan) : true
           return (
             <motion.button
               key={g.id}
               onClick={() => onPick(i)}
               whileHover={{ y: -10 }}
               whileTap={{ scale: 0.95 }}
-              className="flex w-52 flex-col items-start rounded-lg border-2 bg-black/85 p-3 text-left backdrop-blur"
-              style={{ borderColor: `${el.color}cc`, boxShadow: `0 0 18px ${el.color}44` }}
+              className={`relative flex w-52 flex-col items-start rounded-lg border-2 bg-black/85 p-3 text-left backdrop-blur ${fits ? '' : 'opacity-55'}`}
+              style={{ borderColor: `${el.color}cc`, boxShadow: fits ? `0 0 18px ${el.color}44` : 'none' }}
             >
+              {forBakugan && fits && (
+                <span className="font-display absolute -top-2.5 right-2 rounded bg-white px-2 text-[9px] font-bold tracking-widest text-black">
+                  FITS {forBakugan.name.toUpperCase()}
+                </span>
+              )}
               <span className="flex items-center gap-2">
                 <img src={el.icon} alt="" className="h-7 w-7" />
                 <span className="font-display text-sm font-bold">{gateLabel(g)}</span>
@@ -1411,10 +1462,13 @@ function GatePicker({ gates, onPick }: { gates: GateCard[]; onPick: (index: numb
 function ThrowPicker({
   state,
   teams,
+  first = false,
   onPick,
 }: {
   state: BattleState
   teams: readonly [Entrant[], Entrant[]]
+  /** Picked before the gate card is set (the gate cards for it come next). */
+  first?: boolean
   onPick: (index: number) => void
 }) {
   const s = state.sides[0]
@@ -1429,9 +1483,11 @@ function ThrowPicker({
     >
       <p className="font-display mb-1 text-xs tracking-[0.22em] text-white/80">CHOOSE YOUR BAKUGAN · THROW!</p>
       <p className="mb-4 text-xs text-white/55">
-        {foe
-          ? `${foe.name} (${foe.g} G) stands on the Gate Card. Who answers it?`
-          : 'You throw first: you move first, and your Bakugan wins a tie.'}
+        {first
+          ? 'You set the Gate Card this battle: pick your Bakugan, then a Gate Card for it.'
+          : foe
+            ? `${foe.name} (${foe.g} G) stands on the Gate Card. Who answers it?`
+            : 'You throw first: you move first, and your Bakugan wins a tie.'}
       </p>
       <div className="flex gap-3">
         {s.team.map((f, i) => {

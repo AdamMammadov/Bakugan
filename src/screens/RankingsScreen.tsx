@@ -263,8 +263,14 @@ export function RankingsScreen() {
         <div className="mt-4 space-y-1.5">
           {clanRows.map((c, i) => {
             const el = ELEMENT_BY_ID[c.element]
+            // the player's own clan stands out as their own row does in the players' table
+            const mine = c.id === myClan?.id
             return (
-              <div key={c.id} className="flex items-center gap-4 rounded-lg bg-black/40 px-3 py-2">
+              <div
+                key={c.id}
+                className={`flex items-center gap-4 rounded-lg px-3 py-2 ${mine ? 'bg-white/15' : 'bg-black/40'}`}
+                style={mine ? { outline: `2px solid ${el.color}` } : undefined}
+              >
                 <span className="font-display w-6 text-lg font-black text-white/70">{i + 1}</span>
                 <img src={el.icon} alt="" className="h-8 w-8" />
                 <span className="font-display font-bold" style={{ color: el.color }}>
@@ -274,6 +280,11 @@ export function RankingsScreen() {
                   {c.name}{' '}
                   {c.cpu && (
                     <span className="ml-1 rounded bg-white/10 px-1.5 text-[10px] tracking-widest text-white/50">CPU</span>
+                  )}
+                  {mine && (
+                    <span className="ml-1 rounded px-1.5 text-[10px] tracking-widest" style={{ background: el.color }}>
+                      YOUR CLAN
+                    </span>
                   )}
                 </span>
                 <span className="text-sm text-white/50">{c.members} members</span>
