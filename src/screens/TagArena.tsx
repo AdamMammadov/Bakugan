@@ -652,7 +652,7 @@ function DuelPanel({
         <BrawlerFace
           avatar={cast.sides[slot].avatar}
           parts={cast.sides[slot].parts}
-          color={cast.colors[slot]}
+          color={el?.color ?? cast.colors[slot]}
           size={expanded ? 44 : 30}
         />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -660,7 +660,7 @@ function DuelPanel({
             {cast.short[slot].toUpperCase()}
             {moving && <span className="ml-1 rounded-sm bg-white px-1 text-[8px] text-black">MOVE</span>}
           </p>
-          <LifeBalls lives={s.sides[side].lives} max={s.sides[side].maxLives} color={cast.colors[slot]} small />
+          <LifeBalls lives={s.sides[side].lives} max={s.sides[side].maxLives} color={el?.color ?? cast.colors[slot]} small />
         </div>
         <div className="flex items-center gap-1.5">
           <div className={`${expanded ? 'h-14 w-14' : 'h-9 w-9'} overflow-hidden rounded border border-white/15 bg-white/5`}>

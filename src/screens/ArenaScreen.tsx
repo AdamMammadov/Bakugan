@@ -14,7 +14,7 @@ import {
   gateAction,
   gateDelta,
   gateEffectOf,
-  gatesLeft,
+  gatesFor,
   leaderOf,
   LIVES,
   MOVES,
@@ -46,7 +46,7 @@ import { BakuganPortrait } from '../components/BakuganPortrait'
 import { FxOverlay } from '../components/FxOverlay'
 import { BAKUGAN, battleEffect, type Ability, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID } from '../data/elements'
-import { GATE_BY_ID, gateDeck, gateElementOf, gateFits, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
+import { GATE_BY_ID, gateDeck, gateElementOf, gateKindLabel, gateLabel, type GateCard } from '../data/gates'
 import { reportEventResult } from '../events/results'
 import { bakuganById, rankScore, TIERS, useActiveProfile, useProfiles, type BattleReward } from '../profile/useProfiles'
 import { useGame, type ArenaSetup, type TeamMember } from '../store/useGame'
@@ -332,6 +332,8 @@ interface Clash {
   key: number
   power: [number, number]
   names: [string, string]
+  /** Each Bakugan's attribute colour. */
+  colors: [string, string]
   winner: SideIndex
   finisher: boolean
   /** How it was decided. */
@@ -555,31 +557,33 @@ export function Brawl({
     if (s.battle > 1) crowd('chant')
     preThrow.current = null
     later(BATTLE_MS, () => {
-      // the player sets the gate: first the Bakugan they will throw, then a gate card for it
+      // the player sets the gate: first the Bakugan they will throw, then one of its own gate cards
       if (human(s.setter) && s.sides[0].team.length > 1) {
         setPicking('first')
         setBusy(false)
-      } else if (human(s.setter) && gatesLeft(s.sides[0]).length > 1) {
-        setPicking('gate')
-        setBusy(false)
-      } else gateSet(s, human(s.setter) ? 0 : chooseGate(s, levelOf(s.setter)))
+      } else if (human(s.setter)) pickFirst(s, 0)
+      else {
+        const pick = chooseGate(s, levelOf(s.setter))
+        gateSet(s, pick.member, pick.gate)
+      }
     })
   }
 
-  /** The Bakugan the player will throw, picked before the gate card: then the gate cards, those for it marked. */
+  /** The Bakugan the player will throw, picked before the gate card: then that Bakugan's own gate cards. */
   function pickFirst(s: BattleState, index: number) {
     playSfx('select')
     preThrow.current = index
-    if (gatesLeft(s.sides[0]).length > 1) {
+    if (gatesFor(s.sides[0], index).length > 1) {
       setPicking('gate')
       setBusy(false)
-    } else gateSet(s, 0)
+    } else gateSet(s, index, 0)
   }
 
-  function gateSet(s: BattleState, index: number) {
+  /** The setter sets a Gate Card of the Bakugan it will throw (`member`), index into gatesFor. */
+  function gateSet(s: BattleState, member: number, index: number) {
     setPicking(null)
     setBusy(true)
-    const next = setGate(s, index)
+    const next = setGate(s, member, index)
     const side = s.setter
     playSfx('gateCard')
     cue(side, 'card', 'GATE CARD, SET!', human(side) && next.gate ? next.gate.name : 'face-down', 'Gate card, set!')
@@ -595,11 +599,10 @@ export function Brawl({
     setShown(s)
     const side = throwerOf(s)
     if (side === null) return battleReady(s)
-    // the Bakugan the player picked before setting the gate stands on it now
-    if (human(side) && preThrow.current !== null) {
-      const index = preThrow.current
+    // the Bakugan the gate was set for stands on it now (the player picked it before setting the gate)
+    if (side === s.setter && s.planned !== null) {
       preThrow.current = null
-      return throwOne(s, side, index)
+      if (human(side)) return throwOne(s, side, s.planned)
     }
     if (human(side) && s.sides[side].team.length > 1) {
       setPicking('throw')
@@ -797,6 +800,7 @@ export function Brawl({
       key: nextKey(),
       power: result.power,
       names: [d.fighters[0].name, d.fighters[1].name],
+      colors: [ELEMENT_BY_ID[d.fighters[0].bakugan.element].color, ELEMENT_BY_ID[d.fighters[1].bakugan.element].color],
       winner,
       finisher: result.finisher,
       end: result.end,
@@ -948,13 +952,16 @@ export function Brawl({
   const onField = cast.brawlers[0].ai === null && !live
   const duel = battle.duel
   const myTurn = onField && !busy && battle.phase === 'battle' && duel?.turn === 0 && battle.winner === null
-  // each brawler's colour: their lead Bakugan's attribute
-  const colors = [0, 1].map((i) => ELEMENT_BY_ID[cast.teams[i][0].bakugan.element].color) as [string, string]
   const fieldGate = shown.duel?.gate
   const over = !host && battle.winner !== null && battle.phase === 'over' && !clash
   const gateOwner = shown.duel?.gate?.owner ?? shown.setter
   // the Bakugan on the field: this battle's once thrown (the other side's last one waits in its ball till then)
   const onCard = (side: SideIndex) => (shown.duel ? shown.sides[side].active : (shown.thrown[side] ?? shown.sides[side].active))
+  // each brawler's colour: the attribute of their Bakugan on the field (it changes with the Bakugan)
+  const colors = [0, 1].map((i) => ELEMENT_BY_ID[(cast.teams[i][onCard(i as SideIndex)] ?? cast.teams[i][0]).bakugan.element].color) as [
+    string,
+    string,
+  ]
   const hand = onField && battle.phase === 'battle' && !!duel
 
   return (
@@ -1030,9 +1037,9 @@ export function Brawl({
 
       {picking === 'gate' && !busy && (
         <GatePicker
-          gates={gatesLeft(battle.sides[0])}
-          forBakugan={preThrow.current === null ? undefined : battle.sides[0].team[preThrow.current]}
-          onPick={(i) => gateSet(battle, i)}
+          gates={gatesFor(battle.sides[0], preThrow.current ?? 0)}
+          forBakugan={battle.sides[0].team[preThrow.current ?? 0]}
+          onPick={(i) => gateSet(battle, preThrow.current ?? 0, i)}
         />
       )}
       {picking === 'throw' && !busy && <ThrowPicker state={battle} teams={cast.teams} onPick={(i) => pickThrow(battle, i)} />}
@@ -1066,7 +1073,7 @@ export function Brawl({
       </AnimatePresence>
 
       <AnimatePresence>
-        {clash && <ClashView key={clash.key} clash={clash} colors={colors} brawlerNames={[shownName(0), shownName(1)]} />}
+        {clash && <ClashView key={clash.key} clash={clash} brawlerNames={[shownName(0), shownName(1)]} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -1411,9 +1418,9 @@ function GatePicker({
   forBakugan,
   onPick,
 }: {
+  /** The gate cards of the Bakugan the player will throw (gatesFor). */
   gates: GateCard[]
-  /** The Bakugan the player will throw: the gates for it are marked, the others dimmed. */
-  forBakugan?: Fighter
+  forBakugan: Fighter
   onPick: (index: number) => void
 }) {
   return (
@@ -1423,27 +1430,21 @@ function GatePicker({
       animate={{ opacity: 1, y: 0 }}
     >
       <p className="font-display mb-1 text-xs tracking-[0.22em] text-white/80">
-        GATE CARD, SET!{forBakugan ? ` · FOR ${forBakugan.name.toUpperCase()}` : ''}
+        GATE CARD, SET! · FOR {forBakugan.name.toUpperCase()}
       </p>
       <p className="mb-4 text-xs text-white/55">It lies face-down: open it during the battle when the time is right.</p>
       <div className="flex gap-3">
         {gates.map((g, i) => {
           const el = ELEMENT_BY_ID[gateElementOf(g)]
-          const fits = forBakugan ? gateFits(g, forBakugan.bakugan) : true
           return (
             <motion.button
               key={g.id}
               onClick={() => onPick(i)}
               whileHover={{ y: -10 }}
               whileTap={{ scale: 0.95 }}
-              className={`relative flex w-52 flex-col items-start rounded-lg border-2 bg-black/85 p-3 text-left backdrop-blur ${fits ? '' : 'opacity-55'}`}
-              style={{ borderColor: `${el.color}cc`, boxShadow: fits ? `0 0 18px ${el.color}44` : 'none' }}
+              className="relative flex w-52 flex-col items-start rounded-lg border-2 bg-black/85 p-3 text-left backdrop-blur"
+              style={{ borderColor: `${el.color}cc`, boxShadow: `0 0 18px ${el.color}44` }}
             >
-              {forBakugan && fits && (
-                <span className="font-display absolute -top-2.5 right-2 rounded bg-white px-2 text-[9px] font-bold tracking-widest text-black">
-                  FITS {forBakugan.name.toUpperCase()}
-                </span>
-              )}
               <span className="flex items-center gap-2">
                 <img src={el.icon} alt="" className="h-7 w-7" />
                 <span className="font-display text-sm font-bold">{gateLabel(g)}</span>
@@ -1536,8 +1537,9 @@ function ThrowPicker({
 }
 
 /** A battle's end: both G-Powers count up, the winner shows, then the loser's brawler loses a life. */
-function ClashView({ clash, colors, brawlerNames }: { clash: Clash; colors: [string, string]; brawlerNames: [string, string] }) {
+function ClashView({ clash, brawlerNames }: { clash: Clash; brawlerNames: [string, string] }) {
   const loser = other(clash.winner)
+  const colors = clash.colors
   const tie = clash.power[0] === clash.power[1] && !clash.finisher
   return (
     <motion.div

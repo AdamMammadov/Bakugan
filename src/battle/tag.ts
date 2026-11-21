@@ -152,6 +152,7 @@ export function pairBattle(s: TagState, pair: Pair, rng: () => number = Math.ran
     first: setter,
     setter,
     gate: null,
+    planned: null,
     thrown: [null, null],
     duel: null,
     winner: null,
@@ -231,7 +232,10 @@ export interface AiStep {
  * battle is decided. Null once it is decided (phase 'result' or 'over').
  */
 export function aiStep(s: BattleState, levels: [AiLevel, AiLevel], rng: () => number = Math.random): AiStep | null {
-  if (s.phase === 'set') return { state: setGate(s, chooseGate(s, levels[s.setter], rng)), kind: 'set', side: s.setter }
+  if (s.phase === 'set') {
+    const pick = chooseGate(s, levels[s.setter], rng)
+    return { state: setGate(s, pick.member, pick.gate), kind: 'set', side: s.setter }
+  }
   if (s.phase === 'throw') {
     const side = throwerOf(s)!
     return { state: throwBakugan(s, side, chooseThrow(s, side, levels[side], rng), rng), kind: 'throw', side }

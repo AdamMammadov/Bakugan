@@ -73,7 +73,10 @@ function sideOf(bot: BotBrawler): BrawlerSide {
 function playedSoFar(teams: readonly [Entrant[], Entrant[]], ai: [AiLevel, AiLevel], battles: number) {
   let s: BattleState = startBattle(teams[0], teams[1], [gateDeck(teams[0]), gateDeck(teams[1])], Math.random() < 0.5 ? 0 : 1)
   for (let guard = 0; s.results.length < battles && s.winner === null && s.phase !== 'over' && guard < 3000; guard++) {
-    if (s.phase === 'set') s = setGate(s, chooseGate(s, ai[s.setter]))
+    if (s.phase === 'set') {
+      const pick = chooseGate(s, ai[s.setter])
+      s = setGate(s, pick.member, pick.gate)
+    }
     else if (s.phase === 'throw') {
       const side = throwerOf(s)
       if (side === null) break

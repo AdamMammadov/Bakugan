@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-import { FINISHER_CHARGE, HAND_SIZE, LIVES, MOVES } from '../battle/engine'
+import { FINISHER_CHARGE, HAND_SIZE, KO_G, LIVES, MOVES } from '../battle/engine'
 import { COMMAND_GATES } from '../data/gates'
 import { BakuganInfo } from '../components/BakuganInfo'
 import { GRID, GRID_SIZE } from '../components/grid'
@@ -509,18 +509,19 @@ function RulesTab() {
       [
         `Each brawler has ${LIVES} lives: the balls at the top of the screen. A match is a series of battles, one Bakugan against one. The loser of a battle loses a life; lose ${LIVES} battles and you are defeated.`,
         'Each side brings one to three Bakugan. A beaten Bakugan goes back to its brawler and can be thrown again in the next battle.',
-        'Every battle: one brawler sets a Gate Card face-down (the brawlers take turns, a coin toss decides who sets the first). The setter throws a Bakugan first, then the other brawler answers with one of theirs.',
+        'Every battle: one brawler picks the Bakugan they will throw and sets one of its own Gate Cards face-down (the brawlers take turns, a coin toss decides who sets the first). The setter throws that Bakugan first, then the other brawler answers with one of theirs.',
         `Each side draws a hand of up to ${HAND_SIZE} cards from its thrown Bakugan's own ability cards. Then each brawler has ${MOVES} moves; you take turns, and the Gate Card's owner moves first.`,
         'A move is one thing: activate an ability card ("Ability activate!"), or a Gate Card action. There is no passing. A brawler with nothing they can play skips their turn.',
         'Once both brawlers have made their moves (or neither can move), the Bakugan clash: the higher G-Power wins the battle. A tie goes to the Bakugan thrown first (the Gate Card setter’s).',
-        'A battle ends at once when a Bakugan drops to 0 G: it is defeated. A finisher wins it outright. Big cards decide battles: 550 G against 600 G, they open their Gate Card (+150, 750 G), you answer with +400 (950 G).',
+        `A battle ends at once when a Bakugan drops to ${KO_G} G or less: it is knocked out. A finisher wins it outright. Big cards decide battles: 550 G against 600 G, they open their Gate Card (+150, 750 G), you answer with +400 (950 G).`,
         'The loser of a battle loses a life; their Bakugan goes back into its ball and can be thrown again. A turn counter (01T, 02T…) runs through the whole match.',
       ],
     ],
     [
       'Gate Cards',
       [
-        'Your Gate Card stays on the field for the battle and does nothing until you open it with one of your moves: "Gate Card, open!". After the battle it is spent; each brawler has three.',
+        'Your Gate Card stays on the field for the battle and does nothing until you open it with one of your moves: "Gate Card, open!". After the battle it is spent.',
+        'A Gate Card is always one of the Bakugan set on it: its attribute’s Attribute Gate Card, the Command Gate Card of its attribute, or its own Character Gate Card. A team of three attributes brings the cards of all three; once a Bakugan’s cards are spent, they come back for it.',
         'Then it is a tug-of-war, each step a move: your opponent may close it (its effect is undone), then open it for themselves (it works for them); you may then close it again. Each brawler opens it once and closes it once at most.',
         'A Gate Card always works for the brawler it is open for. Attribute Gate Cards give their Bakugan extra G’s: in full if it has the card’s attribute, half otherwise. Character Gate Cards raise its G-Power by half if it is the card’s Bakugan, by a quarter otherwise. On a Command Gate Card, “you” is the brawler it is open for.',
         ...COMMAND_GATES.map((g) => `${g.name}: ${g.text}`),
@@ -529,7 +530,7 @@ function RulesTab() {
     [
       'Ability cards in battle',
       [
-        'Every card counts for the battle it is played in. Boost cards raise your G-Power; attack cards strike at once and weaken cards cut the opponent’s; drain cards steal it (they lose it, you gain it). An attack that takes a Bakugan down to 0 G defeats it.',
+        `Every card counts for the battle it is played in. Boost cards raise your G-Power; attack cards strike at once and weaken cards cut the opponent’s; drain cards steal it (they lose it, you gain it). An attack that takes a Bakugan down to ${KO_G} G or less knocks it out.`,
         'Nullify cards cancel the opponent’s last ability card, and its G change is undone. There are no shields that block everything.',
         `A finisher, played after ${FINISHER_CHARGE} other ability cards in the same battle, wins the battle outright.`,
       ],

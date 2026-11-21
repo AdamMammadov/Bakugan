@@ -132,7 +132,10 @@ export function simulate(a: CupEntrant, b: CupEntrant, seed: number): { winner: 
   const ai = [aiForTier(tierOf(a.score).index), aiForTier(tierOf(b.score).index)]
   let s: BattleState = startBattle(teams[0], teams[1], [gateDeck(teams[0]), gateDeck(teams[1])], rng() < 0.5 ? 0 : 1)
   for (let guard = 0; s.winner === null && s.phase !== 'over' && guard < 3000; guard++) {
-    if (s.phase === 'set') s = setGate(s, chooseGate(s, ai[s.setter], rng))
+    if (s.phase === 'set') {
+      const pick = chooseGate(s, ai[s.setter], rng)
+      s = setGate(s, pick.member, pick.gate)
+    }
     else if (s.phase === 'throw') {
       const side = throwerOf(s)
       if (side === null) break

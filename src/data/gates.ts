@@ -48,7 +48,7 @@ export const ATTRIBUTE_GATES: GateCard[] = ELEMENTS.flatMap((element) =>
   ATTRIBUTE_AMOUNTS.map((amount) => ({
     id: `${element}-${amount}`,
     kind: 'attribute' as const,
-    name: `${cap(element)} - ${amount}`,
+    name: `${cap(element)} +${amount}`,
     element,
     amount,
     text: `Your Bakugan gains +${amount} G's if it is ${cap(element)}, +${amount / 2} G's otherwise.`,
@@ -171,26 +171,27 @@ export const gateKindLabel = (gate: GateCard) =>
   gate.kind === 'attribute' ? 'ATTRIBUTE GATE' : gate.kind === 'character' ? 'CHARACTER GATE' : 'COMMAND GATE'
 
 /**
- * A side's Gate Card deck: three cards, one for each battle it sets (a brawler sets at most three in a match), all of
- * them for its own team. First the attribute gate of each attribute in the team (so every Bakugan brought has a gate
- * of its own: three attributes, three attribute gates), then, while there is room, the lead's attribute's command gate
- * and a character gate of a Bakugan in the team (else Grand Spirit, which helps a brawler who is behind).
+ * A side's Gate Card deck: every card its team's Bakugan can set, so a brawler always sets a Gate Card that is their
+ * own Bakugan's (gateFits): for each Bakugan its attribute's Attribute Gate Card, the Command Gate Card drawn in its
+ * attribute and its own Character Gate Card when it has one. A full Darkus team brings the Darkus cards, a team of three
+ * attributes the cards of all three.
  */
 export function gateDeck(team: Entrant[]): GateCard[] {
-  if (!team.length) return []
-  const lead = team[0].bakugan
-  const elements = [...new Set(team.map((e) => e.bakugan.element))]
-  const deck: GateCard[] = elements.map((el) => GATE_BY_ID[`${el}-${ATTRIBUTE_GATE_G}`]).filter(Boolean)
-  if (deck.length < 3) deck.push(GATE_BY_ID[COMMAND_FOR[lead.element]])
-  if (deck.length < 3) {
-    const own = team.map((e) => GATE_BY_ID[`char-${e.bakugan.id}`]).find(Boolean)
-    deck.push(own ?? GATE_BY_ID['grand-spirit'])
-  }
-  return deck.slice(0, 3)
+  const deck: GateCard[] = []
+  for (const { bakugan: b } of team)
+    for (const id of [`${b.element}-${ATTRIBUTE_GATE_G}`, COMMAND_FOR[b.element], `char-${b.id}`]) {
+      const g = GATE_BY_ID[id]
+      if (g && !deck.includes(g)) deck.push(g)
+    }
+  return deck
 }
 
-/** Whether a gate card is one for this Bakugan: its attribute's gate, its own character gate, or a command gate. */
+/**
+ * Whether a gate card is one for this Bakugan: its attribute's Attribute Gate Card, a Command Gate Card drawn in its
+ * attribute, or its own Character Gate Card. A Bakugan is only ever set on a card of its own.
+ */
 export const gateFits = (gate: GateCard, bakugan: { id: string; element: ElementId }) =>
-  gate.kind === 'command' ||
-  (gate.kind === 'attribute' && gate.element === bakugan.element) ||
-  (gate.kind === 'character' && gate.bakugan === bakugan.id)
+  gate.kind === 'character' ? gate.bakugan === bakugan.id : gate.element === bakugan.element
+
+/** The Attribute Gate Card a Bakugan of this attribute always has (when a deck has nothing else for it). */
+export const attributeGateOf = (element: ElementId) => GATE_BY_ID[`${element}-${ATTRIBUTE_GATE_G}`]

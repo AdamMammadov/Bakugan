@@ -4,7 +4,7 @@ import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { BattleEvent, SideIndex } from '../battle/engine'
-import { formModels, type Entrant } from '../data/bakugan'
+import { formModels, formOf, type Entrant } from '../data/bakugan'
 import { ELEMENT_BY_ID, type ElementId } from '../data/elements'
 import { BattleFx, type FxFighter } from './BattleFx'
 import { BodyAura, type AuraKind } from './BodyAura'
@@ -158,7 +158,8 @@ export function ArenaScene({ fighters, gate, event, shields, defeated, brawlers,
   )
 
   const [el0, el1] = [fighters[0].bakugan.element, fighters[1].bakugan.element]
-  const [name0, name1] = [fighters[0].bakugan.name, fighters[1].bakugan.name]
+  // the big screen names each Bakugan as the HUD does: by the form on the field (Pyroclast Embral, Preyas Angelo)
+  const [name0, name1] = [formOf(fighters[0]).name, formOf(fighters[1]).name]
   const colors = useMemo<[string, string]>(() => [ELEMENT_BY_ID[el0].color, ELEMENT_BY_ID[el1].color], [el0, el1])
   const names = useMemo<[string, string]>(() => [name0, name1], [name0, name1])
   const [model0, model1] = [brawlers[0].model, brawlers[1].model]

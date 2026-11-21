@@ -1,6 +1,6 @@
 import { abilitiesOf, formBrawlG, formOf, type Ability, type Bakugan, type Entrant } from '../data/bakugan'
 import type { ElementId } from '../data/elements'
-import type { GateCard } from '../data/gates'
+import { attributeGateOf, gateFits, type GateCard } from '../data/gates'
 import { released } from '../season/release'
 
 /**
@@ -11,9 +11,11 @@ import { released } from '../season/release'
  * goes back to its brawler in ball form and can be thrown again, so teams of 1, 2 or 3 all work.
  *
  * Battle (one round, a pure 1v1 `Duel`, so a tag match can be built from duels):
- * - Gate Card: one brawler sets a Gate Card from their gate deck, face-down (they take turns; a coin toss decides
- *   who sets the first). It stays on the field for the battle and is spent afterwards.
- * - Throw: the setter throws first, then the other brawler answers with a Bakugan of their own. The Bakugan thrown
+ * - Gate Card: one brawler picks the Bakugan they will throw and sets a Gate Card of that Bakugan's (gateFits) from
+ *   their gate deck, face-down (they take turns; a coin toss decides who sets the first). It stays on the field for
+ *   the battle and is spent afterwards.
+ * - Throw: the setter throws first (the Bakugan the gate was set for), then the other brawler answers with a Bakugan
+ *   of their own. The Bakugan thrown
  *   first wins a tie. Each draws HAND_SIZE ability cards from its Bakugan's deck.
  * - Moves: each brawler has MOVES moves. They alternate, the Gate Card's owner first. A move is an ability card or a
  *   gate action; there is no passing. A brawler with no legal move skips their turn.
@@ -22,9 +24,9 @@ import { released } from '../season/release'
  *   close it again. Each brawler opens it at most once and closes it at most once; each action costs a move.
  * - Nullify cards cancel the opponent's last ability card (its G change is undone).
  * - Clash: once both brawlers have used their moves (or neither can move), the higher G-Power wins; a tie goes to the
- *   Bakugan thrown first. The battle ends sooner when a Bakugan is knocked out (down to KO_SHARE of the G it came
- *   into the battle with, or less: it is defeated at once) or when a finisher is played (charged by FINISHER_CHARGE
- *   other ability cards in the battle).
+ *   Bakugan thrown first. The battle ends sooner when a Bakugan is knocked out (down to KO_G or less, see koLineOf:
+ *   it is defeated at once) or when a finisher is played (charged by FINISHER_CHARGE other ability cards in the
+ *   battle).
  */
 
 export const LIVES = 3
@@ -36,15 +38,20 @@ export const HAND_SIZE = 4
 /** Other ability cards a Bakugan must play in the battle before its finisher (it gathers its power first). */
 export const FINISHER_CHARGE = 2
 /**
- * A Bakugan knocked down to this share of the G-Power it came into the battle with (or less) is defeated at once: a
- * 617 G Bakugan struck down to 17 G, or a 550 G one to 100 G, cannot fight on.
+ * A Bakugan struck down to KO_G or less is defeated at once: a 617 G Bakugan at 17 G, a 589 G one at 189 G, cannot
+ * fight on. A Bakugan far stronger than that falls at KO_SHARE of the G it came into the battle with (225 G for a
+ * 900 G one), and a weak one (an event's) only at half its own G, so it never starts the battle knocked out.
  */
+export const KO_G = 200
 export const KO_SHARE = 0.25
 
 /** The G-Power at or below which a side's Bakugan is knocked out in this duel. */
-export const koLineOf = (d: Duel, side: SideIndex) => Math.floor(d.fighters[side].g * KO_SHARE)
+export function koLineOf(d: Duel, side: SideIndex) {
+  const g = d.fighters[side].g
+  return Math.max(Math.floor(g * KO_SHARE), Math.min(KO_G, Math.floor(g / 2)))
+}
 
-/** Whether a side's Bakugan is knocked out (see KO_SHARE). */
+/** Whether a side's Bakugan is knocked out (see koLineOf). */
 export const knockedOut = (d: Duel, side: SideIndex) => powerOf(d, side) <= koLineOf(d, side)
 
 export type SideIndex = 0 | 1
@@ -100,7 +107,7 @@ export interface Effect {
 }
 
 /**
- * Why a battle ended. ko: a Bakugan was knocked out (see KO_SHARE) · finisher: won outright · clash: the moves were made,
+ * Why a battle ended. ko: a Bakugan was knocked out (see koLineOf) · finisher: won outright · clash: the moves were made,
  * the higher G won.
  */
 export type DuelEnd = 'ko' | 'finisher' | 'clash'
@@ -138,7 +145,7 @@ export interface Side {
   decks: Card[][]
   /** Gate Cards not set yet; one is spent each time this side sets one. */
   gates: GateCard[]
-  /** The whole gate deck: once every card is spent, the deck comes back. */
+  /** The whole gate deck: once a Bakugan's cards are all spent, they come back for it (gatesFor). */
   gateDeck: GateCard[]
   lives: number
   /** Lives at the start of the match (LIVES, unless an event says otherwise). */
@@ -185,6 +192,8 @@ export interface BattleState {
   setter: SideIndex
   /** This battle's Gate Card, set before the Bakugan are thrown. */
   gate: GateCard | null
+  /** The setter's team member the Gate Card was set for: the Bakugan the setter throws. */
+  planned: number | null
   /** Team member each side has thrown this battle. */
   thrown: [number | null, number | null]
   duel: Duel | null
@@ -279,6 +288,7 @@ export function startBattle(
     first,
     setter: first,
     gate: null,
+    planned: null,
     thrown: [null, null],
     duel: null,
     winner: null,
@@ -342,8 +352,20 @@ function clone(state: BattleState): BattleState {
 
 export const activeOf = (side: Side) => side.team[side.active]
 
-/** The Gate Cards a side can set now: those not spent yet, or the whole deck again once all are. */
-export const gatesLeft = (side: Side) => (side.gates.length ? side.gates : side.gateDeck)
+/**
+ * The Gate Cards a side can set for one of its Bakugan (index into its team): the cards of its deck that are this
+ * Bakugan's own (gateFits) and not spent yet; once those are all spent, they come back. A deck with none for it (an
+ * event's own deck) still gives it its attribute's Attribute Gate Card: a Bakugan is never set on another's card.
+ */
+export function gatesFor(side: Side, member: number): GateCard[] {
+  const b = side.team[Math.min(Math.max(member, 0), side.team.length - 1)].bakugan
+  const left = side.gates.filter((g) => gateFits(g, b))
+  if (left.length) return left
+  const again = side.gateDeck.filter((g) => gateFits(g, b))
+  if (again.length) return again
+  const own = attributeGateOf(b.element)
+  return own ? [own] : side.gateDeck.slice(0, 1)
+}
 
 /** A side's G-Power in the battle: its Bakugan's own plus every effect still standing. */
 export function powerOf(d: Duel, side: SideIndex) {
@@ -591,7 +613,7 @@ export function duelStep(
   d.moves++
   d.left[actor]--
 
-  // a Bakugan knocked out (down to a quarter of its G or less) is defeated at once
+  // a Bakugan knocked out (down to 200 G or less, see koLineOf) is defeated at once
   if (!d.done) {
     const zero = SIDES.filter((s) => knockedOut(d, s))
     if (zero.length) {
@@ -616,14 +638,20 @@ const nameOf = (state: BattleState, side: SideIndex) => {
   return d ? d.fighters[side].name : activeOf(state.sides[side]).name
 }
 
-/** The setter sets one of its Gate Cards face-down (index into its gates). */
-export function setGate(prev: BattleState, index: number): BattleState {
+/**
+ * The setter picks the Bakugan it will throw (index into its team) and sets one of that Bakugan's Gate Cards
+ * face-down (index into gatesFor): the Gate Card on the field is always the setter's Bakugan's own.
+ */
+export function setGate(prev: BattleState, member: number, index = 0): BattleState {
   const state = clone(prev)
   const side = state.sides[state.setter]
-  // every card of the deck spent (a long match): the deck comes back
-  if (!side.gates.length) side.gates = [...side.gateDeck]
-  const i = Math.min(Math.max(index, 0), side.gates.length - 1)
-  state.gate = side.gates.length ? side.gates.splice(i, 1)[0] : null
+  const m = Math.min(Math.max(member, 0), side.team.length - 1)
+  const options = gatesFor(side, m)
+  const gate = options[Math.min(Math.max(index, 0), options.length - 1)] ?? null
+  const spent = gate ? side.gates.indexOf(gate) : -1
+  if (spent >= 0) side.gates.splice(spent, 1)
+  state.gate = gate
+  state.planned = m
   state.phase = 'throw'
   state.log.push(`Battle ${state.battle}: Gate Card set.`)
   return state
@@ -641,7 +669,9 @@ export function throwerOf(state: BattleState): SideIndex | null {
 export function throwBakugan(prev: BattleState, side: SideIndex, index: number, rng: () => number = Math.random): BattleState {
   const state = clone(prev)
   const s = state.sides[side]
-  state.thrown[side] = Math.min(Math.max(index, 0), s.team.length - 1)
+  // the setter throws the Bakugan its Gate Card was set for
+  const pick = side === state.setter && state.planned !== null ? state.planned : index
+  state.thrown[side] = Math.min(Math.max(pick, 0), s.team.length - 1)
   if (state.thrown[0] === null || state.thrown[1] === null) return state
   const picks = state.thrown as [number, number]
   state.sides.forEach((x, i) => (x.active = picks[i]))
@@ -757,6 +787,7 @@ export function nextBattle(prev: BattleState): BattleState {
   state.battle += 1
   state.setter = other(state.setter)
   state.gate = null
+  state.planned = null
   state.thrown = [null, null]
   state.duel = null
   state.phase = 'set'
@@ -946,21 +977,28 @@ function gateValue(gate: GateCard, f: Fighter, livesLost: number) {
   }
 }
 
-/** The Gate Card the setter sets (index into its gates): the one that fits its team best. */
+/**
+ * The setter's Gate Card: first the Bakugan it will throw (as chooseThrow picks, each counted with its best own gate),
+ * then that Bakugan's best Gate Card. `member` and `gate` go to setGate.
+ */
 export function chooseGate(state: BattleState, level: AiLevel = AI_EASY, rng: () => number = Math.random) {
-  const s = state.sides[state.setter]
+  const side = state.setter
+  const s = state.sides[side]
   const lost = s.maxLives - s.lives
-  const gates = gatesLeft(s)
-  let best = 0
-  let bestV = -Infinity
-  gates.forEach((gate, gi) => {
-    const v = Math.max(...s.team.map((f, i) => memberValue(s, i) + gateValue(gate, f, lost))) + rng() * level.noise
-    if (v > bestV) {
-      bestV = v
-      best = gi
-    }
+  const best = s.team.map((f, i) => {
+    let gate = 0
+    let value = -Infinity
+    gatesFor(s, i).forEach((g, gi) => {
+      const v = gateValue(g, f, lost) + rng() * level.noise * 0.5
+      if (v > value) {
+        value = v
+        gate = gi
+      }
+    })
+    return { gate, value }
   })
-  return best
+  const member = pickThrow(state, side, level, rng, (i) => best[i].value)
+  return { member, gate: best[member].gate }
 }
 
 /** How much less a Bakugan counts as a throw for each time it was already thrown this match (share of the team's mean). */
@@ -969,16 +1007,14 @@ const THROWN_BEFORE = 0.2
 const JUST_BEATEN = 0.3
 
 /**
- * The team member a side throws: the strongest with its gate (when it is the setter's) and its cards, but a brawler
- * brings the whole team into play, as brawlers do: a Bakugan counts for less each time it was already thrown this
- * match (one not on the field yet gets its turn), and the one just beaten rests a battle when another can go.
- * Without this the same strongest Bakugan was thrown every battle and the rest of a 3-Bakugan team was never seen.
+ * The team member a side throws: the strongest with its cards (and, for the setter, its gate), but a brawler brings
+ * the whole team into play, as brawlers do: a Bakugan counts for less each time it was already thrown this match
+ * (one not on the field yet gets its turn), and the one just beaten rests a battle when another can go. Without this
+ * the same strongest Bakugan was thrown every battle and the rest of a 3-Bakugan team was never seen.
  */
-export function chooseThrow(state: BattleState, side: SideIndex, level: AiLevel = AI_EASY, rng: () => number = Math.random) {
+function pickThrow(state: BattleState, side: SideIndex, level: AiLevel, rng: () => number, gate: (i: number) => number) {
   const s = state.sides[side]
-  const lost = s.maxLives - s.lives
-  const own = state.setter === side && state.gate
-  const base = s.team.map((f, i) => memberValue(s, i) + (own ? gateValue(state.gate!, f, lost) : 0))
+  const base = s.team.map((_, i) => memberValue(s, i) + gate(i))
   const mean = base.reduce((n, v) => n + v, 0) / base.length
   const last = state.results[state.results.length - 1]
   const beaten = last && last.winner !== side ? last.thrown[side] : -1
@@ -989,6 +1025,12 @@ export function chooseThrow(state: BattleState, side: SideIndex, level: AiLevel 
   })
   options.sort((a, b) => b.v - a.v)
   return options[0].i
+}
+
+/** The team member a side throws: the setter, the Bakugan its Gate Card was set for; the other side, as pickThrow picks. */
+export function chooseThrow(state: BattleState, side: SideIndex, level: AiLevel = AI_EASY, rng: () => number = Math.random) {
+  if (side === state.setter && state.planned !== null) return state.planned
+  return pickThrow(state, side, level, rng, () => 0)
 }
 
 /** A random team of different Bakugan. */

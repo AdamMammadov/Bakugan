@@ -163,7 +163,7 @@ export function BrawlerHud({
   side: SideIndex
   brawler: HudBrawler
   teams: readonly [Entrant[], Entrant[]]
-  /** The brawler's colour (their first Bakugan's attribute). */
+  /** The brawler's colour (the attribute of their Bakugan on the field). */
   color: string
   badge?: ReactNode
   /** A boss's extra G-Power on every Bakugan (already in their G): shown as a boss boost. */
@@ -382,7 +382,8 @@ function EffectChips({
           .filter(Boolean)
           .join(' · ')
         let label = ''
-        if (e.kind === 'gate') label = `▣ ${state.duel?.gate?.card.name ?? 'GATE'} ${amount}`
+        // the card's name, then what it did: "Subterra +150 → +75" (an Attribute Gate Card's name carries its own +)
+        if (e.kind === 'gate') label = `▣ ${state.duel?.gate?.card.name ?? 'GATE'} → ${amount || '0'}`
         else if (e.card) {
           const a = e.card.ability
           label = a.type === 'shield' ? `⊘ ${a.name}` : `${TYPE_ICON[a.type]} ${a.name} ${a.type === 'finisher' ? 'KO' : amount}`
