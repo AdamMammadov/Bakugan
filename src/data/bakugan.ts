@@ -381,8 +381,12 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // halo, which floated loose in the owner's tool, is joined back onto the ring, and the thin horn on its helmet is
   // made as thick as in the owner's picture. Given one closed skin, its chest stone, visor and shield ring (and its
   // halo, softly) made to glow; cut into its helmet and four legs, skinned and inked. It stands tall (its halo and
-  // staff reach high over its back), so it is shown a size up
-  noxaris: { monster: 'models/noxaris/monster.glb', scale: 1.55 },
+  // staff reach high over its back), so it is shown a size up. Its ball is the owner's own two models, each given one
+  // closed skin and its magenta made to glow: closed, a ball of violet and black plates banded with silver, a round
+  // disc on each side (the shield's, with its spiral, on the side the shield opens to); as it opens, the open model
+  // (the knight folded round the ball body on its four legs, staff and shield out to the sides, its halo and the
+  // ball's back half raised over it) takes its place at the same size, half way through
+  noxaris: { ball: 'models/noxaris/ball.glb', monster: 'models/noxaris/monster.glb', scale: 1.55 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },

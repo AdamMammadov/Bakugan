@@ -150,10 +150,14 @@ export const OWNER_BOOSTS: {
   rating?: number
   /** Standing raised to at least these (rating, player XP, ranked wins and losses). */
   atLeast?: { rating: number; xp: number; wins: number; losses: number }
+  /** Player XP and ranked wins and losses added. */
+  add?: { xp: number; wins: number; losses: number }
 }[] = [
   { id: 'rating-2026-11', rating: 350, before: Date.UTC(2026, 10, 13, 12) },
   { id: 'standing-2026-11', atLeast: { rating: 3010, xp: 48000, wins: 342, losses: 85 }, before: Date.UTC(2026, 10, 15) },
   { id: 'rating-2026-11-b', rating: 380, before: Date.UTC(2026, 10, 22) },
+  // (the rating above came alone; the rest of the standing rises with it, as the time before)
+  { id: 'standing-2026-11-b', add: { xp: 9000, wins: 44, losses: 6 }, before: Date.UTC(2026, 10, 23) },
 ]
 
 /** Rank score from experience: 1 point per `per` total XP, at most `max`, so playing alone cannot carry a rank. */
@@ -672,6 +676,12 @@ export const useProfiles = create<ProfilesState>()(
             let { rating, xp, stats } = p
             for (const b of due) {
               rating += b.rating ?? 0
+              if (b.add) {
+                xp += b.add.xp
+                const wins = stats.wins + b.add.wins
+                const losses = stats.losses + b.add.losses
+                stats = { ...stats, wins, losses, battles: Math.max(stats.battles, wins + losses) }
+              }
               if (b.atLeast) {
                 rating = Math.max(rating, b.atLeast.rating)
                 xp = Math.max(xp, b.atLeast.xp)
