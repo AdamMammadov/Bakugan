@@ -4344,6 +4344,76 @@ export const ROSTER: Bakugan[] = [
         "name": "Noxaris",
         "series": "Original",
         "gPower": 410
+      },
+      {
+        "name": "Nightfall Noxaris",
+        "series": "Original",
+        "gPower": 650,
+        "abilities": [
+          {
+            "id": "dusk-wings",
+            "name": "Dusk Wings",
+            "type": "boost",
+            "amount": 250,
+            "effect": "aura",
+            "description": "Its violet wings open wide and the cyan gems at their roots blaze: adds 250 G to Nightfall Noxaris.",
+            "estimated": true
+          },
+          {
+            "id": "starless-aegis",
+            "name": "Starless Aegis",
+            "type": "shield",
+            "amount": 0,
+            "effect": "shieldDome",
+            "description": "Nightfall Noxaris folds its wings round in front of its ringed shield: cancels the opponent's last ability card.",
+            "estimated": true
+          },
+          {
+            "id": "twin-halo-turn",
+            "name": "Twin Halo Turn",
+            "type": "weaken",
+            "amount": 200,
+            "effect": "shadowOrb",
+            "description": "The spiked halo and the gear ring behind it turn against each other and the opponent's strength drains away: subtracts 200 G from the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "night-tide",
+            "name": "Night Tide",
+            "type": "drain",
+            "amount": 200,
+            "effect": "shadowOrb",
+            "description": "The magenta stones on its chest pull the light out of the opponent: transfers 200 G from the opponent to Nightfall Noxaris.",
+            "estimated": true
+          },
+          {
+            "id": "jagged-crescent",
+            "name": "Jagged Crescent",
+            "type": "attack",
+            "amount": 300,
+            "effect": "shadowOrb",
+            "description": "It swings the jagged silver crescent of its staff down on the opponent in one stroke.",
+            "estimated": true
+          },
+          {
+            "id": "wingbeat-gale",
+            "name": "Wingbeat Gale",
+            "type": "attack",
+            "amount": 200,
+            "effect": "tornado",
+            "description": "One beat of its great wings drives a storm of black feathers through the opponent.",
+            "estimated": true
+          },
+          {
+            "id": "nightfall",
+            "name": "Nightfall",
+            "type": "finisher",
+            "amount": 0,
+            "effect": "chaosBeam",
+            "description": "Its wings close over the arena like the night itself; when they open again, the opponent has fallen: defeats the opponent's Bakugan at once.",
+            "estimated": true
+          }
+        ]
       }
     ]
   }

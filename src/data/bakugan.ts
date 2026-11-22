@@ -515,6 +515,14 @@ if (tempest)
     length: 2.2,
   }
 
+const nightfall = ROSTER.find((b) => b.id === 'noxaris')?.evolutions.find((e) => e.name === 'Nightfall Noxaris')
+// Noxaris evolved, from the owner's own model: the centaur knight with great violet wings banded in black and silver,
+// a cyan gem at each wing's root, magenta stones on its chest, a gear ring turning inside its spiked halo and a jagged
+// silver crescent on its staff. Given one closed skin (its many loose plates, a few millimetres apart in the owner's
+// tool, joined into one), its chest stones and wing gems made to glow (its halo softly), cut into its helmet, wings and
+// legs (the foreleg its staff stands against stays planted), skinned and inked. It keeps Noxaris's ball for now
+if (nightfall) nightfall.models = { ...ROSTER_MODELS.noxaris, monster: 'models/noxaris/evo.glb', scale: 1.7 }
+
 const zenith = ROSTER.find((b) => b.id === 'scarion')?.evolutions.find((e) => e.name === 'Zenith Scarion')
 // Scarion evolved, from the owner's own model: a great beetle of light in bronze and gold armour on six clawed legs, a
 // pearl helm under a crest of cyan crystals, one great curved horn hung with gold beads arching over its head, a gold
