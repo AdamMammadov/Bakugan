@@ -4234,5 +4234,12 @@
     { "name": "leg_fr", "pivot": [-0.29, -0.04, 0.09], "test": "mesh === 'leg_fr'", "swing": 0.4 },
     { "name": "leg_bl", "pivot": [0.35, -0.05, -0.72], "test": "mesh === 'leg_bl'", "swing": 0.35 },
     { "name": "leg_br", "pivot": [-0.35, -0.05, -0.72], "test": "mesh === 'leg_br'", "swing": 0.35 }
+  ],
+  "noxaris": [
+    { "name": "head", "pivot": [0.0, 0.95, 0.15], "test": "mesh === 'head'", "swing": 0.2 },
+    { "name": "leg_fl", "pivot": [0.2, 0.09, 0.24], "test": "mesh === 'leg_fl'", "swing": 0.35 },
+    { "name": "leg_fr", "pivot": [-0.2, 0.09, 0.24], "test": "mesh === 'leg_fr'", "swing": 0.35 },
+    { "name": "leg_bl", "pivot": [0.2, 0.095, -0.54], "test": "mesh === 'leg_bl'", "swing": 0.3 },
+    { "name": "leg_br", "pivot": [-0.2, 0.095, -0.54], "test": "mesh === 'leg_br'", "swing": 0.3 }
   ]
 }

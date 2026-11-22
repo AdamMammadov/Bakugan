@@ -34,8 +34,15 @@ function pump() {
   listeners.forEach((fn) => fn())
 }
 
+/** Pictures that timed out, tried again once at the back of the queue (a slow first load, e.g. while the arena loads). */
+const retried = new Set<string>()
+
 function done(key: string, url: string | null) {
   if (url) pictures.set(key, url)
+  else if (current && !retried.has(key)) {
+    retried.add(key)
+    waiting.push(current)
+  }
   current = null
   listeners.forEach((fn) => fn())
   pump()
@@ -101,7 +108,7 @@ export function BakuganPortrait({ entrant, mirror = false }: { entrant: Entrant;
 /** The off-screen canvas that renders one picture. */
 function Snapshot({ entrant }: { entrant: Entrant }) {
   const key = keyOf(entrant)
-  // a model that never loads gives up after a while, so the queue moves on
+  // a model that never loads gives up after a while, so the queue moves on (and tries it once more later)
   useEffect(() => {
     const t = window.setTimeout(() => done(key, null), 20000)
     return () => clearTimeout(t)

@@ -4264,6 +4264,88 @@ export const ROSTER: Bakugan[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "noxaris",
+    "name": "Noxaris",
+    "element": "darkus",
+    "brawler": "Game Owner",
+    "series": "Original",
+    "baseG": 410,
+    "brawlG": 510,
+    "description": "A centaur knight of the eclipse in violet and black armour banded with silver. A ring of dark spikes stands behind its horned helmet like a black sun, a magenta stone burns in its chest, and it carries a crescent-bladed staff in one hand and a round shield ringed with magenta on the other arm.",
+    "abilities": [
+      {
+        "id": "eclipse-halo",
+        "name": "Eclipse Halo",
+        "type": "boost",
+        "amount": 200,
+        "effect": "aura",
+        "description": "The spiked ring behind its helmet darkens like the moon passing over the sun: adds 200 G to Noxaris.",
+        "estimated": true
+      },
+      {
+        "id": "umbral-ward",
+        "name": "Umbral Ward",
+        "type": "shield",
+        "amount": 0,
+        "effect": "shieldDome",
+        "description": "Noxaris raises its round shield and the magenta ring on it flares: cancels the opponent's last ability card.",
+        "estimated": true
+      },
+      {
+        "id": "moonless-gaze",
+        "name": "Moonless Gaze",
+        "type": "weaken",
+        "amount": 150,
+        "effect": "shadowOrb",
+        "description": "Its visor glows and the opponent's strength fades into the dark: subtracts 150 G from the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "night-siphon",
+        "name": "Night Siphon",
+        "type": "drain",
+        "amount": 200,
+        "effect": "shadowOrb",
+        "description": "The stone in its chest pulls the light out of the opponent: transfers 200 G from the opponent to Noxaris.",
+        "estimated": true
+      },
+      {
+        "id": "crescent-reap",
+        "name": "Crescent Reap",
+        "type": "attack",
+        "amount": 250,
+        "effect": "shadowOrb",
+        "description": "Noxaris sweeps the crescent blade of its staff round in one long arc through the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "dusk-charge",
+        "name": "Dusk Charge",
+        "type": "attack",
+        "amount": 150,
+        "effect": "quake",
+        "description": "It lowers its horned helmet and charges on its four armoured legs, trampling the opponent.",
+        "estimated": true
+      },
+      {
+        "id": "total-eclipse",
+        "name": "Total Eclipse",
+        "type": "finisher",
+        "amount": 0,
+        "effect": "chaosBeam",
+        "description": "Its halo swallows every light in the arena; when the light comes back, the opponent has fallen: defeats the opponent's Bakugan at once.",
+        "estimated": true
+      }
+    ],
+    "evolutions": [
+      {
+        "name": "Noxaris",
+        "series": "Original",
+        "gPower": 410
+      }
+    ]
   }
 ]
 

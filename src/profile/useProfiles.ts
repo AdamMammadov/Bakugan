@@ -153,6 +153,7 @@ export const OWNER_BOOSTS: {
 }[] = [
   { id: 'rating-2026-11', rating: 350, before: Date.UTC(2026, 10, 13, 12) },
   { id: 'standing-2026-11', atLeast: { rating: 3010, xp: 48000, wins: 342, losses: 85 }, before: Date.UTC(2026, 10, 15) },
+  { id: 'rating-2026-11-b', rating: 380, before: Date.UTC(2026, 10, 22) },
 ]
 
 /** Rank score from experience: 1 point per `per` total XP, at most `max`, so playing alone cannot carry a rank. */

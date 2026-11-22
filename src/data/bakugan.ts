@@ -376,6 +376,13 @@ const ROSTER_MODELS: Record<string, Bakugan['models']> = {
   // front (the short gold horn between round cyan eyes, two more eyes above); as it opens, the open model (the ball
   // body on six legs, its two great horns spread wide, its eyes aglow) takes its place at the same size, half way
   scarion: { ball: 'models/scarion/ball.glb', monster: 'models/scarion/monster.glb', scale: 1.35, length: 2.3, stage: 0.95 },
+  // the game's own Darkus Bakugan, from the owner's own model: a centaur knight of the eclipse in violet and black
+  // armour, a ring of dark spikes behind its horned helmet, a crescent-bladed staff and a round shield. The knob on its
+  // halo, which floated loose in the owner's tool, is joined back onto the ring, and the thin horn on its helmet is
+  // made as thick as in the owner's picture. Given one closed skin, its chest stone, visor and shield ring (and its
+  // halo, softly) made to glow; cut into its helmet and four legs, skinned and inked. It stands tall (its halo and
+  // staff reach high over its back), so it is shown a size up
+  noxaris: { monster: 'models/noxaris/monster.glb', scale: 1.55 },
   // made from an anime picture (sent by the player); its wings are crystal sheets, so the outline
   // skips thin spots (inkThin); skinned and inked
   rubanoid: { monster: 'models/rubanoid/monster.glb', length: 1.6 },
